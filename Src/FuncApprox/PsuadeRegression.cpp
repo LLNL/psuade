@@ -34,7 +34,7 @@
 #include "PrintingTS.h"
 
 // ************************************************************************
-// Constructor 
+// Constructor
 // ------------------------------------------------------------------------
 PsuadeRegression::PsuadeRegression(int nInputs,int nSamples):
                                    FuncApprox(nInputs,nSamples)
@@ -73,7 +73,7 @@ int PsuadeRegression::genNDGridData(double *X, double *Y, int *N2,
 {
   int totPts, ss;
 
-  if (N2 <= 0)
+  if ((*N2) <= 0)
   {
     printf("PsuadeRegression::genNDGridData - ERROR detected (N <= 0).\n");
     (*N2) = 0;
@@ -98,13 +98,13 @@ int PsuadeRegression::genNDGridData(double *X, double *Y, int *N2,
 // Generate 1D mesh results (set all other inputs to nominal values)
 // ------------------------------------------------------------------------
 int PsuadeRegression::gen1DGridData(double *X, double *Y, int ind1,
-                                    double *settings, int *NN, 
+                                    double *settings, int *NN,
                                     double **XX, double **YY)
 {
   int    totPts, mm, nn;
   double HX, *Xloc;
 
-  if (NN <= 0)
+  if ((*NN) <= 0)
   {
     printf("PsuadeRegression::gen1DGridData - ERROR detected (N <= 0).\n");
     (*NN) = 0;
@@ -112,16 +112,16 @@ int PsuadeRegression::gen1DGridData(double *X, double *Y, int ind1,
   }
 
   totPts = nPtsPerDim_;
-  HX = (upperBounds_[ind1] - lowerBounds_[ind1]) / (nPtsPerDim_ - 1); 
+  HX = (upperBounds_[ind1] - lowerBounds_[ind1]) / (nPtsPerDim_ - 1);
 
   (*NN) = totPts;
   (*XX) = new double[totPts];
   (*YY) = new double[totPts];
   Xloc  = new double[nInputs_];
   checkAllocate(Xloc, "Xloc in PsuadeRegression::gen1DGridData");
-  for (nn = 0; nn < nInputs_; nn++) Xloc[nn] = settings[nn]; 
-    
-  for (mm = 0; mm < nPtsPerDim_; mm++) 
+  for (nn = 0; nn < nInputs_; nn++) Xloc[nn] = settings[nn];
+
+  for (mm = 0; mm < nPtsPerDim_; mm++)
   {
     Xloc[ind1] = HX * mm + lowerBounds_[ind1];
     (*XX)[mm] = Xloc[ind1];
@@ -136,13 +136,13 @@ int PsuadeRegression::gen1DGridData(double *X, double *Y, int ind1,
 // Generate 2D mesh results (set all other inputs to nominal values)
 // ------------------------------------------------------------------------
 int PsuadeRegression::gen2DGridData(double *X, double *Y, int ind1,
-                                    int ind2, double *settings, int *NN, 
+                                    int ind2, double *settings, int *NN,
                                     double **XX, double **YY)
 {
   int    totPts, mm, nn, index;
   double *HX, *Xloc;
 
-  if (NN <= 0)
+  if ((*NN) <= 0)
   {
     printf("PsuadeRegression::gen2DGridData - ERROR detected (N <= 0).\n");
     (*NN) = 0;
@@ -151,17 +151,17 @@ int PsuadeRegression::gen2DGridData(double *X, double *Y, int ind1,
 
   totPts = nPtsPerDim_ * nPtsPerDim_;
   HX    = new double[2];
-  HX[0] = (upperBounds_[ind1] - lowerBounds_[ind1]) / (nPtsPerDim_ - 1); 
-  HX[1] = (upperBounds_[ind2] - lowerBounds_[ind2]) / (nPtsPerDim_ - 1); 
+  HX[0] = (upperBounds_[ind1] - lowerBounds_[ind1]) / (nPtsPerDim_ - 1);
+  HX[1] = (upperBounds_[ind2] - lowerBounds_[ind2]) / (nPtsPerDim_ - 1);
 
   (*NN) = totPts;
   (*XX) = new double[totPts * 2];
   (*YY) = new double[totPts];
   Xloc  = new double[nInputs_];
   checkAllocate(Xloc, "Xloc in PsuadeRegression::gen2DGridData");
-  for (nn = 0; nn < nInputs_; nn++) Xloc[nn] = settings[nn]; 
-    
-  for (mm = 0; mm < nPtsPerDim_; mm++) 
+  for (nn = 0; nn < nInputs_; nn++) Xloc[nn] = settings[nn];
+
+  for (mm = 0; mm < nPtsPerDim_; mm++)
   {
     for (nn = 0; nn < nPtsPerDim_; nn++)
     {
@@ -180,16 +180,16 @@ int PsuadeRegression::gen2DGridData(double *X, double *Y, int ind1,
 }
 
 // ************************************************************************
-// Generate 3D mesh results (setting others to some nominal values) 
+// Generate 3D mesh results (setting others to some nominal values)
 // ------------------------------------------------------------------------
 int PsuadeRegression::gen3DGridData(double *X, double *Y, int ind1,
-                                    int ind2, int ind3, double *settings, 
+                                    int ind2, int ind3, double *settings,
                                     int *NN, double **XX, double **YY)
 {
   int    totPts, mm, nn, pp, index;
   double *HX, *Xloc;
 
-  if (NN <= 0)
+  if ((*NN) <= 0)
   {
     printf("PsuadeRegression::gen3DGridData - ERROR detected (N <= 0).\n");
     (*NN) = 0;
@@ -198,18 +198,18 @@ int PsuadeRegression::gen3DGridData(double *X, double *Y, int ind1,
 
   totPts = nPtsPerDim_ * nPtsPerDim_ * nPtsPerDim_;
   HX    = new double[3];
-  HX[0] = (upperBounds_[ind1] - lowerBounds_[ind1]) / (nPtsPerDim_ - 1); 
-  HX[1] = (upperBounds_[ind2] - lowerBounds_[ind2]) / (nPtsPerDim_ - 1); 
-  HX[2] = (upperBounds_[ind3] - lowerBounds_[ind3]) / (nPtsPerDim_ - 1); 
+  HX[0] = (upperBounds_[ind1] - lowerBounds_[ind1]) / (nPtsPerDim_ - 1);
+  HX[1] = (upperBounds_[ind2] - lowerBounds_[ind2]) / (nPtsPerDim_ - 1);
+  HX[2] = (upperBounds_[ind3] - lowerBounds_[ind3]) / (nPtsPerDim_ - 1);
 
   (*NN) = totPts;
   (*XX) = new double[totPts * 3];
   (*YY) = new double[totPts];
   Xloc  = new double[nInputs_];
   checkAllocate(Xloc, "Xloc in PsuadeRegression::gen3DGridData");
-  for (nn = 0; nn < nInputs_; nn++) Xloc[nn] = settings[nn]; 
-    
-  for (mm = 0; mm < nPtsPerDim_; mm++) 
+  for (nn = 0; nn < nInputs_; nn++) Xloc[nn] = settings[nn];
+
+  for (mm = 0; mm < nPtsPerDim_; mm++)
   {
     for (nn = 0; nn < nPtsPerDim_; nn++)
     {
@@ -233,16 +233,16 @@ int PsuadeRegression::gen3DGridData(double *X, double *Y, int ind1,
 }
 
 // ************************************************************************
-// Generate 4D mesh results (setting others to some nominal values) 
+// Generate 4D mesh results (setting others to some nominal values)
 // ------------------------------------------------------------------------
 int PsuadeRegression::gen4DGridData(double *X, double *Y, int ind1, int ind2,
-                                  int ind3, int ind4, double *settings, 
+                                  int ind3, int ind4, double *settings,
                                   int *NN, double **XX, double **YY)
 {
   int    totPts, mm, nn, pp, qq, index;
   double *HX, *Xloc;
 
-  if (NN <= 0)
+  if ((*NN) <= 0)
   {
     printf("PsuadeRegression::gen4DGridData - ERROR detected (N <= 0).\n");
     (*NN) = 0;
@@ -251,19 +251,19 @@ int PsuadeRegression::gen4DGridData(double *X, double *Y, int ind1, int ind2,
 
   totPts = nPtsPerDim_ * nPtsPerDim_ * nPtsPerDim_ * nPtsPerDim_;
   HX    = new double[4];
-  HX[0] = (upperBounds_[ind1] - lowerBounds_[ind1]) / (nPtsPerDim_ - 1); 
-  HX[1] = (upperBounds_[ind2] - lowerBounds_[ind2]) / (nPtsPerDim_ - 1); 
-  HX[2] = (upperBounds_[ind3] - lowerBounds_[ind3]) / (nPtsPerDim_ - 1); 
-  HX[3] = (upperBounds_[ind4] - lowerBounds_[ind4]) / (nPtsPerDim_ - 1); 
+  HX[0] = (upperBounds_[ind1] - lowerBounds_[ind1]) / (nPtsPerDim_ - 1);
+  HX[1] = (upperBounds_[ind2] - lowerBounds_[ind2]) / (nPtsPerDim_ - 1);
+  HX[2] = (upperBounds_[ind3] - lowerBounds_[ind3]) / (nPtsPerDim_ - 1);
+  HX[3] = (upperBounds_[ind4] - lowerBounds_[ind4]) / (nPtsPerDim_ - 1);
 
   (*NN) = totPts;
   (*XX) = new double[totPts * 4];
   (*YY) = new double[totPts];
   Xloc  = new double[nInputs_];
   checkAllocate(Xloc, "Xloc in PsuadeRegression::gen4DGridData");
-  for (nn = 0; nn < nInputs_; nn++) Xloc[nn] = settings[nn]; 
-    
-  for (mm = 0; mm < nPtsPerDim_; mm++) 
+  for (nn = 0; nn < nInputs_; nn++) Xloc[nn] = settings[nn];
+
+  for (mm = 0; mm < nPtsPerDim_; mm++)
   {
     for (nn = 0; nn < nPtsPerDim_; nn++)
     {
@@ -338,9 +338,9 @@ double PsuadeRegression::evaluatePointFuzzy(int npts, double *X, double *Y,
 }
 
 // ************************************************************************
-// User function 
+// User function
 // ------------------------------------------------------------------------
-int PsuadeRegression::userFunction(int nInputs, double *inputs, 
+int PsuadeRegression::userFunction(int nInputs, double *inputs,
                                    int nOutputs, double *outputs)
 {
   if (nInputs != 10)
@@ -371,4 +371,3 @@ int PsuadeRegression::userFunction(int nInputs, double *inputs,
   outputs[0] = muH2O*exp(dtemp*(CO2*(E*MEA+F*TEM+G)+1)*MEA/(TEM*TEM));
   return 0;
 }
-
