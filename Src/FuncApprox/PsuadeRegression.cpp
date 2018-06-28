@@ -73,7 +73,7 @@ int PsuadeRegression::genNDGridData(double *X, double *Y, int *N2,
 {
   int totPts, ss;
 
-  if (N2 <= 0)
+  if ((*N2) <= 0)
   {
     printf("PsuadeRegression::genNDGridData - ERROR detected (N <= 0).\n");
     (*N2) = 0;
