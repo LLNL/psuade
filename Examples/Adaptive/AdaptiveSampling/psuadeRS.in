@@ -11,9 +11,6 @@ END
 METHOD
    sampling = METIS
    num_samples = 100
-   num_refinements = 100
-   refinement_size = 50
-   refinement_type = adaptive
    random_seed = 541541191
 END
 APPLICATION

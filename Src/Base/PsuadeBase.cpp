@@ -215,7 +215,7 @@ int PsuadeBase::getInputFromFile(const char *fname,
     sampler_->setSamplingParams(nSamples, nReps, randomize);
     //**/if (samplingMethod == PSUADE_SAMP_SG)
     //**/{
-    //**/   sprintf(sparam, "nLevels %d", nRefines); 
+    //**/   snprintf(sparam,100,"nLevels %d", nRefines); 
     //**/   sampler_->setParam(sparam);
     //**/}
     sampler_->initialize(1);
@@ -235,7 +235,7 @@ int PsuadeBase::getInputFromFile(const char *fname,
 // ************************************************************************
 // run integrated design and analysis
 // ------------------------------------------------------------------------
-int PsuadeBase::run() throw(Psuade_Stop_Exception)
+int PsuadeBase::run()
 {
   char  *appName, inString[200];
   FILE  *fp;
@@ -683,7 +683,8 @@ int PsuadeBase::runUniform()
           psuadeIO_->updateOutputSection(nSamples,nOutputs,sampleOutputs,
                                          sampleStates,NULL); 
 	  psuadeIO_->writePsuadeFile(NULL,0);
-	  throw Psuade_Stop_Exception();
+          printf("INFO: psuadeStop_ is turned on ==> terminate.\n");
+          exit(0);
 	}
 
         if ((sampleStates[sampleID] == 0) && 
@@ -808,8 +809,9 @@ int PsuadeBase::runUniform()
                 psuadeIO_->updateOutputSection(nSamples,nOutputs,
                                 sampleOutputs,sampleStates,NULL); 
                 psuadeIO_->writePsuadeFile(NULL,0);
-		throw Psuade_Stop_Exception();
-                //**/ removed -- exit(1);
+		//throw Psuade_Stop_Exception();
+                printf("INFO: psuade_stop found ==> terminate.\n");
+                exit(0);
               }
             }
           }
@@ -999,8 +1001,9 @@ int PsuadeBase::runUniform()
         fclose(fp);
         printOutTS(PL_INFO,"\npsuade_stop file found - terminate (2).\n");
 	psuadeIO_->writePsuadeFile(NULL,0);
-	throw Psuade_Stop_Exception();
-	//**/ removed -- exit(1);
+	//**/throw Psuade_Stop_Exception();
+        printf("INFO: psuade_stop found ==> terminate.\n");
+        exit(0);
       }
       if (outputLevel_ > 0) 
       {
@@ -1022,7 +1025,9 @@ int PsuadeBase::runUniform()
             if ((temp != NULL) && (PyObject_Not(temp) == 1)) 
             {
               Py_DECREF(temp);
-              throw Psuade_Stop_Exception();
+              //throw Psuade_Stop_Exception();
+              printf("INFO: terminate.\n");
+              exit(0);
             }
 	    else if (temp != NULL) Py_DECREF(temp);
           }
@@ -1047,7 +1052,12 @@ int PsuadeBase::runUniform()
           printOutTS(PL_INFO, "time per run.\n");
           printf("Do you want to proceed? (y or n) ");
           scanf("%s", winput);
-          if (winput[0] == 'n') throw Psuade_Stop_Exception();
+          if (winput[0] == 'n') 
+          {
+            //**/throw Psuade_Stop_Exception();
+            printf("INFO: terminate.\n");
+            exit(0);
+          }
 #endif
           askFlag = 0;
         }
@@ -1565,11 +1575,11 @@ int PsuadeBase::runAdaptiveNN()
   double *tstSamInputs=NULL, *tstSamOutputs=NULL;
   printOutTS(PL_INFO,"You may test the quality of the response surface\n");
   printOutTS(PL_INFO,"using a test sample (in psuadeData format).\n");
-  sprintf(cString,"Use a test sample ? (y or n) ");
+  snprintf(cString,100,"Use a test sample ? (y or n) ");
   getString(cString, winput);
   if (winput[0] == 'y')
   {
-    sprintf(cString, "Enter the test sample file name : ");
+    snprintf(cString,100,"Enter the test sample file name : ");
     getString(cString, winput);
     ss = strlen(winput);
     winput[ss-1] = '\0';
@@ -1613,9 +1623,9 @@ int PsuadeBase::runAdaptiveNN()
   {
     if (rstype == PSUADE_RS_MARSB)
     {
-      sprintf(cString, "Number of MARS (default = 100, >2, <502) = ");
+      snprintf(cString,100,"Number of MARS (default = 100, >2, <502) = ");
       numMars = getInt(3, 501, cString);
-      sprintf(cString, "Use mean (0) or median (1) of MarsBag : ");
+      snprintf(cString,100,"Use mean (0) or median (1) of MarsBag : ");
       marsMode = getInt(0, 1, cString);
     }
   }
@@ -1649,7 +1659,7 @@ int PsuadeBase::runAdaptiveNN()
   //**/ if adaptive, refineSize is user-specified
   if (refineSize > 0)
   {
-    sprintf(sparam, "setRefineSize %d", refineSize);
+    snprintf(sparam,100,"setRefineSize %d", refineSize);
     sampler_->setParam(sparam);
     printOutTS(PL_INFO, "PSUADE adaptiveNN: refineSize = %d\n",refineSize);
   }
@@ -1730,7 +1740,7 @@ int PsuadeBase::runAdaptiveNN()
            "this sample via psuade or by yourself (if the model\n");
       printOutTS(PL_INFO, 
            "is expensive to run, you want to choose the latter).\n");
-      sprintf(systemCommand, "Run the model yourself (y or n) ? ");
+      snprintf(systemCommand,100,"Run the model yourself (y or n) ? ");
       getString(systemCommand, cString);
       if (cString[0] == 'y')
       {
@@ -1783,7 +1793,9 @@ int PsuadeBase::runAdaptiveNN()
         if (psuadeStop_ == 1)
         {
           psuadeIO_->writePsuadeFile(NULL,0);
-          throw Psuade_Stop_Exception();
+          printf("INFO: psuadeStop_ is turned on ==> terminate.\n");
+          exit(0);
+          //throw Psuade_Stop_Exception();
         }
 
         if ((vecSamStas[ss] == 0) && 
@@ -2079,7 +2091,7 @@ int PsuadeBase::runAdaptiveNN()
             errAvg / totalSum);
       if (errRMS < anaThreshold || refineIndex >= nRefinements)
       {
-        sprintf(cString, "arsm_nn_err.m");
+        snprintf(cString,100,"arsm_nn_err.m");
         fp = fopen(cString, "w");
         if (fp != NULL)
         {
@@ -2154,7 +2166,7 @@ int PsuadeBase::runAdaptiveNN()
     }
     if (psConfig_.AnaExpertModeIsOn())
     {
-      sprintf(systemCommand, "Do you want to quit now (y or n) ? ");
+      snprintf(systemCommand,100,"Do you want to quit now (y or n) ? ");
       getString(systemCommand, cString);
       if (cString[0] == 'y')
       {
@@ -2270,7 +2282,7 @@ int PsuadeBase::runAdaptiveErrBased1()
   printOutTS(PL_INFO, 
     "    As such it requires interpolation for each cell and so expensive.\n");
   ii = 0;
-  sprintf(cString, "Which option ? (1 - 3) ");
+  snprintf(cString,100,"Which option ? (1 - 3) ");
   while (ii <= 0 || ii > 3) ii = getInt(1,3,cString);
   if      (ii == 1) useRandomPts = 1;
   else if (ii == 3) useRS = 1;
@@ -2325,11 +2337,11 @@ int PsuadeBase::runAdaptiveErrBased1()
   printOutTS(PL_INFO,"You may test the quality of the response ");
   printOutTS(PL_INFO,"surface using a test sample\n");
   printOutTS(PL_INFO,"in PSUADE data format.\n");
-  sprintf(cString,"Use a test sample ? (y or n) ");
+  snprintf(cString,100,"Use a test sample ? (y or n) ");
   getString(cString, winput);
   if (winput[0] == 'y')
   {
-    sprintf(cString, "Enter the test sample file name : ");
+    snprintf(cString,100,"Enter the test sample file name : ");
     getString(cString, winput);
     ss = strlen(winput);
     winput[ss-1] = '\0';
@@ -2380,11 +2392,11 @@ int PsuadeBase::runAdaptiveErrBased1()
   printOutTS(PL_INFO,"The purpose may be, for example, to cover ");
   printOutTS(PL_INFO,"the corners using Factorial\n");
   printOutTS(PL_INFO,"or Fractional Factorial samples.\n");
-  sprintf(cString,"Add an auxiliary sample ? (y or n) ");
+  snprintf(cString,100,"Add an auxiliary sample ? (y or n) ");
   getString(cString, winput);
   if (winput[0] == 'y')
   {
-    sprintf(cString, "Enter auxiliary sample file name : ");
+    snprintf(cString,100,"Enter auxiliary sample file name : ");
     getString(cString, winput);
     ss = strlen(winput);
     winput[ss-1] = '\0';
@@ -2468,7 +2480,7 @@ int PsuadeBase::runAdaptiveErrBased1()
   printf("for discontinuous functions)\n");
   printf("2. Gaussian process (not as good as MARSB)\n");
   printf("3. Kriging (not as good as MARSB)\n");
-  sprintf(cString, "Which option ? (0 - 3) ");
+  snprintf(cString,100,"Which option ? (0 - 3) ");
   int rstype = getInt(0, 3, cString); 
   if      (rstype == 0) rstype = PSUADE_RS_REGR2; 
   else if (rstype == 1) rstype = PSUADE_RS_MARSB; 
@@ -2480,16 +2492,16 @@ int PsuadeBase::runAdaptiveErrBased1()
   {
     if (rstype == PSUADE_RS_MARSB)
     {
-      sprintf(cString, "Number of MARS (default = 100, >2, <502) = ");
+      snprintf(cString,100,"Number of MARS (default = 100, >2, <502) = ");
       numMars = getInt(3, 501, cString);
-      sprintf(cString, "Use mean (0) or median (1) of MarsBag : ");
+      snprintf(cString,100,"Use mean (0) or median (1) of MarsBag : ");
       marsMode = getInt(0, 1, cString);
     }
   }
   int polyOrder=2;
   if (rstype == PSUADE_RS_REGR2)
   {
-    sprintf(cString, "polynomial order ? (1 - 4) = ");
+    snprintf(cString,100,"polynomial order ? (1 - 4) = ");
     polyOrder = getInt(1, 4, cString);
     if      (polyOrder == 1) rstype = PSUADE_RS_REGR1;
     else if (polyOrder == 2) rstype = PSUADE_RS_REGR2;
@@ -2530,7 +2542,7 @@ int PsuadeBase::runAdaptiveErrBased1()
   //**/ if adaptive, refineSize is user-specified
   if (refineSize > 0)
   {
-    sprintf(sparam, "setRefineSize %d", refineSize);
+    snprintf(sparam,100,"setRefineSize %d", refineSize);
     sampler_->setParam(sparam);
     printOutTS(PL_INFO, 
        "PSUADE adaptive(1): refineSize = %d\n",refineSize);
@@ -2617,7 +2629,7 @@ int PsuadeBase::runAdaptiveErrBased1()
       printOutTS(PL_INFO,"by PSUADE or by yourself\n");
       printOutTS(PL_INFO,"(if the model is expensive to run, you may ");
       printOutTS(PL_INFO,"want to choose the latter).\n");
-      sprintf(sysCmd, "Run the model yourself (y or n) ? ");
+      snprintf(sysCmd,100,"Run the model yourself (y or n) ? ");
       getString(sysCmd, cString);
       if (cString[0] == 'y')
       {
@@ -2666,7 +2678,9 @@ int PsuadeBase::runAdaptiveErrBased1()
         if (psuadeStop_ == 1)
         {
           psuadeIO_->writePsuadeFile(NULL,0);
-          throw Psuade_Stop_Exception();
+          printf("INFO: psuadeStop_ is turned on ==> terminate.\n");
+          exit(0);
+          //throw Psuade_Stop_Exception();
         }
 
         if ((vecSamStas[ss] == 0) && (parallelJobCount < maxParallelJobs))
@@ -2884,9 +2898,9 @@ int PsuadeBase::runAdaptiveErrBased1()
       if (outputLevel_ > 0)
       {
         if (plotScilab())
-          sprintf(cString, "arsm_testset_prediction_errors.sci");
+          snprintf(cString,100,"arsm_testset_prediction_errors.sci");
         else
-          sprintf(cString, "arsm_testset_prediction_errors.m");
+          snprintf(cString,100,"arsm_testset_prediction_errors.m");
         fp = fopen(cString, "w");
         strcpy(winput, "inputs, true outputs, predicted outputs");
         fwriteComment(fp, winput);
@@ -3106,7 +3120,7 @@ int PsuadeBase::runAdaptiveErrBased1()
     }
     if (psConfig_.AnaExpertModeIsOn())
     {
-      //**/sprintf(sysCmd, "Want to quit now (y or n) ? ");
+      //**/snprintf(sysCmd,100,"Want to quit now (y or n) ? ");
       //**/getString(sysCmd, cString);
       cString[0] = 'n';
       if (cString[0] == 'y')
@@ -3214,7 +3228,7 @@ int PsuadeBase::runAdaptiveErrBased1()
   printOutTS(PL_INFO, 
     "strategy with mere random adaptivity. To run this prediction error-\n");
   printOutTS(PL_INFO, "based strategy, answer 'n' below'.\n");
-  sprintf(cString, "Use random points for refinement ? (y or n) ");
+  snprintf(cString,100,"Use random points for refinement ? (y or n) ");
   getString(cString, winput);
   if (winput[0] == 'y') useRandomPts = 1;
 
@@ -3265,11 +3279,11 @@ int PsuadeBase::runAdaptiveErrBased1()
   PsuadeData *tstIO=NULL;
   printOutTS(PL_INFO,"You may test the quality of the response surface\n");
   printOutTS(PL_INFO,"using a test sample (in psuadeData format).\n");
-  sprintf(cString,"Use a test sample ? (y or n) ");
+  snprintf(cString,100,"Use a test sample ? (y or n) ");
   getString(cString, winput);
   if (winput[0] == 'y')
   {
-    sprintf(cString, "Enter the test sample file name : ");
+    snprintf(cString,100,"Enter the test sample file name : ");
     getString(cString, winput);
     ss = strlen(winput);
     winput[ss-1] = '\0';
@@ -3314,11 +3328,11 @@ int PsuadeBase::runAdaptiveErrBased1()
   printOutTS(PL_INFO,
        "covers the corners (for example, factorial or fractional\n");
   printOutTS(PL_INFO,"factorial).\n");
-  sprintf(cString,"Add an auxiliary sample ? (y or n) ");
+  snprintf(cString,100,"Add an auxiliary sample ? (y or n) ");
   getString(cString, winput);
   if (winput[0] == 'y')
   {
-    sprintf(cString, "Enter auxiliary sample file name : ");
+    snprintf(cString,100,"Enter auxiliary sample file name : ");
     getString(cString, winput);
     ss = strlen(winput);
     winput[ss-1] = '\0';
@@ -3399,9 +3413,9 @@ int PsuadeBase::runAdaptiveErrBased1()
   {
     if (rstype == PSUADE_RS_MARSB)
     {
-      sprintf(cString, "Number of MARS (default = 100, >2, <502) = ");
+      snprintf(cString,100,"Number of MARS (default = 100, >2, <502) = ");
       numMars = getInt(3, 501, cString);
-      sprintf(cString, "Use mean (0) or median (1) of MarsBag : ");
+      snprintf(cString,100,"Use mean (0) or median (1) of MarsBag : ");
       marsMode = getInt(0, 1, cString);
     }
   }
@@ -3437,7 +3451,7 @@ int PsuadeBase::runAdaptiveErrBased1()
   //**/ if adaptive, refineSize is user-specified
   if (refineSize > 0)
   {
-    sprintf(sparam, "setRefineSize %d", refineSize);
+    snprintf(sparam,100,"setRefineSize %d", refineSize);
     sampler_->setParam(sparam);
     printOutTS(PL_INFO, 
        "PSUADE adaptive(1): refineSize = %d\n",refineSize);
@@ -3525,7 +3539,7 @@ int PsuadeBase::runAdaptiveErrBased1()
            "this sample via psuade or by yourself (if the model\n");
       printOutTS(PL_INFO, 
            "is expensive to run, you want to choose the latter).\n");
-      sprintf(systemCommand, "Run the model yourself (y or n) ? ");
+      snprintf(systemCommand,100,"Run the model yourself (y or n) ? ");
       getString(systemCommand, cString);
       if (cString[0] == 'y')
       {
@@ -3573,7 +3587,9 @@ int PsuadeBase::runAdaptiveErrBased1()
         if (psuadeStop_ == 1)
         {
           psuadeIO_->writePsuadeFile(NULL,0);
-          throw Psuade_Stop_Exception();
+          printf("INFO: psuadeStop_ is turned on ==> terminate.\n");
+          exit(0);
+          //throw Psuade_Stop_Exception();
         }
 
         if ((vecSamStas[ss] == 0) && 
@@ -3867,7 +3883,7 @@ int PsuadeBase::runAdaptiveErrBased1()
       //**/if (errL2 < anaThreshold || refineLevel >= nRefinements)
       if (outputLevel_ > 0)
       {
-        sprintf(cString, "arsm_marsb_err.m");
+        snprintf(cString,100,"arsm_marsb_err.m");
         fp = fopen(cString, "w");
         fprintf(fp, "%% inputs, true outputs, predicted outputs\n");
         fwritePlotCLF(fp);
@@ -3943,7 +3959,7 @@ int PsuadeBase::runAdaptiveErrBased1()
     }
     if (psConfig_.AnaExpertModeIsOn())
     {
-      //**/sprintf(systemCommand, "Want to quit now (y or n) ? ");
+      //**/snprintf(systemCommand,100,"Want to quit now (y or n) ? ");
       //**/getString(systemCommand, cString);
       cString[0] = 'n';
       if (cString[0] == 'y')
@@ -4108,11 +4124,11 @@ int PsuadeBase::runAdaptiveErrBasedG()
   //**/ ----------------------------------------------------------------
   printOutTS(PL_INFO,"You may test the quality of the response surface\n");
   printOutTS(PL_INFO,"using a test sample (in psuadeData format).\n");
-  sprintf(cString,"Use a test sample ? (y or n) ");
+  snprintf(cString,100,"Use a test sample ? (y or n) ");
   getString(cString, winput);
   if (winput[0] == 'y')
   {
-    sprintf(cString, "Enter the test sample file name : ");
+    snprintf(cString,100,"Enter the test sample file name : ");
     getString(cString, winput);
     ss = strlen(winput);
     winput[ss-1] = '\0';
@@ -4157,11 +4173,11 @@ int PsuadeBase::runAdaptiveErrBasedG()
   printOutTS(PL_INFO, 
        "covers the corners (for example, factorial or fractional\n");
   printOutTS(PL_INFO, "factorial).\n");
-  sprintf(cString, "Add an auxiliary sample ? (y or n) ");
+  snprintf(cString,100,"Add an auxiliary sample ? (y or n) ");
   getString(cString, winput);
   if (winput[0] == 'y')
   {
-    sprintf(cString, "Enter auxiliary sample file name : ");
+    snprintf(cString,100,"Enter auxiliary sample file name : ");
     getString(cString, winput);
     ss = strlen(winput);
     winput[ss-1] = '\0';
@@ -4247,7 +4263,7 @@ int PsuadeBase::runAdaptiveErrBasedG()
     printf("PSUADE adaptive(G): Select response surface for fitting:\n");
     printf("marsb: MARS with bagging\n");
     printf("gp   : Gaussian process\n");
-    sprintf(cString,"Select response surface type: ");
+    snprintf(cString,100,"Select response surface type: ");
     getString(cString, winput);
     if      (!strcmp(winput, "marsb")) rstype = PSUADE_RS_MARSB; 
     else if (!strcmp(winput, "gp"))    rstype = PSUADE_RS_GP3; 
@@ -4258,9 +4274,9 @@ int PsuadeBase::runAdaptiveErrBasedG()
     }
     if (!strcmp(winput, "marsb")) 
     {
-      sprintf(cString, "Number of MARS (default = 100, > 2, < 502) = ");
+      snprintf(cString,100,"Number of MARS (default = 100, > 2, < 502) = ");
       numMars = getInt(3, 501, cString);
-      sprintf(cString, "Use mean (0) or median (1) of MarSBag : ");
+      snprintf(cString,100,"Use mean (0) or median (1) of MarSBag : ");
       marsMode = getInt(0, 1, cString);
     }
   }
@@ -4295,7 +4311,7 @@ int PsuadeBase::runAdaptiveErrBasedG()
   //**/ if adaptive, refineSize is user-specified
   if (refineSize > 0)
   {
-    sprintf(sparam, "setRefineSize %d", refineSize);
+    snprintf(sparam,100,"setRefineSize %d", refineSize);
     sampler_->setParam(sparam);
     printOutTS(PL_INFO, "PSUADE adaptive(G): refineSize = %d\n",refineSize);
   }
@@ -4368,7 +4384,7 @@ int PsuadeBase::runAdaptiveErrBasedG()
            "this sample via psuade or by yourself (if the model\n");
       printOutTS(PL_INFO, 
            "is expensive to run, you want to choose the latter).\n");
-      sprintf(systemCommand, "Run the model yourself (y or n) ? ");
+      snprintf(systemCommand,100,"Run the model yourself (y or n) ? ");
       getString(systemCommand, cString);
       if (cString[0] == 'y')
       {
@@ -4411,7 +4427,9 @@ int PsuadeBase::runAdaptiveErrBasedG()
         if (psuadeStop_ == 1)
 	{
 	  psuadeIO_->writePsuadeFile(NULL,0);
-	  throw Psuade_Stop_Exception();
+          printf("INFO: psuadeStop_ is turned on ==> terminate.\n");
+          exit(0);
+	  //throw Psuade_Stop_Exception();
 	}
 
         if ((vecSamStas[ss] == 0) && 
@@ -4665,7 +4683,7 @@ int PsuadeBase::runAdaptiveErrBasedG()
          "     test sample RS   scaled avg error = %e\n",errAvg/totalSum);
       if (outputLevel_ > 0)
       {
-        sprintf(cString, "rsag_err_hist_%d.m", refineLevel);
+        snprintf(cString,100,"rsag_err_hist_%d.m", refineLevel);
         fp = fopen(cString, "w");
         if (fp != NULL)
         {
@@ -4679,7 +4697,7 @@ int PsuadeBase::runAdaptiveErrBasedG()
           fwritePlotAxes(fp);
           fwritePlotTitle(fp, "Distribution of Prediction Errors");
           fwritePlotXLabel(fp, "Output Value");
-          sprintf(winput, "Count (total = %d)", tstNSamples);
+          snprintf(winput,100,"Count (total = %d)", tstNSamples);
           fwritePlotYLabel(fp, winput);
           fprintf(fp,"E = A(:,1)-A(:,2);\n");
           fprintf(fp,"hist(E)\n");
@@ -4710,7 +4728,7 @@ int PsuadeBase::runAdaptiveErrBasedG()
     }
     if (psConfig_.AnaExpertModeIsOn())
     {
-      sprintf(systemCommand, "Do you want to quit now (y or n) ? ");
+      snprintf(systemCommand,100,"Do you want to quit now (y or n) ? ");
       getString(systemCommand, cString);
       if (cString[0] == 'y')
       {
@@ -4877,7 +4895,7 @@ int PsuadeBase::runAdaptivePRA()
   //**/ if adaptive, refineSize is user-specified
   if (refineSize > 0)
   {
-    sprintf(sparam, "setRefineSize %d", refineSize);
+    snprintf(sparam,100,"setRefineSize %d", refineSize);
     sampler_->setParam(sparam);
     printOutTS(PL_INFO, "PSUADE adaptivePRA: refineSize = %d\n",refineSize);
   }
@@ -4978,7 +4996,9 @@ int PsuadeBase::runAdaptivePRA()
 	if (psuadeStop_ == 1)
 	{
 	  psuadeIO_->writePsuadeFile(NULL,0);
-	  throw Psuade_Stop_Exception();
+          printf("INFO: psuadeStop_ is turned on ==> terminate.\n");
+          exit(0);
+	  //throw Psuade_Stop_Exception();
 	}
 
         if ((sampleStates[ss] == 0) && 
@@ -5116,10 +5136,10 @@ int PsuadeBase::runAdaptivePRA()
         while (relMin >= relMax)
         {
           printf("Safety region is defined to be inside [lower, upper].\n");
-          sprintf(cString,"Upper bound for safety region (-999 if none): ");
+          snprintf(cString,100,"Upper bound for safety region (-999 if none): ");
           relMax = getDouble(cString);
           if (relMax == -999) relMax = 1.0e10;
-          sprintf(cString,"Lower bound for safety region (-999 if none): ");
+          snprintf(cString,100,"Lower bound for safety region (-999 if none): ");
           relMin = getDouble(cString);
           if (relMin == -999) relMin = -1.0e10;
           if (relMin >= relMax) printOutTS(PL_INFO, "INVALID bounds.\n");
@@ -5251,14 +5271,14 @@ int PsuadeBase::runAdaptivePRA()
                             vecYT.getDVector(), sampleStates);
       strcpy(sparam, "setAdaptiveRefinementBasedOnOutputs");
       sampler_->setParam(sparam);
-      sprintf(sparam, "setRefineSize 100000");
+      snprintf(sparam,100,"setRefineSize 100000");
       sampler_->setParam(sparam);
       printOutTS(PL_INFO, 
           "PRA adaptive refinement (Output!=0/1;currRA!=0/1) begins.\n");
       sampler_->refine(refineRatio,randomize,refineThreshold,0,NULL);
       printOutTS(PL_INFO, 
           "PRA adaptive refinement (Output!=0/1;currRA!=0/1) completes.\n");
-      sprintf(sparam, "setRefineSize %d", refineSize);
+      snprintf(sparam,100,"setRefineSize %d", refineSize);
       sampler_->setParam(sparam);
       vecYT = vecSamOuts;
       count = nSamples;
@@ -5302,7 +5322,7 @@ int PsuadeBase::runAdaptivePRA()
       printOutTS(PL_INFO, "     equal to 0/1 interface.\n");
       strcpy(sparam, "setAdaptiveRefinementBasedOnOutputs");
       sampler_->setParam(sparam);
-      sprintf(sparam, "setRefineSize 100000");
+      snprintf(sparam,100,"setRefineSize 100000");
       sampler_->setParam(sparam);
       printOutTS(PL_INFO, 
           "PRA uniform refinement (Output==0/1;currRA==0/1) begins.\n");
@@ -5447,7 +5467,7 @@ int PsuadeBase::runAdaptiveOpt()
   //**/ if adaptive, refineSize is user-specified
   if (refineSize > 0)
   {
-    sprintf(sparam, "setRefineSize %d", refineSize);
+    snprintf(sparam,100,"setRefineSize %d", refineSize);
     sampler_->setParam(sparam);
     printOutTS(PL_INFO, "PSUADE adaptiveOpt: refineSize = %d\n",refineSize);
   }
@@ -5478,10 +5498,10 @@ int PsuadeBase::runAdaptiveOpt()
        "enforce the number of uniform refinements before adaptive\n");
   printOutTS(PL_INFO, 
        "sampling is applied. You have the opportunity to do it now.\n");
-  sprintf(cString,"Number of initial uniform refinements : (0 - %d): ",
+  snprintf(cString,100,"Number of initial uniform refinements : (0 - %d): ",
           nRefinements);
   nUniform = getInt(0, nRefinements, cString);
-  sprintf(cString,"Number of minimum to track : (1 - 10): ");
+  snprintf(cString,100,"Number of minimum to track : (1 - 10): ");
   int nMins = getInt(1, 10, cString);
 
   //**/ ----------------------------------------------------------------
@@ -5557,7 +5577,9 @@ int PsuadeBase::runAdaptiveOpt()
 	{
 	  psuadeIO_->writePsuadeFile(NULL,0);
           delete funcIO;
-	  throw Psuade_Stop_Exception();
+          printf("INFO: psuadeStop_ is turned on ==> terminate.\n");
+          exit(0);
+	  //throw Psuade_Stop_Exception();
 	}
 
         if ((sampleStates[ss] == 0) && 
@@ -5771,7 +5793,7 @@ int PsuadeBase::runAdaptive2Level()
   printEquals(PL_INFO, 0);
 
   //**/ read in PSUADE input files for the two models
-  sprintf(cString,"Name of the expensive simulation PSUADE file: ");
+  snprintf(cString,100,"Name of the expensive simulation PSUADE file: ");
   getString(cString, winput);
   kk = strlen(winput);
   winput[kk-1] = '\0';
@@ -5783,7 +5805,7 @@ int PsuadeBase::runAdaptive2Level()
            winput);
     exit(1);
   }
-  sprintf(cString,"Name of the cheaper simulation PSUADE file: ");
+  snprintf(cString,100,"Name of the cheaper simulation PSUADE file: ");
   getString(cString, winput);
   kk = strlen(winput);
   winput[kk-1] = '\0';
@@ -5837,12 +5859,12 @@ int PsuadeBase::runAdaptive2Level()
   //**/ request more sample information
   //**/ ----------------------------------------------------------------
   printf("Current sample size for expensive simulation = %d\n",fNSamples);
-  sprintf(cString,
+  snprintf(cString,100,
      "Specify the maximum number of expensive simulations (> %d, <=1000)",
      fNSamples);
   int fMaxSamples = getInt(fNSamples+1, 1000, cString);
   printf("Current sample size for the cheaper simulation = %d\n",cNSamples);
-  sprintf(cString,
+  snprintf(cString,100,
      "Specify the maximum number of cheaper simulations (> %d, <=100000)",
      cNSamples);
   int cMaxSamples = getInt(cNSamples+1, 100000, cString);
@@ -5885,7 +5907,7 @@ int PsuadeBase::runAdaptive2Level()
   sampler->setParam(sparam);
   strcpy(sparam, "setAdaptiveRefinementBasedOnErrors");
   sampler_->setParam(sparam);
-  sprintf(sparam, "setRefineSize 5");
+  snprintf(sparam,100,"setRefineSize 5");
   sampler->setParam(sparam);
   sampler->initialize(1);
   sampler->loadSamples(nSamples, nInputs, iOne, sampleInputs,
@@ -5949,7 +5971,7 @@ int PsuadeBase::runAdaptive2Level()
            "this sample via psuade or by yourself (if the model\n");
       printOutTS(PL_INFO,
            "is expensive to run, you want to choose the latter).\n");
-      sprintf(systemCommand, "Run the model yourself (y or n) ? ");
+      snprintf(systemCommand,100,"Run the model yourself (y or n) ? ");
       getString(systemCommand, cString);
       if (cString[0] == 'y')
       {
@@ -6205,7 +6227,7 @@ int PsuadeBase::runAdaptive2Level()
     }
     if (psConfig_.AnaExpertModeIsOn())
     {
-      sprintf(systemCommand, "Do you want to quit now (y or n) ? ");
+      snprintf(systemCommand,100,"Do you want to quit now (y or n) ? ");
       getString(systemCommand, cString);
       if (cString[0] == 'y')
       {

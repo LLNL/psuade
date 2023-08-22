@@ -197,7 +197,7 @@ int MOATSampling::initialize(int initLevel)
   if (psConfig_.SamExpertModeIsOn() && setFlag == 0)
   {
     printOutTS(PL_INFO,"MOATSampling: the current P is %d.\n", P_);
-    sprintf(winput1, "Please choose a new P: (4 - 10, even) ");
+    snprintf(winput1,100,"Please choose a new P: (4 - 10, even) ");
     P_ = getInt(4, 10, winput1);
     P_ = P_ / 2 * 2;
   }
@@ -916,7 +916,7 @@ int MOATSampling::merge()
   //**/ -------------------------------------------------------------------
   //**/ read first data file
   //**/ -------------------------------------------------------------------
-  sprintf(pString,"Please enter the name of the first MOAT datafile: ");
+  snprintf(pString,100,"Please enter the name of the first MOAT datafile: ");
   getString(pString, file1);
   file1[strlen(file1)-1] = '\0';
   if ((fp1=fopen(file1,"r")) == NULL)
@@ -966,7 +966,7 @@ int MOATSampling::merge()
   //**/ -------------------------------------------------------------------
   //**/ read second data file
   //**/ -------------------------------------------------------------------
-  sprintf(pString,"Please enter the name of the second MOAT datafile: ");
+  snprintf(pString,100,"Please enter the name of the second MOAT datafile: ");
   getString(pString, file2);
   file2[strlen(file2)-1] = '\0';
   if ((fp2=fopen(file2,"r")) == NULL)
@@ -1183,7 +1183,7 @@ int MOATSampling::genRepair(int nInputs, double *lbounds, double *ubounds)
   psIVector  vecStates, vecIndSet;
 
   status = 0;
-  sprintf(pString,"How many constraint data files are there (1-10)? ");
+  snprintf(pString,100,"How many constraint data files are there (1-10)? ");
   nFiles = getInt(1, 10, pString);
   faFlag = 2;
   faPtrs = new FuncApprox*[nFiles];
@@ -1191,7 +1191,7 @@ int MOATSampling::genRepair(int nInputs, double *lbounds, double *ubounds)
   vecUThreshs.setLength(nFiles);
   for (kk = 0; kk < nFiles; kk++)
   {
-    sprintf(pString,"Enter name of file #%d : ", kk+1);
+    snprintf(pString,100,"Enter name of file #%d : ", kk+1);
     getString(pString, winput);
     ioPtr = new PsuadeData;
     status = ioPtr->readPsuadeFile(winput);
@@ -1231,9 +1231,9 @@ int MOATSampling::genRepair(int nInputs, double *lbounds, double *ubounds)
     faPtrs[kk] = genFAInteractive(ioPtr, faFlag);
     if (faPtrs[kk] == NULL) {printf("ERROR detected.\n"); exit(1);}
     faPtrs[kk]->setOutputLevel(printLevel_);
-    sprintf(pString,"Constraint %d lower bound : ",kk+1);
+    snprintf(pString,100,"Constraint %d lower bound : ",kk+1);
     vecLThreshs[kk] = getDouble(pString);
-    sprintf(pString,"Constraint %d upper bound : ",kk+1);
+    snprintf(pString,100,"Constraint %d upper bound : ",kk+1);
     vecUThreshs[kk] = getDouble(pString);
     if (vecLThreshs[kk] >= vecUThreshs[kk])
     {
@@ -1242,11 +1242,11 @@ int MOATSampling::genRepair(int nInputs, double *lbounds, double *ubounds)
     }
     delete ioPtr;
   }
-  sprintf(pString,"Please enter the number of paths to search: ");
+  snprintf(pString,100,"Please enter the number of paths to search: ");
   nPaths = getInt(1, 1000, pString);
-  sprintf(pString, "Please enter P (resolution: try 4-10) : ");
+  snprintf(pString,100,"Please enter P (resolution: try 4-10) : ");
   currP = getInt(4, 10, pString);
-  sprintf(pString, "Please enter the number of trials (> 100) : ");
+  snprintf(pString,100,"Please enter the number of trials (> 100) : ");
   nTrials = getInt(101, 10000000, pString);
   vecMoat.setLength(nPaths*(nInputs+1)*nInputs_);
   vecWT.setLength(nInputs);
@@ -1539,10 +1539,10 @@ int MOATSampling::genRepair(PsuadeData *psIO)
     if (vecSamOuts_[sInd*nOutputs+outputID] < Ymin)
       Ymin = vecSamOuts_[sInd*nOutputs+outputID];
   }
-  sprintf(pString,
+  snprintf(pString,100,
           "Please enter the lower bound constraint (Ymin=%e) : ",Ymin);
   threshL = getDouble(pString);
-  sprintf(pString,
+  snprintf(pString,100,
           "Please enter the upper bound constraint (Ymax=%e) : ",Ymax);
   threshU = getDouble(pString);
   if (threshL >= threshU)
@@ -1552,11 +1552,11 @@ int MOATSampling::genRepair(PsuadeData *psIO)
     delete faPtr;
     return 0;
   }
-  sprintf(pString,"Please enter the number of paths to search: ");
+  snprintf(pString,100,"Please enter the number of paths to search: ");
   nPaths = getInt(1, 1000, pString);
-  sprintf(pString, "Please enter P (resolution: try 4-10) : ");
+  snprintf(pString,100,"Please enter P (resolution: try 4-10) : ");
   currP = getInt(4, 10, pString);
-  sprintf(pString, "Please enter the number of trials (> 100) : ");
+  snprintf(pString,100,"Please enter the number of trials (> 100) : ");
   nTrials = getInt(101, 10000000, pString);
   vecMoat.setLength(nPaths*(nInputs+1)*nInputs);
   vecWT.setLength(nInputs);

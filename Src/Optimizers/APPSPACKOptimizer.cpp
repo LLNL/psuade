@@ -59,15 +59,15 @@ void APPSPACKOptimizer::optimize(oData *odata)
    FILE   *fp;
    int    i, nFuncEvals, nInputs; 
    double h;
-   char   *optDriver, inputFile[200], outputFile[200], systemCommand[200];
+   char   *optDriver, inputFile[101], outputFile[101], systemCommand[501];
    char   lineIn[500], *subString;
    char   *keywords[] = {"FINAL MINIMUM", "f=", "x=[", "Fevals:"};
  
    //**/ ------------------------------------------------------------------
    //**/ prepare appspack input file
    //**/ ------------------------------------------------------------------
-   sprintf(inputFile, "psuadeAPPSPACK.in");
-   sprintf(outputFile, "psuadeAPPSPACK.out");
+   snprintf(inputFile,100,"psuadeAPPSPACK.in");
+   snprintf(outputFile,100,"psuadeAPPSPACK.out");
    fp = fopen(inputFile, "w");
    if (fp == NULL)
    {
@@ -104,8 +104,8 @@ void APPSPACKOptimizer::optimize(oData *odata)
          h = odata->upperBounds_[i] - odata->lowerBounds_[i];
    //**/h = h / (double) odata->nSamples_;
    h = h * odata->tolerance_;
-   sprintf(systemCommand, "%s/bin/appspack --tol=%e --debug=%d %s > %s", 
-           PSUADE_INSTALL_DIR,h,odata->outputLevel_,inputFile,outputFile);
+   snprintf(systemCommand,500,"%s/bin/appspack --tol=%e --debug=%d %s > %s", 
+            PSUADE_INSTALL_DIR,h,odata->outputLevel_,inputFile,outputFile);
 
    if (odata->outputLevel_ > 1) printf("Calling %s\n", systemCommand);
    system(systemCommand);
@@ -167,9 +167,9 @@ void APPSPACKOptimizer::optimize(oData *odata)
    //**/ ------------------------------------------------------------------
    //**/ clean up 
    //**/ ------------------------------------------------------------------
-   //**/sprintf(systemCommand, "/bin/rm -f psuadeAPPSPACK.in");
+   //**/snprintf(systemCommand,500,"/bin/rm -f psuadeAPPSPACK.in");
    //**/system(systemCommand);
-   //**/sprintf(systemCommand, "/bin/rm -f psuadeAPPSPACK.out");
+   //**/snprintf(systemCommand,500,"/bin/rm -f psuadeAPPSPACK.out");
    //**/system(systemCommand);
 }
 

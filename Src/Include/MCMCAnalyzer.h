@@ -62,6 +62,10 @@ public:
    //**/ @param adata - all data needed for analysis
    double analyze(aData &adata);
 
+   //**/ Perform Gibbs MCMC analysis
+   //**/ @param adata - all data needed for analysis
+   double analyze_gibbs(aData &adata);
+
    //**/ Perform brute force MCMC analysis
    //**/ @param adata - all data needed for analysis
    double analyze_bf(aData &adata);
@@ -89,6 +93,11 @@ public:
    //**/ Perform MCMC analysis in direct mode
    //**/ @param mdata - all data needed for analysis
    double analyzeDirect(McmcData &mdata);
+
+   //**/ Compute negative log likelihood from a given calibration
+   //**/ setting
+   //**/ @param adata - all data needed for analysis
+   double computeLikelihood(aData &adata);
 
    //**/ assign operator
    //**/ @param analyzer
@@ -135,27 +144,13 @@ public:
                  double *upper, double *XRange, int numChains,
                  int chainCnt, double ***XChains, int *chainStatus,
                  int chainLimit, int *rsIndices, double *rsValues,
-                 int *designParams, int dnInputs, int dnSample, 
-                 double *dSamInputs, FuncApprox **faPtrs, 
+                 psIVector vecDesignP, int dnInputs, int dnSample, 
+                 psMatrix matInps, FuncApprox **faPtrs, 
                  int nOutputs, double *discOutputs,
-                 double *discFuncConstantMeans, double *dSamMeans,
-                 double *dSamStdevs, int, int, psIVector&);
+                 double *discFuncConstantMeans, psMatrix matMeans,
+                 psMatrix matStdvs, int, int, psIVector&);
 
-   //**/ Read the experimental data file
-   //**/ @param nInputs  - number of inputs
-   //**/ @param nOutputs - number of outputs
-   //**/ @param dnSamp   - number of experiments
-   //**/ @param dnInps   - number of design parameters
-   //**/ @param dParams  - design parameter list
-   //**/ @param dSamIns  - design parameter values
-   //**/ @param dMeans   - data means
-   //**/ @param dStds    - data standard deviations
-   //**/ @param combFlag - control likelihood 
-   //**/ @param printLevel - diagnostics level
-   double readSpecFile(int nInputs, int nOutputs, int *dnSamp,
-                       int *dnInps, int **dParams, double **dSamIns,
-                       double **dMeans, double **dStds, int &combFlag,
-                       int printLevel);
+   double createPosteriorFromLikelihoods(psVector, psVector, int);
 
    //**/ Read the experimental data file
    //**/ @param nInputs  - number of inputs
@@ -166,10 +161,10 @@ public:
    //**/ @param dStds    - data standard deviations
    //**/ @param combFlag - control likelihood 
    //**/ @param printLevel - diagnostics level
-   double readSpecFile2(int nInputs, int nOutputs,
-                        psIVector &dParams, psMatrix &dSamInputs,
-                        psMatrix &dSamMeans, psMatrix &dSamStds,
-                        int &combineFlag, int printLevel);
+   double readSpecFile(int nInputs, int nOutputs,
+                       psIVector &dParams, psMatrix &dSamInputs,
+                       psMatrix &dSamMeans, psMatrix &dSamStds,
+                       int &combineFlag, int printLevel);
 
    //**/ set internal paramter
    //**/ @param nParams - number of parameters
@@ -177,11 +172,13 @@ public:
    int setParams(int nParams, char **params);
 
    //**/ check convergence
-   //**/ @param num   - number of elements
-   //**/ @param means - mean vector
-   //**/ @param stds  - sd vector
-   //**/ @param leng  - length of chain
-   int checkConvergence(int num, double *means, double *stds, int leng);
+   //**/ @param num    - number of elements
+   //**/ @param means  - mean vector
+   //**/ @param stds   - sd vector
+   //**/ @param leng   - length of chain
+   //**/ @param thresh - threshold 
+   double checkConvergence(int num, double *means, double *stds, 
+                           int leng, double thresh);
 
    //**/ display banner information
    void displayBanner(int printLevel);
@@ -199,13 +196,6 @@ public:
 
   //**/ write optimization results to file
   int writeMLEInfo(FILE *fp, int nInputs, int nOutputs, FuncApprox **, 
-                int *designPs, int *rsIndices, double *rsValues, 
-                double *vecXmax, int dnSamples, int dnInputs, 
-                double *dExpInps, double *dExpMeans, double *dExpStdvs, 
-                int, int, double *, double *, psIVector &);
-
-  //**/ write optimization results to file (slightly different version)
-  int writeMLEInfo2(FILE *fp, int nInputs, int nOutputs, FuncApprox **, 
                 int *designPs, int *rsIndices, double *rsValues, 
                 double *vecXmax, int dnSamples, int dnInputs, 
                 double *dExpInps, double *dExpMeans, double *dExpStdvs, 

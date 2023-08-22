@@ -1,0 +1,7 @@
+sys cc -o simulator simulator.c -lm
+run psuade.in
+load psuadeData
+opca
+5
+q
+

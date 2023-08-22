@@ -76,7 +76,7 @@ extern "C"
     funcID = odata->numFuncEvals_++;
     if (strcmp(MO_PythonFile_, "NULL"))
     {
-      sprintf(fName, "MOO_params.in.%d", funcID);
+      snprintf(fName,100,"MOO_params.in.%d", funcID);
       fp = fopen(fName, "w");
       if (fp == NULL)
       {
@@ -90,10 +90,10 @@ extern "C"
       fprintf(fp, "# line 2-: design variables\n");
       fprintf(fp, "# line --: output variables\n");
       fclose(fp);
-      sprintf(runLine, "%s MOO_params.in.%d MOO_params.out.%d",
-              MO_PythonFile_, funcID, funcID);
+      snprintf(runLine,100,"%s MOO_params.in.%d MOO_params.out.%d",
+               MO_PythonFile_, funcID, funcID);
       system(runLine);
-      sprintf(fName, "MOO_params.out.%d", funcID);
+      snprintf(fName,100,"MOO_params.out.%d", funcID);
       fp = fopen(fName, "r");
       if (fp == NULL)
       {
@@ -167,7 +167,7 @@ void MultiObjectiveOptimizer::optimize(oData *odata)
   int    nInputs, printLevel=0, ii, maxfun, currDriver, nPts=0, nn;
   int    nOutputs, iOne=1, length, numVars, nSamples, pLevel, resolution;
   double rhobeg=1.0, rhoend=1.0e-4, dtemp, MO_OptY;
-  char   filename[501], lineIn[501], pString[501];
+  char   filename[501], lineIn[501], pString[101];
   string   sfname, iline;
   size_t   compFlag;
   ifstream ifile, ifile2;
@@ -384,19 +384,19 @@ void MultiObjectiveOptimizer::optimize(oData *odata)
   printf("it is expensive).\n");
   if (numVars == 1)
   {
-    sprintf(pString,
+    snprintf(pString,100,
             "Enter the desired resolution (>2,<100,suggested: 11): ");
     resolution = getInt(3, 99, pString);
   }
   else if (numVars == 2)
   {
-    sprintf(pString,
+    snprintf(pString,100,
             "Enter the desired resolution (>2,<50,suggested: 11): ");
     resolution = getInt(3, 49, pString);
   }
   else
   {
-    sprintf(pString,
+    snprintf(pString,100,
             "Enter the desired resolution (>2,<20,suggested: 11): ");
     resolution = getInt(3, 19, pString);
   }
@@ -595,15 +595,15 @@ void MultiObjectiveOptimizer::optimize(oData *odata)
   for (ii = 0; ii < numVars; ii++)
   {
     iNames[ii] = new char[100];
-    sprintf(iNames[ii], "X%d", ii+1);
+    snprintf(iNames[ii],100,"X%d", ii+1);
   }
   oNames = new char*[nInputs+nOutputs+1];
   for (ii = 0; ii < nInputs+nOutputs+1; ii++)
   {
     oNames[ii] = new char[100];
-    if (ii == 0)            sprintf(oNames[ii], "Y");
-    else if (ii <= nInputs) sprintf(oNames[ii], "X%d", ii);
-    else                    sprintf(oNames[ii], "F%d", ii);
+    if (ii == 0)            snprintf(oNames[ii],100,"Y");
+    else if (ii <= nInputs) snprintf(oNames[ii],100,"X%d", ii);
+    else                    snprintf(oNames[ii],100,"F%d", ii);
   }
   for (ii = 0; ii < nSamples; ii++) vecSamStas[ii] = 1;
   ioPtr = new PsuadeData();

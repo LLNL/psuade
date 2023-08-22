@@ -399,12 +399,12 @@ double RSFuncApproxAnalyzer::analyze(aData &adata)
     printOutTS(PL_INFO,"line mode), and set config option\n");
     printOutTS(PL_INFO, " in your data file.\n");
     printDashes(PL_INFO,0);
-    sprintf(pString, "Perform cross validation ? (y or n) ");
+    snprintf(pString,100,"Perform cross validation ? (y or n) ");
     getString(pString, winput1);
     if (winput1[0] == 'y')
     {
       useCV_ = 1;
-      sprintf(pString,
+      snprintf(pString,100,
           "Enter the number of groups to validate : (2 - %d) ",
           nSamples);
       ss = getInt(1, nSamples, pString);
@@ -458,6 +458,8 @@ double RSFuncApproxAnalyzer::analyze(aData &adata)
       faPtrs[ig]->setBounds(lower, upper);
       faPtrs[ig]->setOutputLevel(0);
     }
+    psConfig_.RSExpertModeRestore();
+    psConfig_.InteractiveRestore();
 
     //**/ ---------------------------------------------------------
     //**/ allocate space to store errors
@@ -475,7 +477,7 @@ double RSFuncApproxAnalyzer::analyze(aData &adata)
     VecW.setLength(nSamples);
     IVec2.setLength(nSamples);
 
-    sprintf(pString,"Random selection of leave-out groups ? (y or n) ");
+    snprintf(pString,100,"Random selection of leave-out groups ? (y or n) ");
     getString(pString, winput1);
     if (winput1[0] == 'y')
       generateRandomIvector(nSamples, IVec1.getIVector());
@@ -517,6 +519,7 @@ double RSFuncApproxAnalyzer::analyze(aData &adata)
       printOutTS(PL_INFO, "RSAnalysis INFO: OpenMP mode on\n");
 #pragma omp parallel shared(VecSigmas,VecE,VecS) \
     private(ddata2,ig2,VecX2,VecY2,VecT2,VecS2,VecW2,count2,iI2,status2,ss2)
+{
 #pragma omp for
       for (ig2 = 0; ig2 < numCVGroups_; ig2++)
       {
@@ -554,6 +557,8 @@ double RSFuncApproxAnalyzer::analyze(aData &adata)
                                    VecW2.getDVector());
 
         //**/ generate response surface
+        //**/ Note: the following response surface requires access to
+        //**/       3rd party software that may not be run in parallel
         if (rsType_ != PSUADE_RS_GP1   && rsType_ != PSUADE_RS_SVM &&
             rsType_ != PSUADE_RS_MARS  && rsType_ != PSUADE_RS_MMARS &&
             rsType_ != PSUADE_RS_MARSB && rsType_ != PSUADE_RS_ACOSSO &&
@@ -612,6 +617,7 @@ double RSFuncApproxAnalyzer::analyze(aData &adata)
         delete faPtrs[ig2];
         faPtrs[ig2] = NULL;
       }
+} /* omp */
     }
     else
     {
@@ -1013,11 +1019,11 @@ double RSFuncApproxAnalyzer::analyze(aData &adata)
         fwriteHold(fpData, 0);
         fwritePlotAxes(fpData);
         if (yvar > 0 && ((1-CVErr2*CVErr2*nSamples/yvar) > 0))
-          sprintf(pString,
+          snprintf(pString,100,
              "Parity Plot (scaled rmse=%11.2e, R2=%11.2e)",
              CVErr2s,1.0-CVErr2*CVErr2*nSamples/yvar);
         else
-          sprintf(pString,"Parity Plot (scaled rmse=%11.2e)",CVErr2s);
+          snprintf(pString,100,"Parity Plot (scaled rmse=%11.2e)",CVErr2s);
         fwritePlotTitle(fpData, pString);
         fwritePlotXLabel(fpData, "Sample Output");
         fwritePlotYLabel(fpData, "Predicted Output");
@@ -1083,8 +1089,6 @@ double RSFuncApproxAnalyzer::analyze(aData &adata)
         else printOutTS(PL_INFO, "CV error file is RSFA_CV_err.m\n");
       }
     }
-    psConfig_.RSExpertModeRestore();
-    psConfig_.InteractiveRestore();
   }
 
   //**/ ---------------------------------------------------------------
@@ -1690,7 +1694,7 @@ double RSFuncApproxAnalyzer::genTrainingErrPlot(FuncApprox *faPtr,
     if (plotScilab())
     {
       fwritePlotTitle(fpErr,"Error Plot for Input");
-      sprintf(winput, 
+      snprintf(winput,100,
            "a.title.text = \"Error Plot for Input\" + string(ii);\n");
       fprintf(fpErr, "%s", winput);
       fwritePlotXLabel(fpErr, "Input Values");

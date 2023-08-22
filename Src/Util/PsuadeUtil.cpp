@@ -2572,11 +2572,11 @@ int genMatlabPlotFile(int nInps,double *LB,double *UB,int nSamps,
     printOutTS(PL_ERROR, "ERROR: cannot open %s file.\n", cfname);
     return 0;
   }
-  sprintf(charString,"This file shows posteriors plots");
+  snprintf(charString,100,"This file shows posteriors plots");
   fwriteComment(fp, charString);
-  sprintf(charString,"ns  - set to 1 for 1-step smoothing of 2D contours");
+  snprintf(charString,100,"ns  - set to 1 for 1-step smoothing of 2D contours");
   fwriteComment(fp, charString);
-  sprintf(charString,"ns1 - set to 1 for 1-step smoothing of 1D histgrams");
+  snprintf(charString,100,"ns1 - set to 1 for 1-step smoothing of 1D histgrams");
   fwriteComment(fp, charString);
   fprintf(fp, "ns  = 0;\n");
   fprintf(fp, "ns1 = 0;\n");

@@ -1,0 +1,318 @@
+From "Error Estimation Approaches for Progressive Response Surfaces-
+More Results" by V. Romero, R. Slepoy, L. Swiler, and A. Giunta
+T. Krishnamurthy
+
+2D test function
+
+F(x1,x2) = [0.8R + 0.35 sin(2.4 pi R / sqrt(2))] (1.5 * sin(1.3 theta))
+
+where R = sqrt(x1*x1 + x2*x2) 
+      theta = arctan(x2/x1) on 0 <= x1, x2 <= 1.
+
+example upper bounds for safety = 1.5 (Prob = 0.000252)
+                                  1.0 (Prob = 0.00756)
+                                  0.5 (Prob = 0.44926)
+                                  0.2 (Prob = 0.98439)
+========================================================================
+=============================================================================
+=============================================================================
+=============================================================================
+=============================================================================
+UNIFORM RESULTS
+=============================================================================
+=============================================================================
+=============================================================================
+=============================================================================
+*** ********************************************************* ***
+*** Welcome to PSUADE (version 1.0.3a)                        ***
+*** ********************************************************* ***
+Psuade: PSUADE_IO section absent.
+MetisSampling : a partition file is found but it is not
+     compatible. Can psuade write over it (y or n) ? y
+MetisSampling:: calling domain partitioner.
+MetisSampling:: subdomains created.
+MetisSampling:: ranges expanded by 0 percent on each side.
+PSUADE adaptivePRA - refineSize = 50
+PSUADE adaptivePRA - initial nSamples = 100
+PSUADE adaptivePRA - number of refinements = 100
+This function finds the first division between fail/no fail
+and focuses the adaptive sampling on the interface. Hence, it
+important that the initial nSamples is sufficient largely to
+uncover all fail/no fail interfaces. Alternatively, you can
+enforce the number of uniform refinements before adaptive
+sampling is applied. You have the opportunity to do it now.
+Number of initial uniform refinements : (0 - 100): 10
+*******************************************************
+PSUADE adaptivePRA: current level    = 0 (of 100)
+PSUADE adaptivePRA: current nSamples = 100
+..........
+PSUADE adaptivePRA: jobs completed = 100(of 100)
+PSUADE adaptivePRA: non 0/1 outputs (transform to 0/1).
+Upper bound for safe region (-999 if none): 1.5
+Lower bound for safe region (-999 if none): -999
+Current reliability = 98.00000% (1920800/1960000*100)
+INFO: user requested uniform refinement.
+*******************************************************
+PSUADE adaptivePRA: current level    = 1 (of 100)
+PSUADE adaptivePRA: current nSamples = 200
+.........
+PSUADE adaptivePRA: jobs completed = 200(of 200)
+PSUADE adaptivePRA: non 0/1 outputs (transform to 0/1).
+Current reliability = 97.50000% (1911000/1960000*100)
+Convergence check = 5.115090e-03 (1.000000e-03), trial 1 (of 2)
+INFO: user requested uniform refinement.
+*******************************************************
+PSUADE adaptivePRA: current level    = 2 (of 100)
+PSUADE adaptivePRA: current nSamples = 400
+..................
+PSUADE adaptivePRA: jobs completed = 400(of 400)
+PSUADE adaptivePRA: non 0/1 outputs (transform to 0/1).
+Current reliability = 97.50000% (1911000/1960000*100)
+Convergence check = -0.000000e+00 (1.000000e-03), trial 1 (of 2)
+INFO: user requested uniform refinement.
+*******************************************************
+PSUADE adaptivePRA: current level    = 3 (of 100)
+PSUADE adaptivePRA: current nSamples = 800
+....................................
+PSUADE adaptivePRA: jobs completed = 800(of 800)
+PSUADE adaptivePRA: non 0/1 outputs (transform to 0/1).
+Current reliability = 97.75000% (1915900/1960000*100)
+Convergence check = 2.560819e-03 (1.000000e-03), trial 2 (of 2)
+INFO: user requested uniform refinement.
+*******************************************************
+PSUADE adaptivePRA: current level    = 4 (of 100)
+PSUADE adaptivePRA: current nSamples = 1600
+.........................................................................
+PSUADE adaptivePRA: jobs completed = 1600(of 1600)
+PSUADE adaptivePRA: non 0/1 outputs (transform to 0/1).
+Current reliability = 97.56250% (1912225/1960000*100)
+Convergence check = 1.920000e-03 (1.000000e-03), trial 1 (of 2)
+INFO: user requested uniform refinement.
+*******************************************************
+PSUADE adaptivePRA: current level    = 5 (of 100)
+PSUADE adaptivePRA: current nSamples = 3200
+.................................................................................................................................................
+PSUADE adaptivePRA: jobs completed = 3200(of 3200)
+PSUADE adaptivePRA: non 0/1 outputs (transform to 0/1).
+Current reliability = 97.59383% (1912839/1960000*100)
+Convergence check = 3.210404e-04 (1.000000e-03), trial 1 (of 2)
+INFO: user requested uniform refinement.
+*******************************************************
+PSUADE adaptivePRA: current level    = 6 (of 100)
+PSUADE adaptivePRA: current nSamples = 6400
+...................................................................................................................................................................................................................................................................................................
+PSUADE adaptivePRA: jobs completed = 6400(of 6400)
+PSUADE adaptivePRA: non 0/1 outputs (transform to 0/1).
+Current reliability = 97.59378% (1912838/1960000*100)
+Convergence check = 5.227833e-07 (1.000000e-03), trial 2 (of 2)
+Convergence achieved: reliability = 97.59378%
+[tux140.llnl.gov 335]
+=============================================================================
+
+=============================================================================
+=============================================================================
+=============================================================================
+=============================================================================
+ADAPTIVE RESULTS
+=============================================================================
+=============================================================================
+=============================================================================
+=============================================================================
+
+
+*** ********************************************************* ***
+*** Welcome to PSUADE (version 1.0.3a)                        ***
+*** ********************************************************* ***
+Psuade: PSUADE_IO section absent.
+MetisSampling : a partition file is found but it is not
+     compatible. Can psuade write over it (y or n) ? y
+MetisSampling:: calling domain partitioner.
+MetisSampling:: subdomains created.
+MetisSampling:: ranges expanded by 0 percent on each side.
+PSUADE adaptivePRA - refineSize = 50
+PSUADE adaptivePRA - initial nSamples = 100
+PSUADE adaptivePRA - number of refinements = 100
+This function finds the first division between fail/no fail
+and focuses the adaptive sampling on the interface. Hence, it
+important that the initial nSamples is sufficient largely to
+uncover all fail/no fail interfaces. Alternatively, you can
+enforce the number of uniform refinements before adaptive
+sampling is applied. You have the opportunity to do it now.
+Number of initial uniform refinements : (0 - 100): 0
+*******************************************************
+PSUADE adaptivePRA: current level    = 0 (of 100)
+PSUADE adaptivePRA: current nSamples = 100
+..........
+PSUADE adaptivePRA: jobs completed = 100(of 100)
+PSUADE adaptivePRA: non 0/1 outputs (transform to 0/1).
+Upper bound for safe region (-999 if none): 1.5
+Lower bound for safe region (-999 if none): -999
+Current reliability = 98.00000% (1920800/1960000*100)
+INFO: outputs != 0/1, reliability != 0/1 => adaptive.
+MetisSampling::refine - maximum number of new points = 100000.
+MetisSampling::refine - number of new sample points = 5.
+*******************************************************
+PSUADE adaptivePRA: current level    = 1 (of 100)
+PSUADE adaptivePRA: current nSamples = 105
+
+PSUADE adaptivePRA: jobs completed = 105(of 105)
+PSUADE adaptivePRA: non 0/1 outputs (transform to 0/1).
+Current reliability = 98.50000% (1930600/1960000*100)
+Convergence check = 5.089059e-03 (1.000000e-05), trial 1 (of 2)
+INFO: outputs != 0/1, reliability != 0/1 => adaptive.
+MetisSampling::refine - maximum number of new points = 100000.
+MetisSampling::refine - number of new sample points = 8.
+*******************************************************
+PSUADE adaptivePRA: current level    = 2 (of 100)
+PSUADE adaptivePRA: current nSamples = 113
+.
+PSUADE adaptivePRA: jobs completed = 113(of 113)
+PSUADE adaptivePRA: non 0/1 outputs (transform to 0/1).
+Current reliability = 98.25000% (1925700/1960000*100)
+Convergence check = 2.541296e-03 (1.000000e-05), trial 1 (of 2)
+INFO: outputs != 0/1, reliability != 0/1 => adaptive.
+MetisSampling::refine - maximum number of new points = 100000.
+MetisSampling::refine - number of new sample points = 13.
+*******************************************************
+PSUADE adaptivePRA: current level    = 3 (of 100)
+PSUADE adaptivePRA: current nSamples = 126
+.
+PSUADE adaptivePRA: jobs completed = 126(of 126)
+PSUADE adaptivePRA: non 0/1 outputs (transform to 0/1).
+Current reliability = 98.00000% (1920800/1960000*100)
+Convergence check = 2.547771e-03 (1.000000e-05), trial 1 (of 2)
+INFO: outputs != 0/1, reliability != 0/1 => adaptive.
+MetisSampling::refine - maximum number of new points = 100000.
+MetisSampling::refine - number of new sample points = 17.
+*******************************************************
+PSUADE adaptivePRA: current level    = 4 (of 100)
+PSUADE adaptivePRA: current nSamples = 143
+.
+PSUADE adaptivePRA: jobs completed = 143(of 143)
+PSUADE adaptivePRA: non 0/1 outputs (transform to 0/1).
+Current reliability = 97.68750% (1914675/1960000*100)
+Convergence check = 3.193868e-03 (1.000000e-05), trial 1 (of 2)
+INFO: outputs != 0/1, reliability != 0/1 => adaptive.
+MetisSampling::refine - maximum number of new points = 100000.
+MetisSampling::refine - number of new sample points = 25.
+*******************************************************
+PSUADE adaptivePRA: current level    = 5 (of 100)
+PSUADE adaptivePRA: current nSamples = 168
+...
+PSUADE adaptivePRA: jobs completed = 168(of 168)
+PSUADE adaptivePRA: non 0/1 outputs (transform to 0/1).
+Current reliability = 97.56260% (1912227/1960000*100)
+Convergence check = 1.279364e-03 (1.000000e-05), trial 1 (of 2)
+INFO: outputs != 0/1, reliability != 0/1 => adaptive.
+MetisSampling::refine - maximum number of new points = 100000.
+MetisSampling::refine - number of new sample points = 36.
+*******************************************************
+PSUADE adaptivePRA: current level    = 6 (of 100)
+PSUADE adaptivePRA: current nSamples = 204
+...
+PSUADE adaptivePRA: jobs completed = 204(of 204)
+PSUADE adaptivePRA: non 0/1 outputs (transform to 0/1).
+Current reliability = 97.54699% (1911921/1960000*100)
+Convergence check = 1.600356e-04 (1.000000e-05), trial 1 (of 2)
+INFO: outputs != 0/1, reliability != 0/1 => adaptive.
+MetisSampling::refine - maximum number of new points = 100000.
+MetisSampling::refine - number of new sample points = 53.
+*******************************************************
+PSUADE adaptivePRA: current level    = 7 (of 100)
+PSUADE adaptivePRA: current nSamples = 257
+.....
+PSUADE adaptivePRA: jobs completed = 257(of 257)
+PSUADE adaptivePRA: non 0/1 outputs (transform to 0/1).
+Current reliability = 97.57041% (1912380/1960000*100)
+Convergence check = 2.400439e-04 (1.000000e-05), trial 1 (of 2)
+INFO: outputs != 0/1, reliability != 0/1 => adaptive.
+MetisSampling::refine - maximum number of new points = 100000.
+MetisSampling::refine - number of new sample points = 72.
+*******************************************************
+PSUADE adaptivePRA: current level    = 8 (of 100)
+PSUADE adaptivePRA: current nSamples = 329
+......
+PSUADE adaptivePRA: jobs completed = 329(of 329)
+PSUADE adaptivePRA: non 0/1 outputs (transform to 0/1).
+Current reliability = 97.57821% (1912533/1960000*100)
+Convergence check = 8.000182e-05 (1.000000e-05), trial 1 (of 2)
+INFO: outputs != 0/1, reliability != 0/1 => adaptive.
+MetisSampling::refine - maximum number of new points = 100000.
+MetisSampling::refine - number of new sample points = 110.
+*******************************************************
+PSUADE adaptivePRA: current level    = 9 (of 100)
+PSUADE adaptivePRA: current nSamples = 439
+..........
+PSUADE adaptivePRA: jobs completed = 439(of 439)
+PSUADE adaptivePRA: non 0/1 outputs (transform to 0/1).
+Current reliability = 97.58806% (1912726/1960000*100)
+Convergence check = 1.009082e-04 (1.000000e-05), trial 1 (of 2)
+INFO: outputs != 0/1, reliability != 0/1 => adaptive.
+MetisSampling::refine - maximum number of new points = 100000.
+MetisSampling::refine - number of new sample points = 149.
+*******************************************************
+PSUADE adaptivePRA: current level    = 10 (of 100)
+PSUADE adaptivePRA: current nSamples = 588
+..............
+PSUADE adaptivePRA: jobs completed = 588(of 588)
+PSUADE adaptivePRA: non 0/1 outputs (transform to 0/1).
+Current reliability = 97.59031% (1912770/1960000*100)
+Convergence check = 2.300355e-05 (1.000000e-05), trial 1 (of 2)
+INFO: outputs != 0/1, reliability != 0/1 => adaptive.
+MetisSampling::refine - maximum number of new points = 100000.
+MetisSampling::refine - number of new sample points = 210.
+*******************************************************
+PSUADE adaptivePRA: current level    = 11 (of 100)
+PSUADE adaptivePRA: current nSamples = 798
+...................
+PSUADE adaptivePRA: jobs completed = 798(of 798)
+PSUADE adaptivePRA: non 0/1 outputs (transform to 0/1).
+Current reliability = 97.58888% (1912742/1960000*100)
+Convergence check = 1.463856e-05 (1.000000e-05), trial 1 (of 2)
+INFO: outputs != 0/1, reliability != 0/1 => adaptive.
+MetisSampling::refine - maximum number of new points = 100000.
+MetisSampling::refine - number of new sample points = 284.
+*******************************************************
+PSUADE adaptivePRA: current level    = 12 (of 100)
+PSUADE adaptivePRA: current nSamples = 1082
+..........................
+PSUADE adaptivePRA: jobs completed = 1082(of 1082)
+PSUADE adaptivePRA: non 0/1 outputs (transform to 0/1).
+Current reliability = 97.58679% (1912701/1960000*100)
+Convergence check = 2.143543e-05 (1.000000e-05), trial 1 (of 2)
+INFO: outputs != 0/1, reliability != 0/1 => adaptive.
+MetisSampling::refine - maximum number of new points = 100000.
+MetisSampling::refine - number of new sample points = 414.
+*******************************************************
+PSUADE adaptivePRA: current level    = 13 (of 100)
+PSUADE adaptivePRA: current nSamples = 1496
+.....................................
+PSUADE adaptivePRA: jobs completed = 1496(of 1496)
+PSUADE adaptivePRA: non 0/1 outputs (transform to 0/1).
+Current reliability = 97.58250% (1912617/1960000*100)
+Convergence check = 4.391792e-05 (1.000000e-05), trial 1 (of 2)
+INFO: outputs != 0/1, reliability != 0/1 => adaptive.
+MetisSampling::refine - maximum number of new points = 100000.
+MetisSampling::refine - number of new sample points = 568.
+*******************************************************
+PSUADE adaptivePRA: current level    = 14 (of 100)
+PSUADE adaptivePRA: current nSamples = 2064
+....................................................
+PSUADE adaptivePRA: jobs completed = 2064(of 2064)
+PSUADE adaptivePRA: non 0/1 outputs (transform to 0/1).
+Current reliability = 97.58321% (1912631/1960000*100)
+Convergence check = 7.319787e-06 (1.000000e-05), trial 1 (of 2)
+INFO: outputs != 0/1, reliability != 0/1 => adaptive.
+MetisSampling::refine - maximum number of new points = 100000.
+MetisSampling::refine - number of new sample points = 406.
+*******************************************************
+PSUADE adaptivePRA: current level    = 15 (of 100)
+PSUADE adaptivePRA: current nSamples = 2470
+.....................................
+PSUADE adaptivePRA: jobs completed = 2470(of 2470)
+PSUADE adaptivePRA: non 0/1 outputs (transform to 0/1).
+Current reliability = 97.58418% (1912650/1960000*100)
+Convergence check = 9.933911e-06 (1.000000e-05), trial 2 (of 2)
+Convergence achieved: reliability = 97.58418%
+[tux140.llnl.gov 337]
+

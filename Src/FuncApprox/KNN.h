@@ -45,6 +45,7 @@ class KNN : public FuncApprox
    psVector VecDistances_;
    psVector VecYStored_;
    psVector VecRanges_;
+   psVector VecSigmas_;
  
 public:
 
@@ -69,7 +70,8 @@ public:
 
 private:
 
-   double train(int, double *, double *, int, int, double *, double *);
+   double computeTestError(int,double *,double *,int,int,double *,double *);
+   double trainGaussian(psVector&, psVector&);
    void   genRSCode();
 };
 

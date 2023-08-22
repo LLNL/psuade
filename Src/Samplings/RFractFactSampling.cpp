@@ -114,7 +114,7 @@ int RFractFactSampling::initialize(int initLevel)
   nReps = 1;
   if (psConfig_.SamExpertModeIsOn())
   {
-    sprintf(pString, "How many replications ? (1 - 10000) : ");
+    snprintf(pString,100,"How many replications ? (1 - 10000) : ");
     nReps = getInt(1, 10000, pString);
   }
   nSamples_ *= nReps;

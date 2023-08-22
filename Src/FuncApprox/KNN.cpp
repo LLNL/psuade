@@ -33,19 +33,201 @@
 #include "sysdef.h"
 #include "PsuadeUtil.h"
 #include "Psuade.h"
+#include "Sampling.h"
 
 #define PABS(x) ((x) > 0 ? (x) : (-(x)))
+
+psVector KNN_VecX_;
+psVector KNN_VecY_;
+psVector KNN_VecSigmas_;
+int      KNN_nSamples_;
+int      KNN_kfold_;
+double   KNN_currY_;
+double   KNN_kmax_;
+int      KNN_currK_;
+psVector KNN_VecYStore_;
+psVector KNN_VecDists_;
+int      KNN_numIts_; 
+
+// ************************************************************************
+// ************************************************************************
+// external functions
+// ------------------------------------------------------------------------
+extern "C" {
+  void kbobyqa_(int *,int *, double *, double *, double *, double *,
+                double *, int *, int *, double*);
+}
+
+// ************************************************************************
+// resident function to perform evaluation
+// This function performs k-fold cross validation
+// ------------------------------------------------------------------------
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+  void *knnevalfunc_(int *nInps, double *SValues, double *YValue)
+  {
+    int    ii, kk, ss, ss2, ss3, nInputs, nSubSamples, nTrain, kcnt;
+    double error, ddata, dist, sumDist, YEst;
+    psVector vecX2, vecY2;
+
+    KNN_numIts_++; 
+    //**/ search for neighbors if this is empty
+    int searchFlag=0;
+    if (KNN_VecYStore_.length() == 0) 
+    {
+      searchFlag = 1;
+      KNN_VecDists_.setLength(KNN_nSamples_*KNN_currK_);
+      KNN_VecYStore_.setLength(KNN_nSamples_*KNN_currK_);
+    }
+
+    //**/ get ready for search
+    nInputs = KNN_VecX_.length() / KNN_VecY_.length();
+    vecX2.setLength(KNN_nSamples_*nInputs);
+    vecY2.setLength(KNN_nSamples_);
+    nSubSamples = KNN_nSamples_ / KNN_kfold_;
+    if (nSubSamples == 0) nSubSamples = 1;
+
+    //**/ for each fold do the following
+    error = 0.0;
+    for (ss = 0; ss < KNN_nSamples_; ss+=nSubSamples)
+    {
+      //**/ put a training set into (vecX2, vecY2)
+      for (ss2 = 0; ss2 < ss*nInputs; ss2++) 
+        vecX2[ss2] = KNN_VecX_[ss2];
+      for (ss2 = 0; ss2 < ss; ss2++) vecY2[ss2] = KNN_VecY_[ss2];
+      nTrain = ss;
+      for (ss2 = ss+nSubSamples; ss2 < KNN_nSamples_; ss2++)
+      {
+        for (ii = 0; ii < nInputs; ii++)
+          vecX2[(ss2-nSubSamples)*nInputs+ii] = 
+                   KNN_VecX_[ss2*nInputs+ii];
+        vecY2[ss2-nSubSamples] = KNN_VecY_[ss2];
+        nTrain++;
+      }
+
+      //**/ now we have separated into training and test sets, compute
+      //**/ test error (test set in KNN_VecX_[ss2*nInputs] on)
+      for (ss2 = ss; ss2 < ss+KNN_nSamples_-nTrain; ss2++)
+      {
+        //**/ compute Y of test point ss2 wrt to training points
+        //**/ but first identify neighbors of point ss2
+        if (searchFlag == 1)
+        {
+          kcnt = 0;
+          for (ss3 = 0; ss3 < nTrain; ss3++) 
+          {
+            dist = 0.0;
+            //**/ find distance between training and test sample point 
+            for (ii = 0; ii < nInputs; ii++) 
+            {
+              ddata = KNN_VecX_[ss2*nInputs+ii];
+              ddata -= vecX2[ss3*nInputs+ii];
+              dist += ddata * ddata;
+            }
+            //**/ If test coincides with training sample, use sample 
+            //**/ output of training sample
+            if (dist == 0.0) 
+            {
+              KNN_VecDists_[ss2*KNN_currK_] = 0;
+              KNN_VecYStore_[ss2*KNN_currK_] = vecY2[ss3];
+              for (kk = 1; kk < KNN_currK_; kk++)
+              {
+                KNN_VecDists_[ss2*KNN_currK_+kk] = 0;
+                KNN_VecYStore_[ss2*KNN_currK_+kk] = 0;
+              }
+              break;
+            }
+            else
+            {
+              //**/ compile k neighbors
+              if (kcnt < KNN_currK_)
+              {
+                KNN_VecDists_[ss2*KNN_currK_+kcnt] = dist;
+                KNN_VecYStore_[ss2*KNN_currK_+kcnt] = vecY2[ss3];
+                kcnt++;
+                for (kk = kcnt-1; kk > 0; kk--)
+                {
+                  if (KNN_VecDists_[ss2*KNN_currK_+kk] < 
+                      KNN_VecDists_[ss2*KNN_currK_+kk-1])
+                  {
+                    ddata = KNN_VecDists_[ss2*KNN_currK_+kk];
+                    KNN_VecDists_[ss2*KNN_currK_+kk] = 
+                             KNN_VecDists_[ss2*KNN_currK_+kk-1];
+                    KNN_VecDists_[ss2*KNN_currK_+kk-1] = ddata;
+                    ddata = KNN_VecYStore_[ss2*KNN_currK_+kk];
+                    KNN_VecYStore_[ss2*KNN_currK_+kk] = 
+                             KNN_VecYStore_[ss2*KNN_currK_+kk-1];
+                    KNN_VecYStore_[ss2*KNN_currK_+kk-1] = ddata;
+                  }
+                }
+              }
+              else
+              {
+                if (dist < KNN_VecDists_[ss2*KNN_currK_+kcnt-1])
+                {
+                  KNN_VecDists_[ss2*KNN_currK_+kcnt-1] = dist;
+                  KNN_VecYStore_[ss2*KNN_currK_+kcnt-1] = KNN_VecY_[ss3];
+                  for (kk = kcnt-1; kk > 0; kk--)
+                  {
+                    if (KNN_VecDists_[ss2*KNN_currK_+kk] < 
+                        KNN_VecDists_[ss2*KNN_currK_+kk-1])
+                    {
+                      ddata = KNN_VecDists_[ss2*KNN_currK_+kk];
+                      KNN_VecDists_[ss2*KNN_currK_+kk] = 
+                              KNN_VecDists_[ss2*KNN_currK_+kk-1];
+                      KNN_VecDists_[ss2*KNN_currK_+kk-1] = ddata;
+                      ddata = KNN_VecYStore_[ss2*KNN_currK_+kk];
+                      KNN_VecYStore_[ss2*KNN_currK_+kk] = 
+                             KNN_VecYStore_[ss2*KNN_currK_+kk-1];
+                      KNN_VecYStore_[ss2*KNN_currK_+kk-1] = ddata;
+                    }
+                  }
+                }
+              }
+            }
+          } /* ss3 */
+        }
+        //**/ KNN_VecDists_ and KNN_VecYStore_ have been 
+        //**/ constructed, next is to perform interpolation
+        YEst = sumDist = 0.0;
+        for (kk = 0; kk < KNN_currK_; kk++) 
+        {
+          ddata = pow(KNN_VecDists_[ss2*KNN_currK_+kk]/SValues[kk],2.0);
+          ddata = exp(-ddata);
+          YEst += KNN_VecYStore_[ss2*KNN_currK_+kk] * ddata;
+          sumDist += ddata;
+        }
+        YEst = YEst / sumDist;
+        error += pow(YEst-KNN_VecY_[ss2], 2.0);
+      }
+    }
+    error = error / (double) KNN_nSamples_;
+    error = sqrt(error);
+    YValue[0] = error;
+    if (error < KNN_currY_)
+    {
+      KNN_currY_ = error;
+      for (kk = 0; kk < KNN_currK_; kk++) 
+        KNN_VecSigmas_[kk] = SValues[kk]; 
+    }
+    return NULL;
+  }
+#ifdef __cplusplus
+}
+#endif
 
 // ************************************************************************
 // Constructor for object class KNN
 // ------------------------------------------------------------------------
 KNN::KNN(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
 {
-  char pString[501];
+  char pString[101];
 
   //**/ set identifier
   faID_ = PSUADE_RS_KNN;
-  //**/ 0: linear combination, 1: mode
+  //**/ 0: linear combination, 1: Gaussian kernel, 2: classification
   mode_ = 0;
 
   //**/ set number of nearest neighbors
@@ -76,22 +258,29 @@ KNN::KNN(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
   {
     printf("In the following you have the option to select K. But if\n");
     printf("you want it to be selected automatically, enter option 0.\n");
-    sprintf(pString,"Enter number of nearest neighbors (>= 0, <= %d): ",
-            kmax_);
+    snprintf(pString,100,"Enter number of nearest neighbors (>= 0, <= %d): ",
+             kmax_);
     k_ = getInt(0, kmax_, pString);
+    snprintf(pString,100,"KNN_k = %d", k_);
+    psConfig_.putParameter(pString);
     if (k_ == 0)
     {
-      sprintf(pString,"Maximum K to be searched (>1,<=%d): ",kmax_);
+      snprintf(pString,100,"Maximum K to be searched (>1,<=%d): ",kmax_);
       kmax_ = getInt(2, kmax_, pString);
-      sprintf(pString,"How many fold cross validation (10-%d)? ",kfold_);
+      snprintf(pString,100,"KNN_kmax = %d", kmax_);
+      psConfig_.putParameter(pString);
+      snprintf(pString,100,"How many fold cross validation (10-%d)? ",kfold_);
       kfold_ = getInt(10, kfold_, pString);
+      snprintf(pString,100,"KNN_kfold = %d", kfold_);
+      psConfig_.putParameter(pString);
     }
     printf("There are two options for interpolation: \n");
-    printf("0: linear weightings of neighboring points.\n");
-    printf("1: mode (for integer labels of outputs, classification.\n");
-    sprintf(pString,"Enter desired mode (0 or 1): ");
-    mode_ = getInt(0, 1, pString);
-    sprintf(pString, "KNN_mode = %d", mode_);
+    printf("0: Linear interpolation from neighboring points.\n");
+    printf("1: Exponential interpolation from neighboring points.\n");
+    printf("2: Mode of neigbors (for classification: with integer outputs.\n");
+    snprintf(pString,100,"Enter desired mode (0, 1, or 2): ");
+    mode_ = getInt(0, 2, pString);
+    snprintf(pString,100,"KNN_mode = %d", mode_);
     psConfig_.putParameter(pString);
   }
   else
@@ -101,7 +290,29 @@ KNN::KNN(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
     if (cString != NULL)
     {
       sscanf(cString, "%s %s %d", keyword, equalSign, &mode_);
-      if (mode_ != 0 && mode_ != 1) mode_ = 0;
+      if (mode_ < 0 || mode_ > 2) mode_ = 0;
+      if (outputLevel_ > 1) printf("KNN_mode = %d\n", mode_);
+    }
+    cString = psConfig_.getParameter("KNN_k");
+    if (cString != NULL)
+    {
+      sscanf(cString, "%s %s %d", keyword, equalSign, &k_);
+      if (k_ < 0) k_ = 0;
+      if (outputLevel_ > 1) printf("KNN_k = %d\n", k_);
+    }
+    cString = psConfig_.getParameter("KNN_kfold");
+    if (cString != NULL)
+    {
+      sscanf(cString, "%s %s %d", keyword, equalSign, &kfold_);
+      if (kfold_ < 0) kfold_ = 0;
+      if (outputLevel_ > 1) printf("KNN_kfold = %d\n", kfold_);
+    }
+    cString = psConfig_.getParameter("KNN_kmax");
+    if (cString != NULL)
+    {
+      sscanf(cString, "%s %s %d", keyword, equalSign, &kmax_);
+      if (kmax_ < k_) kmax_ = k_;
+      if (outputLevel_ > 1) printf("KNN_kmax = %d\n", kmax_);
     }
   }
 }
@@ -132,7 +343,7 @@ int KNN::initialize(double *X, double *Y)
     return -1;
   }
   VecNormalX_.setLength(nSamples_*nInputs_);
-  VecNormalY_.setLength(nSamples_*nInputs_);
+  VecNormalY_.setLength(nSamples_);
   for (ii = 0; ii < nInputs_; ii++)
   {
     range = 1.0 / (VecUBs_[ii] - VecLBs_[ii]);
@@ -148,13 +359,29 @@ int KNN::initialize(double *X, double *Y)
   //**/ ---------------------------------------------------------------
   //**/ searching for best k, if it has not been selected 
   //**/ ---------------------------------------------------------------
-  if (k_ == 0)
+  if (mode_ == 1)
   {
+    //**/ randomize the order of the training sample ==> VecXX
+    //**/ this is needed for cross validation to ensure randomness
     VecIT.setLength(nSamples_);
     VecXX.setLength(nSamples_*nInputs_);
     VecYY.setLength(nSamples_);
-    double *arrayXX = VecXX.getDVector();
-    double *arrayYY = VecYY.getDVector();
+    generateRandomIvector(nSamples_, VecIT.getIVector());
+    for (ii = 0; ii < nInputs_; ii++)
+    {
+      for (ss = 0; ss < nSamples_; ss++)
+        VecXX[VecIT[ss]*nInputs_+ii] = VecNormalX_[ss*nInputs_+ii];
+    }
+    for (ss = 0; ss < nSamples_; ss++) VecYY[VecIT[ss]] = Y[ss];
+    trainGaussian(VecXX, VecYY);
+  }
+  else
+  {
+    //**/ randomize the order of the training sample ==> VecXX
+    //**/ this is needed for cross validation to ensure randomness
+    VecIT.setLength(nSamples_);
+    VecXX.setLength(nSamples_*nInputs_);
+    VecYY.setLength(nSamples_);
     generateRandomIvector(nSamples_, VecIT.getIVector());
     for (ii = 0; ii < nInputs_; ii++)
     {
@@ -163,13 +390,30 @@ int KNN::initialize(double *X, double *Y)
     }
     for (ss = 0; ss < nSamples_; ss++) VecYY[VecIT[ss]] = Y[ss];
 
-    //**/ get ready for search
+    //**/ set up to search k or just use one k_
+    //**/ if k_=0, search k = 1 to kmax
+    int kbeg, kend;
+    if (k_ == 0)
+    {
+      kbeg = 1;
+      kend = kmax_;
+    }
+    else
+    {
+      kbeg = k_;
+      kend = k_;
+    }
+
+    //**/ get ready for search for mode=0,2 (k-fold cross validation)
+    //**/ VecX2 and VecY2 are for selecting training points
+    double *arrayXX = VecXX.getDVector();
+    double *arrayYY = VecYY.getDVector();
     VecX2.setLength(nSamples_*nInputs_);
     VecY2.setLength(nSamples_);
     nSubSamples = nSamples_ / kfold_;
     if (nSubSamples == 0) nSubSamples = 1;
     errMin = 1e35;
-    for (kk = 1; kk <= kmax_; kk++)
+    for (kk = kbeg; kk <= kend; kk++)
     {
       error = 0.0;
       //**/ for each of the k folds
@@ -183,21 +427,23 @@ int KNN::initialize(double *X, double *Y)
         {
           for (ii = 0; ii < nInputs_; ii++)
             VecX2[(ss2-nSubSamples)*nInputs_+ii] = VecXX[ss2*nInputs_+ii];
+          VecY2[ss2-nSubSamples] = VecYY[ss2];
           count++;
         }
         //**/ train and test it on the hold out
-        error += train(count, VecX2.getDVector(), VecY2.getDVector(), kk, 
-                       nSamples_-count, &arrayXX[ss*nInputs_],&arrayYY[ss]);
+        error += computeTestError(count,VecX2.getDVector(),VecY2.getDVector(),
+                    kk,nSamples_-count, &arrayXX[ss*nInputs_],&arrayYY[ss]);
       }
       if (error < errMin)
       {
         k_ = kk;
         errMin = error;
       }
-      if (psConfig_.InteractiveIsOn())
-        printf("K=%d (%d) : error = %e\n", kk, kmax_, error);
+      if (psConfig_.InteractiveIsOn() && kbeg != kend)
+        printf("   K=%d (%d) : error = %e\n", kk, kend, error);
     }
-    if (psConfig_.InteractiveIsOn()) printf("KNN: K selected = %d\n", k_);
+    if (psConfig_.InteractiveIsOn() && kbeg != kend) 
+      printf("KNN: K selected = %d\n", k_);
   }
   if (!psConfig_.RSCodeGenIsOn()) return 0;
   genRSCode();
@@ -483,9 +729,11 @@ double KNN::evaluatePoint(int nSamp, double *XN, double *YN, double *X,
   int    ss, ii, kk, count=0, cnt, maxcnt;
   double dist, sumDist, ddata, Y=0.0, ylabel;
 
+  //**/ construct a nearest neighbor list for X
   for (ss = 0; ss < nSamp; ss++) 
   {
     dist = 0.0;
+    //**/ find distance between X and training sample point ss
     for (ii = 0; ii < nInputs_; ii++) 
     {
       ddata = X[ii];
@@ -493,18 +741,20 @@ double KNN::evaluatePoint(int nSamp, double *XN, double *YN, double *X,
         ddata = (ddata - VecLBs_[ii]) * VecRanges_[ii];
       ddata -= XN[ss*nInputs_+ii];
       dist += ddata * ddata;
-      if (count > 0 && count < knn && dist > VecDistances_[count-1]) break; 
     }
+    //**/ If X coincides with training sample s, return sample output of s
     if (dist == 0.0)
     {
       Y = YN[ss];
       return Y;
     }
+    //**/ if less than knn so far, add training sample point s to the list
     if (count < knn)
     {
       VecDistances_[count] = dist;
       VecYStored_[count] = YN[ss];
       count++;
+      //**/ update VecDistances so that distance[kk] >= distance[kk-1]
       for (kk = count-1; kk > 0; kk--) 
       {
         if (VecDistances_[kk] < VecDistances_[kk-1])
@@ -518,6 +768,8 @@ double KNN::evaluatePoint(int nSamp, double *XN, double *YN, double *X,
         } 
       } 
     }
+    //**/ if the list has knn element and the current point ss is nearer
+    //**/ than some point on the list, swap the points
     else
     {
       if (dist < VecDistances_[count-1])
@@ -539,6 +791,10 @@ double KNN::evaluatePoint(int nSamp, double *XN, double *YN, double *X,
       } 
     } 
   }
+
+  //**/ Now VecDistances and VecYStored have been constructed, next is
+  //**/ to perform interpolation
+  //**/ linear kernel
   if (mode_ == 0)
   {
     Y = sumDist = 0.0;
@@ -549,11 +805,27 @@ double KNN::evaluatePoint(int nSamp, double *XN, double *YN, double *X,
     }
     Y /= sumDist;
   }
+  //**/ Gaussian kernel
+  else if (mode_ == 1)
+  {
+    Y = sumDist = 0.0;
+    for (ss = 0; ss < count; ss++) 
+    {
+      ddata = exp(-VecDistances_[ss]*VecDistances_[ss] /
+                  (VecSigmas_[ss]*VecSigmas_[ss]));
+      Y += VecYStored_[ss] * ddata;
+      sumDist += ddata;
+    }
+    Y /= sumDist;
+  }
+  //**/ For classification: search for label with largest frequency
   else
   {
+    //**/ sort in ascending order
     sortDbleList(count, VecYStored_.getDVector());
     maxcnt = 0;
     cnt = 1;
+    //**/ search for label with maxcnt and set Y to that label
     for (ss = 1; ss < count; ss++) 
     {
       if (VecYStored_[ss] == VecYStored_[ss-1]) cnt++;
@@ -615,10 +887,135 @@ double KNN::evaluatePointFuzzy(int npts, double *X, double *Y, double *Ystd)
 }
 
 // ************************************************************************
-// initialize the trees
+// Train Gaussian kernel (incoming vecX has been randomized)
 // ------------------------------------------------------------------------
-double KNN::train(int nSamp, double *X, double *Y, int knn, int nTests, 
-                  double *XTest, double *YTest)
+double KNN::trainGaussian(psVector &vecX, psVector &vecY)
+{
+  int    ii, jj, kk, pLevel=1112, kbeg, kend;
+  double errMin = 1e35, ddata;
+
+  //**/ set up for optimization
+  psVector vecUBs, vecLBs;
+  vecUBs.setLength(kmax_);
+  vecLBs.setLength(kmax_);
+  for (ii = 0; ii < kmax_; ii++) 
+  { 
+    vecLBs[ii] = 0.1;
+    vecUBs[ii] = 3.0;
+  }
+  if (k_ == 0) 
+  {
+    kbeg = 1; 
+    kend = kmax_;
+  }
+  else kbeg = kend = k_;
+
+  int    maxfun=5000;
+  double rhobeg, rhoend;
+  psVector vecTVals, vecW;
+  vecTVals.setLength(kmax_+1);
+  double *TValues = vecTVals.getDVector();
+  int nPts = (kmax_ + 1) * (kmax_ + 2) / 2;
+  jj = (nPts+13) * (nPts+kmax_) + 3*kmax_*(kmax_+3)/2;
+  kk = (nPts+5)*(nPts+kmax_)+3*kmax_*(kmax_+5)/2+1;
+  if (jj > kk) vecW.setLength(jj);
+  else         vecW.setLength(kk);
+
+  //**/ to facilitate callling external optimizer
+  KNN_VecX_ = vecX;
+  KNN_VecY_ = vecY;
+  KNN_nSamples_ = nSamples_;
+  KNN_kfold_ = kfold_;
+  KNN_kmax_ = kmax_;
+
+  //**/ create a number of iniital guesses 
+  int nSamp = 5;
+  Sampling *sampler = SamplingCreateFromID(PSUADE_SAMP_LHS);
+  sampler->setInputBounds(kmax_,vecLBs.getDVector(),vecUBs.getDVector());
+  sampler->setOutputParams(1);
+  sampler->setSamplingParams(nSamp, 1, 0);
+  sampler->initialize(0);
+  psVector  vecXS, vecYS;
+  psIVector vecIS;
+  vecIS.setLength(nSamp);
+  vecXS.setLength(nSamp*kmax_);
+  vecYS.setLength(nSamp);
+  sampler->getSamples(nSamp,kmax_,1,vecXS.getDVector(),
+                      vecYS.getDVector(), vecIS.getIVector());
+  delete sampler;
+
+  //**/ search for each k
+  int ss;
+  psVector VecBestSigmas;
+  for (kk = kbeg; kk <= kend; kk++)
+  {
+    if (psConfig_.InteractiveIsOn() && outputLevel_ > 1)
+      printf("KNN INFO: Search for %d nearest neighbors.\n",kk);
+    //**/ send callback function some initial information
+    KNN_currK_ = kk;
+    KNN_currY_ = 1e35;
+    //**/ for storing best sigmas for this optimizaiton 
+    KNN_VecSigmas_.setLength(kk);
+    //**/ optimizer parameter setting
+    nPts = (kk + 1) * (kk + 2) / 2;
+
+    //**/ these two arrays are for speeding up the callback function
+    KNN_VecDists_.clean();
+    KNN_VecYStore_.clean();
+
+    //**/ optimization using some initial guesses
+    for (ss = 0; ss < nSamp; ss++) 
+    {
+      for (ii = 0; ii < kmax_; ii++) vecTVals[ii] = vecXS[ss*kmax_+ii];
+      if (outputLevel_ > 1)
+      {
+        for (ii = 0; ii < kk; ii++) 
+          printf("Initial guess %d = %e\n",ii+1,vecTVals[ii]);
+      }
+      //**/ tell BOBYQA to call back 
+      pLevel = 1112;
+
+      double rhobeg = vecUBs[0] - vecLBs[0];
+      for (ii = kbeg; ii < kend; ii++)
+      {
+        ddata = vecUBs[ii] - vecLBs[ii];
+        if (ddata < rhobeg) rhobeg = ddata;
+      }
+      rhobeg *= 0.5;
+      rhoend = rhobeg * 1.0e-8;
+#ifdef HAVE_BOBYQA
+      KNN_numIts_ = 0;
+      kbobyqa_(&kk,&nPts,vecTVals.getDVector(),vecLBs.getDVector(),
+               vecUBs.getDVector(),&rhobeg,&rhoend,&pLevel,&maxfun, 
+               vecW.getDVector());
+#else
+      printf("KNN ERROR: BOBYQA optimizer not installed.\n");
+      exit(1);
+#endif
+
+      if (KNN_currY_ < errMin)
+      {
+        k_ = kk;
+        errMin = KNN_currY_;
+        VecBestSigmas = KNN_VecSigmas_; 
+      }
+      printf("K=%d, sample=%d : Number of iterations = %d\n",kk,ss+1,
+             KNN_numIts_); 
+    }
+    if (psConfig_.InteractiveIsOn() && outputLevel_ > 1)
+      printf("K=%d (%d) : error = %e\n", kk, kend, KNN_currY_);
+  }
+  if (psConfig_.InteractiveIsOn() && kbeg != kend) 
+    printf("KNN: K selected = %d\n", k_);
+  VecSigmas_ = VecBestSigmas;
+  return 0;
+}
+
+// ************************************************************************
+// compute error on test set
+// ------------------------------------------------------------------------
+double KNN::computeTestError(int nSamp, double *X, double *Y, int knn, 
+                             int nTests, double *XTest, double *YTest)
 {
   int    ii;
   double ddata, YEst, error;

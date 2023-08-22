@@ -113,7 +113,7 @@ int TGP::genNDGridData(double *X, double *Y, int *N, double **XOut,
   int  BTE[3], R=1, linBurn=1, PS_FALSE=0, PS_TRUE=1;
   int  totPts, ii, ss, count, bte0, bte1;
   void *tgp_state=NULL;
-  char lineOut[1000];
+  char lineOut[101];
   psVector  vecDParms, vecHX, vecXT, vecYOut, vecGpcs, vecXL, vecTParms;
   psIVector vecStateIn;
 
@@ -126,10 +126,10 @@ int TGP::genNDGridData(double *X, double *Y, int *N, double **XOut,
   {
     printf("TGP: default burn-in sample size = 2000\n");
     printf("TGP: default MCMC    sample size = 7000\n");
-    sprintf(lineOut, "TGP: enter burn-in sample size (e.g. 500-5000): ");
+    snprintf(lineOut,100,"TGP: enter burn-in sample size (e.g. 500-5000): ");
     bte0 = getInt(500, 5000, lineOut); 
-    sprintf(lineOut,"TGP: enter MCMC sample size (e.g. %d-20000): ",
-            2000+bte0);
+    snprintf(lineOut,100,"TGP: enter MCMC sample size (e.g. %d-20000): ",
+             2000+bte0);
     bte1 = getInt(2000+bte0, 20000, lineOut); 
   }
 
@@ -320,7 +320,7 @@ int TGP::gen1DGridData(double *X, double *Y, int ind1, double *settings,
   int    totPts, ii, kk, count, bte0, bte1;
   double HX;
   void   *tgp_state=NULL;
-  char   lineOut[1000];
+  char   lineOut[101];
   psVector  vecDParms, vecTParms, vecGpcs, vecXOut, vecYOut, vecXT;
   psIVector vecStateIn;
 
@@ -333,10 +333,10 @@ int TGP::gen1DGridData(double *X, double *Y, int ind1, double *settings,
   {
     printf("TGP: default burn-in sample size = 2000\n");
     printf("TGP: default MCMC    sample size = 7000\n");
-    sprintf(lineOut, "TGP: enter burn-in sample size (e.g. 500-5000): ");
+    snprintf(lineOut,100,"TGP: enter burn-in sample size (e.g. 500-5000): ");
     bte0 = getInt(500, 5000, lineOut); 
-    sprintf(lineOut,"TGP: enter MCMC sample size (e.g. %d-20000): ",
-            2000+bte0);
+    snprintf(lineOut,100,"TGP: enter MCMC sample size (e.g. %d-20000): ",
+             2000+bte0);
     bte1 = getInt(2000+bte0, 20000, lineOut); 
   }
 
@@ -492,7 +492,7 @@ int TGP::gen2DGridData(double *X, double *Y, int ind1, int ind2,
   int    BTE[3], R=1, linBurn=1, PS_FALSE=0, PS_TRUE=1, bte0, bte1;
   int    totPts, ii, jj, kk, count, index;
   void   *tgp_state=NULL;
-  char   lineOut[1000];
+  char   lineOut[101];
   psVector vecDParms, vecTParms, vecHX, vecXT, vecXOut, vecYOut, vecGpcs;
   psIVector vecStateIn;
 
@@ -505,9 +505,9 @@ int TGP::gen2DGridData(double *X, double *Y, int ind1, int ind2,
   {
     printf("TGP: default burn-in sample size = 2000\n");
     printf("TGP: default MCMC    sample size = 7000\n");
-    sprintf(lineOut, "TGP: enter burn-in sample size (e.g. 500-5000): ");
+    snprintf(lineOut,100, "TGP: enter burn-in sample size (e.g. 500-5000): ");
     bte0 = getInt(500, 5000, lineOut); 
-    sprintf(lineOut,"TGP: enter MCMC sample size (e.g. %d-20000): ",
+    snprintf(lineOut,100,"TGP: enter MCMC sample size (e.g. %d-20000): ",
             2000+bte0);
     bte1 = getInt(2000+bte0, 20000, lineOut); 
   }
@@ -672,7 +672,7 @@ int TGP::gen3DGridData(double *X, double *Y, int ind1, int ind2, int ind3,
   int    BTE[3], R=1, linBurn=1, PS_FALSE=0, PS_TRUE=1, bte0, bte1;
   int    totPts, ii, jj, ll, kk, count, index;
   void   *tgp_state=NULL;
-  char   lineOut[1000];
+  char   lineOut[101];
   psVector vecHX, vecXT, vecDParms, vecTParms, vecGpcs, vecXOut, vecYOut;
   psIVector vecStateIn;
 
@@ -685,9 +685,9 @@ int TGP::gen3DGridData(double *X, double *Y, int ind1, int ind2, int ind3,
   {
     printf("TGP: default burn-in sample size = 2000\n");
     printf("TGP: default MCMC    sample size = 7000\n");
-    sprintf(lineOut, "TGP: enter burn-in sample size (e.g. 500-5000): ");
+    snprintf(lineOut,100,"TGP: enter burn-in sample size (e.g. 500-5000): ");
     bte0 = getInt(500, 5000, lineOut); 
-    sprintf(lineOut,"TGP: enter MCMC sample size (e.g. %d-20000): ",
+    snprintf(lineOut,100,"TGP: enter MCMC sample size (e.g. %d-20000): ",
             2000+bte0);
     bte1 = getInt(2000+bte0, 20000, lineOut); 
   }
@@ -859,7 +859,7 @@ int TGP::gen4DGridData(double *X, double *Y, int ind1, int ind2, int ind3,
   int    BTE[3], R=1, linBurn=1, PS_FALSE=0, PS_TRUE=1, bte0, bte1;
   int    totPts, ii, jj, ll, mm, kk, count, index;
   void   *tgp_state=NULL;
-  char   lineOut[1000];
+  char   lineOut[101];
   psVector vecHX, vecXT, vecDParms, vecTParms, vecGpcs, vecXOut, vecYOut;
   psIVector vecStateIn;
 
@@ -872,10 +872,10 @@ int TGP::gen4DGridData(double *X, double *Y, int ind1, int ind2, int ind3,
   {
     printf("TGP: default burn-in sample size = 2000\n");
     printf("TGP: default MCMC    sample size = 7000\n");
-    sprintf(lineOut, "TGP: enter burn-in sample size (e.g. 500-5000): ");
+    snprintf(lineOut,100,"TGP: enter burn-in sample size (e.g. 500-5000): ");
     bte0 = getInt(500, 5000, lineOut); 
-    sprintf(lineOut,"TGP: enter MCMC sample size (e.g. %d-20000): ",
-            2000+bte0);
+    snprintf(lineOut,100,"TGP: enter MCMC sample size (e.g. %d-20000): ",
+             2000+bte0);
     bte1 = getInt(2000+bte0, 20000, lineOut); 
   }
 

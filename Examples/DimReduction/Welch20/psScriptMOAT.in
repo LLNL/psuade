@@ -1,0 +1,4 @@
+sys cc -o simulator simulator.c -lm
+run psuadeMOAT.in
+q
+

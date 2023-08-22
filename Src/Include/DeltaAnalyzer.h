@@ -38,10 +38,9 @@ class DeltaAnalyzer : public Analyzer
 {
 private:
 
-   int mode_;
    int nBins_;
    int nInputs_;
-   int nConfig_;
+   int nNeigh_;
    psVector  VecMinDeltas_;
    psIMatrix MatDeltaBins_;
    psVector  VecOrders_;
@@ -63,16 +62,9 @@ public:
    //**/ @param analyzer
    DeltaAnalyzer& operator=(const DeltaAnalyzer &analyzer);
 
-   //**/ set internal paramter
-   //**/ @param nParams - number of parameters
-   //**/ @param params - parameters
-   int setParams(int nParams, char **params);
-
    /** Getters for analysis results */
-   int    get_mode();
    int    get_nBins();
    int    get_nInputs();
-   int    get_nConfig();
    double *get_minDeltas();
    int    **get_deltaBins();
    double *get_dOrder();

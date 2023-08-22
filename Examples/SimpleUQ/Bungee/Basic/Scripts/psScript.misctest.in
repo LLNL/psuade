@@ -26,10 +26,12 @@ y
 odelete
 y
 1
+1
 # load the original sample again
 load simdata
 # response surface analysis with Kriging
 rscheck
+y
 11
 1
 y
@@ -98,12 +100,6 @@ y
 gp_sa
 y
 1
-2
-# perform parameter ranking using GP measure
-gp_sa
-y
-1
-3
 sys rm -f abc *.m simdata simulator rsua_sample psuadeSample?
 q
 

@@ -278,7 +278,7 @@ extern "C"
 HKriging::HKriging(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
 {
   int  ii;
-  char pString[500], winput[500];
+  char pString[101], winput[500];
 
   //**/ =======================================================
   // initialize variables and parameters
@@ -321,9 +321,9 @@ HKriging::HKriging(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
     printf("There are two modes available: \n");
     printf("(1) slow mode with optimization on theta\n");
     printf("(2) very slow mode with multi-start optimization\n");
-    sprintf(pString, "Please select mode (1 - 2) : ");
+    snprintf(pString,100,"Please select mode (1 - 2) : ");
     fastMode_ = getInt(1,2,pString);
-    sprintf(pString, "Enter optimization tolerance (default = 1e-4): ");
+    snprintf(pString,100,"Enter optimization tolerance (default = 1e-4): ");
     optTolerance_ = getDouble(pString);
     if (optTolerance_ <= 0 || optTolerance_ > 0.5)
     {
@@ -332,11 +332,11 @@ HKriging::HKriging(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
       optTolerance_ = 1.0e-4;
     }
     printf("HKriging: Current initial length scales = %e\n",Theta_);
-    sprintf(pString, "Change initial theta? (y or n) ");
+    snprintf(pString,100,"Change initial theta? (y or n) ");
     getString(pString, winput);
     if (winput[0] == 'y')
     {
-      sprintf(pString,"Enter new theta : ");
+      snprintf(pString,100,"Enter new theta : ");
       Theta_ = 0;
       while (Theta_ <= 0)
       {
@@ -346,14 +346,14 @@ HKriging::HKriging(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
     }
     if (psConfig_.MasterModeIsOn())
     {
-      sprintf(pString, "Add nugget? (y or n) ");
+      snprintf(pString,100,"Add nugget? (y or n) ");
       getString(pString, winput);
       if (winput[0] == 'y') 
       {
         HKRI_nugget = 1.0;
         while (HKRI_nugget >= 1.0 || HKRI_nugget < 0.0)
         {
-          sprintf(pString, "Enter nugget ([0,1)) : ");
+          snprintf(pString,100,"Enter nugget ([0,1)) : ");
           HKRI_nugget = getDouble(pString);
         }
       }
@@ -714,7 +714,6 @@ double HKriging::train(double *X, double *Y)
 {
   int    ii, jj, kk, count, status, nDists, iOne=1, iZero=0;
   double *XDists, dist, ddata, TValue;
-  char   pString[500];
   FILE   *fp;
 
   //**/ ============================================================

@@ -1,0 +1,26 @@
+sys rm -f psuadeMetis*
+sys cc -o simulator simulator.c -lm
+run psuadeValidate.in
+rename psuadeData vsample
+load sample_adaptive
+rstest_hs
+vsample
+1
+0
+n
+rename RSTest_hs.m RSTest_hs_adaptive.m
+load sample_uniform
+rstest_hs
+vsample
+1
+0
+n
+rename RSTest_hs.m RSTest_hs_uniform.m
+# NOTE: The first set of validation test displayed above is 
+#       from the adaptive sample while the second set is from
+#       uniform sample. 
+# DO: compare the error measures between the two.
+# DO: run Matlab on RSTest_hs_adaptive.m and RSTest_hs_uniform.m
+#     and compare visually
+quit
+

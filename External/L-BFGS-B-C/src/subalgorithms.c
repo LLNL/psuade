@@ -57,12 +57,16 @@
 	    if (nbd[i__] <= 2 && x[i__] <= l[i__]) {
 		if (x[i__] < l[i__]) {
 		    *prjctd = TRUE_;
+                    printf("LBFGS input %ld out of bound = %e [%e,%e]\n",
+                           i__,x[i__],l[i__],u[i__]);
 		    x[i__] = l[i__];
 		}
 		++nbdd;
 	    } else if (nbd[i__] >= 2 && x[i__] >= u[i__]) {
 		if (x[i__] > u[i__]) {
 		    *prjctd = TRUE_;
+                    printf("LBFGS input %ld out of bound = %e [%e,%e]\n",
+                           i__,x[i__],l[i__],u[i__]);
 		    x[i__] = u[i__];
 		}
 		++nbdd;

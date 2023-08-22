@@ -1,0 +1,20 @@
+=============================================================
+Bungee problem: running uncertainty analysis using sampling
+                refinement
+* Sometimes you do not know ahead the sample size needed to
+  compute the uncertainty metrics accurately. As such, it may
+  be desirable to adaptively add more samples until sufficient
+  accuracy is attained. This example shows how to set it up.
+* The key setup step is to set the num_refinements parameter
+  in the METHOD section in psuade.in to, say, 4, so if it
+  starts with 50 points, then after 4 levels of refinements,
+  it becomes 50 * 2^4 = 800 sample points.
+* After each refinement an uncertainty analysis will be
+  performed and the results displayed. Observe how the
+  statistics change with each refinement.
+=============================================================
+To run:
+
+cc -o simulator simulator.c -lm
+psuade psuade.in
+

@@ -100,7 +100,7 @@ title = '2-Input Scatter Plot'
 plt.title(title, fontsize=14, fontweight='bold')
 for axis in ['top', 'bottom', 'left', 'right']:
    ax.spines[axis].set_linewidth(6)
-plt.grid(b=True)
+#plt.grid(visible=True)
 
 plt.savefig('psu_iplt2.png')
 print('2-Input Scatter plot is now in psu_iplt2.png')

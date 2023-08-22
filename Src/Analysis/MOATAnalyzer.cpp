@@ -541,7 +541,7 @@ double MOATAnalyzer::analyze(aData &adata)
     printOutTS(PL_INFO,"fixed values of the inputs. This will yield ");
     printOutTS(PL_INFO,"interaction information of\n");
     printOutTS(PL_INFO,"this parameters with the others.\n");
-    sprintf(pString,"Perform MOAT interaction study ? (y or n) ");
+    snprintf(pString,100,"Perform MOAT interaction study ? (y or n) ");
     getString(pString, winput);
     if (winput[0] == 'y')
     {
@@ -629,7 +629,7 @@ double MOATAnalyzer::analyze(aData &adata)
     printOutTS(PL_INFO,"an input is likely a\n");
     printOutTS(PL_INFO,"significant input given a gradient threshold to");
     printOutTS(PL_INFO,"indicate significance.\n");
-    sprintf(pString, "Perform hypothesis tests ? (y or n) ");
+    snprintf(pString,100,"Perform hypothesis tests ? (y or n) ");
     getString(pString, winput);
     if (winput[0] == 'y')
     {
@@ -651,7 +651,7 @@ double MOATAnalyzer::analyze(aData &adata)
         if (sortedModifiedMeans[ii] < binMin) 
           binMin = sortedModifiedMeans[ii];
       }
-      sprintf(pString,"Enter significance threshold (min,max = %e %e): ",
+      snprintf(pString,100,"Enter significance threshold (min,max = %e %e): ",
               binMin, binMax);
       thresh = binMin - 1.0;
       while (thresh < binMin || thresh > binMax)
@@ -814,10 +814,10 @@ int MOATAnalyzer::createScreenDiagramFile(int nSamples, int nInputs,
   printOutTS(PL_INFO,"Screening diagram plots std devs of the gradients\n");
   printOutTS(PL_INFO,"against modified means. It thus provides another\n");
   printOutTS(PL_INFO,"perspective of viewing the parameter importance.\n");
-  sprintf(pString,"Create screening diagram? (y or n) ");
+  snprintf(pString,100,"Create screening diagram? (y or n) ");
   getString(pString, winput);
   if (winput[0] != 'y') return 0;
-  sprintf(pString,
+  snprintf(pString,100,
         "Enter matlab/scilab screening diagram file name (no extension): ");
   getString(pString, moatFile);
   cnt = strlen(moatFile);
@@ -1158,7 +1158,7 @@ int MOATAnalyzer::createScreenDiagramFile(int nSamples, int nInputs,
   fwritePlotAxes(fp);
   fwritePlotXLabel(fp, "Modified Means (of gradients)");
   fwritePlotYLabel(fp, "Std Deviations (of gradients)");
-  sprintf(pString, "Modified Morris Diagram for Output %d", outputID+1);
+  snprintf(pString,100,"Modified Morris Diagram for Output %d", outputID+1);
   fwritePlotTitle(fp, pString);
   fprintf(fp, "if (maxFlag == 1)\n");
   if (plotScilab())
@@ -1223,11 +1223,11 @@ int MOATAnalyzer::createScatterFile(int nSamples, int nInputs, double *Y,
   printOutTS(PL_INFO,"Color to level mapping :\n");
   printOutTS(PL_INFO,"low to high: red, green, blue, magenta, cyan dots\n");
   printOutTS(PL_INFO,"low to high: red, green, blue, magenta, cyan 'x'\n");
-  sprintf(pString,"Create scatter plot ? (y or n) ");
+  snprintf(pString,100,"Create scatter plot ? (y or n) ");
   getString(pString, winput);
   if (winput[0] != 'y') return 0;
 
-  sprintf(pString,
+  snprintf(pString,100,
           "Enter matlab/scilab scatter plot file name (no extension): ");
   getString(pString, scatterFile);
   cnt = strlen(scatterFile);
@@ -1762,15 +1762,15 @@ int MOATAnalyzer::createBootstrapFile(int nSamples, int nInputs, double *Y,
   //**/ ---------------------------------------------------------------
   //**/ now write these information to a matlab file
   //**/ ---------------------------------------------------------------
-  sprintf(pString,"This file contains modified means of gradients");
+  snprintf(pString,100,"This file contains modified means of gradients");
   fwriteComment(fp, pString);
-  sprintf(pString,"and also their spreads based on bootstraping.");
+  snprintf(pString,100,"and also their spreads based on bootstraping.");
   fwriteComment(fp, pString);
-  sprintf(pString,"to select the most important ones to display,");
+  snprintf(pString,100,"to select the most important ones to display,");
   fwriteComment(fp, pString);
-  sprintf(pString,"set sortFlag = 1 and set nn to be the number");
+  snprintf(pString,100,"set sortFlag = 1 and set nn to be the number");
   fwriteComment(fp, pString);
-  sprintf(pString,"of inputs to display.\n");
+  snprintf(pString,100,"of inputs to display.\n");
   fwriteComment(fp, pString);
   fprintf(fp, "sortFlag = 0;\n");
   fprintf(fp, "nn = %d;\n", nInputs);

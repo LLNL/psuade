@@ -167,7 +167,7 @@ FunctionInterface::~FunctionInterface()
 // ------------------------------------------------------------------------
 int FunctionInterface::loadInputData(int nInputs, char **names)
 { 
-  char pString[1000];
+  char pString[101];
   if (nInputs <= 0)
   {
     printf("FuncIO LoadInput ERROR: nInputs <= 0\n");
@@ -181,7 +181,7 @@ int FunctionInterface::loadInputData(int nInputs, char **names)
       StrInpNames_.loadOneString(ii, names[ii]);
     else 
     {
-      sprintf(pString, "X%d", ii);
+      snprintf(pString,100, "X%d", ii);
       StrInpNames_.loadOneString(ii, pString);
     }
   }
@@ -193,7 +193,7 @@ int FunctionInterface::loadInputData(int nInputs, char **names)
 // ------------------------------------------------------------------------
 int FunctionInterface::loadOutputData(int nOutputs, char **names)
 { 
-  char pString[1000];
+  char pString[101];
   if (nOutputs <= 0)
   {
     printf("FuncIO loadOutput ERROR: nOutputs <= 0\n");
@@ -205,7 +205,7 @@ int FunctionInterface::loadOutputData(int nOutputs, char **names)
   {
     if (names != NULL && names[ii] != NULL)
          strcpy(pString, names[ii]);
-    else sprintf(pString, "Y%d", ii);
+    else snprintf(pString,100,"Y%d", ii);
     StrOutNames_.loadOneString(ii, pString);
   }
   return 0;
@@ -609,7 +609,7 @@ int FunctionInterface::setDriver(int which)
             //**/ input names of the RS model and match
             for (ii = 0; ii < nInps; ii++)
             {
-              sprintf(pString,"fixed-%d", ii+1);
+              snprintf(pString,100,"fixed-%d", ii+1);
               cString = psConfig_.getParameter(pString);
               if (cString != NULL)
               {
@@ -708,8 +708,8 @@ int FunctionInterface::evaluate(int sampleID,int nInputs,double *inputs,
 {
   int    ii, outputCount, length, nfixed, status;
   double value, *myInputs, stdev;
-  char   lineIn[500], command[500], winput1[500], winput2[500];
-  char   outfile[500], infile[500], *cString, equal[100];
+  char   lineIn[1001], command[1001], winput1[1001], winput2[1001];
+  char   outfile[501], infile[501], *cString, equal[100];
   FILE   *fp, *fIn, *fOut;
 
   //**/ ---------------------------------------------------------------
@@ -757,9 +757,9 @@ int FunctionInterface::evaluate(int sampleID,int nInputs,double *inputs,
       length = strlen(appInputTemplate_);
       for (ii = length-1; ii >= 0; ii--)
         if (appInputTemplate_[ii] == '/') break; 
-      sprintf(infile, "%s.%d", &(appInputTemplate_[ii+1]), sampleID+1);
+      snprintf(infile,500,"%s.%d", &(appInputTemplate_[ii+1]), sampleID+1);
     }
-    else sprintf(infile, "psuadeOpt.in.%d", sampleID+1);
+    else snprintf(infile,500,"psuadeOpt.in.%d", sampleID+1);
 
     //**/ -------------------------------------------------------------
     //**/ fetch the name of the output file to read
@@ -769,9 +769,9 @@ int FunctionInterface::evaluate(int sampleID,int nInputs,double *inputs,
       length = strlen(appOutputTemplate_);
       for (ii = length-1; ii >= 0; ii--)
         if (appOutputTemplate_[ii] == '/') break; 
-      sprintf(outfile, "%s.%d", &(appOutputTemplate_[ii+1]), sampleID+1);
+      snprintf(outfile,500, "%s.%d",&(appOutputTemplate_[ii+1]),sampleID+1);
     }
-    else sprintf(outfile, "psuadeOpt.out.%d", sampleID+1);
+    else snprintf(outfile,500,"psuadeOpt.out.%d", sampleID+1);
 
     //**/ -------------------------------------------------------------
     //**/ check to see if the output file is already present (new 2008)
@@ -805,7 +805,7 @@ int FunctionInterface::evaluate(int sampleID,int nInputs,double *inputs,
         while (ii < nfixed)
         {
           ii++;
-          sprintf(winput1, "fixed-%d",ii);
+          snprintf(winput1,100,"fixed-%d",ii);
           cString = psConfig_.getParameter(winput1);
           if (cString != NULL)
           {
@@ -855,10 +855,10 @@ int FunctionInterface::evaluate(int sampleID,int nInputs,double *inputs,
       {
         //**/ executionMode_ == 1 ==> asynchronous mode
         if (executionMode_ == 1)
-          sprintf(command, "\"%s\" %s %s %d %d %d&",appDriver_,infile,
-                  outfile, sampleID, flag, printLevel_);
+          snprintf(command,1000,"\"%s\" %s %s %d %d %d&",appDriver_,infile,
+                   outfile, sampleID, flag, printLevel_);
         else
-          sprintf(command, "\"%s\" %s %s %d %d %d", appDriver_,infile,
+          snprintf(command,1000,"\"%s\" %s %s %d %d %d", appDriver_,infile,
                    outfile, sampleID, flag, printLevel_);
         if (strstr((const char*) appDriver_, "rm ") != NULL ||
             strstr((const char*) appDriver_, "mv ") != NULL ||
@@ -873,11 +873,11 @@ int FunctionInterface::evaluate(int sampleID,int nInputs,double *inputs,
       else if (appOptFlag_ == 1)
       {
         if (executionMode_ == 1)
-          sprintf(command, "%s %s %s %d %d %d&",optDriver_,infile,outfile,
-                  sampleID+1, flag, printLevel_);
+          snprintf(command,1000,"%s %s %s %d %d %d&",optDriver_,infile,outfile,
+                   sampleID+1, flag, printLevel_);
         else
-          sprintf(command, "%s %s %s %d %d %d",optDriver_,infile,outfile,
-                  sampleID+1, flag, printLevel_);
+          snprintf(command,1000,"%s %s %s %d %d %d",optDriver_,infile,outfile,
+                   sampleID+1, flag, printLevel_);
         if (strstr((const char*) optDriver_, "rm ") != NULL ||
             strstr((const char*) optDriver_, "mv ") != NULL ||
             strstr((const char*) optDriver_, " -f ") != NULL ||
@@ -890,8 +890,8 @@ int FunctionInterface::evaluate(int sampleID,int nInputs,double *inputs,
       }
       else if (appOptFlag_ == 2)
       {
-        sprintf(command, "%s %s %s %d %d %d", auxOptDriver_, infile, 
-                outfile, sampleID+1, flag, printLevel_);
+        snprintf(command,1000,"%s %s %s %d %d %d", auxOptDriver_, infile, 
+                 outfile, sampleID+1, flag, printLevel_);
         if (strstr((const char*) auxOptDriver_, "rm ") != NULL ||
             strstr((const char*) auxOptDriver_, "mv ") != NULL ||
             strstr((const char*) auxOptDriver_, " -f ") != NULL ||
@@ -1098,7 +1098,7 @@ int FunctionInterface::ensembleEvaluate(int nSamp,int nInputs,
 {
   int    ii, ss, outputCount, nfixed, status;
   double value;
-  char   outfile[500], infile[500], lineIn[5000], command[500];
+  char   outfile[500], infile[500], lineIn[5000], command[1001];
   char   winput1[500], winput2[500], winput3[500], *cString;
   FILE   *fp, *fIn, *fOut;
 
@@ -1119,8 +1119,8 @@ int FunctionInterface::ensembleEvaluate(int nSamp,int nInputs,
   //**/ -------------------------------------------------------------
   //**/ prepare input file 
   //**/ -------------------------------------------------------------
-  sprintf(infile, "psuadeEnsemble.in.%d", ID);
-  sprintf(outfile, "psuadeEnsemble.out.%d", ID);
+  snprintf(infile,100,"psuadeEnsemble.in.%d", ID);
+  snprintf(outfile,100,"psuadeEnsemble.out.%d", ID);
 
   //**/ -------------------------------------------------------------
   //**/ check to see if the output file is already present 
@@ -1171,7 +1171,7 @@ int FunctionInterface::ensembleEvaluate(int nSamp,int nInputs,
       ss = 0;
       for (ii = 0; ii < nfixed; ii++)
       {
-        sprintf(winput1, "fixed-%d",ii+1);
+        snprintf(winput1,100,"fixed-%d",ii+1);
         cString = psConfig_.getParameter(winput1);
         if (cString != NULL)
         {
@@ -1209,8 +1209,8 @@ int FunctionInterface::ensembleEvaluate(int nSamp,int nInputs,
         exit(1);
       }
       else fclose(fp);
-      sprintf(command, "%s %s %s %d %d", ensembleDriver_,infile,
-              outfile,ID,printLevel_);
+      snprintf(command,1000,"%s %s %s %d %d", ensembleDriver_,infile,
+               outfile,ID,printLevel_);
     }
     else
     {
@@ -1228,7 +1228,7 @@ int FunctionInterface::ensembleEvaluate(int nSamp,int nInputs,
         exit(1);
       }
       else fclose(fp);
-      sprintf(command, "%s %s %s %d %d", ensembleOptDriver_,infile,
+      snprintf(command,1000,"%s %s %s %d %d", ensembleOptDriver_,infile,
               outfile, ID, printLevel_);
     }
 
@@ -1533,7 +1533,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       //**/ ==> psuadeIO has training sample
       //**/ --- nInps = number of inputs in training sample
       //**/ --- nOuts = number of outputs in training sample
-      sprintf(pString,
+      snprintf(pString,100,
         "Enter name of the training sample (for creating RS): ");
       getString(pString, fname);
       fname[strlen(fname)-1] = '\0';
@@ -1555,7 +1555,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       //**/ --- set uncertain parameter input to 1 
       //**/ --- (e.g. vecIT[kk]>=1) if kk is an uncertain parameter
       vecUInputs.setLength(nInps);
-      sprintf(pString,
+      snprintf(pString,100,
          "Enter uncertain input number (1 - %d, 0 to end) : ",
          nInps);
       ii = 0;
@@ -1585,7 +1585,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       printf("Line 2: 1 <sample 1 values>\n");
       printf("Line 3: 2 <sample 2 values>\n");
       printf("Line 4: ...\n");
-      sprintf(pString,"Enter the file name of your prior sample : ");
+      snprintf(pString,100,"Enter the file name of your prior sample : ");
       getString(pString, fname);
       fname[strlen(fname)-1] = '\0';
       status = readIReadDataFile(fname, matPriorSample);
@@ -1627,7 +1627,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
         printf("IMPORTANT: THE PRIOR SAMPLE MUST BE A SUBSET OF ");
         printf("THE UNIFORM\n");
         printf("           SAMPLE, OR THIS ALGORITHM WILL FAIL.\n");
-        sprintf(pString,"Enter the file name of your uniform sample : ");
+        snprintf(pString,100,"Enter the file name of your uniform sample : ");
         getString(pString, fname);
         kk = strlen(fname);
         fname[kk-1] = '\0';
@@ -1658,7 +1658,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       printf("Line 2: 1 <design inputs> <expected outputs and std dev>\n");
       printf("Line 3: 2 <design inputs> <expected outputs and std dev>\n");
       printf("...\n");
-      sprintf(pString,"Enter the file name of your candidate set : ");
+      snprintf(pString,100,"Enter the file name of your candidate set : ");
       getString(pString, fname);
       fname[strlen(fname)-1] = '\0';
       status = readIReadDataFile(fname, matCandidates);
@@ -1708,8 +1708,8 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
         printf("compute the optimality metrics.\n");
         printf("This can be the same as the candidate set");
         printf(" (but not recommended).\n");
-        sprintf(pString,
-                "Enter the file name of your evaluation set : ");
+        snprintf(pString,100,
+                 "Enter the file name of your evaluation set : ");
         getString(pString, fname);
         fname[strlen(fname)-1] = '\0';
         status = readIReadDataFile(fname, matEvalSet);
@@ -2475,7 +2475,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       printf("This method needs a training sample to create ");
       printf("response surfaces for\n");
       printf("inference and for analyzing the evaluation set.\n");
-      sprintf(pString,
+      snprintf(pString,100,
           "Enter name of the training sample (in PSUADE format): ");
       getString(pString, fname);
       fname[strlen(fname)-1] = '\0';
@@ -2494,7 +2494,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
 
       //**/ --- user selects uncertain inputs ==> vecUInputs
       vecUInputs.setLength(nInps);
-      sprintf(pString,
+      snprintf(pString,100,
          "Enter uncertain input number (1 - %d, 0 to end) : ",nInps);
       ii = 0;
       while (1)
@@ -2524,7 +2524,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       printf("Line 2: 1 <sample 1 values>\n");
       printf("Line 3: 2 <sample 2 values>\n");
       printf("Line 4: ...\n");
-      sprintf(pString, "Enter the file name of your prior sample : ");
+      snprintf(pString,100,"Enter the file name of your prior sample : ");
       getString(pString, fname);
       fname[strlen(fname)-1] = '\0';
       matPriorSample.setFormat(PS_MAT2D); // This is needed for later sort
@@ -2561,7 +2561,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
         printf("Line 2: <design 1 values>\n");
         printf("Line 3: <design 2 values>\n");
         printf("Line 4: ...\n");
-        sprintf(pString,"Enter the file name of your selected designs : ");
+        snprintf(pString,100,"Enter the file name of your selected designs : ");
       }
       else
       {
@@ -2571,7 +2571,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
         printf("Line 2: <design 1 values>\n");
         printf("Line 3: <design 2 values>\n");
         printf("Line 4: ...\n");
-        sprintf(pString,"Enter the file name of your candidate set : ");
+        snprintf(pString,100,"Enter the file name of your candidate set : ");
       }
       getString(pString, fname);
       fname[strlen(fname)-1] = '\0';
@@ -2606,7 +2606,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
         printf("compute the optimality metrics.\n");
         printf("This can be the same as the candidate set (but");
         printf(" not recommended).\n");
-        sprintf(pString,
+        snprintf(pString,100,
                 "Enter the file name of your evaluation set : ");
         getString(pString, fname);
         fname[strlen(fname)-1] = '\0';
@@ -3220,7 +3220,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       printf("- A candidate set (or a design set) of experimental designs\n");
 
       //**/ get the training sample
-      sprintf(pString,
+      snprintf(pString,100,
           "Enter name of the training sample (in PSUADE format): ");
       getString(pString, fname);
       fname[strlen(fname)-1] = '\0';
@@ -3254,7 +3254,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       printf("which inputs\n");
       printf("are uncertain (and the rest are design parameters).\n");
       vecUInputs.setLength(nInps);
-      sprintf(pString,
+      snprintf(pString,100,
          "Enter uncertain input number (1 - %d, 0 to terminate) : ",nInps);
       ii = 0;
       while (1)
@@ -3296,7 +3296,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       printf("Line 2: 1 <sample 1 values>\n");
       printf("Line 3: 2 <sample 2 values>\n");
       printf("Line 4: ...\n");
-      sprintf(pString, "Enter the file name of your prior sample : ");
+      snprintf(pString,100,"Enter the file name of your prior sample : ");
       getString(pString, fname);
       fname[strlen(fname)-1] = '\0';
       matPriorSample.setFormat(PS_MAT2D); // This may not be needed
@@ -3326,14 +3326,14 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
         printf("to reduce the cost by collapsing the prior sample into ");
         printf("fewer sample\n");
         printf("points (prior sample size = %d).\n",matPriorSample.nrows());
-        sprintf(pString,
+        snprintf(pString,100,
            "Collapse prior sample into smaller sample ? (y or n) \n"); 
         getString(pString, lineIn);
         if (lineIn[0] == 'y')
         {
           printf("The size of the prior sample is %d.\n",
                  matPriorSample.nrows());
-          sprintf(pString,
+          snprintf(pString,100,
             "Use (1) the sample mean only or (2) a random sub-sample ? ");
           kk = getInt(1, 2, pString);
           if (kk == 1)
@@ -3353,7 +3353,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
           }
           else if (kk == 2)
           {
-            sprintf(pString,"Enter sub-sample size (%d - %d) : ",
+            snprintf(pString,100,"Enter sub-sample size (%d - %d) : ",
                     nInputs, matPriorSample.nrows()-1);
             int nSamFisher = getInt(nInputs,matPriorSample.nrows()-1,pString);
             
@@ -3416,7 +3416,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
         printf("Line 2: <selected design point 1 values>\n");
         printf("Line 3: <selected design point 2 values>\n");
         printf("Line 4: ...\n");
-        sprintf(pString,
+        snprintf(pString,100,
                 "Enter the file name of the selected set of designs : ");
       }
       else
@@ -3427,7 +3427,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
         printf("Line 2: <candidate design 1 values>\n");
         printf("Line 3: <candidate design 2 values>\n");
         printf("Line 4: ...\n");
-        sprintf(pString,
+        snprintf(pString,100,
                 "Enter the file name of your candidate design set : ");
       }
       getString(pString, fname);
@@ -3466,7 +3466,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
         printf("Line 2: 1 <sample 1 values> \n");
         printf("Line 3: 2 <sample 2 values> \n");
         printf("....\n");
-        sprintf(pString,
+        snprintf(pString,100,
                 "Enter the file name of your evaluation set : ");
         getString(pString, fname);
         fname[strlen(fname)-1] = '\0';
@@ -4465,7 +4465,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
         printf("This file should have either the\n");
         printf("(1) PSUADE iread format (iread-compatible) or\n");
         printf("(2) PSUADE data format (load-compatible)\n");
-        sprintf(pString,
+        snprintf(pString,100,
                 "Enter the file name of your candidate set : ");
         getString(pString, fname);
         kk = strlen(fname);
@@ -4512,11 +4512,11 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
           printf("Select one of the following alternatives: \n");
           printf("(1) Unweighted MMD (no weight given to each sample)\n");
           printf("(2) Weighted MMD (use one of the outputs as weight)\n");
-          sprintf(pString, "Enter your choice (1 or 2): ");
+          snprintf(pString,100,"Enter your choice (1 or 2): ");
           hasWeights = getInt(1,2,pString);
           if (hasWeights == 2)
           {
-            sprintf(pString,
+            snprintf(pString,100,
               "Which output to use as weight (1 - %d): ",nOuts);
             outputID = getInt(1, nOuts, pString);
             outputID--;
@@ -4682,12 +4682,12 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       printf("Process either from a\n");
       printf("training sample or from a vector of user-provided ");
       printf("hyperparameters.\n");
-      sprintf(pString, "Use a training set ? (y or n) ");
+      snprintf(pString,100,"Use a training set ? (y or n) ");
       getString(pString, lineIn);
       if (lineIn[0] == 'y')
       {
         printf("This training sample must be in PSUADE format.\n");
-        sprintf(pString, "Name of the training sample ? ");
+        snprintf(pString,100,"Name of the training sample ? ");
         getString(pString, fname);
         fname[strlen(fname)-1] = '\0';
         PsuadeData *psuadeIO = new PsuadeData();
@@ -4863,7 +4863,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
         printf("have the option to use a response surface built ");
         printf("from a training set\n");
         printf("(no derivative needed, simulation nOutput=1 only).\n");
-        sprintf(pString,
+        snprintf(pString,100,
           "Build response surface from training set ? (y or n) ");
         getString(pString, lineIn);
         if (lineIn[0] == 'y')
@@ -4875,7 +4875,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
           printf("SIMULATION EXECUTABLE, AND THIS SIMULATOR HAS ");
           printf("TO COMPUTE 1 OUTPUT PLUS\n");
           printf("ITS DERIVATIVES WITH RESPECT TO THE INCERTAIN INPUTS.\n");
-          sprintf(pString,
+          snprintf(pString,100,
                  "Name of the training sample (in PSUADE format) ? ");
           getString(pString, fname);
           fname[strlen(fname)-1] = '\0';
@@ -4925,7 +4925,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
         printf("extracting user information:\n"); 
         printf("1. input dimension and input bounds\n");
         printf("2. simulation driver name\n");
-        sprintf(pString, "Enter PSUADE input file name : ");
+        snprintf(pString,100,"Enter PSUADE input file name : ");
         getString(pString, fname);
         fname[strlen(fname)-1] = '\0';
         psuadeIO = new PsuadeData();
@@ -4951,7 +4951,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
 
       //**/ --- user selects uncertain inputs ==> vecUInputs
       vecUInputs.setLength(nInps);
-      sprintf(pString,
+      snprintf(pString,100,
          "Enter uncertain input number (1 - %d, 0 to end) : ",nInps);
       ii = 0;
       while (1)
@@ -4981,7 +4981,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       printf("Line 2: 1 <sample 1 values>\n");
       printf("Line 3: 2 <sample 2 values>\n");
       printf("Line 4: ...\n");
-      sprintf(pString, "Enter the file name of your prior sample : ");
+      snprintf(pString,100,"Enter the file name of your prior sample : ");
       getString(pString, fname);
       fname[strlen(fname)-1] = '\0';
       status = readIReadDataFile(fname, matPriorSample);
@@ -5021,19 +5021,19 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
         printf("fewer sample\n");
         printf("points (has to be larger than the number of ");
         printf("uncertain parameters.)\n");
-        sprintf(pString,
+        snprintf(pString,100,
            "Collapse prior sample into smaller sample ? (y or n) \n"); 
         getString(pString, lineIn);
         if (lineIn[0] == 'y')
         {
           printf("The size of the prior sample is %d.\n",
                  matPriorSample.nrows());
-          sprintf(pString,
+          snprintf(pString,100,
             "Use (1) the full sample or (2) a random sub-sample ? ");
           kk = getInt(1, 2, pString);
           if (kk == 2)
           {
-            sprintf(pString,"Enter sub-sample size (%d - %d) : ",
+            snprintf(pString,100,"Enter sub-sample size (%d - %d) : ",
                     nInputs, matPriorSample.nrows()/2+1);
             nSamFisher = getInt(nInputs,matPriorSample.nrows()/2+1,pString);
             
@@ -5094,7 +5094,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
         printf("Line 2: <design 1 values>\n");
         printf("Line 3: <design 2 values>\n");
         printf("Line 4: ...\n");
-        sprintf(pString,"Enter the file name of your selected designs : ");
+        snprintf(pString,100,"Enter the file name of your selected designs : ");
       }
       else
       {
@@ -5104,7 +5104,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
         printf("Line 2: <design 1 values>\n");
         printf("Line 3: <design 2 values>\n");
         printf("Line 4: ...\n");
-        sprintf(pString,"Enter the file name of your candidate design set : ");
+        snprintf(pString,100,"Enter the file name of your candidate design set : ");
       }
       getString(pString, fname);
       fname[strlen(fname)-1] = '\0';
@@ -5130,7 +5130,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
         printf("Line 2: 1 <sample 1 values> \n");
         printf("Line 3: 2 <sample 2 values> \n");
         printf("....\n");
-        sprintf(pString,
+        snprintf(pString,100,
                 "Enter the file name of your evaluation set : ");
         getString(pString, fname);
         fname[strlen(fname)-1] = '\0';
@@ -5601,7 +5601,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
     {
       //**/ firstly, clean up
       if (printLevel_ > 0)
-        printf("PSUADE_LOCAL: LS optimization Initialization begins ..\n");
+        printf("PSUADE_LOCAL: LS optimization initialization begins ..\n");
       if (rsPtrs != NULL)
       {
         for (ii = 0; ii < nOuts; ii++)
@@ -5695,7 +5695,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       printf("Line 1: <number of data points> <nInputs> <nOutputs>\n");
       printf("Line 2: 1 <inputs for point 1> <output/scale pairs>\n");
       printf("Line 3: 2 <inputs for point 2> <output/scale pairs>\n");
-      printf("...\n");
+      printf("... (which is the same as that for rsmcmc)\n");
       MCMCAnalyzer *mcmc = new MCMCAnalyzer();
       double dstat = mcmc->readSpecFile(nInps, nOuts, vecDParams,
                          matOptInps,matOptMeans,matOptStds,kk,0);
@@ -5740,6 +5740,13 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
     vecXX.setLength(nInps);
     int offset1, offset2;
     double loglikelihood=0, mse, YOut;
+    if (printLevel_ > 2)
+    {
+      printf("  Current optimization inputs : \n");
+      for (jj = 0; jj < nInps; jj++)
+        if (vecDParams.length() == 0 || vecDParams[jj] == 0)
+          printf("    Input %4d = %14.6e\n",jj+1,vecXX[jj]);
+    } 
     for (ii = 0; ii < matOptMeans.nrows(); ii++)
     {
       offset1 = offset2 = 0;
@@ -5758,9 +5765,9 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       }
       if (printLevel_ > 3)
       {
-        printf("  Current inputs : \n");
-        for (jj = 0; jj < nInps; jj++)
-          printf("    Input %4d = %14.6e\n",jj+1,vecXX[jj]);
+        //printf("  Current inputs : \n");
+        //for (jj = 0; jj < nInps; jj++)
+        //  printf("    Input %4d = %14.6e\n",jj+1,vecXX[jj]);
         printf("  Current outputs : \n");
       } 
       mse = 0;

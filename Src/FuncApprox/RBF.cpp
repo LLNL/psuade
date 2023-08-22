@@ -54,7 +54,7 @@ extern "C" {
 RBF::RBF(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
 {
   int  kernel;
-  char pString[501], *cString, winput1[1000], winput2[1000];
+  char pString[101], *cString, winput1[1000], winput2[1000];
 
   faID_ = PSUADE_RS_RBF;
   //**/ =======================================================
@@ -96,11 +96,11 @@ RBF::RBF(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
     printf("1. inverse multi-quadratic\n");
     printf("2. Gaussian\n");
     printf("3. thin plate spline\n");
-    sprintf(pString,"Enter your choice (0 - 3) : ");
+    snprintf(pString,100,"Enter your choice (0 - 3) : ");
     type_ = getInt(0, 3, pString);
     if (type_ == 2)
     {
-      sprintf(pString,
+      snprintf(pString,100,
          "Enter scaling factor for Gaussian kernel (default=1) : ");
       gaussScale_ = getDouble(pString);
     }
@@ -112,14 +112,14 @@ RBF::RBF(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
       "You have the option to change this threshold (1e-15).\n");
     printOutTS(PL_INFO,
       "NOTE: truncating singular values may lead to erroneous results.\n");
-    sprintf(pString, "Enter new threshold for SVD (> 0 but << 1) : ");
+    snprintf(pString,100,"Enter new threshold for SVD (> 0 but << 1) : ");
     svdThresh_ = getDouble(pString);
 
-    sprintf(pString, "RBF_kernel = %d", type_);
+    snprintf(pString,100,"RBF_kernel = %d", type_);
     psConfig_.putParameter(pString);
-    sprintf(pString, "RBF_scale = %e", gaussScale_);
+    snprintf(pString,100,"RBF_scale = %e", gaussScale_);
     psConfig_.putParameter(pString);
-    sprintf(pString, "RBF_thresh = %e", svdThresh_);
+    snprintf(pString,100,"RBF_thresh = %e", svdThresh_);
     psConfig_.putParameter(pString);
   }
   else

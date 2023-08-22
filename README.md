@@ -9,18 +9,17 @@ models with a large number of parameters and complex parameter correlations.
 
 # History
 
-It enjoyed its first public release in 2007 and it has been over 15 years. 
-In 2016, as part of the Carbon Capture Simulation Initiative (CCSI program) 
-software suite (it is the computational workhorse of the CCSI FOQUS 
-software), it has earned the RD100 award. PSUADE has been downloaded and 
+It enjoyed its first public release in 2007 and it has been over 15 years.
+In 2016, as part of the Carbon Capture Simulation Initiative (CCSI program)
+software suite (it is the computational workhorse of the CCSI FOQUS
+software), it has earned the RD100 award. PSUADE has been downloaded and
 used across several continents for many diverse scientific applications.
 
------------------------------------------------------------------------------
-## Getting Started
+## Quick Installation Guide
 
 For problems with installation, contact:
 
-Charles Tong at tong10@llnl.gov
+Charles Tong at tong10@llnl.gov, or James Leek at leek2@llnl.gov
 
 ### Linux
 
@@ -64,7 +63,7 @@ B. After all compilation is done successfully, the executable "psuade"
    the lib directory.
 
 C. You can run a simple test by going to the
-   <toplevel>/Examples/Bungee directory and issuing:
+   <toplevel>/Examples/SimpleUQ/Bungee directory and issuing:
        cc -o simulator simulator.c -lm
        ../../build/bin/psuade psuade.in
    Afterward, you should see a file called 'psuadeData'.
@@ -84,6 +83,45 @@ F. You can build a package for other people to install by running 'make package'
 G. Now read the short manual in the Doc/Manual directory and follow the
    instructions to get a simple application running within minutes.
 
+-----------------------------------------------------------------------------
+
+### Windows
+
+   Requires Cmake and mingw (preferably including gfortran).  If you want to 
+   build an installable package you will need NSIS.
+
+A. Make sure you have cmake >= 2.8 installed on your system.  Then start the
+   cmake-gui.  
+   Select you PSUADE source tree, and where you want it to build.
+   Click configure.
+   Select MingGW make files.
+   Select BUILD_SHARED, BOBYQA, and METIS.
+   Click Generate.
+
+B. Open a command line window, either powershell of cmd.
+   cd builddir
+   c:\mingw\bin\mingw-make.exe
+   It should build for a while.
+
+C. You can also run the built in tests my running:
+   c:\mingw\bin\mingw-make.exe test
+   WARNING:
+   1. This will take a long time.  At least 20 minutes
+   2. Some tests are expected to fail on Windows. PSUADE is very sensitive
+      to the processor it's running on and the numeric results will be off
+      on different processors and enviromnet variables.  As long as a few
+      tests pass you're probably OK.
+
+E. You can install PSUADE by running c:\mingw\bin\mingw-make.exe install
+
+F. You can build a package for other people to install by running
+   c:\mingw\bin\mingw-make.exe package
+
+G. Now read the short manual in the Doc/Manual directory and follow the
+   instructions to get a simple application running within minutes.
+
+-----------------------------------------------------------------------------
+
 ### MacOSX
 
    Requires cmake, and cc/gcc, c++/g++, gfortran >= 4.4.
@@ -102,9 +140,13 @@ B. Now let's run cmake.  Go to your psuade source.
    CMAKE_C_COMPILER                 /usr/bin/cc          
    I need to change it to:
    CMAKE_C_COMPILER                 /opt/local/bin//gcc
+   If ccmake fails and the option 'g' is not available, remove the specifics
+   in OSX_DEPLOYMENT_TARGET to see if this fixes the problem.
 
    Aside from that it seems OK, so I hit 'c' until I can hit 'g'
    hit 'g' to generate and exit.
+   Note: If you are using compilers from XCode and compilation errors occur,
+         try setting the compilers to the ones in /usr/bin.
 
 C. Now build: run 'make'  It should build for a while.
 
@@ -114,53 +156,18 @@ D. You can run a simple test by going to the
        ../../build/bin/psuade psuade.in
    Afterward, you should see a file called 'psuadeData'.
 
-E. You can also run the built in tests my running 'make test' from the
-   build directory.  WARNINGS:
-   1. This will take a long time.  At least 20 minutes
-   2. Some tests are expected to fail on MACOSX PSUADE is very sensitive
-      to the system it's running on, and we get different results on OSX
-      than Linux.  So the following tests are expected to fail:
-          8 - ARSM1 (Failed)
-         10 - Morris20MOAT (Failed)
-         11 - Morris20LH (Failed)
-         12 - MCMCTest (Failed)
+E. You can install PSUADE by running 'make install'
 
-F. You can install PSUADE by running 'make install'
+F. You can build a package for other people to install by running 'make package'
 
-G. You can build a package for other people to install by running 'make package'
-
-H. Now read the short manual in the Doc/Manual directory and follow the
+G. Now read the short manual in the Doc/Manual directory and follow the
    instructions to get a simple application running within minutes.
 
------------------------------------------------------------------------------
-## Citation
+*****************************************************************************
 
-If you are referencing in a publication, please cite the following book
-chapter
-
-C. "Tong, Problem Solving Environment for Uncertainty Analysis and
-      Design Exploration," Handbook of Uncertainty Quantification, edited
-      by R. Ghanem, D. Higdon, and H. Owhadi,
-      doi:10.1007/978-3-319-11259-6\_53-1, 2016.
-
------------------------------------------------------------------------------
 ## Explanation of directories
 
 Examples : test programs
 Src      : source code
 Doc      : documentations
 External : external packages
-
------------------------------------------------------------------------------
-## LICENSE
-
-PSUADE is distributed under the terms of both the MIT license and the Apache 
-License (Version 2.0). Users may choose either license, at their option.
-
-All new contributions must be made under both the MIT and Apache-2.0 licenses.
-
-See LICENSE-MIT, LICENSE-APACHE, COPYRIGHT, and NOTICE for details.
-
-SPDX-License-Identifier: (Apache-2.0 OR MIT)
-
-LLNL-CODE-842506

@@ -315,12 +315,12 @@ double RSMSobol2Analyzer::analyze(aData &adata)
      printOutTS(PL_INFO,"Default M = %d\n", nSubSamples);
      printOutTS(PL_INFO,"Default K = %d\n", nLevels);
      printEquals(PL_INFO, 0);
-     sprintf(pString,"Enter M (suggestion: 100 - 1000) : ");
+     snprintf(pString,100,"Enter M (suggestion: 100 - 1000) : ");
      nSubSamples = getInt(100, 1000, pString);
-     sprintf(pString,"Enter K (suggestion:  50 - 500) : ");
+     snprintf(pString,100,"Enter K (suggestion:  50 - 500) : ");
      nLevels = getInt(50, 500, pString);
 
-     //**/sprintf(pString,
+     //**/snprintf(pString,100,
      //**/  "If analyze one input only, enter input number (0 if all): ");
      //**/ don't remember what it does, disable for now (2/2014)
      //**/selectedInput = getInt(0, nInputs, pString);
@@ -955,9 +955,9 @@ double RSMSobol2Analyzer::analyze2(aData &adata)
     printOutTS(PL_INFO,"default K = %d.\n", nLevels);
     printOutTS(PL_INFO,"NOTE: large M and K can take a long time.\n");
     printEquals(PL_INFO, 0);
-    sprintf(pString,"Enter M (suggestion: 100 - 1000) : ");
+    snprintf(pString,100,"Enter M (suggestion: 100 - 1000) : ");
     nSubSamples = getInt(100, 1000, pString);
-    sprintf(pString, "Enter nLevels (suggestion: 50 - 500) : ");
+    snprintf(pString,100,"Enter nLevels (suggestion: 50 - 500) : ");
     nLevels = getInt(50, 500, pString);
     printAsterisks(PL_INFO, 0);
   }
@@ -1024,7 +1024,7 @@ double RSMSobol2Analyzer::analyze2(aData &adata)
     strNames.setNumStrings(nInputs);
     for (ii = 0; ii < nInputs; ii++) 
     {
-      sprintf(pString, "X%d", ii+1);
+      snprintf(pString,100,"X%d", ii+1);
       strNames.loadOneString(ii, pString);
     }
     pdfman->initialize(nInputs, inputPDFs, inputMeans, inputStdevs,

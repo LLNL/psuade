@@ -22,7 +22,7 @@
 // ************************************************************************
 // Functions for the class RBF
 // AUTHOR : CHARLES TONG
-// DATE   : 2014
+// DATE   : 2017
 // ************************************************************************
 #include <stdlib.h>
 #include <stdio.h>
@@ -47,8 +47,6 @@ extern "C" {
 
 #define PABS(x) ((x) > 0 ? (x) : (-(x)))
 
-#define PS_RBF1
-
 // ************************************************************************
 // Constructor for object class RBF
 // ------------------------------------------------------------------------
@@ -56,7 +54,7 @@ MRBF::MRBF(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
 {
   int    idata, ii;
   double ddata;
-  char   pString[501], *strPtr, equal[100], winput[5000];
+  char   pString[101], *strPtr, equal[100], winput[5000];
 
   //**/ =======================================================
   //**/ set identifier
@@ -101,11 +99,11 @@ MRBF::MRBF(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
     printf("1. inverse multi-quadratic\n");
     printf("2. Gaussian\n");
     printf("3. thin plate spline\n");
-    sprintf(pString,"Enter your choice (0 - 3) : ");
+    snprintf(pString,100,"Enter your choice (0 - 3) : ");
     type_ = getInt(0, 3, pString);
     if (type_ == 2)
     {
-      sprintf(pString,
+      snprintf(pString,100,
          "Enter scaling factor for Gaussian kernel (default=1) : ");
       gaussScale_ = getDouble(pString);
     }
@@ -117,12 +115,12 @@ MRBF::MRBF(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
          "You have the option to change this threshold (1e-15).\n");
     printOutTS(PL_INFO,
          "NOTE: truncating singular values may lead to erroneous results.\n");
-    sprintf(pString, "Enter new threshold for SVD (> 0 but << 1) : ");
+    snprintf(pString,100,"Enter new threshold for SVD (> 0 but << 1) : ");
     svdThresh_ = getDouble(pString);
 
     printf("You can improve smoothness across partitions by allowing\n");
     printf("overlaps. The recommended overlap is 0.1 (or 10%%).\n");
-    sprintf(pString, "Enter the degree of overlap (0 - 0.4) : ");
+    snprintf(pString,100,"Enter the degree of overlap (0 - 0.4) : ");
     ddata = getDouble(pString);
     if (ddata < 0 || ddata > 0.4)
     {
@@ -134,18 +132,18 @@ MRBF::MRBF(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
     printf("You can decide the sample size of each partition.\n");
     printf("Larger sample size per partition will take more setup time.\n");
     printf("The default is 500 (will have more if there is overlap).\n");
-    sprintf(pString, "Enter the partition sample size (500 - 2000) : ");
+    snprintf(pString,100,"Enter the partition sample size (500 - 2000) : ");
     partSize_ = getInt(500, 20000, pString);
    
-    sprintf(pString, "RBF_kernel = %d", type_);
+    snprintf(pString,100,"RBF_kernel = %d", type_);
     psConfig_.putParameter(pString);
-    sprintf(pString, "RBF_scale = %e", gaussScale_);
+    snprintf(pString,100,"RBF_scale = %e", gaussScale_);
     psConfig_.putParameter(pString);
-    sprintf(pString, "RBF_thresh = %e", svdThresh_);
+    snprintf(pString,100,"RBF_thresh = %e", svdThresh_);
     psConfig_.putParameter(pString);
-    sprintf(pString, "MRBF_max_samples_per_group = %d", partSize_);
+    snprintf(pString,100,"MRBF_max_samples_per_group = %d", partSize_);
     psConfig_.putParameter(pString);
-    sprintf(pString, "MRBF_overlap = %e", vecXd_[0]);
+    snprintf(pString,100,"MRBF_overlap = %e", vecXd_[0]);
     psConfig_.putParameter(pString);
   }
   else
@@ -385,8 +383,8 @@ int MRBF::initialize(double *X, double *Y)
   psConfig_.RSExpertModeSaveAndReset();
 
 #pragma omp parallel private(ii)
+{
 #pragma omp for
-
   for (ii = 0; ii < nPartitions_; ii++)
   {
     if (boxes_[ii]->nSamples_ > 0)
@@ -403,6 +401,7 @@ int MRBF::initialize(double *X, double *Y)
         printf("MRBF: processing partition %d completed\n",ii+1);
     }
   }
+}
   psConfig_.RSExpertModeRestore();
   turnPrintTSOn();
 

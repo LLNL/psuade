@@ -1,0 +1,13 @@
+sys rm -f psuadeMetis*
+sys cc -o simulator simulator.c -lm
+run psuadeARSM1.in
+3
+n
+n
+1
+sys rm -f *.m simulator psuadeG* psuadeM*
+rename psuadeData sample_adaptive
+# You may use the psuade rs2 command with sample_adaptive
+# create a Matlab response surface plot.
+quit
+

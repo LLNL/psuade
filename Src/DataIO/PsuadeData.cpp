@@ -326,7 +326,7 @@ int PsuadeData::getInputParameter(const char *keyword, pData &pd)
         strcpy(pd.strArray_[ii], pInput_.StrInpNames_.getOneString(ii));
       else
       {
-        sprintf(winput, "X%d", ii+1);
+        snprintf(winput,100,"X%d", ii+1);
         strcpy(pd.strArray_[ii], winput);
       }
     }
@@ -467,7 +467,7 @@ int PsuadeData::getOutputParameter(const char *keyword, pData &pd)
         strcpy(pd.strArray_[ii], pOutput_.StrOutNames_.getOneString(ii));
       else
       {
-        sprintf(winput, "Y%d", ii+1);
+        snprintf(winput,100,"Y%d", ii+1);
         strcpy(pd.strArray_[ii], winput);
       }
     }
@@ -807,7 +807,7 @@ void PsuadeData::createInputSection(int nInputs, int *symTable,
     {
       for (ii = 0; ii < nInputs; ii++)
       {
-        sprintf(pString, "X%d", ii+1);
+        snprintf(pString,100,"X%d", ii+1);
         pInput_.StrInpNames_.loadOneString(ii, pString);
       }
     }
@@ -903,11 +903,11 @@ void PsuadeData::updateInputSection(int nSamples,int nInputs,int *symTable,
 void PsuadeData::updateFixedParameters(int nFixed, char **names, 
                                        double *values)
 {
-  char pString[1000]; 
+  char pString[1001]; 
   pInput_.nFixedInps_ = nFixed;
   pInput_.StrFixedInpNames_.setNumStrings(nFixed);
   pInput_.VecFixedInpVals_.setLength(nFixed);
-  sprintf(pString,"num_fixed = %d", pInput_.nFixedInps_);
+  snprintf(pString,100,"num_fixed = %d", pInput_.nFixedInps_);
   psConfig_.putParameter(pString);
   for (int ii = 0; ii < pInput_.nFixedInps_; ii++)
   {
@@ -915,13 +915,13 @@ void PsuadeData::updateFixedParameters(int nFixed, char **names,
       pInput_.StrFixedInpNames_.loadOneString(ii, names[ii]);
     else
     { 
-      sprintf(pString, "Xfixed%d", ii+1);
+      snprintf(pString,100,"Xfixed%d", ii+1);
       pInput_.StrFixedInpNames_.loadOneString(ii, pString);
     }
     pInput_.VecFixedInpVals_[ii] = values[ii];
-    sprintf(pString,"fixed-%d %s = %24.16e", ii+1,
-            pInput_.StrFixedInpNames_.getOneString(ii),
-            pInput_.VecFixedInpVals_[ii]);
+    snprintf(pString,1000,"fixed-%d %s = %24.16e", ii+1,
+             pInput_.StrFixedInpNames_.getOneString(ii),
+             pInput_.VecFixedInpVals_[ii]);
     psConfig_.putParameter(pString);
   }
 }
@@ -1629,7 +1629,7 @@ int PsuadeData::readInputSection(FILE *fp)
 {
   int    ii, ind, idata, itmp, lineLeng=1000, nInputs=0;
   double ddata;
-  char   line[1000], winput[1000], winput2[1000], winput3[1000];
+  char   line[1001], winput[1001], winput2[1001], winput3[1001];
   const char *keywords[] = {"dimension", "variable", "PDF", "COR", "NAME", 
                             "num_fixed", "fixed", "discrete", "END"};
   FILE *fp2=NULL;
@@ -2099,7 +2099,7 @@ int PsuadeData::readInputSection(FILE *fp)
       pInput_.VecFixedInpVals_.setLength(idata);
       pInput_.nFixedInps_ = idata;
       pInput_.StrFixedInpNames_.setNumStrings(idata);
-      sprintf(winput,"num_fixed = %d", pInput_.nFixedInps_);
+      snprintf(winput,100,"num_fixed = %d", pInput_.nFixedInps_);
       psConfig_.putParameter(winput);
     }
     else if (strcmp(winput, keywords[6]) == 0) /* fixed */
@@ -2138,8 +2138,8 @@ int PsuadeData::readInputSection(FILE *fp)
       }
       sscanf(line,"%s %d %s %s %lg", winput, &itmp, winput2,
              winput3, &(pInput_.VecFixedInpVals_[idata]));
-      sprintf(winput,"fixed-%d %s = %24.16e", itmp, 
-              pInput_.StrFixedInpNames_.getOneString(idata),
+      snprintf(winput,1000,"fixed-%d %s = %24.16e", itmp, 
+               pInput_.StrFixedInpNames_.getOneString(idata),
               pInput_.VecFixedInpVals_[idata]);
       psConfig_.putParameter(winput);
     }
@@ -2152,7 +2152,7 @@ int PsuadeData::readInputSection(FILE *fp)
         printf("    input number should be between 1 and %d\n",nInputs);
         return -1;
       }
-      sprintf(winput2,"iDiscrete%d", idata);
+      snprintf(winput2,100,"iDiscrete%d", idata);
       psConfig_.putParameter(winput2);
     }
     else if (strcmp(winput, keywords[8]) == 0) /* END */
@@ -2178,7 +2178,7 @@ int PsuadeData::readInputSection(FILE *fp)
     if (pInput_.StrInpNames_.getOneString(ii) == NULL)
     {
       printf("INPUT SECTION ERROR: input %d has not defined\n",ii+1);
-      sprintf(winput, "X%d", ii+1);
+      snprintf(winput,100,"X%d", ii+1);
       pInput_.StrInpNames_.loadOneString(ii, winput);
       pInput_.VecInpLBds_[ii] = 0;
       pInput_.VecInpUBds_[ii] = 1;
@@ -2343,7 +2343,7 @@ int PsuadeData::readOutputSection(FILE *fp)
     {
       printf("OUTPUT SECTION WARNING: variable %d undeclared.\n",
              ii+1);
-      sprintf(winput, "Y%d", ii+1);
+      snprintf(winput,100,"Y%d", ii+1);
       pOutput_.StrOutNames_.loadOneString(ii, winput);
       return -1;
     } 
@@ -2425,7 +2425,7 @@ int PsuadeData::readMethodSection(FILE *fp)
     else if (strcmp(winput, keywords[1]) == 0) /* randomize */
     {
       pMethod_.sampleRandomize_ = 1;
-      sprintf(winput2,"randomize");
+      snprintf(winput2,100,"randomize");
       psConfig_.putParameter(winput2);
     }
     else if (strcmp(winput, keywords[2]) == 0) /* random perturbation */
@@ -3198,7 +3198,7 @@ int PsuadeData::readAnalysisSection(FILE *fp)
              "MARSBag","sum_of_trees","Legendre","user_regression",
              "sparse_grid_regression", "Kriging", "splines", "KNN", "RBF",
              "Acosso", "Bssanova", "psuade_regression", "RBFBag", "PLS",
-             "MRBF", "MGP3", "MMARS", "MTGP", "HLEG", "HGP3"};
+             "MRBF", "MGP3", "MMARS", "MTGP", "MNN", "HLEG", "HGP3"};
   const char *transformTypes[] = {"logx","logy"};
   const char *optimizeOptions[] = {
              "method", "fmin", "num_local_minima", "use_response_surface", 
@@ -3387,8 +3387,10 @@ int PsuadeData::readAnalysisSection(FILE *fp)
         else if (!strcmp(winput4,resSurfTypes[29])) 
              rstype = PSUADE_RS_MTGP;
         else if (!strcmp(winput4,resSurfTypes[30])) 
-             rstype = PSUADE_RS_HLEG;
+             rstype = PSUADE_RS_MDNN;
         else if (!strcmp(winput4,resSurfTypes[31])) 
+             rstype = PSUADE_RS_HLEG;
+        else if (!strcmp(winput4,resSurfTypes[32])) 
              rstype = PSUADE_RS_HGP3;
         else
         {
@@ -3480,21 +3482,21 @@ int PsuadeData::readAnalysisSection(FILE *fp)
       {
         sscanf(line,"%s %s %s %d", winput, winput2, winput3, 
                &pAnalysis_.legendreOrder_);
-        sprintf(winput,"Legendre_order = %d", pAnalysis_.legendreOrder_);
+        snprintf(winput,100,"Legendre_order = %d", pAnalysis_.legendreOrder_);
         psConfig_.putParameter(winput);
       }
       else if (strcmp(winput2, analysisOptions[10]) == 0) /* _mars_nbases */
       {
         sscanf(line,"%s %s %s %d", winput, winput2, winput3, 
                &pAnalysis_.marsNbasis_);
-        sprintf(winput,"MARS_num_bases = %d", pAnalysis_.marsNbasis_);
+        snprintf(winput,100,"MARS_num_bases = %d", pAnalysis_.marsNbasis_);
         psConfig_.putParameter(winput);
       }
       else if (strcmp(winput2, analysisOptions[11]) == 0) 
       {
         sscanf(line,"%s %s %s %d", winput, winput2, winput3, 
                &pAnalysis_.marsNdegrees_);
-        sprintf(winput,"MARS_interaction = %d", pAnalysis_.marsNdegrees_);
+        snprintf(winput,100,"MARS_interaction = %d", pAnalysis_.marsNdegrees_);
         psConfig_.putParameter(winput);
       }
       else if (strcmp(winput2, analysisOptions[12]) == 0) /* rs_num_mars*/
@@ -3508,7 +3510,7 @@ int PsuadeData::readAnalysisSection(FILE *fp)
         }
         else 
         {
-          sprintf(winput,"MARS_num = %d", pAnalysis_.marsNum_);
+          snprintf(winput,100,"MARS_num = %d", pAnalysis_.marsNum_);
           psConfig_.putParameter(winput);
         }
       }
@@ -3523,7 +3525,7 @@ int PsuadeData::readAnalysisSection(FILE *fp)
         }
         else
         {
-          sprintf(winput,"KRI_mode = %d", pAnalysis_.kriMode_);
+          snprintf(winput,100,"KRI_mode = %d", pAnalysis_.kriMode_);
           psConfig_.putParameter(winput);
         }
       }
@@ -3539,7 +3541,7 @@ int PsuadeData::readAnalysisSection(FILE *fp)
         }
         else
         {
-          sprintf(winput,"KRI_tol = %e", pAnalysis_.kriTol_);
+          snprintf(winput,100,"KRI_tol = %e", pAnalysis_.kriTol_);
           psConfig_.putParameter(winput);
         }
       }
@@ -3767,13 +3769,13 @@ int PsuadeData::readAnalysisSection(FILE *fp)
       else if (!strcmp(winput2, optimizeOptions[12])) /* opt save history */
       {
         pAnalysis_.optSaveHistory_ = 1;
-        sprintf(winput,"opt_save_history");
+        snprintf(winput,100,"opt_save_history");
         psConfig_.putParameter(winput);
       }
       else if (!strcmp(winput2, optimizeOptions[13])) /* opt use history */
       {
         pAnalysis_.optUseHistory_ = 1;
-        sprintf(winput,"opt_use_history");
+        snprintf(winput,100,"opt_use_history");
         psConfig_.putParameter(winput);
       }
       else if (!strcmp(winput2, optimizeOptions[14])) /* no of restarts */
@@ -3937,7 +3939,7 @@ int PsuadeData::readAnalysisSection(FILE *fp)
     }
     else if (strcmp(winput, keywords[23]) == 0) /* set MCMC to use Gibbs */
     {
-      sprintf(winput,"MCMC_gibbs");
+      snprintf(winput,100,"MCMC_gibbs");
       psConfig_.putParameter(winput);
       break;
     }
@@ -3977,6 +3979,7 @@ void PsuadeData::writePsuadeIO(FILE *fOut, int flag)
   int  ss, ii;
   char cString[1000], lineIn[1000];
 
+  if (pMethod_.nSamples_ < 0) return;
   if (pMethod_.nSamples_ > 200000 && (!psConfig_.IOExpertModeIsOn()))
   {
     printf("INFO: Data too large to be written (%d).\n",
@@ -4677,9 +4680,14 @@ void PsuadeData::writeAnalysisSection(FILE *fOut)
   else fprintf(fOut,"#  analyzer rstype = MMARS\n");
   fprintf(fOut, "##==============================================\n");
   fprintf(fOut, "##RS: MTGP - multiple TGP\n");
-  if (pAnalysis_.analysisIntOptions_[2] == PSUADE_RS_MMARS)
+  if (pAnalysis_.analysisIntOptions_[2] == PSUADE_RS_MTGP)
        fprintf(fOut,"   analyzer rstype = MTGP\n");
   else fprintf(fOut,"#  analyzer rstype = MTGP\n");
+  fprintf(fOut, "##==============================================\n");
+  fprintf(fOut, "##RS: MNN - multi-domain Neural Network\n");
+  if (pAnalysis_.analysisIntOptions_[2] == PSUADE_RS_MDNN)
+       fprintf(fOut,"   analyzer rstype = MNN\n");
+  else fprintf(fOut,"#  analyzer rstype = MNN\n");
   fprintf(fOut, "##==============================================\n");
   if (pAnalysis_.legendreOrder_ > 0)
        fprintf(fOut,"   analyzer rs_legendre_order = %d\n", 
@@ -4842,7 +4850,7 @@ void PsuadeData::writeAnalysisSection(FILE *fOut)
       (pAnalysis_.optimizeIntOptions_[1] == 14)) 
        fprintf(fOut, "   optimization method = lincoa\n");
   else fprintf(fOut, "#  optimization method = lincoa\n");
-#ifdef NEWUOA
+#ifdef HAVE_NEWUOA
   fprintf(fOut, "##==============================================\n");
   fprintf(fOut, "## newuoa: unconstrained optimization\n");
   if ((pAnalysis_.optimizeIntOptions_[0] > 0) &&

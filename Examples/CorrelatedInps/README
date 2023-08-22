@@ -2,10 +2,10 @@
 A challenge in global sensitivity analysis is to account for 
 correlations in the uncertain parameters. Correlations may be present
 in several forms:
-1. correlation coefficients in Gaussian distributions
-   (nonzero term in the covariance matrix)
-2. correlation present in parameter distribution in the
-   form of a large sample
+1. correlation coefficients in Gaussian distributions (nonzero
+   off-diagonal terms in the covariance matrix)
+2. correlation embedded in parameter distribution in the form of a
+   large sample
 3. correlation in the form of inequality constraints
    (e.g. 0 <= X1 + X2 <= 1)
 
@@ -68,6 +68,7 @@ b. call 'rssobol1' directly
 Case 1a and 1b are shown below (both with correlation = 0.7)
 ----------------------------------------------------------------------
 Case 1a: run psuade with psScriptCase1a.in
+         (note that psuadeME.in has COR set to 0.7)
 
 i.   compile the simulator
      cc -o simulator simulator.c -lm
@@ -78,6 +79,7 @@ iii. use main effect analysis by running
      psuade psuadeME.in
 
 Case 1b: run psuade with psScriptCase1b.in
+         (note that psuadeSobol1Cor.in has COR set to 0.7)
 
 i.  use RSMSobol1 by running
     psuade psuadeSobol1Cor.in
@@ -90,7 +92,7 @@ It is the same as Case 1 (correlation=0.7) but using sample instead
 ======================================================================
 In this case, the analysis involves the following steps (the first of
 which is to evaluate the outputs of the large sample with a response
-surface): psScript2.in
+surface):
 
 i.   Create a small sample (in RSSample) for building response surface:
      > cc -o simulator simulator.c -lm
@@ -112,6 +114,9 @@ iv.  launch psuade in command line mode and do:
      psuade> load largeSample
      psuade> me
      ...
+
+NOTE: These steps are captured in psScriptCase2.in.
+
 **********************************************************************
 Case 3: parameters with possibly non-normal/correlated distributions 
         that are represented by a large sample (e.g. posterior 
@@ -148,6 +153,9 @@ to create psData, do:
 NOW everything is ready, the next step is to run:
 > psuade psuadeSobol1Constr.in
 
+Normalized mean VCE for input   1 =  3.055e-02
+Normalized mean VCE for input   2 =  4.886e-01
+Normalized mean VCE for input   3 =  1.466e-01
 **********************************************************************
 Case 4: You can combine correlated distribution with inequality
         constraints too. No example is given here, but you got the 

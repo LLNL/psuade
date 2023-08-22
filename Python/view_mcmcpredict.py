@@ -180,7 +180,7 @@ plt.xlim([dmin, dmax])
 plt.ylim([dmin, dmax])
 plt.xlabel('Experiment',fontsize=13,fontweight='bold')
 plt.ylabel('Prediction',fontsize=13,fontweight='bold')
-plt.grid(b=True)
+#plt.grid(b=True)
 # thicken the border lines
 for axis in ['top', 'bottom', 'left', 'right']:
    ax.spines[axis].set_linewidth(6)
@@ -232,7 +232,7 @@ plt.xlabel('Experimental - Prediction mean',fontsize=13,fontweight='bold')
 plt.ylabel('Probability',fontsize=13,fontweight='bold')
 tStr = 'Prediction Error Statistics'
 plt.title(tStr,fontsize=14,fontweight='bold')
-plt.grid(b=True)
+#plt.grid(b=True)
 # thicken the border lines
 for axis in ['top', 'bottom', 'left', 'right']:
    ax.spines[axis].set_linewidth(6)

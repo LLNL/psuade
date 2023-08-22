@@ -93,7 +93,7 @@ void SCEPOptimizer::optimize(oData *odata)
    for (ii = 0; ii < nInputs; ii++) psSCEPInputTypes_[ii] = 0;
    for (ii = 0; ii < nInputs; ii++)
    {
-      sprintf(pString,"iiscrete%d", ii+1);
+      snprintf(pString,100,"iiscrete%d", ii+1);
       cString = psConfig_.getParameter(pString);
       if (cString != NULL) 
       {
@@ -109,7 +109,7 @@ void SCEPOptimizer::optimize(oData *odata)
       printf("SCE can solve either \n");
       printf("1. continuous \n");
       printf("2. mixed-integer optimization.\n");
-      sprintf(pString, "Please select (1) or (2) : ");
+      snprintf(pString,100,"Please select (1) or (2) : ");
       jj = getInt(1, 2, pString);
       if (jj == 2)
       {
@@ -120,9 +120,9 @@ void SCEPOptimizer::optimize(oData *odata)
          kk = 0;
          for (ii = 0; ii < nInputs; ii++)
          {
-            sprintf(pString, "Please enter type for input %d : ",ii+1);
-            psSCEPInputTypes_[ii] = getInt(1, 2, pString);
-            if (psSCEPInputTypes_[ii] == 1) kk++;
+           snprintf(pString,100,"Please enter type for input %d : ",ii+1);
+           psSCEPInputTypes_[ii] = getInt(1, 2, pString);
+           if (psSCEPInputTypes_[ii] == 1) kk++;
          }
          if (kk == nInputs) 
          {

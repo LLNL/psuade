@@ -146,7 +146,6 @@ int psVector::setLength(int leng)
 #endif
   if (Vec_ != NULL) delete [] Vec_;
   Vec_ = NULL;
-  assert(leng >= 0);
   if (leng == 0) return -1;
   length_ = leng;
   Vec_ = new double[leng];
@@ -253,6 +252,21 @@ double psVector::sum()
   double dsum=0.0;
   for (ii = 0; ii < length_; ii++) dsum += Vec_[ii];
   return dsum;
+}
+
+// ************************************************************************
+// compute vector standard deviation 
+// ------------------------------------------------------------------------
+double psVector::stdev()
+{
+  int    ii;
+  double dmean=0.0, dstdv=0.0;
+  for (ii = 0; ii < length_; ii++) dmean += Vec_[ii];
+  dmean /= (double) length_;
+  for (ii = 0; ii < length_; ii++) 
+    dstdv += pow(Vec_[ii] - dmean, 2.0);
+  dstdv = sqrt(dstdv / (double) length_);
+  return dstdv;
 }
 
 // ************************************************************************

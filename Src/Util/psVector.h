@@ -69,6 +69,7 @@ public:
   double  min();
   double  sum();
   double  norm();
+  double  stdev();
   void    scale(double);
   void    setConstant(double);
   void    axpy(const double scale, psVector v1);

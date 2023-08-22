@@ -1,0 +1,16 @@
+run sam150.psu
+rename psuadeData sam150.psu
+load sam150.psu
+arefine_metis
+y
+1
+100
+10
+write sam160.psu
+run sam160.psu
+rename psuadeData sam160.psu
+# sam160.psu is now ready
+# use iplot2 to view sampling distribution
+q
+
+

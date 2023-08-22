@@ -425,13 +425,13 @@ int PsuadeBase::runAdaptiveGradBased()
     YNames.setNumStrings(nOutputs);
     for (ii = 0; ii < nOutputs; ii++)
     {
-      sprintf(pString, "Y%d", ii+1);
+      snprintf(pString,100,"Y%d", ii+1);
       YNames.loadOneString(ii, pString);
     }
     XNames.setNumStrings(nInputs);
     for (ii = 0; ii < nInputs; ii++)
     {
-      sprintf(pString, "X%d", ii+1);
+      snprintf(pString,100,"X%d", ii+1);
       XNames.loadOneString(ii, pString);
     }
     psIO = new PsuadeData();
@@ -478,7 +478,7 @@ int PsuadeBase::runAdaptiveGradBased()
   YNames.setNumStrings(Ysize);
   for (ii = 0; ii < Ysize; ii++)
   {
-    sprintf(pString, "Y%d", ii+1);
+    snprintf(pString,100,"Y%d", ii+1);
     YNames.loadOneString(ii, pString);
   }
   vecGrad.setLength(nInputs);

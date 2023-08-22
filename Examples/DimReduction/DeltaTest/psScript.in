@@ -5,6 +5,6 @@ load simdata
 delta_test
 y
 1
-sys rm -f simdata *.m
+y
 q
 

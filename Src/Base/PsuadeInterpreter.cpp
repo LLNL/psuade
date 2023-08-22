@@ -273,7 +273,8 @@ int PsuadeBase::interpretInteractive()
          !strcmp(command,"rsi2") || !strcmp(command,"rsi3") ||
          !strcmp(command,"rsi3m") || !strcmp(command,"rsmeb") || 
          !strcmp(command,"rsieb") || !strcmp(command,"rssobol1b") || 
-         !strcmp(command,"rssobol2b") || !strcmp(command,"rssoboltsib"))
+         !strcmp(command,"rssobol2b") || !strcmp(command,"rssoboltsib") ||
+         !strcmp(command,"rsaeua") || !strcmp(command,"rsshapley"))
     {
       sscanf(lineIn,"%s %s",command,winput);
       if (!strcmp(winput, "-h"))
@@ -631,7 +632,7 @@ int PsuadeBase::interpretInteractive()
       {
         if (nOutputs_ > 1)
         {
-          sprintf(pString,
+          snprintf(pString, 10000,
             "Save only one output (n - save all outputs)? (y or n) "); 
           getString(pString, winput);
         }
@@ -642,7 +643,7 @@ int PsuadeBase::interpretInteractive()
         }
         if (winput[0] == 'y')
         {
-          sprintf(pString,"Enter output number (1 - %d) : ",nOutputs_);
+          snprintf(pString,1000,"Enter output number (1 - %d) : ",nOutputs_);
           outputID = getInt(1, nOutputs_, pString);
           outputID--;
           for (sInd = 0; sInd < nSamples_; sInd++)
@@ -890,7 +891,7 @@ int PsuadeBase::interpretInteractive()
       StrInpNames_.setNumStrings(nInputs_);
       for (ii = 0; ii < nInputs_; ii++)
       {
-        sprintf(pString, "X%d", ii+1);
+        snprintf(pString, 100, "X%d", ii+1);
         StrInpNames_.loadOneString(ii, pString);
       }
       VecILowerBs_.setLength(nInputs_);
@@ -936,7 +937,7 @@ int PsuadeBase::interpretInteractive()
       StrOutNames_.setNumStrings(nOutputs_);
       for (ii = 0; ii < nOutputs_; ii++)
       {
-        sprintf(pString, "Y%d", ii+1);
+        snprintf(pString, 100, "Y%d", ii+1);
         StrOutNames_.loadOneString(ii, pString);
       }
       psuadeIO_->updateOutputSection(nSamples_, nOutputs_, 
@@ -1102,7 +1103,7 @@ int PsuadeBase::interpretInteractive()
           if (nOutputs_ == 1) outputID = 0;
           else
           {
-            sprintf(pString, "Output number (1 - %d, 0 for all): ",
+            snprintf(pString, 1000, "Output number (1 - %d, 0 for all): ",
                     nOutputs_);
             outputID = getInt(0, nOutputs_, pString);
             outputID--;
@@ -1241,13 +1242,13 @@ int PsuadeBase::interpretInteractive()
       StrInpNames_.setNumStrings(nInputs_);
       for (ii = 0; ii < nInputs_; ii++)
       {
-        sprintf(pString, "X%d", ii+1);
+        snprintf(pString, 100, "X%d", ii+1);
         StrInpNames_.loadOneString(ii, pString);
       }
       StrOutNames_.setNumStrings(nOutputs_);
       for (ii = 0; ii < nOutputs_; ii++)
       {
-        sprintf(pString, "Y%d", ii+1);
+        snprintf(pString, 100, "Y%d", ii+1);
         StrOutNames_.loadOneString(ii, pString);
       }
       VecILowerBs_.setLength(nInputs_);
@@ -1369,8 +1370,8 @@ int PsuadeBase::interpretInteractive()
             if (nOutputs_ == 1) outputID = 0;
              else
              {
-               sprintf(pString,"Enter output ID (1 - %d, 0 for all) : ",
-                       nOutputs_);
+               snprintf(pString,1000,"Enter output ID (1 - %d, 0 for all) : ",
+                        nOutputs_);
                outputID = getInt(0, nOutputs_, pString);
                outputID--;
              }
@@ -1483,8 +1484,8 @@ int PsuadeBase::interpretInteractive()
       int flag = 0;
       if (nOutputs_ == 0)
       {
-        sprintf(pString,"Enter number of input variables (1 - %d) : ",
-                nInputs_);
+        snprintf(pString,1000,"Enter number of input variables (1 - %d) : ",
+                 nInputs_);
         kk = getInt(1, nInputs_, pString);
         if (nInputs_ == kk)
         {
@@ -1533,14 +1534,14 @@ int PsuadeBase::interpretInteractive()
             StrInpNames_.loadOneString(ii, inames[ii]);
           else
           {
-            sprintf(pString, "X%d", ii+1);
+            snprintf(pString, 100, "X%d", ii+1);
             StrInpNames_.loadOneString(ii, pString);
           }
           free(inames[ii]);
         }
         else 
         {
-          sprintf(pString, "X%d", ii+1);
+          snprintf(pString, 100, "X%d", ii+1);
           StrInpNames_.loadOneString(ii, pString);
         }
       }
@@ -1553,7 +1554,7 @@ int PsuadeBase::interpretInteractive()
             StrOutNames_.loadOneString(ii, onames[ii]);
           else
           {
-            sprintf(pString,"Y%d",ii+1);
+            snprintf(pString,100,"Y%d",ii+1);
             StrOutNames_.loadOneString(ii, pString);
           }
           free(onames[ii]);
@@ -1565,14 +1566,14 @@ int PsuadeBase::interpretInteractive()
             StrOutNames_.loadOneString(ii, inames[nInputs_+ii]);
           else
           {
-            sprintf(pString,"Y%d",ii+1);
+            snprintf(pString,100,"Y%d",ii+1);
             StrOutNames_.loadOneString(ii, pString);
           }
           free(inames[nInputs_+ii]);
         }
         else 
         {
-          sprintf(pString,"Y%d",ii+1);
+          snprintf(pString,100,"Y%d",ii+1);
           StrOutNames_.loadOneString(ii, pString);
         }
       }
@@ -1978,13 +1979,13 @@ int PsuadeBase::interpretInteractive()
       StrInpNames_.setNumStrings(nInputs_);
       for (ii = 0; ii < nInputs_; ii++)
       {
-        sprintf(pString, "X%d", ii+1);
+        snprintf(pString, 100, "X%d", ii+1);
         StrInpNames_.loadOneString(ii, pString);
       }
       StrOutNames_.setNumStrings(nOutputs_);
       for (ii = 0; ii < nOutputs_; ii++)
       {
-        sprintf(pString, "Y%d", ii+1);
+        snprintf(pString, 100, "Y%d", ii+1);
         StrOutNames_.loadOneString(ii, pString);
       } 
       psuadeIO_->updateInputSection(nSamples_,nInputs_,NULL,
@@ -2161,7 +2162,7 @@ int PsuadeBase::interpretInteractive()
           if (nOutputs_ == 1) outputID = 0;
           else
           {
-            sprintf(pString, "Enter output number (1 - %d) : ",nOutputs_);
+            snprintf(pString, 100,"Enter output number (1 - %d) : ",nOutputs_);
             outputID = getInt(1, nOutputs_, pString);
             outputID--;
           }
@@ -2596,11 +2597,11 @@ int PsuadeBase::interpretInteractive()
       printf("is feasible if Ymin <= F(X) <= Ymax) where F(X) ");
       printf("is from response\n");
       printf("surface evaluation.\n");
-      sprintf(pString,
-              "Enter the lower bound constraint (Ymin=%e) : ",Ymin);
+      snprintf(pString,100,
+               "Enter the lower bound constraint (Ymin=%e) : ",Ymin);
       threshL = getDouble(pString);
-      sprintf(pString,
-              "Enter the upper bound constraint (Ymax=%e) : ",Ymax);
+      snprintf(pString,100,
+               "Enter the upper bound constraint (Ymax=%e) : ",Ymax);
       threshU = getDouble(pString);
       if (threshL >= threshU)
       {
@@ -2612,9 +2613,9 @@ int PsuadeBase::interpretInteractive()
       printf("P is the MOAT resolution (normally equal to 4) ");
       printf("but can be otherwise.\n");
       int nPaths = 5000;
-      sprintf(pString, "Enter P (resolution: try 4-10) : ");
+      snprintf(pString, 100, "Enter P (resolution: try 4-10) : ");
       int currP = getInt(4, 10, pString);
-      sprintf(pString, "Enter the number of trials (> 100) : ");
+      snprintf(pString, 100, "Enter the number of trials (> 100) : ");
       int nTrials = getInt(101, 10000000, pString);
       psMatrix matMOATSample;
       matMOATSample.setFormat(PS_MAT2D);
@@ -2875,7 +2876,7 @@ int PsuadeBase::interpretInteractive()
         continue;
       }
       status = 0;
-      sprintf(pString,
+      snprintf(pString,100,
          "How many constraint data files are there (1-10)? ");
       int nFiles = getInt(1, 10, pString);
       faFlag = 2;
@@ -2886,8 +2887,8 @@ int PsuadeBase::interpretInteractive()
       PsuadeData *ioPtr = NULL;
       for (kk = 0; kk < nFiles; kk++)
       {
-        sprintf(pString,
-                "Enter name of constraint file #%d : ",kk+1);
+        snprintf(pString,100,
+                 "Enter name of constraint file #%d : ",kk+1);
         getString(pString, winput);
         kk = strlen(winput);
         winput[kk-1] = '\0';
@@ -2941,9 +2942,9 @@ int PsuadeBase::interpretInteractive()
           break;
         }
         faPtrs[kk]->setOutputLevel(outputLevel_);
-        sprintf(pString,"Constraint %d lower bound : ",kk+1);
+        snprintf(pString,100,"Constraint %d lower bound : ",kk+1);
         vecThreshLs[kk] = getDouble(pString);
-        sprintf(pString,"Constraint %d upper bound : ",kk+1);
+        snprintf(pString,100,"Constraint %d upper bound : ",kk+1);
         vecThreshUs[kk] = getDouble(pString);
         if (vecThreshLs[kk] >= vecThreshUs[kk])
         {
@@ -2958,14 +2959,14 @@ int PsuadeBase::interpretInteractive()
       if (status != 0) continue;
       int nPaths = 5000;
       printf("P is the MOAT resolution (normally = 4).\n");
-      sprintf(pString, "Enter P (resolution: try 4-10) : ");
+      snprintf(pString, 100, "Enter P (resolution: try 4-10) : ");
       int currP = getInt(4, 10, pString);
       printf("INFO: Searching for a MOAT path may come up ");
       printf("empty due to complex\n");
       printf("      constraints. So we allow a number of ");
       printf("trials before giving up.\n"); 
-      sprintf(pString, 
-              "Enter the maximum number of trials (> 100) : ");
+      snprintf(pString,100, 
+               "Enter the maximum number of trials (> 100) : ");
       int nTrials = getInt(101, 10000000, pString);
       psMatrix matMOATSample;
       matMOATSample.setFormat(PS_MAT2D);
@@ -3826,7 +3827,7 @@ int PsuadeBase::interpretInteractive()
         vecInds.setLength(nInps2);
         for (ii = 0; ii < nInps2; ii++)
         {
-          sprintf(pString,
+          snprintf(pString,100,
              "Which local input corresponds to data file sample input %d ? ",
              ii+1);
           kk = getInt(1, nInputs_, pString);
@@ -3932,12 +3933,12 @@ int PsuadeBase::interpretInteractive()
       printf("How to initialize this additional input ? \n");
       printf("1. Set it to a constant, or\n");
       printf("2. Set it to be uniformly distributed in [0,1].\n");
-      sprintf(pString,"Select an option (1 or 2) : ");
+      snprintf(pString,100,"Select an option (1 or 2) : ");
       int setOption = getInt(1, 2, pString);
       double setVal;
       if (setOption == 1)
       {
-        sprintf(pString,"What is the constant ? ");
+        snprintf(pString,100,"What is the constant ? ");
         setVal = getDouble(pString);
       }
 
@@ -4005,7 +4006,7 @@ int PsuadeBase::interpretInteractive()
 
       //**/ add one more input names
       StrInpNames_.addMoreStrings(iOne);
-      sprintf(pString, "X%d", nInputs_+1);
+      snprintf(pString, 100, "X%d", nInputs_+1);
       StrInpNames_.loadOneString(nInputs_, pString);
 
       //**/ add more sample inputs 
@@ -4079,7 +4080,7 @@ int PsuadeBase::interpretInteractive()
       else
       {
         StrOutNames_.addMoreStrings(iOne);
-        sprintf(pString, "Y%d", nOutputs_+1);
+        snprintf(pString, 100, "Y%d", nOutputs_+1);
         StrOutNames_.loadOneString(nOutputs_, pString);
         vecYT = VecSamOutputs_;
         VecSamOutputs_.setLength(nSamples_*(nOutputs_+1));
@@ -4171,7 +4172,7 @@ int PsuadeBase::interpretInteractive()
         inputID = 0;
         if (nInputs_ > 1)
         {
-          sprintf(pString,"Enter input number to replace (1 - %d) : ",
+          snprintf(pString,100,"Enter input number to replace (1 - %d) : ",
                   nInputs_);
           inputID = getInt(1, nInputs_, pString);
           inputID--;
@@ -4205,7 +4206,7 @@ int PsuadeBase::interpretInteractive()
         }
 
         //**/ add one more input name and then update input section
-        sprintf(pString, "X%d", inputID+1);
+        snprintf(pString, 100, "X%d", inputID+1);
         StrInpNames_.loadOneString(inputID, pString);
         psuadeIO_->updateInputSection(nSamples_,nInputs_,NULL,
                      VecILowerBs_.getDVector(),VecIUpperBs_.getDVector(),
@@ -4304,7 +4305,7 @@ int PsuadeBase::interpretInteractive()
         StrOutNames_.setNumStrings(nOutputs_);
         for (ii = 0; ii < nOutputs_; ii++)
         {
-          sprintf(pString, "Y%d", ii+1);
+          snprintf(pString, 100, "Y%d", ii+1);
           StrOutNames_.loadOneString(ii, pString);
         }
         VecSamOutputs_.clean();
@@ -4368,15 +4369,15 @@ int PsuadeBase::interpretInteractive()
       }
 
       printf("The current sample size is %d.\n", nSamples_);
-      sprintf(pString,"Sample size of the first set? (1 - %d) ",
-              nSamples_-1);
+      snprintf(pString,100,"Sample size of the first set? (1 - %d) ",
+               nSamples_-1);
       int splitCnt = getInt(1, nSamples_, pString);
       printf("Select from the following options: \n");
       printf("1. random draw from the sample\n");
       printf("2. draw the first %d sample points\n",splitCnt);
       printf("3. draw every other %d sample points\n",nSamples_/splitCnt);
       printf("4. draw the first m points from every chunk of M points\n");
-      sprintf(pString,"your choice: (1 - 4) ");
+      snprintf(pString,100,"your choice: (1 - 4) ");
       int splitChoice = getInt(1, nSamples_, pString);
       if (splitChoice == 3 && (nSamples_/splitCnt*splitCnt != nSamples_))
       {
@@ -4386,15 +4387,15 @@ int PsuadeBase::interpretInteractive()
       }
       if (splitChoice == 3) 
       {
-        sprintf(pString,"Starting sample number: (1 - %d) ",
-                nSamples_/splitCnt);
+        snprintf(pString,100,"Starting sample number: (1 - %d) ",
+                 nSamples_/splitCnt);
         ll = getInt(1, nSamples_/splitCnt, pString);
         ll--;
       }
       int chunkSize=1, mStep;
       if (splitChoice == 4) 
       {
-        sprintf(pString,"Enter m = ");
+        snprintf(pString,100,"Enter m = ");
         chunkSize = getInt(1, nSamples_, pString);
         mStep = nSamples_ * chunkSize / splitCnt;
         printf("m = %d\n", chunkSize);
@@ -4525,7 +4526,7 @@ int PsuadeBase::interpretInteractive()
         continue;
       }
 
-      sprintf(pString, "Enter output number (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
       outputID = getInt(0, nOutputs_, pString);
       outputID--;
       int analysisMethod = PSUADE_ANA_MOMENT;
@@ -4572,7 +4573,7 @@ int PsuadeBase::interpretInteractive()
         continue;
       }
 
-      sprintf(pString, "Enter output number (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
       outputID = getInt(0, nOutputs_, pString);
       outputID--;
       int analysisMethod = PSUADE_ANA_BSTRAP;
@@ -4618,7 +4619,7 @@ int PsuadeBase::interpretInteractive()
         continue;
       }
 
-      sprintf(pString, "Enter output number (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       int analysisMethod = PSUADE_ANA_CORRELATION;
@@ -4664,7 +4665,7 @@ int PsuadeBase::interpretInteractive()
         continue;
       }
 
-      sprintf(pString, "Enter output number (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       int analysisMethod = PSUADE_ANA_ANOVA;
@@ -4712,7 +4713,7 @@ int PsuadeBase::interpretInteractive()
         continue;
       }
 
-      sprintf(pString, "Enter output number (1 - %d) = ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) = ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       int analysisMethod = PSUADE_ANA_MOAT;
@@ -4805,7 +4806,7 @@ int PsuadeBase::interpretInteractive()
       if (plotMatlab()) fp = fopen("matlabmoatmo.m", "w");
       if (fp != NULL)
       {
-        sprintf(pString,"This file contains Morris modified Means");
+        snprintf(pString,100,"This file contains Morris modified Means");
         fwriteComment(fp, pString);
         fprintf(fp, "A = [\n");
         for (ii = 0; ii < nInputs_; ii++)
@@ -4903,7 +4904,7 @@ int PsuadeBase::interpretInteractive()
         continue;
       }
 
-      sprintf(pString, "Enter output number (1 - %d) = ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) = ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       int analysisMethod = PSUADE_ANA_FF;
@@ -4950,7 +4951,7 @@ int PsuadeBase::interpretInteractive()
         continue;
       }
 
-      sprintf(pString, "Enter output number (1 - %d) = ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) = ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       int analysisMethod = PSUADE_ANA_LSA;
@@ -4997,10 +4998,10 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString, "Enter output number (1 - %d) = ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) = ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
-      sprintf(pString,"MARS (0) or MARS with bagging (1) ? ");
+      snprintf(pString,100,"MARS (0) or MARS with bagging (1) ? ");
       kk = getInt(0, 1, pString);
       if (kk == 0) faType = PSUADE_RS_MARS;
       else         faType = PSUADE_RS_MARSB;
@@ -5037,18 +5038,18 @@ int PsuadeBase::interpretInteractive()
       sscanf(lineIn,"%s %s",command,winput);
       if (!strcmp(winput, "-h"))
       {
-        printf("gp_sa: Gaussian Process-based sensitivity analysis\n");
+        printf("gp_sa: Kriging-based sensitivity analysis\n");
         printf("Syntax: gp_sa (after data have been loaded)\n");
         continue;
       }
       printAsterisks(PL_INFO, 0);
       printf("This command performs COARSE global sensitivity ");
       printf("analysis based on the\n");
-      printf("result of training the loaded sample with ");
-      printf("the Gaussian process/Kriging\n");
-      printf("model (that is, magnitudes of the hyperparameters). The ");
-      printf("loaded sample\n");
-      printf("may be any space-filling design.\n");
+      printf("result of training the loaded sample with the ");
+      printf("Kriging model (that is,\n");
+      printf("magnitudes of the hyperparameters). The loaded ");
+      printf("sample is expected to\n");
+      printf("be any space-filling design.\n");
       printf("NOTE: this command does not work on samples with ");
       printf("replicated points.\n");
       printDashes(PL_INFO, 0);
@@ -5069,23 +5070,10 @@ int PsuadeBase::interpretInteractive()
         continue;
       }
 
-      sprintf(pString, "Enter output number (1 - %d) = ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) = ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
-      faType = -1;
-      printf("Which Gaussian process ? \n");
-#ifdef HAVE_TPROS
-      printf("1. MacKay's Tpros\n");
-#endif
-      printf("2. Tong's GP\n");
-      printf("3. Kriging\n");
-      sprintf(pString, "Enter number (1, 2, or 3) = ");
-      faType = getInt(1, 3, pString);
-#ifdef HAVE_TPROS
-      if (faType == 1) faType = PSUADE_RS_GP1;
-#endif
-      if (faType == 2) faType = PSUADE_RS_GP3;
-      if (faType == 3) faType = PSUADE_RS_KR;
+      faType = PSUADE_RS_KR;
       FuncApprox *faPtr = genFA(faType, nInputs_, iOne, nSamples_);
       if (faPtr != NULL)
       {
@@ -5155,7 +5143,7 @@ int PsuadeBase::interpretInteractive()
         continue;
       }
 
-      sprintf(pString, "Enter output number (1 - %d) = ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) = ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       faType = PSUADE_RS_SOTS;
@@ -5251,7 +5239,7 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString, "Enter output number (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       int analysisMethod = PSUADE_ANA_ME;
@@ -5345,7 +5333,7 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString, "Enter output number (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       int analysisMethod = PSUADE_ANA_IE;
@@ -5436,7 +5424,7 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString, "Enter output number (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       TSIAnalyzer *tsiAnalyzer = new TSIAnalyzer();
@@ -5476,7 +5464,7 @@ int PsuadeBase::interpretInteractive()
       printf("sensitivity analysis using\n");
       printf("the Sobol' method (first- and total-Sobol' indices). ");
       printf("The loaded sample\n");
-      printf("must be a Sobol' sample.");
+      printf("must be a Sobol' sample.\n");
       printDashes(PL_INFO, 0);
       printf("Proceed ? (y or n to abort) ");
       scanf("%s", lineIn2);
@@ -5501,7 +5489,7 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString, "Enter output number (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       SobolAnalyzer *sobolAnalyzer = new SobolAnalyzer();
@@ -5559,7 +5547,7 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString, "Enter output number (1 - %d) = ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) = ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       int analysisMethod = PSUADE_ANA_FAST;
@@ -5601,7 +5589,7 @@ int PsuadeBase::interpretInteractive()
       printf("This command creates %d scatter plots (selected output ",
              nInputs_);
       printf("vs each input.)\n"); 
-      sprintf(pString, "Select which output (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Select which output (1 - %d) : ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
 
@@ -5627,9 +5615,9 @@ int PsuadeBase::interpretInteractive()
           continue;
         }
       }
-      sprintf(pString," plotMode=0  : plot all in a single plot");
+      snprintf(pString,100," plotMode=0  : plot all in a single plot");
       fwriteComment(fp, pString);
-      sprintf(pString," plotMode!=0 : plot one at a time");
+      snprintf(pString,100," plotMode!=0 : plot one at a time");
       fwriteComment(fp, pString);
       fprintf(fp, "plotMode=0;\n");
       fprintf(fp, "Y = [\n");
@@ -5656,8 +5644,8 @@ int PsuadeBase::interpretInteractive()
           fprintf(fp, "plot(X%d,Y,'.','markersize',10)\n",iInd+1);
           fprintf(fp, "a = gca();\n");
           fprintf(fp, "a.children.children.mark_foreground = 5;\n");
-          sprintf(winput, "%s vs %s", StrOutNames_[outputID],
-                  StrInpNames_[iInd]);
+          snprintf(winput,1000,"%s vs %s", StrOutNames_[outputID],
+                   StrInpNames_[iInd]);
           fwritePlotTitle(fp, winput);
           fwritePlotAxes(fp);
           fwritePlotXLabel(fp, StrInpNames_[iInd]);
@@ -5700,8 +5688,8 @@ int PsuadeBase::interpretInteractive()
           fprintf(fp,"hold off\n");
           fprintf(fp,"axis([%24.16e %24.16e min(Y) max(Y)])\n",
                   VecILowerBs_[iInd], VecIUpperBs_[iInd]);
-          sprintf(winput, "%s vs %s", StrOutNames_[outputID],
-                  StrInpNames_[iInd]);
+          snprintf(winput,1000,"%s vs %s", StrOutNames_[outputID],
+                   StrInpNames_[iInd]);
           fwritePlotTitle(fp, winput);
           fwritePlotAxes(fp);
           fwritePlotXLabel(fp, StrInpNames_[iInd]);
@@ -5767,7 +5755,7 @@ int PsuadeBase::interpretInteractive()
       { 
         //**/ ask users to specify the output set
         int rsiNOutputs = 2;
-        sprintf(pString,"How many outputs to use ? (2 - %d) ",nOutputs_);
+        snprintf(pString,100,"How many outputs to use ? (2 - %d) ",nOutputs_);
         rsiNOutputs = getInt(2, nOutputs_, pString);
 
         //**/ get the collection of output set
@@ -5781,8 +5769,8 @@ int PsuadeBase::interpretInteractive()
         {
           for (ii = 0; ii < rsiNOutputs; ii++)
           {
-            sprintf(pString,"Enter the %d-th output index (1 - %d) : ",
-                    ii+1, nOutputs_);
+            snprintf(pString,100,"Enter the %d-th output index (1 - %d) : ",
+                     ii+1, nOutputs_);
             vecRsiSet[ii] = getInt(1, nOutputs_, pString);
             vecRsiSet[ii]--;
           }
@@ -5821,11 +5809,11 @@ int PsuadeBase::interpretInteractive()
             if (vecFaYOut[sInd] > Ymax) Ymax = vecFaYOut[sInd];
 
           printf("Ymin and Ymax = %e %e\n", Ymin, Ymax);
-          sprintf(pString,
+          snprintf(pString,100,
              "Enter the lower threshold for output %d (min = %16.8e) : ",
              jplot, Ymin);
           threshL = getDouble(pString);
-          sprintf(pString,
+          snprintf(pString,100,
              "Enter the upper threshold for output %d (max = %16.8e) : ",
              jplot, Ymax);
           threshU = getDouble(pString);
@@ -5938,7 +5926,7 @@ int PsuadeBase::interpretInteractive()
 
       //**/ ask users to specify the output set
       int rsiNOutputs = 2;
-      sprintf(pString,"How many outputs to use ? (2 - %d) ",nOutputs_);
+      snprintf(pString,100,"How many outputs to use ? (2 - %d) ",nOutputs_);
       rsiNOutputs = getInt(2, nOutputs_, pString);
 
       //**/ get the collection of output set
@@ -5952,7 +5940,7 @@ int PsuadeBase::interpretInteractive()
       {
         for (ii = 0; ii < rsiNOutputs; ii++)
         {
-          sprintf(pString,"Enter the %d-th output index (1 - %d) : ",
+          snprintf(pString,100,"Enter the %d-th output index (1 - %d) : ",
                   ii+1, nOutputs_);
           vecRsiSet[ii] = getInt(1, nOutputs_, pString);
           vecRsiSet[ii]--;
@@ -5990,9 +5978,9 @@ int PsuadeBase::interpretInteractive()
 
         printf("\nOutput %d : Ymin and Ymax found = %e %e.\n", jplot,
                Ymin, Ymax);
-        sprintf(pString,"Enter the lower threshold (min = %e) : ", Ymin);
+        snprintf(pString,100,"Enter the lower threshold (min = %e) : ", Ymin);
         threshL = getDouble(pString);
-        sprintf(pString,"Enter the upper threshold (max = %e) : ", Ymax);
+        snprintf(pString,100,"Enter the upper threshold (max = %e) : ", Ymax);
         threshU = getDouble(pString);
 
         for (sInd = 0; sInd < nSamples_; sInd++)
@@ -6179,7 +6167,7 @@ int PsuadeBase::interpretInteractive()
       }
       //**/ set up the function approximator
       nPtsPerDim = 64;
-      sprintf(pString, "Grid resolution ? (32 - 128) ");
+      snprintf(pString,100,"Grid resolution ? (32 - 128) ");
       nPtsPerDim = getInt(32, 128, pString);
       faFlag = 1;
       FuncApprox *faPtr = genFAInteractive(psuadeIO_, faFlag);
@@ -6190,8 +6178,8 @@ int PsuadeBase::interpretInteractive()
 
       //**/ get which inputs to plot
       nPlots = 0;
-      sprintf(pString, "Enter the number of inputs to plot (1 - %d) : ",
-              nInputs_);
+      snprintf(pString,100,"Enter the number of inputs to plot (1 - %d) : ",
+               nInputs_);
       nPlots = getInt(1, nInputs_, pString);
       psIVector vecPlotInds;
       vecPlotInds.setLength(nInputs_);
@@ -6200,7 +6188,7 @@ int PsuadeBase::interpretInteractive()
       {
         for (ii = 0; ii < nPlots; ii++)
         {
-          sprintf(pString, "Enter the %d-th input (1 - %d) : ", ii+1,
+          snprintf(pString,100,"Enter the %d-th input (1 - %d) : ", ii+1,
                   nInputs_);
           vecPlotInds[ii] = getInt(1, nInputs_, pString);
           vecPlotInds[ii]--;
@@ -6210,7 +6198,7 @@ int PsuadeBase::interpretInteractive()
       vecInpVals.setLength(nInputs_);
       if (nInputs_ > 2)
       {
-        sprintf(pString,
+        snprintf(pString,100,
                 "Set other nominal values at mid point ? (y or n) ");
         getString(pString, command);
       }
@@ -6295,7 +6283,7 @@ int PsuadeBase::interpretInteractive()
       fwritePlotCLF(fp);
 
       jplot = 0;
-      sprintf(pString, "Enter output number (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
       jplot = getInt(1, nOutputs_, pString);
       jplot--;
       Ymax = Ymin = VecSamOutputs_[0*nOutputs_+jplot];
@@ -6307,21 +6295,21 @@ int PsuadeBase::interpretInteractive()
          Ymin = VecSamOutputs_[sInd*nOutputs_+jplot];
       }
       printf("Ymin and Ymax found = %e %e.\n", Ymin, Ymax);
-      sprintf(pString,"Set lower threshold ? (y or n) ");
+      snprintf(pString,100,"Set lower threshold ? (y or n) ");
       getString(pString, command);
       if (command[0] == 'y')
       {
-        sprintf(pString,"Enter the lower threshold (min = %e) : ", 
-                Ymin);
+        snprintf(pString,100,"Enter the lower threshold (min = %e) : ", 
+                 Ymin);
         thresh = getDouble(pString);
         fprintf(fp, "Ymin = %e;\n", thresh);
       }
       else fprintf(fp, "Ymin = -1.0e35;\n");
-      sprintf(pString,"Set upper threshold ? (y or n) : ");
+      snprintf(pString,100,"Set upper threshold ? (y or n) : ");
       getString(pString, command);
       if (command[0] == 'y')
       {
-        sprintf(pString,"Enter the upper threshold (max = %e) : ", 
+        snprintf(pString,100,"Enter the upper threshold (max = %e) : ", 
                 Ymax);
         thresh = getDouble(pString);
         fprintf(fp, "Ymax = %e;\n", thresh);
@@ -6492,7 +6480,7 @@ int PsuadeBase::interpretInteractive()
       }
       //**/ set up the function approximator
       nPtsPerDim = 64;
-      sprintf(pString, "Grid resolution ? (32 - 128) ");
+      snprintf(pString,100,"Grid resolution ? (32 - 128) ");
       nPtsPerDim = getInt(32, 128, pString);
       faFlag = 1;
       FuncApprox *faPtr = genFAInteractive(psuadeIO_, faFlag);
@@ -6504,8 +6492,8 @@ int PsuadeBase::interpretInteractive()
 
       //**/ get which inputs to plot
       nPlots = 0;
-      sprintf(pString, "Enter the number of inputs to plot (1 - %d) : ",
-              nInputs_);
+      snprintf(pString,100,"Enter the number of inputs to plot (1 - %d) : ",
+               nInputs_);
       nPlots = getInt(1, nInputs_, pString);
       psIVector vecPlotInds;
       vecPlotInds.setLength(nInputs_);
@@ -6514,8 +6502,8 @@ int PsuadeBase::interpretInteractive()
       {
         for (ii = 0; ii < nPlots; ii++)
         {
-          sprintf(pString, "Enter the %d-th input (1 - %d) : ", ii+1,
-                  nInputs_);
+          snprintf(pString,100,"Enter the %d-th input (1 - %d) : ", ii+1,
+                   nInputs_);
           vecPlotInds[ii] = getInt(1, nInputs_, pString);
           vecPlotInds[ii]--;
         }
@@ -6542,10 +6530,10 @@ int PsuadeBase::interpretInteractive()
             Ymin = VecSamOutputs_[sInd*nOutputs_+jplot];
         }
         printf("Output %d: Ymin and Ymax = %e %e\n",jplot+1,Ymin,Ymax);
-        sprintf(pString,
-                "Enter the lower threshold (min = %16.8e) : ", Ymin);
+        snprintf(pString,100,
+                 "Enter the lower threshold (min = %16.8e) : ", Ymin);
         vecThreshLs[ii] = getDouble(pString);
-        sprintf(pString,
+        snprintf(pString,100,
                 "Enter the upper threshold (max = %16.8e) : ", Ymax);
         vecThreshUs[ii] = getDouble(pString);
       }
@@ -6747,13 +6735,13 @@ int PsuadeBase::interpretInteractive()
         continue;
       }
       faType = -1;
-      sprintf(pString, "Enter your choice ? ");
+      snprintf(pString,100,"Enter your choice ? ");
       while (faType < 0 || faType > PSUADE_NUM_RS)
       {
         writeFAInfo(outputLevel_);
         faType = getFAType(pString);
       }
-      sprintf(pString, "Enter output number (1 - %d) = ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) = ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       psIVector vecXsforms;
@@ -6765,7 +6753,7 @@ int PsuadeBase::interpretInteractive()
         printf("1. log transformation on all the inputs.\n");
         printf("2. log transformation on all the selected output.\n");
         printf("3. log transformation on all inputs and outputs.\n");
-        sprintf(pString, "Enter your choice ? ");
+        snprintf(pString,100,"Enter your choice ? ");
         int otrans = getInt(0, 3, pString);
         vecXsforms[0] = otrans & 1;
         vecXsforms[1] = otrans & 2;
@@ -6813,13 +6801,13 @@ int PsuadeBase::interpretInteractive()
         continue;
       }
       faType = -1;
-      sprintf(pString, "Enter your choice ? ");
+      snprintf(pString,100,"Enter your choice ? ");
       while (faType < 0 || faType > PSUADE_NUM_RS)
       {
         writeFAInfo(outputLevel_);
         faType = getFAType(pString);
       }
-      sprintf(pString, "Enter output number (1 - %d) = ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) = ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       FuncApprox *faPtr = genFA(faType, nInputs_, iOne, nSamples_);
@@ -6839,9 +6827,9 @@ int PsuadeBase::interpretInteractive()
       faPtr = NULL;
       if (plotScilab()) fp = fopen("scilabrstestts.sci", "w");
       else              fp = fopen("matlabrstestts.m", "w");
-      sprintf(pString," col 1: simulation data, col 2: rs data");
+      snprintf(pString,100," col 1: simulation data, col 2: rs data");
       fwriteComment(fp, pString);
-      sprintf(pString," col 3: std dev");
+      snprintf(pString,100," col 3: std dev");
       fwriteComment(fp, pString);
       fprintf(fp, "A = [\n");
       for (ss = 0; ss < nSamples_; ss++)
@@ -7027,7 +7015,7 @@ int PsuadeBase::interpretInteractive()
       printf("prevent extrapolation. This augmented sample ");
       printf("will be used in every\n");
       printf("training set (that is, not to be held out).\n"); 
-      sprintf(pString, "Do you have an augmented sample ? (y or n) ");
+      snprintf(pString,100,"Do you have an augmented sample ? (y or n) ");
       getString(pString, winput);
       PsuadeData *pIO=NULL;
       pData pX, pY;
@@ -7035,7 +7023,7 @@ int PsuadeBase::interpretInteractive()
       int nSamAux=0;
       if (winput[0] == 'y')
       {
-        sprintf(pString, "Enter name of your augment sample file : ");
+        snprintf(pString,100,"Enter name of your augment sample file : ");
         getString(pString, dataFile);
         kk = strlen(dataFile);
         dataFile[kk-1] = '\0';
@@ -7080,19 +7068,19 @@ int PsuadeBase::interpretInteractive()
       }
 
       faType = -1;
-      sprintf(pString, "Enter your response surface choice ? ");
+      snprintf(pString,100,"Enter your response surface choice ? ");
       while (faType < 0 || faType > PSUADE_NUM_RS)
       {
         writeFAInfo(outputLevel_);
         faType = getFAType(pString);
       }
-      sprintf(pString, "Enter output number (1 - %d) = ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) = ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
-      sprintf(pString, "Size of holdout sets (2 - %d)? ", nSamples_/2);
+      snprintf(pString,100,"Size of holdout sets (2 - %d)? ", nSamples_/2);
       int hoSize = getInt(2, nSamples_/2, pString);
       kk = nSamples_ / hoSize * 2;
-      sprintf(pString, "Number of iterations (>= %d)? ",kk);
+      snprintf(pString,100,"Number of iterations (>= %d)? ",kk);
       int numIter = getInt(kk, 1000000, pString);
 
       psVector vecXTrain, vecYTrain, vecXHO, vecYHO, vecYPred, vecYWorst;
@@ -7381,9 +7369,9 @@ int PsuadeBase::interpretInteractive()
       //**/ create visualization file
       if (plotScilab()) fp = fopen("scilabrstestrcv.sci", "w");
       else              fp = fopen("matlabrstestrcv.m", "w");
-      sprintf(pString," col 1: simulation data, col 2: rs predicted data");
+      snprintf(pString,100," col 1: simulation data, col 2: rs predicted data");
       fwriteComment(fp, pString);
-      sprintf(pString," col 3: worst cases, col 4: best case");
+      snprintf(pString,100," col 3: worst cases, col 4: best case");
       fwriteComment(fp, pString);
       fprintf(fp, "A = [\n");
       for (ss = 0; ss < nSamples_; ss++)
@@ -7545,13 +7533,13 @@ int PsuadeBase::interpretInteractive()
         continue;
       }
       faType = -1;
-      sprintf(pString, "Enter your choice ? ");
+      snprintf(pString,100,"Enter your choice ? ");
       while (faType < 0 || faType > PSUADE_NUM_RS)
       {
         writeFAInfo(outputLevel_);
         faType = getFAType(pString);
       }
-      sprintf(pString, "Enter output number (1 - %d) = ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) = ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       thresh = -1.0;
@@ -7561,14 +7549,14 @@ int PsuadeBase::interpretInteractive()
         printf("uses one part to predict the other part. You can\n");
         printf("decide the percentage of the sample points for \n");
         printf("training (>= 50 percent).\n");
-        sprintf(pString,"Enter this percentage in fraction [0.5 - 1) = ");
+        snprintf(pString,100,"Enter this percentage in fraction [0.5 - 1) = ");
         thresh = getDouble(pString);
       }
       if (plotScilab()) fp = fopen("scilabrstestgt.sci", "w");
       else              fp = fopen("matlabrstestgt.m", "w");
-      sprintf(pString," col 1-m: inputs, col m+1: simulation output");
+      snprintf(pString,100," col 1-m: inputs, col m+1: simulation output");
       fwriteComment(fp, pString);
-      sprintf(pString," col m+2: predicted output");
+      snprintf(pString,100," col m+2: predicted output");
       fwriteComment(fp, pString);
       fwritePlotCLF(fp);
 
@@ -7712,7 +7700,7 @@ int PsuadeBase::interpretInteractive()
         }
         else fprintf(fp, "axis([xmin xmax xmin xmax])\n");
         fwritePlotAxes(fp);
-        sprintf(pString, "Extrapolated vs actual data (input = %d)",ii+1);
+        snprintf(pString,100,"Extrapolated vs actual data (input = %d)",ii+1);
         fwritePlotTitle(fp, pString);
         fwritePlotXLabel(fp, "Actual data");
         fwritePlotYLabel(fp, "Predicted data");
@@ -7774,7 +7762,7 @@ int PsuadeBase::interpretInteractive()
       printf("2. Gaussian process (GP)\n");
       printf("3. Kriging\n");
       printf("4. Sum of trees method\n");
-      sprintf(pString,"Make your choice: ");
+      snprintf(pString,100,"Make your choice: ");
       faType = getInt(1,4,pString);
       switch (faType)
       {
@@ -7790,10 +7778,10 @@ int PsuadeBase::interpretInteractive()
       faPtr->setOutputLevel(0);
 
       //**/ get output information and generate sample 
-      sprintf(pString, "Enter output number (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
-      sprintf(pString,
+      snprintf(pString,100,
          "Sample size for probing the parameter space? (10000 - 1000000) ");
       int nSamp = getInt(10000, 1000000, pString);
       psVector  vecStds;
@@ -7879,7 +7867,7 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString, "Enter output number (1 - %d) = ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) = ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       faType = PSUADE_RS_SVM;
@@ -7899,13 +7887,13 @@ int PsuadeBase::interpretInteractive()
       printf("Search for best gamma for RBF kernel.\n");
       printf("SVM tolerance can be adjusted for more accurate result.\n");
       printf("However, small tolerance takes more time to run.\n");
-      sprintf(pString, "Enter the desired tolerance (e.g. 1e-4): ");
+      snprintf(pString,100,"Enter the desired tolerance (e.g. 1e-4): ");
       double tolerance = getDouble(pString);
       double gamma1=1e-10;
-      sprintf(pString,"Enter lower bound of gamma to search (1e-6 - 1e6): ");
+      snprintf(pString,100,"Enter lower bound of gamma to search (1e-6 - 1e6): ");
       while (gamma1 < 1e-6 || gamma1 > 1e6) gamma1 = getDouble(pString);
       double gamma2=1e-10;
-      sprintf(pString,"Enter upper bound of gamma to search (1e-6 - 1e6): ");
+      snprintf(pString,100,"Enter upper bound of gamma to search (1e-6 - 1e6): ");
       while (gamma2 < 1e-6 || gamma2 > 1e6 || gamma2 < gamma1)
          gamma2 = getDouble(pString);
       Ymin  = 1.0e35;
@@ -7974,7 +7962,7 @@ int PsuadeBase::interpretInteractive()
       {
         printf("Enter a response surface method : \n");
         int faLimit = writeFAInfo(outputLevel_);
-        sprintf(pString, "Enter your choice ? ");
+        snprintf(pString,100,"Enter your choice ? ");
         faType = getInt(0, faLimit, pString);
       }
       psuadeIO_->updateAnalysisSection(-1, -1, faType, -3, -1, -1);
@@ -8002,9 +7990,9 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString,"Select a sampling method from below: ");
+      snprintf(pString,100,"Select a sampling method from below: ");
       SamplingMethod_ = getSamplingMethod(pString);
-      sprintf(pString,"Select a sample size: (> 10, < 1000000): ");
+      snprintf(pString,100,"Select a sample size: (> 10, < 1000000): ");
       count = getInt(10, 1000000, pString);
       if (sampler_ != NULL) delete sampler_;
       sampler_ = (Sampling *) SamplingCreateFromID(SamplingMethod_);
@@ -8059,7 +8047,7 @@ int PsuadeBase::interpretInteractive()
         continue;
       }
       strcpy(dataFile, "\0");
-      sprintf(pString, "Enter test data (PSUADE format) file name : ");
+      snprintf(pString,100,"Enter test data (PSUADE format) file name : ");
       getString(pString, dataFile);
       dataFile[strlen(dataFile)-1] = '\0';
       status = 0;
@@ -8095,7 +8083,7 @@ int PsuadeBase::interpretInteractive()
       delete ioPtr;
       if (status == 0)
       {
-        sprintf(pString,"Enter output number (1 - %d) = ",nOutputs_);
+        snprintf(pString,100,"Enter output number (1 - %d) = ",nOutputs_);
         outputID = getInt(1, nOutputs_, pString);
         outputID--;
         faType = -1;
@@ -8104,7 +8092,7 @@ int PsuadeBase::interpretInteractive()
         {
           printf("Enter a response surface method : \n");
           faLimit = writeFAInfo(outputLevel_);
-          sprintf(pString, "Enter your choice ? ");
+          snprintf(pString,100,"Enter your choice ? ");
           faType = getInt(0, faLimit, pString);
         }
         psIVector vecXSForms;
@@ -8115,7 +8103,7 @@ int PsuadeBase::interpretInteractive()
           printf("1. log transformation on all the inputs.\n");
           printf("2. log transformation on all the outputs.\n");
           printf("3. log transformation on all inputs and outputs.\n");
-          sprintf(pString, "Enter your choice ? ");
+          snprintf(pString,100,"Enter your choice ? ");
           int otrans = getInt(0, 3, pString);
           vecXSForms.setLength(2);
           vecXSForms[0] = otrans & 1;
@@ -8297,7 +8285,7 @@ int PsuadeBase::interpretInteractive()
       printf("    fractional factorial sampling with resolution IV\n");
       printf("    which needs nSamples = 32 for m up to 15 and 64 for\n");
       printf("    m up to 32.\n");
-      sprintf(pString, "Which option? (1 - 3) ");
+      snprintf(pString,100,"Which option? (1 - 3) ");
       ind = getInt(1, 3, pString);
       Sampling *sampPtr = NULL;
       if (ind == 1)
@@ -8398,7 +8386,7 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString, "Enter output number (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
 
@@ -8467,7 +8455,7 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString, "Enter output number (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       Ymax = - 1.0e35;
@@ -8479,11 +8467,11 @@ int PsuadeBase::interpretInteractive()
         if (VecSamOutputs_[sInd*nOutputs_+outputID] < Ymin)
           Ymin = VecSamOutputs_[sInd*nOutputs_+outputID];
       }
-      sprintf(pString,"Enter the lower bound constraint (Ymin=%e) : ",
-              Ymin);
+      snprintf(pString,100,"Enter the lower bound constraint (Ymin=%e) : ",
+               Ymin);
       threshL = getDouble(pString);
-      sprintf(pString,"Enter the upper bound constraint (Ymax=%e) : ",
-              Ymax);
+      snprintf(pString,100,"Enter the upper bound constraint (Ymax=%e) : ",
+               Ymax);
       threshU = getDouble(pString);
       if (threshL >= threshU)
       {
@@ -8663,7 +8651,7 @@ int PsuadeBase::interpretInteractive()
       }
 
       iplot1 = -1;
-      sprintf(pString, "Enter the input number (1 - %d) : ", nInputs_);
+      snprintf(pString,100,"Enter the input number (1 - %d) : ", nInputs_);
       iplot1 = getInt(1, nInputs_, pString);
       iplot1--;
 
@@ -8787,12 +8775,12 @@ int PsuadeBase::interpretInteractive()
       }
 
       iplot1 = iplot2 = -1;
-      sprintf(pString, 
-              "Enter the input for x axis (1 - %d) : ",nInputs_);
+      snprintf(pString,100, 
+               "Enter the input for x axis (1 - %d) : ",nInputs_);
       iplot1 = getInt(1, nInputs_, pString);
       iplot1--;
-      sprintf(pString, 
-              "Enter the input for y axis (1 - %d) : ",nInputs_);
+      snprintf(pString,100, 
+               "Enter the input for y axis (1 - %d) : ",nInputs_);
       iplot2 = getInt(1, nInputs_, pString);
       iplot2--;
       if (iplot2 == iplot1)
@@ -8936,16 +8924,16 @@ int PsuadeBase::interpretInteractive()
       }
 
       iplot1 = iplot2 = -1;
-      sprintf(pString, "X-axis input ? (1 - %d) ", nInputs_);
+      snprintf(pString,100,"X-axis input ? (1 - %d) ", nInputs_);
       iplot1 = getInt(1, nInputs_, pString);
       iplot1--;
-      sprintf(pString, "Y-axis input ? (1 - %d) ", nInputs_);
+      snprintf(pString,100,"Y-axis input ? (1 - %d) ", nInputs_);
       iplot2 = getInt(1, nInputs_, pString);
       iplot2--;
       if (iplot1 == iplot2)
         printf("WARNING: X- and Y-axes use the same input %d\n",
                iplot1+1);
-      sprintf(pString, "Z-axis output ? (1 - %d) : ",nOutputs_);
+      snprintf(pString,100,"Z-axis output ? (1 - %d) : ",nOutputs_);
       oplot1 = getInt(1, nOutputs_, pString);
       oplot1--;
 
@@ -9115,22 +9103,22 @@ int PsuadeBase::interpretInteractive()
         continue;
       }
 
-      sprintf(pString, "X-axis input ? (1 - %d) ", nInputs_);
+      snprintf(pString,100,"X-axis input ? (1 - %d) ", nInputs_);
       iplot1 = getInt(1, nInputs_, pString);
       iplot1--;
-      sprintf(pString, "Y-axis input ? (1 - %d) ", nInputs_);
+      snprintf(pString,100,"Y-axis input ? (1 - %d) ", nInputs_);
       iplot2 = getInt(1, nInputs_, pString);
       iplot2--;
       if (iplot1 == iplot2)
         printf("WARNING: X- and Y-axes use the same input %d\n",
                iplot1+1);
-      sprintf(pString, "Z-axis input ? (1 - %d) ", nInputs_);
+      snprintf(pString,100,"Z-axis input ? (1 - %d) ", nInputs_);
       iplot3 = getInt(1, nInputs_, pString);
       iplot3--;
       if (iplot1 == iplot3 || iplot2 == iplot3)
         printf("WARNING: input %d is used more than once.\n",
                iplot3+1);
-      sprintf(pString, "Which output ? (1 - %d) : ",nOutputs_);
+      snprintf(pString,100,"Which output ? (1 - %d) : ",nOutputs_);
       oplot1 = getInt(1, nOutputs_, pString);
       oplot1--;
 
@@ -9292,7 +9280,7 @@ int PsuadeBase::interpretInteractive()
         continue;
       }
 
-      sprintf(pString, "Select output ? (1 - %d) : ",nOutputs_);
+      snprintf(pString,100,"Select output ? (1 - %d) : ",nOutputs_);
       oplot1 = getInt(1, nOutputs_, pString);
       oplot1--;
 
@@ -9398,17 +9386,17 @@ int PsuadeBase::interpretInteractive()
       }
 
       iplot1 = iplot2 = iplot3 = -1;
-      sprintf(pString,"Enter the input for x axis (1 - %d) : ",nInputs_);
+      snprintf(pString,100,"Enter the input for x axis (1 - %d) : ",nInputs_);
       iplot1 = getInt(1, nInputs_, pString);
       iplot1--;
-      sprintf(pString,"Enter the input for y axis (1 - %d) : ",nInputs_);
+      snprintf(pString,100,"Enter the input for y axis (1 - %d) : ",nInputs_);
       iplot2 = getInt(1, nInputs_, pString);
       iplot2--;
       if (iplot1 == iplot2)
         printf("WARNING: input %d is used more than once.\n",
                iplot1+1);
-      sprintf(pString,"Enter the input for z axis (1 - %d) : ",
-              nInputs_);
+      snprintf(pString,100,"Enter the input for z axis (1 - %d) : ",
+               nInputs_);
       iplot3 = getInt(1, nInputs_, pString);
       iplot3--;
       if (iplot3 == iplot1 || iplot3 == iplot2)
@@ -9490,12 +9478,12 @@ int PsuadeBase::interpretInteractive()
           printf("ERROR: cannot open file matlabiplt3.m.\n");
           continue;
         }
-        sprintf(pString," ranflag: to distinguish identical points");
+        snprintf(pString,100," ranflag: to distinguish identical points");
         fwriteComment(fp, pString);
-        sprintf(pString,"     by adding a small perturbation (when on)");
+        snprintf(pString,100,"     by adding a small perturbation (when on)");
         fwriteComment(fp, pString);
         fprintf(fp, "ranflag  = 0;\n");
-        sprintf(pString," set cvFlag to 1 to use convex hull");
+        snprintf(pString,100," set cvFlag to 1 to use convex hull");
         fwriteComment(fp, pString);
         fprintf(fp, "cvFlag = 0;\n");
         fwritePlotCLF(fp);
@@ -9610,26 +9598,26 @@ int PsuadeBase::interpretInteractive()
       }
 
       int iplot4 = -1;
-      sprintf(pString, 
-              "Enter the input for x axis (1 - %d) : ",nInputs_);
+      snprintf(pString,100, 
+               "Enter the input for x axis (1 - %d) : ",nInputs_);
       iplot1 = getInt(1, nInputs_, pString);
       iplot1--;
-      sprintf(pString, 
-              "Enter the input for y axis (1 - %d) : ",nInputs_);
+      snprintf(pString,100, 
+               "Enter the input for y axis (1 - %d) : ",nInputs_);
       iplot2 = getInt(1, nInputs_, pString);
       iplot2--;
       if (iplot2 == iplot1)
         printf("WARNING: input %d is used more than once.\n",
                iplot2+1);
-      sprintf(pString, 
-              "Enter the input for z axis (1 - %d) : ",nInputs_);
+      snprintf(pString,100, 
+               "Enter the input for z axis (1 - %d) : ",nInputs_);
       iplot3 = getInt(1, nInputs_, pString);
       iplot3--;
       if (iplot3 == iplot1 || iplot3 == iplot2)
         printf("WARNING: input %d is used more than once.\n",
                iplot3+1);
-      sprintf(pString, 
-              "Enter the input for t axis (1 - %d) : ",nInputs_);
+      snprintf(pString,100, 
+               "Enter the input for t axis (1 - %d) : ",nInputs_);
       iplot4 = getInt(1, nInputs_, pString);
       iplot4--;
       if (iplot4 == iplot1 || iplot4 == iplot2 || iplot4 == iplot3)
@@ -9644,12 +9632,12 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString," set cvFlag to 1 to use convex hull");
+      snprintf(pString,100," set cvFlag to 1 to use convex hull");
       fwriteComment(fp, pString);
       fprintf(fp, "cvFlag = 0;\n");
-      sprintf(pString," change npart to change resolution of the ");
+      snprintf(pString,100," change npart to change resolution of the ");
       fwriteComment(fp, pString);
-      sprintf(pString," 4th dimension");
+      snprintf(pString,100," 4th dimension");
       fwriteComment(fp, pString);
       fwritePlotCLF(fp);
       fprintf(fp, "X = [\n");
@@ -9714,8 +9702,8 @@ int PsuadeBase::interpretInteractive()
       fwritePlotYLabel(fp, StrInpNames_[iplot2]);
       fwritePlotZLabel(fp, StrInpNames_[iplot3]);
       fwritePlotAxes(fp);
-      sprintf(pString,"4D Input Scatter Plot for %s)",
-              StrInpNames_[iplot4]);
+      snprintf(pString,1000,"4D Input Scatter Plot for %s)",
+               StrInpNames_[iplot4]);
       fwritePlotTitle(fp, pString);
       fprintf(fp,"     disp('Press ENTER to advance')\n");
       fprintf(fp,"     pause\n");
@@ -9773,11 +9761,11 @@ int PsuadeBase::interpretInteractive()
       }
 
       oplot1 = oplot2 = -1;
-      sprintf(pString,
-              "Enter the output for x axis (1 - %d) : ",nOutputs_);
+      snprintf(pString,100,
+               "Enter the output for x axis (1 - %d) : ",nOutputs_);
       oplot1 = getInt(1, nOutputs_, pString);
       oplot1--;
-      sprintf(pString,
+      snprintf(pString,100,
               "Enter the output for y axis (1 - %d) : ",nOutputs_);
       oplot2 = getInt(1, nOutputs_, pString);
       oplot2--;
@@ -10085,7 +10073,7 @@ int PsuadeBase::interpretInteractive()
       printf("1. test your own calibration parameter values, or\n");
       printf("2. have PSUADE to search for good ");
       printf("calibration parameter values?\n");
-      sprintf(pString, "Select 1 or 2 : ");
+      snprintf(pString,100,"Select 1 or 2 : ");
       int srchOption = getInt(1,2,pString);
  
       int dmOption = 1;
@@ -10094,7 +10082,7 @@ int PsuadeBase::interpretInteractive()
         printf("There are 2 options to choose discrepancy model : \n");
         printf("1. The one that minimizes one-at-a-time CV error.\n");
         printf("2. The one that minimizes the energy of the RS.\n");
-        sprintf(pString, "Select 1 or 2 : ");
+        snprintf(pString,100,"Select 1 or 2 : ");
         dmOption = getInt(1,2,pString);
       }
 
@@ -10149,7 +10137,7 @@ int PsuadeBase::interpretInteractive()
         vecTestCInps.setLength(nCalib);
         for (ii = 0; ii < nCalib; ii++)
         {
-          sprintf(pString, 
+          snprintf(pString,100, 
              "Enter calibration parameter %d value (in [%12.4e, %12.4e]) : ",
              ii+1,vecCLBs[ii],vecCUBs[ii]);
           vecTestCInps[ii] = getDouble(pString);
@@ -10285,6 +10273,7 @@ int PsuadeBase::interpretInteractive()
         vecAllDiscOuts[nn] = new psVector();
 #pragma omp parallel shared(vecDesignP,vecTestCInps,dnSamples,nCalib,matExpInps,faPtr,faPtr2,faPtrs,dnInputs,expInps,vecAllNorms,vecAllDiscOuts,rstype,vecEnergySamInps,vecEnergySamOuts) \
     private(nn,ii,jj,kk,vecTestAllInps,vecTestAllOuts,vecCVInps,vecCVOuts,vecDiscOuts,status,count,errNorm,ddata)
+{
 #pragma omp for
       for (nn = 0; nn < nTests; nn++)
       {
@@ -10400,6 +10389,7 @@ int PsuadeBase::interpretInteractive()
         }
         vecAllDiscOuts[nn]->load(dnSamples,vecDiscOuts.getDVector());
       }
+} /* omp */
       psConfig_.InteractiveRestore();
       psConfig_.RSExpertModeRestore();
       for (nn = 0; nn < nTests; nn++) delete faPtrs[nn];
@@ -10486,8 +10476,8 @@ int PsuadeBase::interpretInteractive()
       printf("values given above and evaluate the ");
       printf("loaded sample with it. The result\n");
       printf("will be written a file for you to inspect.\n");
-      sprintf(pString, 
-              "Perform response surface evaluation ? (y or n) ");
+      snprintf(pString,100, 
+               "Perform response surface evaluation ? (y or n) ");
       getString(pString, winput);
       if (winput[0] == 'y')
       {
@@ -10567,7 +10557,130 @@ int PsuadeBase::interpretInteractive()
     }
 
     //**/ -------------------------------------------------------------
-    // +++ ocov
+    // +++ mcmc_direct 
+    //**/ create a posterior sample from a sample with negLoglikelihood
+    //**/ -------------------------------------------------------------
+    else if (!strcmp(command, "mcmc_direct"))
+    {
+      sscanf(lineIn,"%s %s",command,winput);
+      if (!strcmp(winput, "-h"))
+      {
+        printf("mcmc_direct: draw a posterior sample from a ");
+        printf("space-filling sample with");
+        printf("              negative log-likelihoods given as ");
+        printf("sample output.\n");
+        printf("Syntax: mcmc_direct (no argument needed)\n");
+      }
+      printAsterisks(PL_INFO, 0);
+      printf("If you have a space-filling sample for the ");
+      printf("calibration parameter, and\n");
+      printf("you have also calculated the negative ");
+      printf("log-likelihoods of all sample\n");
+      printf("point as the sample outputs, then this command ");
+      printf("will draw a 'posterior'\n");
+      printf("sample based on the negative log-likelihoods ");
+      printf("(that is, it is analogous\n");
+      printf("to resampling where larger weight will be given ");
+      printf("to the sample points\n");
+      printf("with higher likelihoods). Note that the final ");
+      printf("'posterior' sample will\n");
+      printf("be a sub-sample with replication of the original ");
+      printf("loaded sample. Thus,\n");
+      printf("this command is useful when: \n");
+      printf(" * You have a space-filling sample for the ");
+      printf("calibration parameters.\n");
+      printf(" * You have calculated negative log-likelihood of ");
+      printf("each sample point.\n");
+      printf(" * You want to re-sample based on the negative ");
+      printf("log-likelihood values.\n");
+      printDashes(PL_INFO, 0);
+      printf("Proceed ? (y or n to abort) ");
+      scanf("%s", lineIn2);
+      fgets(winput, 5000, stdin);
+      if (lineIn2[0] != 'y') continue; 
+
+      if (nInputs_ <= 0 || psuadeIO_ == NULL)
+      {
+        printf("ERROR: sample data has not been loaded.\n");
+        cmdStatus = 1;
+        continue;
+      }
+      if (nOutputs_ != 1)
+      {
+        printf("ERROR: nOutputs should be equal to 1.\n");
+        printf("NOTE:  The sample output is taken to be the ");
+        printf("negative log-likelihood of\n");
+        printf("       the sample point.\n");
+        cmdStatus = 1;
+        continue;
+      }
+      MCMCAnalyzer *mcmc = new MCMCAnalyzer();
+      mcmc->createPosteriorFromLikelihoods(VecSamInputs_,VecSamOutputs_,
+                       outputLevel_);
+    }
+
+    //**/ -------------------------------------------------------------
+    // +++ compute-LogL 
+    //**/ Given a single posterior sample, find negative log likelihood
+    //**/ -------------------------------------------------------------
+    else if (!strcmp(command, "compute-LogL"))
+    {
+      sscanf(lineIn,"%s %s",command,winput);
+      if (!strcmp(winput, "-h"))
+      {
+        printf("compute-LogL: Given a single sample point, ");
+        printf("find negative log\n");
+        printf("                likelihood.\n");
+        printf("Syntax: compute-LogL (no argument needed)\n");
+      }
+      printAsterisks(PL_INFO, 0);
+      printf("Apart from the optimal calibration setting obtained ");
+      printf("via MCMC, you may\n");
+      printf("have other settings (e.g. from numerical optimization) ");
+      printf("that you would\n");
+      printf("like to examine and compare against the one from rsmcmc. ");
+      printf("This command\n");
+      printf("serves this purpose by calculating the negative ");
+      printf("log-likelihood given 1\n");
+      printf("such calibration setting. As such, this command needs ");
+      printf("the following\n");
+      printf("information to move forward:\n");
+      printf(" - Experimental data (in a format as in rsmcmc)\n");
+      printf(" - One sample point for the calibration inputs.\n");
+      printf(" - A sample (alread loaded) to create a response surface.\n");
+      printf("At the end, a negative log-likelihood value for ");
+      printf("the sample point will\n");
+      printf("be displayed.\n");
+      printf("NOTE: Small negative log-likelihood is good.\n");
+      printDashes(PL_INFO, 0);
+      printf("Proceed ? (y or n to abort) ");
+      scanf("%s", lineIn2);
+      fgets(winput, 5000, stdin);
+      if (lineIn2[0] != 'y') continue; 
+
+      if (nInputs_ <= 0 || psuadeIO_ == NULL)
+      {
+        printf("ERROR: sample data has not been loaded.\n");
+        cmdStatus = 1;
+        continue;
+      }
+      aData adata;
+      adata.printLevel_ = outputLevel_;
+      adata.nSamples_ = nSamples_;
+      adata.nInputs_  = nInputs_;
+      adata.nOutputs_ = nOutputs_;
+      adata.nOutputs_ = nOutputs_;
+      adata.sampleInputs_  = VecSamInputs_.getDVector();
+      adata.sampleOutputs_ = VecSamOutputs_.getDVector();
+      adata.sampleStates_  = VecSamStates_.getIVector();
+      adata.iLowerB_ = VecILowerBs_.getDVector();
+      adata.iUpperB_ = VecIUpperBs_.getDVector();
+      MCMCAnalyzer *mcmc = new MCMCAnalyzer();
+      mcmc->computeLikelihood(adata);
+    }
+
+    //**/ -------------------------------------------------------------
+    // +++ ocov (UNDER DEVELOPMENT)
     //**/ create a covariance matrix 
     //**/ -------------------------------------------------------------
     else if (!strcmp(command, "ocov"))
@@ -10657,11 +10770,11 @@ int PsuadeBase::interpretInteractive()
       printf("- BF may be good to capture multimodal posteriors.\n");
 
       //printf("2. Metropolis-Hastings\n");
-      sprintf(pString, "Enter MCMC scheme (1, 2, or 3) : ");
+      snprintf(pString,100,"Enter MCMC scheme (1, 2, or 3) : ");
       int mcmcScheme = getInt(1,3,pString);
-      if      (mcmcScheme == 1) sprintf(pString, "MCMC_gibbs");
-      else if (mcmcScheme == 2) sprintf(pString, "MCMC_mh");
-      else if (mcmcScheme == 3) sprintf(pString, "MCMC_brute_force");
+      if      (mcmcScheme == 1) snprintf(pString,100,"MCMC_gibbs");
+      else if (mcmcScheme == 2) snprintf(pString,100,"MCMC_mh");
+      else if (mcmcScheme == 3) snprintf(pString,100,"MCMC_brute_force");
       psConfig_.putParameter(pString);
       int analysisMethod = PSUADE_ANA_MCMC;
       AnalysisManager *anaManager = new AnalysisManager();
@@ -10758,8 +10871,8 @@ int PsuadeBase::interpretInteractive()
       anaManager->specialRequest(analysisMethod, 1, targv);
       //**/if (nOutputs_ > 1)
       //**/{
-      //**/   sprintf(pString, "Which output to analyze (1 - %d) ? ",
-      //**/           nOutputs_);
+      //**/   snprintf(pString,100,"Which output to analyze (1 - %d) ? ",
+      //**/            nOutputs_);
       //**/   outputID = getInt(1, nOutputs_, pString);
       //**/}
       //**/else outputID = 1;
@@ -10994,7 +11107,7 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString,
+      snprintf(pString,100,
           "Select output to use for prediction estimation (1 - %d) ",
           nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
@@ -11042,9 +11155,9 @@ int PsuadeBase::interpretInteractive()
                nSamples_);
         printf("(2) the previous refinement file (psuadeMetisInfo)\n");
         printf("    which needs to be in the current directory.\n");
-        sprintf(pString,"What is the original sample size ? ");
+        snprintf(pString,100,"What is the original sample size ? ");
         int origNSamples = getInt(1, nSamples_, pString);
-        sprintf(pString,
+        snprintf(pString,100,
               "How many sample points to add? (1 - %d, default = %d) ",
               nSamples_, nSamples_);
         refineSize = getInt(1, nSamples_, pString);
@@ -11069,6 +11182,11 @@ int PsuadeBase::interpretInteractive()
         sampPtr->loadSamples(nSamples_,nInputs_,nOutputs_,
                 VecSamInputs_.getDVector(),VecSamOutputs_.getDVector(), 
                 VecSamStates_.getIVector());
+#if 0
+        //**/ Scheme 1: perform uniform refinement (bisection),
+        //**/           evaluate prediction uncertainties at new 
+        //**/           points, and select aggregates with largest
+        //**/           prediction uncertainties for refinement
         Sampling *sampAux = SamplingCreateFromID(SamplingMethod_);
         sampAux->setPrintLevel(outputLevel_);
         sampAux->setInputBounds(nInputs_, VecILowerBs_.getDVector(), 
@@ -11111,6 +11229,8 @@ int PsuadeBase::interpretInteractive()
         double *samStd2 = vecSamStd2.getDVector();
         sampAux->getSamples(nSamples2,nInputs_,1,vecSamInp2.getDVector(),
                      vecSamOut2.getDVector(),vecSamSta2.getIVector());
+        delete sampAux;
+        sampAux = NULL;
 
         //**/ create a MARSB response surface
         faType = PSUADE_RS_MARSB;
@@ -11187,11 +11307,88 @@ int PsuadeBase::interpretInteractive()
         //**/ now refine based on magnitudes of the errors
         strcpy(pString, "setAdaptiveRefinementBasedOnErrors");
         sampPtr->setParam(pString);
-        sprintf(pString, "setRefineSize %d", refineSize);
+        snprintf(pString,100,"setRefineSize %d", refineSize);
         sampPtr->setParam(pString);
         sampPtr->refine(2,1,1.0e-6,nSamples_,samStd2);
         VecSamOutputs_.clean();
         VecSamStates_.clean();
+#else
+        //**/ Scheme 2: pass a response surface evaluator to the
+        //**/           METIS sampler and let it evaluate at
+        //**/           various points and select aggregates for
+        //**/           refinement
+
+        //**/ create a MARSB response surface
+        faType = PSUADE_RS_MARSB;
+        FuncApprox *faPtr = genFA(faType, nInputs_, iOne, nSamples_);
+        faPtr->setNPtsPerDim(32);
+        faPtr->setBounds(VecILowerBs_.getDVector(), 
+                         VecIUpperBs_.getDVector());
+        faPtr->setOutputLevel(0);
+
+        //**/ generate 100 instantiations
+        int numMars = 100, ivar1;
+        psMatrix matMarsX, matMarsY;
+        matMarsX.setFormat(PS_MAT2D);
+        matMarsY.setFormat(PS_MAT2D);
+        matMarsX.setDim(numMars, nSamples_*nInputs_);
+        matMarsY.setDim(numMars, nSamples_);
+        double **marsX = matMarsX.getMatrix2D();
+        double **marsY = matMarsY.getMatrix2D();
+        for (ii = 0; ii < numMars; ii++)
+        {
+          for (ss = 0; ss < nSamples_; ss++)
+          {
+            if (ss < origNSamples)
+                 ivar1 = PSUADE_rand() % origNSamples;
+            else ivar1 = ss;
+            for (jj = 0; jj < nInputs_; jj++)
+              marsX[ii][ss*nInputs_+jj] =
+                       VecSamInputs_[ivar1*nInputs_+jj];
+            marsY[ii][ss] = VecSamOutputs_[ivar1*nOutputs_+outputID];
+          }
+        }
+
+        //**/ pass response surface to sampler
+        strcpy(cString, "mars_params");
+        int ivar2 = 2 * nInputs_ / 3 + 1;
+        int ivar3 = nSamples_;
+        if (ivar3 > 300) ivar3 = 300;
+        targv[0] = (char *) cString;
+        targv[1] = (char *) &ivar3;
+        targv[2] = (char *) &ivar2;
+        faPtr->setParams(3, targv);
+        strcpy(cString, "num_mars");
+        targv[0] = (char *) cString;
+        targv[1] = (char *) &numMars;
+        faPtr->setParams(2, targv);
+        strcpy(cString, "mars_sample");
+        targv[0] = (char *) cString;
+        targv[2] = (char *) &nSamples_;
+        for (ii = 0; ii < numMars; ii++)
+        {
+          targv[1] = (char *) &ii;
+          targv[3] = (char *) marsX[ii];
+          targv[4] = (char *) marsY[ii];
+        }
+        faPtr->initialize(VecSamInputs_.getDVector(),
+                          vecYT.getDVector());
+        targv[0] = (char *) faPtr;
+        strcpy(cString, "setRSPTR");
+        targv[0] = (char *) cString;
+        targv[1] = (char *) faPtr;
+        ii = 2;
+        sampPtr->setParam(ii, targv);
+
+        //**/ now refine 
+        strcpy(pString, "setAdaptiveRefinementBasedOnErrors");
+        sampPtr->setParam(pString);
+        snprintf(pString,100,"setRefineSize %d", refineSize);
+        sampPtr->setParam(pString);
+        sampPtr->refine(2,1,0,0,NULL);
+        VecSamOutputs_.clean();
+        VecSamStates_.clean();
+#endif
 
         //**/ fetch the new sample 
         nSamples_ = sampPtr->getNumSamples();
@@ -11216,8 +11413,7 @@ int PsuadeBase::interpretInteractive()
         printf("this refined sample (the\n");
         printf("     last %d sample points).\n",refineSize);
         delete sampPtr;
-        delete sampAux;
-        sampPtr = sampAux = NULL;
+        sampPtr = NULL;
         delete faPtr;
         faPtr = NULL;
         psConfig_.SamExpertModeRestore();
@@ -11253,7 +11449,7 @@ int PsuadeBase::interpretInteractive()
         //**/ now refine based on magnitudes of the errors
         strcpy(pString, "setAdaptiveRefinementBasedOnOutputs");
         sampPtr->setParam(pString);
-        sprintf(pString, "setRefineSize %d", nSamples_);
+        snprintf(pString,100,"setRefineSize %d", nSamples_);
         sampPtr->setParam(pString);
         sampPtr->refine(2,1,1.0e-6,0,NULL);
 
@@ -11329,8 +11525,8 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString,"Select output to use for arefine (1 - %d) ",
-              nOutputs_);
+      snprintf(pString,100,"Select output to use for arefine (1 - %d) ",
+               nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       for (ss = 0; ss < nSamples_; ss++)
@@ -11352,12 +11548,12 @@ int PsuadeBase::interpretInteractive()
       printf("you enter 0, the current sample size will be ");
       printf("used (i.e. no favorites\n");
       printf("in selecting bootstrapped samples for MarsBagg.\n");
-      sprintf(pString,"Enter the original sample size (<= %d): ",
+      snprintf(pString,100,"Enter the original sample size (<= %d): ",
               nSamples_);
       int origNSamples = getInt(0, nSamples_, pString);
       if (origNSamples == 0) origNSamples = nSamples_;
       SamplingMethod_ = PSUADE_SAMP_GMETIS;
-      sprintf(pString,"How many sample points to add? (1 - %d) ",
+      snprintf(pString,100,"How many sample points to add? (1 - %d) ",
               nSamples_);
       int refineSize = getInt(1, nSamples_, pString);
 
@@ -11383,6 +11579,12 @@ int PsuadeBase::interpretInteractive()
       sampPtr->loadSamples(nSamples_, nInputs_, nOutputs_, 
                 VecSamInputs_.getDVector(),VecSamOutputs_.getDVector(), 
                 VecSamStates_.getIVector());
+#if 1
+      //**/ This scheme may not be as good, but the other option has 
+      //**/ not been implemented.
+      //**/ Scheme 1: refine uniformly first, then evaluate prediction
+      //**/           uncertainty for all new points and then select
+      //**/           points with largest uncertainty
       Sampling *sampAux = SamplingCreateFromID(SamplingMethod_);
       sampAux->setPrintLevel(outputLevel_);
       sampAux->setInputBounds(nInputs_, VecILowerBs_.getDVector(), 
@@ -11411,6 +11613,8 @@ int PsuadeBase::interpretInteractive()
       sampAux->getSamples(nSamples2,nInputs_,iOne,
                VecSamInp2.getDVector(), 
                VecSamOut2.getDVector(), VecSamSta2.getIVector());
+      delete sampAux;
+      sampAux = NULL;
 
       //**/ create a MARSB response surface
       faType = PSUADE_RS_MARSB;
@@ -11422,7 +11626,7 @@ int PsuadeBase::interpretInteractive()
         printf("2. Gaussian process (GP)\n");
         printf("3. Kriging\n");
         printf("4. Sum of trees method\n");
-        sprintf(pString,"Make your choice (default: MARSB) : ");
+        snprintf(pString,100,"Make your choice (default: MARSB) : ");
         faType = getInt(1,4,pString);
         switch (faType)
         {
@@ -11508,7 +11712,7 @@ int PsuadeBase::interpretInteractive()
       //**/ now refine based on magnitudes of the errors
       strcpy(pString, "setAdaptiveRefinementBasedOnErrors");
       sampPtr->setParam(pString);
-      sprintf(pString, "setRefineSize %d", refineSize);
+      snprintf(pString,100,"setRefineSize %d", refineSize);
       sampPtr->setParam(pString);
       if (outputLevel_ > 3)
       {
@@ -11517,6 +11721,85 @@ int PsuadeBase::interpretInteractive()
           printf("%5d: std dev = %e\n", ss+1, VecSamStd2[ss]);
       }
       sampPtr->refine(2,1,1.0e-6,nSamples_,VecSamStd2.getDVector());
+      delete faPtr;
+      faPtr = NULL;
+#else
+      //**/ This scheme will require change in GMetisSampling.cpp
+      //**/ Scheme 2: send response surface evaluator to METIS and let
+      //**/           it evaluate prediction uncertainties and select
+
+      //**/ create a MarsBag response surface
+      faType = PSUADE_RS_MARSB;
+      FuncApprox *faPtr = genFA(faType, nInputs_, iOne, nSamples_);
+      faPtr->setNPtsPerDim(32);
+      faPtr->setBounds(VecILowerBs_.getDVector(), 
+                       VecIUpperBs_.getDVector());
+      faPtr->setOutputLevel(0);
+
+      //**/ generate 100 instantiations of Mars
+      int numMars = 100, ivar1;
+      psMatrix matMarsX, matMarsY;
+      matMarsX.setFormat(PS_MAT2D);
+      matMarsY.setFormat(PS_MAT2D);
+      matMarsX.setDim(numMars, nSamples_*nInputs_);
+      matMarsY.setDim(numMars, nSamples_);
+      double **marsX = matMarsX.getMatrix2D();
+      double **marsY = matMarsY.getMatrix2D();
+      for (ii = 0; ii < numMars; ii++)
+      {
+        for (ss = 0; ss < nSamples_; ss++)
+        {
+          if (ss < origNSamples)
+               ivar1 = PSUADE_rand() % origNSamples;
+          else ivar1 = ss;
+          for (jj = 0; jj < nInputs_; jj++)
+            marsX[ii][ss*nInputs_+jj] =
+                 VecSamInputs_[ivar1*nInputs_+jj];
+          marsY[ii][ss] = VecSamOutputs_[ivar1*nOutputs_+outputID];
+        }
+      }
+      strcpy(cString, "mars_params");
+      int ivar2 = 2 * nInputs_ / 3 + 1;
+      int ivar3 = nSamples_;
+      if (ivar3 > 300) ivar3 = 300;
+      targv[0] = (char *) cString;
+      targv[1] = (char *) &ivar3;
+      targv[2] = (char *) &ivar2;
+      faPtr->setParams(3, targv);
+      strcpy(cString, "num_mars");
+      targv[0] = (char *) cString;
+      targv[1] = (char *) &numMars;
+      faPtr->setParams(2, targv);
+      strcpy(cString, "mars_sample");
+      targv[0] = (char *) cString;
+      targv[2] = (char *) &nSamples_;
+      for (ii = 0; ii < numMars; ii++)
+      {
+        targv[1] = (char *) &ii;
+        targv[3] = (char *) marsX[ii];
+        targv[4] = (char *) marsY[ii];
+        faPtr->setParams(5, targv);
+      }
+      faPtr->initialize(VecSamInputs_.getDVector(),
+                        vecYT.getDVector());
+
+      //**/ pass the response surface evaluator in
+      targv[0] = (char *) faPtr;
+      strcpy(cString, "setRSPTR");
+      targv[0] = (char *) cString;
+      targv[1] = (char *) faPtr;
+      ii = 2;
+      sampPtr->setParam(ii, targv);
+
+      //**/ now refine 
+      strcpy(pString, "setAdaptiveRefinementBasedOnErrors");
+      sampPtr->setParam(pString);
+      snprintf(pString,100,"setRefineSize %d", refineSize);
+      sampPtr->setParam(pString);
+      sampPtr->refine(2,1,0,0,NULL);
+      delete faPtr;
+      faPtr = NULL;
+#endif
 
       //**/ fetch the new sample 
       nSamples_ = sampPtr->getNumSamples();
@@ -11527,6 +11810,8 @@ int PsuadeBase::interpretInteractive()
                           VecSamInputs_.getDVector(),
                           VecSamOutputs_.getDVector(), 
                           VecSamStates_.getIVector());
+      delete sampPtr;
+      sampPtr = NULL;
       psuadeIO_->updateInputSection(nSamples_,nInputs_,NULL,NULL,NULL,
                    VecSamInputs_.getDVector(),NULL,NULL,NULL,NULL,NULL); 
       psuadeIO_->updateOutputSection(nSamples_,nOutputs_,
@@ -11541,11 +11826,6 @@ int PsuadeBase::interpretInteractive()
       printf("     the newly created sample points in ");
       printf("this refined sample (the last\n");
       printf("     %d sample points).\n",refineSize);
-      delete sampPtr;
-      delete sampAux;
-      sampPtr = sampAux = NULL;
-      delete faPtr;
-      faPtr = NULL;
       psConfig_.SamExpertModeRestore();
       cmdStatus = 0;
     }
@@ -11595,8 +11875,8 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString,"Select output to use for refinement (1 - %d) ",
-              nOutputs_);
+      snprintf(pString,100,"Select output to use for refinement (1 - %d) ",
+               nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       for (ss = 0; ss < nSamples_; ss++)
@@ -11612,7 +11892,7 @@ int PsuadeBase::interpretInteractive()
 
       psuadeIO_->getParameter("method_sampling", pPtr);
       SamplingMethod_ = PSUADE_SAMP_GMETIS;
-      sprintf(pString,"How many sample points to add? (1 - %d) ",nSamples_);
+      snprintf(pString,100,"How many sample points to add? (1 - %d) ",nSamples_);
       int refineSize = getInt(1, nSamples_, pString);
       //**/ temporarily turn off sampling expert mode
       //**/ load sample to 2 samplers, one for uniform sampling (sampAux), 
@@ -11664,7 +11944,7 @@ int PsuadeBase::interpretInteractive()
       if (psConfig_.RSExpertModeIsOn())
       {
         faType = -1;
-        sprintf(pString, "Enter your choice ? ");
+        snprintf(pString,100,"Enter your choice ? ");
         while (faType < 0 || faType > PSUADE_NUM_RS)
         {
           writeFAInfo(0);
@@ -11711,7 +11991,7 @@ int PsuadeBase::interpretInteractive()
       //**/ now refine based on magnitudes of the errors
       strcpy(pString, "setAdaptiveRefinementBasedOnErrors");
       sampPtr->setParam(pString);
-      sprintf(pString, "setRefineSize %d", refineSize);
+      snprintf(pString,100,"setRefineSize %d", refineSize);
       sampPtr->setParam(pString);
       sampPtr->refine(2,1,1.0e-6,nSamples_,samOut2);
 
@@ -11806,7 +12086,7 @@ int PsuadeBase::interpretInteractive()
       }
 
       //**/ ask for which output
-      sprintf(pString,"Select output to use for refinement (1 - %d) ",
+      snprintf(pString,100,"Select output to use for refinement (1 - %d) ",
               nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
@@ -11835,7 +12115,7 @@ int PsuadeBase::interpretInteractive()
       printf("Sample minimum and maximum are %e and %e.\n",dMin,dMax);
       printf("The threshold should be somewhere in between ");
       printf("or not too far away.\n");
-      sprintf(pString, "Please enter threshold : ");
+      snprintf(pString,100,"Please enter threshold : ");
       thresh = getDouble(pString);
 
       //**/ ask to see if RS is needed
@@ -11886,8 +12166,8 @@ int PsuadeBase::interpretInteractive()
       long lcount = 1;
       for (ii = 0; ii < nInputs_; ii++)
       {
-        sprintf(pString, 
-                "Enter resolution for input %d : ", ii+1);
+        snprintf(pString,100, 
+                 "Enter resolution for input %d : ", ii+1);
         vecResolution[ii] = getInt(2,1000000,pString);
         lcount *= vecResolution[ii];
       }
@@ -11903,7 +12183,7 @@ int PsuadeBase::interpretInteractive()
       if (useRS == 1)
       {
         faType = -1;
-        sprintf(pString, "Enter your choice for response surface : ");
+        snprintf(pString,100,"Enter your choice for response surface : ");
         while (faType < 0 || faType > PSUADE_NUM_RS)
         {
           writeFAInfo(0);
@@ -11957,8 +12237,8 @@ int PsuadeBase::interpretInteractive()
         printf("==> 97.5%% confidence\n");  
         printf("Prediction mean + 3 x prediction std dev ");
         printf("==> 99.5%% confidence\n");  
-        sprintf(pString, 
-                "Please enter this multiple factor (0, 1, 2, 3) : ");
+        snprintf(pString,100, 
+                 "Please enter this multiple factor (0, 1, 2, 3) : ");
         double multiplier = getDouble(pString);
         faPtr->evaluatePointFuzzy(nEvals, vecEvalX.getDVector(),
                              vecEvalY.getDVector(),
@@ -12037,7 +12317,7 @@ int PsuadeBase::interpretInteractive()
       printf(" 3. Don't know. Assume both 1 and 2 are possible.\n");
       for (ii = 0; ii < nInputs_; ii++)
       {
-        sprintf(pString,"Enter option for input %d (1 - 3) : ",ii+1);
+        snprintf(pString,100,"Enter option for input %d (1 - 3) : ",ii+1);
         vecDirections[ii] = getInt(1,3,pString);
       }
 
@@ -12379,8 +12659,8 @@ int PsuadeBase::interpretInteractive()
       }
 
       //**/ ask for which output
-      sprintf(pString,"Select output to use for refinement (1 - %d) ",
-              nOutputs_);
+      snprintf(pString,100,"Select output to use for refinement (1 - %d) ",
+               nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       for (ss = 0; ss < nSamples_; ss++)
@@ -12408,7 +12688,7 @@ int PsuadeBase::interpretInteractive()
       printf("Sample minimum and maximum are %e and %e.\n",dMin,dMax);
       printf("The threshold should be somewhere in between ");
       printf("or not too far away.\n");
-      sprintf(pString, "Please enter threshold : ");
+      snprintf(pString,100,"Please enter threshold : ");
       thresh = getDouble(pString);
 
       //**/ see if the sample is a factorial sample
@@ -12430,8 +12710,8 @@ int PsuadeBase::interpretInteractive()
       long lcount = 1;
       for (ii = 0; ii < nInputs_; ii++)
       {
-        sprintf(pString, 
-                "Enter resolution for input %d : ", ii+1);
+        snprintf(pString,100, 
+                 "Enter resolution for input %d : ", ii+1);
         vecResolution[ii] = getInt(2,1000000,pString);
         lcount *= vecResolution[ii];
       }
@@ -12907,7 +13187,7 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString,
+      snprintf(pString,100,
           "Select output to use for prediction estimation (1 - %d) ",
           nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
@@ -12934,7 +13214,7 @@ int PsuadeBase::interpretInteractive()
              nSamples_);
       printf("(2) the previous refinement file (psuadeMetisInfo)\n");
       printf("    which needs to be in the current directory.\n");
-      sprintf(pString,"What is the original sample size ? ");
+      snprintf(pString,100,"What is the original sample size ? ");
 
       //**/ get min/max information from sample output
       double dMin=1e35, dMax=-1e-35;
@@ -12948,11 +13228,11 @@ int PsuadeBase::interpretInteractive()
       printf("Sample minimum and maximum are %e and %e.\n",dMin,dMax);
       printf("The threshold should be somewhere in between ");
       printf("or not too far away.\n");
-      sprintf(pString, "Please enter threshold : ");
+      snprintf(pString,100,"Please enter threshold : ");
       thresh = getDouble(pString);
 
       int origNSamples = getInt(1, nSamples_, pString);
-      sprintf(pString,
+      snprintf(pString,100,
             "How many sample points to add? (1 - %d, default = %d) ",
             nSamples_, nSamples_);
       int refineSize = getInt(1, nSamples_, pString);
@@ -13036,7 +13316,7 @@ int PsuadeBase::interpretInteractive()
       //**/ now refine based on magnitudes of the errors
       strcpy(pString, "setAdaptiveRefinementBasedOnErrors");
       sampPtr->setParam(pString);
-      sprintf(pString, "setRefineSize %d", refineSize);
+      snprintf(pString,100,"setRefineSize %d", refineSize);
       sampPtr->setParam(pString);
       sampPtr->refine(2,0,0,nSamples_,NULL);
       VecSamOutputs_.clean();
@@ -13106,7 +13386,7 @@ int PsuadeBase::interpretInteractive()
       fgets(winput,5000,stdin); 
       if (lineIn2[0] != 'y') continue; 
 
-      sprintf(pString,"Enter output number (1 - %d) : ",nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ",nOutputs_);
       outputID = getInt(1, nOutputs_, pString) - 1;
 
       //**/ check that all outputs are 0/1 or not
@@ -13126,10 +13406,10 @@ int PsuadeBase::interpretInteractive()
         while (relMin >= relMax)
         {
           printf("Safety region is defined to be inside [lower, upper].\n");
-          sprintf(cString,"Upper bound for safety region (-999 if none): ");
+          snprintf(cString,100,"Upper bound for safety region (-999 if none): ");
           relMax = getDouble(cString);
           if (relMax == -999) relMax = 1.0e10;
-          sprintf(cString,"Lower bound for safety region (-999 if none): ");
+          snprintf(cString,100,"Lower bound for safety region (-999 if none): ");
           relMin = getDouble(cString);
           if (relMin == -999) relMin = -1.0e10;
           if (relMin >= relMax) printf("INVALID bounds.\n");
@@ -13192,7 +13472,7 @@ int PsuadeBase::interpretInteractive()
         printf("adaptive refinement along 0/1 boundary.\n");
         strcpy(sparam, "setAdaptiveRefinementBasedOnOutputs");
         sampler->setParam(sparam);
-        sprintf(sparam, "setRefineSize 100000");
+        snprintf(sparam,100,"setRefineSize 100000");
         sampler->setParam(sparam);
         printf("arel_metis: refinement begins.\n");
         sampler->refine(refineRatio,randomize,refineThresh,
@@ -13645,17 +13925,17 @@ int PsuadeBase::interpretInteractive()
       }
       else
       {
-        sprintf(pString, "Enter output number (1 - %d) : ", nOutputs_);
+        snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
         outputID = getInt(1, nOutputs_, pString);
         outputID--;
-        sprintf(pString,
+        snprintf(pString,100,
           "Check (a) against itself or (b) against another sample? (a or b) ");
         getString(pString, winput);
 
         if (winput[0] == 'a')  
         {      
           int nNeighbors=0;
-          sprintf(pString,
+          snprintf(pString,100,
              "How many nearest neighbors to use number (1 - default=100) : ");
           nNeighbors = getInt(1, 100, pString);
 
@@ -13697,10 +13977,10 @@ int PsuadeBase::interpretInteractive()
         else
         {
           int nNeighbors=0;
-          sprintf(pString,
+          snprintf(pString,100,
              "How many neighbors to use number (1 - default=100) : ");
           nNeighbors = getInt(1, 100, pString);
-          sprintf(pString,"Enter name of sample file name : ");
+          snprintf(pString,100,"Enter name of sample file name : ");
           getString(pString, winput);
           kk = strlen(winput);
           winput[kk-1] = '\0';
@@ -13814,11 +14094,11 @@ int PsuadeBase::interpretInteractive()
         continue;
       }
 
-      sprintf(pString,"Enter first sample number (1 - %d) = ", nSamples_);
+      snprintf(pString,100,"Enter first sample number (1 - %d) = ", nSamples_);
       ind = getInt(1, nSamples_, pString);
       ind--;
-      sprintf(pString, "Enter last sample number (%d - %d) = ", 
-              ind+1, nSamples_);
+      snprintf(pString,100,"Enter last sample number (%d - %d) = ", 
+               ind+1, nSamples_);
       ind2 = getInt(ind+1, nSamples_, pString);
       for (ii = ind; ii < ind2; ii++) VecSamStates_[ii] = 1;
       psuadeIO_->updateOutputSection(nSamples_,nOutputs_,
@@ -13869,8 +14149,8 @@ int PsuadeBase::interpretInteractive()
         continue;
       }
 
-      sprintf(pString, "Enter output number (1 - %d, 0 for all points) : ", 
-              nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d, 0 for all points) : ", 
+               nOutputs_);
       outputID = getInt(0, nOutputs_, pString);
       outputID--;
       if (outputID == -1)
@@ -13893,9 +14173,9 @@ int PsuadeBase::interpretInteractive()
             Ymin = VecSamOutputs_[sInd*nOutputs_+outputID];
         }
         printf("INFO: Values outside the bounds are invalidated.\n");
-        sprintf(pString, "Enter the filter's lower bound (Ymin=%e) : ",Ymin);
+        snprintf(pString,100,"Enter the filter's lower bound (Ymin=%e) : ",Ymin);
         threshL = getDouble(pString);
-        sprintf(pString, "Enter the filter's upper bound (Ymax=%e) : ",Ymax);
+        snprintf(pString,100,"Enter the filter's upper bound (Ymax=%e) : ",Ymax);
         threshU = getDouble(pString);
         if (threshL >= threshU)
         {
@@ -14001,8 +14281,8 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString,
-              "Do you want duplicate sample points purged too? (y or n)");
+      snprintf(pString,100,
+               "Do you want duplicate sample points purged too? (y or n)");
       getString(pString, winput);
       int setCompare = 0;
       if (winput[0] == 'y') setCompare = 1;
@@ -14276,17 +14556,17 @@ int PsuadeBase::interpretInteractive()
       printf("Since this command only works for 2D, you ");
       printf("need to select 2 inputs from\n");
       printf("the %d inputs in the loaded sample.\n",nInputs_);
-      sprintf(pString,"Select the first input (1 - %d) : ",nInputs_);
+      snprintf(pString,100,"Select the first input (1 - %d) : ",nInputs_);
       ii = getInt(1,nInputs_,pString);
       jj = ii;
-      sprintf(pString,"Select the second input (1 - %d, not %d) : ",
-              nInputs_,ii);
+      snprintf(pString,100,"Select the second input (1 - %d, not %d) : ",
+               nInputs_,ii);
       while (jj <= 0 || jj > nInputs_ || jj == ii)
         jj = getInt(1,nInputs_,pString);
       printf("Now enter the point to see if it is in the convex hull.\n");
-      sprintf(pString,"Enter the value of the first input : ");
+      snprintf(pString,100,"Enter the value of the first input : ");
       xVal = getDouble(pString);
-      sprintf(pString,"Enter the value of the second input : ");
+      snprintf(pString,100,"Enter the value of the second input : ");
       yVal = getDouble(pString);
       psVector vec1, vec2;
       vec1.setLength(nSamples_);
@@ -14336,15 +14616,15 @@ int PsuadeBase::interpretInteractive()
         continue;
       }
 
-      sprintf(pString, "Enter sample number (1 - %d) : ", nSamples_);
+      snprintf(pString,100,"Enter sample number (1 - %d) : ", nSamples_);
       sInd = getInt(1, nSamples_, pString);
       sInd--;
-      sprintf(pString, "Enter input number (1 - %d) : ", nInputs_);
+      snprintf(pString,100,"Enter input number (1 - %d) : ", nInputs_);
       inputID = getInt(1, nInputs_, pString);
       inputID--;
       printf("Current value of input = %e\n",
              VecSamInputs_[sInd*nInputs_+inputID]);
-      sprintf(pString, "Enter new value : ");
+      snprintf(pString,100,"Enter new value : ");
       VecSamInputs_[sInd*nInputs_+inputID] = getDouble(pString);
       psuadeIO_->updateInputSection(nSamples_,nInputs_,NULL,NULL,NULL,
                     VecSamInputs_.getDVector(),NULL,NULL,NULL,NULL,NULL); 
@@ -14382,15 +14662,15 @@ int PsuadeBase::interpretInteractive()
         continue;
       }
 
-      sprintf(pString, "Enter sample number (1 - %d) : ", nSamples_);
+      snprintf(pString,100,"Enter sample number (1 - %d) : ", nSamples_);
       sInd = getInt(1, nSamples_, pString);
       sInd--;
-      sprintf(pString, "Enter output number (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
       ii = getInt(1, nOutputs_, pString);
       ii--;
       printf("Current value of output = %e\n",
              VecSamOutputs_[sInd*nOutputs_+ii]);
-      sprintf(pString, "Enter new value : ");
+      snprintf(pString,100,"Enter new value : ");
       VecSamOutputs_[sInd*nOutputs_+ii] = getDouble(pString);
       psuadeIO_->updateOutputSection(nSamples_, nOutputs_, 
                    VecSamOutputs_.getDVector(), 
@@ -14434,7 +14714,7 @@ int PsuadeBase::interpretInteractive()
       inputID = 0;
       if (nInputs_ > 1)
       {
-        sprintf(pString, "Enter input number (1 - %d) : ", nInputs_);
+        snprintf(pString,100,"Enter input number (1 - %d) : ", nInputs_);
         inputID = getInt(1, nInputs_, pString);
         inputID--;
       }
@@ -14447,9 +14727,9 @@ int PsuadeBase::interpretInteractive()
         if (VecSamInputs_[sInd*nInputs_+inputID] > Xmax) 
           Xmax = VecSamInputs_[sInd*nInputs_+inputID];
       printf("Xmin and Xmax found = %e %e.\n", Xmin, Xmax);
-      sprintf(pString,"Enter the lower threshold (Xmin = %e) : ",Xmin);
+      snprintf(pString,100,"Enter the lower threshold (Xmin = %e) : ",Xmin);
       threshL = getDouble(pString);
-      sprintf(pString,"Enter the upper threshold (Xmax = %e) : ",Xmax);
+      snprintf(pString,100,"Enter the upper threshold (Xmax = %e) : ",Xmax);
       threshU = getDouble(pString);
       if (threshL >= threshU)
       {
@@ -14529,7 +14809,7 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString, "Enter output number (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       Ymax = - PSUADE_UNDEFINED;
@@ -14541,9 +14821,9 @@ int PsuadeBase::interpretInteractive()
         if (VecSamOutputs_[sInd*nOutputs_+outputID] < Ymin)
           Ymin = VecSamOutputs_[sInd*nOutputs_+outputID];
       }
-      sprintf(pString,"Enter the lower threshold (Ymin=%e) : ",Ymin);
+      snprintf(pString,100,"Enter the lower threshold (Ymin=%e) : ",Ymin);
       threshL = getDouble(pString);
-      sprintf(pString,"Enter the upper threshold (Ymax=%e) : ",Ymax);
+      snprintf(pString,100,"Enter the upper threshold (Ymax=%e) : ",Ymax);
       threshU = getDouble(pString);
       if (threshL >= threshU)
       {
@@ -14632,24 +14912,24 @@ int PsuadeBase::interpretInteractive()
       printf("input <1> = arctan(input <1>)\n");
       printf("9. Divide one input by another : ");
       printf("input <1> = input <2> / input <3>)\n");
-      sprintf(pString, "Enter a selection : ");
+      snprintf(pString,100,"Enter a selection : ");
       int option = getInt(1, 9, pString);
 
       if (option == 1)
       {
         printf("Form linear transformation of inputs : \n");
         printf("   input <1> = <a> * input <2> + <b> * input <3>\n");
-        sprintf(pString, "Enter input <1> (1 - %d) : ", nInputs_);
+        snprintf(pString,100,"Enter input <1> (1 - %d) : ", nInputs_);
         ii = getInt(1, nInputs_, pString);
         ii--;
-        sprintf(pString, "Enter the value <a>: ");
+        snprintf(pString,100,"Enter the value <a>: ");
         double aVal = getDouble(pString);
-        sprintf(pString, "Enter input <2> (1 - %d) : ", nInputs_);
+        snprintf(pString,100,"Enter input <2> (1 - %d) : ", nInputs_);
         jj = getInt(1, nInputs_, pString);
         jj--;
-        sprintf(pString, "Enter the value <b>: ");
+        snprintf(pString,100,"Enter the value <b>: ");
         double bVal = getDouble(pString);
-        sprintf(pString, "Enter input <3> (1 - %d) : ", nInputs_);
+        snprintf(pString,100,"Enter input <3> (1 - %d) : ", nInputs_);
         kk = getInt(1, nInputs_, pString);
         kk--;
         for (sInd = 0; sInd < nSamples_; sInd++)
@@ -14662,10 +14942,10 @@ int PsuadeBase::interpretInteractive()
       else if (option == 2)
       {
         printf("Take an input to a power: input = (input)^P\n");
-        sprintf(pString, "Enter input (1 - %d) : ", nInputs_);
+        snprintf(pString,100,"Enter input (1 - %d) : ", nInputs_);
         ii = getInt(1, nInputs_, pString);
         ii--;
-        sprintf(pString, "Enter the power <P>: ");
+        snprintf(pString,100,"Enter the power <P>: ");
         double pVal = getDouble(pString);
         for (sInd = 0; sInd < nSamples_; sInd++)
         {
@@ -14676,7 +14956,7 @@ int PsuadeBase::interpretInteractive()
       else if (option == 3)
       {
         printf("Exponentiate an input : input = exp(input)\n");
-        sprintf(pString, "Enter input (1 - %d) : ", nInputs_);
+        snprintf(pString,100,"Enter input (1 - %d) : ", nInputs_);
         ii = getInt(1, nInputs_, pString);
         ii--;
         for (sInd = 0; sInd < nSamples_; sInd++)
@@ -14689,7 +14969,7 @@ int PsuadeBase::interpretInteractive()
       {
         printf("Replace an input with its logarithm : ");
         printf("input = log(input)\n");
-        sprintf(pString, "Enter input (1 - %d) : ", nInputs_);
+        snprintf(pString,100,"Enter input (1 - %d) : ", nInputs_);
         ii = getInt(1, nInputs_, pString);
         ii--;
         for (sInd = 0; sInd < nSamples_; sInd++)
@@ -14705,7 +14985,7 @@ int PsuadeBase::interpretInteractive()
       {
         printf("Replace an input with its sine : ");
         printf("input = sin(input)\n");
-        sprintf(pString, "Enter input (1 - %d) : ", nInputs_);
+        snprintf(pString,100,"Enter input (1 - %d) : ", nInputs_);
         ii = getInt(1, nInputs_, pString);
         ii--;
         for (sInd = 0; sInd < nSamples_; sInd++)
@@ -14718,7 +14998,7 @@ int PsuadeBase::interpretInteractive()
       {
         printf("Replace an input with its cosine : ");
         printf("input  = cos(input)\n");
-        sprintf(pString, "Enter input (1 - %d) : ", nInputs_);
+        snprintf(pString,100,"Enter input (1 - %d) : ", nInputs_);
         ii = getInt(1, nInputs_, pString);
         ii--;
         for (sInd = 0; sInd < nSamples_; sInd++)
@@ -14731,7 +15011,7 @@ int PsuadeBase::interpretInteractive()
       {
         printf("Replace an input with its tangent : ");
         printf("input = tan(input)\n");
-        sprintf(pString, "Enter input (1 - %d) : ", nInputs_);
+        snprintf(pString,100,"Enter input (1 - %d) : ", nInputs_);
         ii = getInt(1, nInputs_, pString);
         ii--;
         for (sInd = 0; sInd < nSamples_; sInd++)
@@ -14744,7 +15024,7 @@ int PsuadeBase::interpretInteractive()
       {
         printf("Replace an input with its arctangent : ");
         printf("input = arctan(input)\n");
-        sprintf(pString, "Enter input (1 - %d) : ", nInputs_);
+        snprintf(pString,100,"Enter input (1 - %d) : ", nInputs_);
         ii = getInt(1, nInputs_, pString);
         ii--;
         for (sInd = 0; sInd < nSamples_; sInd++)
@@ -14756,13 +15036,13 @@ int PsuadeBase::interpretInteractive()
       else if (option == 9)
       {
         printf("Division: input <1> = input <2> / input <3>\n");
-        sprintf(pString, "Enter input <1> (1 - %d) : ", nInputs_);
+        snprintf(pString,100,"Enter input <1> (1 - %d) : ", nInputs_);
         ii = getInt(1, nInputs_, pString);
         ii--;
-        sprintf(pString, "Enter input <2> (1 - %d) : ", nInputs_);
+        snprintf(pString,100,"Enter input <2> (1 - %d) : ", nInputs_);
         jj = getInt(1, nInputs_, pString);
         jj--;
-        sprintf(pString, "Enter input <3> (1 - %d) : ", nInputs_);
+        snprintf(pString,100,"Enter input <3> (1 - %d) : ", nInputs_);
         kk = getInt(1, nInputs_, pString);
         kk--;
         for (sInd = 0; sInd < nSamples_; sInd++)
@@ -14850,24 +15130,24 @@ int PsuadeBase::interpretInteractive()
       printf("3. Replace an input with its logarithm : ");
       printf("output = log(output)\n");
       printf("4. Division: output <1> = output <2> / output <3>\n");
-      sprintf(pString, "Enter a selection : ");
+      snprintf(pString,100,"Enter a selection : ");
       int option = getInt(1, 4, pString);
 
       if (option == 1)
       {
         printf("Linear transformation : \n");
         printf("   output <1> = <a> * output <2> + <b> * output <3>\n");
-        sprintf(pString, "Enter output <1> (1 - %d) : ", nOutputs_);
+        snprintf(pString,100,"Enter output <1> (1 - %d) : ", nOutputs_);
         ii = getInt(1, nOutputs_, pString);
         ii--;
-        sprintf(pString, "Enter the value <a>: ");
+        snprintf(pString,100,"Enter the value <a>: ");
         double aVal = getDouble(pString);
-        sprintf(pString, "Enter output <2> (1 - %d) : ", nOutputs_);
+        snprintf(pString,100,"Enter output <2> (1 - %d) : ", nOutputs_);
         jj = getInt(1, nOutputs_, pString);
         jj--;
-        sprintf(pString, "Enter the value <b>: ");
+        snprintf(pString,100,"Enter the value <b>: ");
         double bVal = getDouble(pString);
-        sprintf(pString, "Enter output <3> (1 - %d) : ", nOutputs_);
+        snprintf(pString,100,"Enter output <3> (1 - %d) : ", nOutputs_);
         kk = getInt(1, nOutputs_, pString);
         kk--;
         for (sInd = 0; sInd < nSamples_; sInd++)
@@ -14880,10 +15160,10 @@ int PsuadeBase::interpretInteractive()
       else if (option == 2)
       {
         printf("Take an output to a power: output = (output)^P\n");
-        sprintf(pString, "Enter output (1 - %d) : ", nOutputs_);
+        snprintf(pString,100,"Enter output (1 - %d) : ", nOutputs_);
         ii = getInt(1, nOutputs_, pString);
         ii--;
-        sprintf(pString, "Enter the power <P>: ");
+        snprintf(pString,100,"Enter the power <P>: ");
         double pVal = getDouble(pString);
         for (sInd = 0; sInd < nSamples_; sInd++)
         {
@@ -14895,7 +15175,7 @@ int PsuadeBase::interpretInteractive()
       {
         printf("Replace an input with its logarithm : ");
         printf("output = log(output)\n");
-        sprintf(pString, "Enter output (1 - %d) : ", nOutputs_);
+        snprintf(pString,100,"Enter output (1 - %d) : ", nOutputs_);
         ii = getInt(1, nOutputs_, pString);
         ii--;
         for (sInd = 0; sInd < nSamples_; sInd++)
@@ -14907,13 +15187,13 @@ int PsuadeBase::interpretInteractive()
       else if (option == 4)
       {
         printf("Division: output <1> = output <2> / output <3>\n");
-        sprintf(pString, "Enter output <1> (1 - %d) : ", nOutputs_);
+        snprintf(pString,100,"Enter output <1> (1 - %d) : ", nOutputs_);
         ii = getInt(1, nOutputs_, pString);
         ii--;
-        sprintf(pString, "Enter output <2> (1 - %d) : ", nOutputs_);
+        snprintf(pString,100,"Enter output <2> (1 - %d) : ", nOutputs_);
         jj = getInt(1, nOutputs_, pString);
         jj--;
-        sprintf(pString, "Enter output <3> (1 - %d) : ", nOutputs_);
+        snprintf(pString,100,"Enter output <3> (1 - %d) : ", nOutputs_);
         kk = getInt(1, nOutputs_, pString);
         kk--;
         for (sInd = 0; sInd < nSamples_; sInd++)
@@ -14968,17 +15248,17 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString, "Enter output <1> (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output <1> (1 - %d) : ", nOutputs_);
       ii = getInt(1, nOutputs_, pString);
       ii--;
-      sprintf(pString, "Enter the value <a>: ");
+      snprintf(pString,100,"Enter the value <a>: ");
       double aVal = getDouble(pString);
-      sprintf(pString, "Enter input <1> (1 - %d) : ", nInputs_);
+      snprintf(pString,100,"Enter input <1> (1 - %d) : ", nInputs_);
       jj = getInt(1, nInputs_, pString);
       jj--;
-      sprintf(pString, "Enter the value <b>: ");
+      snprintf(pString,100,"Enter the value <b>: ");
       double bVal = getDouble(pString);
-      sprintf(pString, "Enter input <2> (1 - %d) : ", nInputs_);
+      snprintf(pString,100,"Enter input <2> (1 - %d) : ", nInputs_);
       kk = getInt(1, nInputs_, pString);
       kk--;
       for (sInd = 0; sInd < nSamples_; sInd++)
@@ -15021,7 +15301,7 @@ int PsuadeBase::interpretInteractive()
       }
       printf("nna: for each data point, find nearest neighbor and");
       printf(" plot changes in the outputs.\n");
-      sprintf(pString, "Enter output number (1 - %d) = ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) = ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       //**/ write to scilab/matlab file
@@ -15045,19 +15325,19 @@ int PsuadeBase::interpretInteractive()
           continue;
         }
       }
-      sprintf(pString," nearest neighbor analysis");
+      snprintf(pString,100," nearest neighbor analysis");
       fwriteComment(fp, pString);
-      sprintf(pString," for detecting outliers.");
+      snprintf(pString,100," for detecting outliers.");
       fwriteComment(fp, pString);
-      sprintf(pString," The following plot is : ");
+      snprintf(pString,100," The following plot is : ");
       fwriteComment(fp, pString);
-      sprintf(pString," Y-axis: delta output / distance");
+      snprintf(pString,100," Y-axis: delta output / distance");
       fwriteComment(fp, pString);
-      sprintf(pString," X-axis: sample number");
+      snprintf(pString,100," X-axis: sample number");
       fwriteComment(fp, pString);
-      sprintf(pString," Column 3: nearest neighbor");
+      snprintf(pString,100," Column 3: nearest neighbor");
       fwriteComment(fp, pString);
-      sprintf(pString," Column 4: distance with nearest neighbor");
+      snprintf(pString,100," Column 4: distance with nearest neighbor");
       fwriteComment(fp, pString);
       fprintf(fp, "A = [\n");
       double minDist;
@@ -15167,14 +15447,14 @@ int PsuadeBase::interpretInteractive()
         continue;
       }
       int inp1=0, inp2=1, inp3=2;
-      sprintf(pString, 
-              "Select the first input (1 - %d) = ",nInputs_);
+      snprintf(pString,100, 
+               "Select the first input (1 - %d) = ",nInputs_);
       inp1 = getInt(1, nInputs_, pString);
       inp1--;
       inp2 = -1;
       while ((inp2 < 1 || inp2 > nInputs_) && (inp2 != inp1))
       {
-        sprintf(pString, 
+        snprintf(pString,100, 
             "Select the second input (1 - %d) = ",nInputs_);
         inp2 = getInt(1, nInputs_, pString);
         inp2--;
@@ -15185,7 +15465,7 @@ int PsuadeBase::interpretInteractive()
       while ((inp3 < -1 || inp3 > nInputs_) && (inp2 != inp1) &&
              (inp3 != inp2))
       {
-        sprintf(pString, 
+        snprintf(pString,100, 
             "Select the third input (1 - %d, or 0 if none) = ",
             nInputs_);
         inp3 = getInt(0, nInputs_, pString);
@@ -15193,7 +15473,7 @@ int PsuadeBase::interpretInteractive()
         if (inp3 == inp1 || inp3 == inp2) 
           printf("ERROR: input %d already used\n",inp3+1);
       }
-      sprintf(pString,"Which output to use (1 - %d) = ",nOutputs_);
+      snprintf(pString,100,"Which output to use (1 - %d) = ",nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       int inpCnt = 0;
@@ -15205,7 +15485,7 @@ int PsuadeBase::interpretInteractive()
       vecInpSettings.setLength(nInputs_);
       if (nInputs_-inpCnt > 0)
       {
-        sprintf(pString,
+        snprintf(pString,100,
                 "Set other inputs at their mid points? (y or n) ");
         getString(pString, winput);
         if (winput[0] == 'y')
@@ -15223,7 +15503,7 @@ int PsuadeBase::interpretInteractive()
           {
             if (iInd1 != inp1 && iInd1 != inp2 && iInd1 != inp3)
             {
-              sprintf(pString,
+              snprintf(pString,100,
                     "Enter nominal value for input %d (%e - %e): ",
                     iInd1+1,VecILowerBs_[iInd1],VecIUpperBs_[iInd1]);
               vecInpSettings[iInd1] = getDouble(pString);
@@ -15233,7 +15513,7 @@ int PsuadeBase::interpretInteractive()
       }
       vecNewLBs = VecILowerBs_;
       vecNewUBs = VecIUpperBs_;
-      sprintf(pString,
+      snprintf(pString,100,
               "Use a different lower/upper bounds for the inputs? (y or n) ");
       getString(pString, winput);
       if (winput[0] == 'y')
@@ -15247,11 +15527,11 @@ int PsuadeBase::interpretInteractive()
             {
               printf("Input %d: current lower bound = %12.4e\n",ii+1,
                       VecILowerBs_[ii]);
-              sprintf(pString, "New lower bound ? ");
+              snprintf(pString,100,"New lower bound ? ");
               vecNewLBs[ii] = getDouble(pString);
               printf("Input %d: current upper bound = %12.4e\n",ii+1,
                       VecIUpperBs_[ii]);
-              sprintf(pString, "New upper bound ? ");
+              snprintf(pString,100,"New upper bound ? ");
               vecNewUBs[ii] = getDouble(pString);
               if (vecNewLBs[ii] >= vecNewUBs[ii])
                 printf("ERROR: lower bound cannot be >= upper bound\\n");
@@ -15282,20 +15562,20 @@ int PsuadeBase::interpretInteractive()
       if (inpCnt == 2)
       {
         printf("It will be a 2D lattice of size MxN.\n");
-        sprintf(pString,"What M to use ? (10 - 1000) = ");
+        snprintf(pString,100,"What M to use ? (10 - 1000) = ");
         lattice1 = getInt(10, 1000, pString);
-        sprintf(pString,"What N to use ? (10 - 1000) = ");
+        snprintf(pString,100,"What N to use ? (10 - 1000) = ");
         lattice2 = getInt(10, 1000, pString);
         totalPts = lattice1 * lattice2;
       }
       if (inpCnt == 3)
       {
         printf("It will be a 3D lattice of size MxNxP.\n");
-        sprintf(pString,"What M to use ? (10 - 100) = ");
+        snprintf(pString,100,"What M to use ? (10 - 100) = ");
         lattice1 = getInt(10, 100, pString);
-        sprintf(pString,"What N to use ? (10 - 100) = ");
+        snprintf(pString,100,"What N to use ? (10 - 100) = ");
         lattice2 = getInt(10, 100, pString);
-        sprintf(pString,"What P to use ? (10 - 100) = ");
+        snprintf(pString,100,"What P to use ? (10 - 100) = ");
         lattice3 = getInt(10, 100, pString);
         totalPts = lattice1 * lattice2 * lattice3;
       }
@@ -15336,7 +15616,7 @@ int PsuadeBase::interpretInteractive()
         for (ii = 1; ii < totalPts; ii++)
           if (vecFAY[ii] > Ymax) Ymax = vecFAY[ii];
         printf("Output Ymin and Ymax = %e %e.\n", Ymin, Ymax);
-        sprintf(pString,"Enter threshold : ");
+        snprintf(pString,100,"Enter threshold : ");
         double thresh = getDouble(pString);
 
         //**/ create a user-specified number of points near the 
@@ -15494,7 +15774,7 @@ int PsuadeBase::interpretInteractive()
         for (sInd = 1; sInd < totalPts; sInd++)
           if (faYOut[sInd] > Ymax) Ymax = faYOut[sInd];
         printf("Output Ymin and Ymax = %e %e.\n", Ymin, Ymax);
-        sprintf(pString,"Enter threshold : ");
+        snprintf(pString,100,"Enter threshold : ");
         double thresh = getDouble(pString);
         int myCnt=0;
         for (jj = 0; jj < latticeN; jj++)
@@ -15673,7 +15953,7 @@ int PsuadeBase::interpretInteractive()
       printf("This command draws a sample with replacement from the ");
       printf("loaded sample.\n");
       printf("Size of the loaded sample = %d.\n",nSamples_);
-      sprintf(pString,"Size of the sample to be drawn : (1-1000000) ");
+      snprintf(pString,100,"Size of the sample to be drawn : (1-1000000) ");
       count = getInt(1, 1000000, pString);
       vecXT.setLength(nInputs_ * count);
       vecYT.setLength(nOutputs_ * count);
@@ -15807,8 +16087,8 @@ int PsuadeBase::interpretInteractive()
              nSamples_/blksize, blksize);
       printf("So the sample size to be drawn should be multiples of %d.\n",
              blksize);
-      sprintf(pString,"Size of the sample to be drawn (multiples of %d) ",
-              blksize);
+      snprintf(pString,100,"Size of the sample to be drawn (multiples of %d) ",
+               blksize);
       int samSize = getInt(blksize, 10000000, pString);
       if (samSize/blksize*blksize != samSize)
       {
@@ -15902,7 +16182,7 @@ int PsuadeBase::interpretInteractive()
       printf("This command randomly draws from 2 samples and ");
       printf("concatenates the inputs.\n");
       printf("Both files have to be in PSUADE data format.\n");
-      sprintf(pString,"Enter name of the first sample file : ");
+      snprintf(pString,100,"Enter name of the first sample file : ");
       getString(pString, winput);
       kk = strlen(winput);
       winput[kk-1] = '\0';
@@ -15914,7 +16194,7 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString,"Enter name of the second sample file : ");
+      snprintf(pString,100,"Enter name of the second sample file : ");
       getString(pString, winput);
       kk = strlen(winput);
       winput[kk-1] = '\0';
@@ -15968,12 +16248,12 @@ int PsuadeBase::interpretInteractive()
       pUpper.clean();
 
       //**/ mix and match
-      sprintf(pString,"Size of the sample to be drawn : (1-2000000) ");
+      snprintf(pString,100,"Size of the sample to be drawn : (1-2000000) ");
       count = getInt(1, 2000000, pString);
       kk = 0;
       if (count == (nSamples_ * nSamples2))
       {
-        sprintf(pString,"Form sample tensor product? (y or n) ");
+        snprintf(pString,100,"Form sample tensor product? (y or n) ");
         getString(pString, winput);
         if (winput[0] == 'y') kk = 1;
       }
@@ -16044,7 +16324,7 @@ int PsuadeBase::interpretInteractive()
       //**/ set OUTPUT and METHOD fields
       nOutputs_ = 1;
       StrOutNames_.setNumStrings(iOne);
-      sprintf(pString, "Y");
+      snprintf(pString, 100, "Y");
       StrOutNames_.loadOneString(0, pString);
       ioPtr->updateOutputSection(count,nOutputs_,vecYT.getDVector(), 
                    vecST.getIVector(),StrOutNames_.getStrings());
@@ -16108,7 +16388,7 @@ int PsuadeBase::interpretInteractive()
       printf("PDF presciption given in the loaded file.\n");
       printDashes(PL_INFO, 0);
 
-      sprintf(pString,"Sample size? (>= 2, <=10000000) ");
+      snprintf(pString,100,"Sample size? (>= 2, <=10000000) ");
       kk = getInt(1,10000000,pString);
       PDFManager *pdfman = new PDFManager();
       pdfman->initialize(nInputs_,VecInpPDFs_.getIVector(),
@@ -16183,70 +16463,70 @@ int PsuadeBase::interpretInteractive()
       printf("value X.\n");
       printDashes(PL_INFO, 0);
 
-      sprintf(pString,
+      snprintf(pString, 100, 
         "PDF type: 1-N, 2-L, 3-T, 4-Beta, 5-Weibull, 6-Gamma, 7-Exp, 8-F ?");
       gtype = getInt(1, 8, pString);
       if (gtype == 1)
       {
         gtype = PSUADE_PDF_NORMAL;
-        sprintf(pString, "PDF mean = ");
+        snprintf(pString,100,"PDF mean = ");
         smean = getDouble(pString);
-        sprintf(pString, "PDF std. dev. = ");
+        snprintf(pString,100,"PDF std. dev. = ");
         sstdev = getDouble(pString);
       }
       else if (gtype == 2) 
       {
         gtype = PSUADE_PDF_LOGNORMAL;
-        sprintf(pString, "PDF log(mean) = ");
+        snprintf(pString,100,"PDF log(mean) = ");
         smean = getDouble(pString);
-        sprintf(pString, "PDF std. dev. = ");
+        snprintf(pString,100,"PDF std. dev. = ");
         sstdev = getDouble(pString);
       }
       else if (gtype == 3)
       {
         gtype = PSUADE_PDF_TRIANGLE;
-        sprintf(pString, "PDF center = ");
+        snprintf(pString,100,"PDF center = ");
         smean = getDouble(pString);
-        sprintf(pString, "PDF half base width (assumed isosceles) = ");
+        snprintf(pString,100,"PDF half base width (assumed isosceles) = ");
         sstdev = getDouble(pString);
       }
       else if (gtype == 4)
       {
         gtype = PSUADE_PDF_BETA;
-        sprintf(pString, "PDF alpha = ");
+        snprintf(pString,100,"PDF alpha = ");
         smean = getDouble(pString);
-        sprintf(pString, "PDF beta = ");
+        snprintf(pString,100,"PDF beta = ");
         sstdev = getDouble(pString);
       }
       else if (gtype == 5)
       {
         gtype = PSUADE_PDF_WEIBULL;
-        sprintf(pString, "PDF lambda = ");
+        snprintf(pString,100,"PDF lambda = ");
         smean = getDouble(pString);
-        sprintf(pString, "PDF k = ");
+        snprintf(pString,100,"PDF k = ");
         sstdev = getDouble(pString);
       }
       else if (gtype == 6)
       {
         gtype = PSUADE_PDF_GAMMA;
-        sprintf(pString, "PDF alpha = ");
+        snprintf(pString,100,"PDF alpha = ");
         smean = getDouble(pString);
-        sprintf(pString, "PDF beta = ");
+        snprintf(pString,100,"PDF beta = ");
         sstdev = getDouble(pString);
       }
       else if (gtype == 7)
       {
         gtype = PSUADE_PDF_EXPONENTIAL;
-        sprintf(pString, "PDF lambda = ");
+        snprintf(pString,100,"PDF lambda = ");
         smean = getDouble(pString);
         sstdev = 0.0;
       }
       else if (gtype == 8)
       {
         gtype = PSUADE_PDF_F;
-        sprintf(pString, "PDF d1 = ");
+        snprintf(pString,100,"PDF d1 = ");
         smean = getDouble(pString);
-        sprintf(pString, "PDF d2 = ");
+        snprintf(pString,100,"PDF d2 = ");
         sstdev = getDouble(pString);
       }
       corMat.setDim(1,1);
@@ -16255,7 +16535,7 @@ int PsuadeBase::interpretInteractive()
       pdfman->initialize(1, &gtype, &smean, &sstdev, corMat, NULL, NULL);
       vecInps.setLength(iOne);
       vecOuts.setLength(iOne);
-      sprintf(pString,
+      snprintf(pString,100,
               "Enter parameter value to fetch cumulative probability: ");
       ddata = getDouble(pString);
       vecInps.load(1, &ddata);
@@ -16298,78 +16578,78 @@ int PsuadeBase::interpretInteractive()
       printf("the target CDF.\n");
       printDashes(PL_INFO, 0);
 
-      sprintf(pString,
+      snprintf(pString,100,
         "PDF type: 1-N, 2-L, 3-T, 4-Beta, 5-Weibull, 6-Gamma, 7-Exp, 8-F, 9-Cauchy ? ");
       gtype = getInt(1, 9, pString);
       if (gtype == 1)
       {
         gtype = PSUADE_PDF_NORMAL;
-        sprintf(pString, "PDF mean = ");
+        snprintf(pString,100,"PDF mean = ");
         smean = getDouble(pString);
-        sprintf(pString, "PDF std. dev. = ");
+        snprintf(pString,100,"PDF std. dev. = ");
         sstdev = getDouble(pString);
       }
       else if (gtype == 2) 
       {
         gtype = PSUADE_PDF_LOGNORMAL;
-        sprintf(pString, "PDF log(mean) = ");
+        snprintf(pString,100,"PDF log(mean) = ");
         smean = getDouble(pString);
-        sprintf(pString, "PDF std. dev. = ");
+        snprintf(pString,100,"PDF std. dev. = ");
         sstdev = getDouble(pString);
       }
       else if (gtype == 3)
       {
         gtype = PSUADE_PDF_TRIANGLE;
-        sprintf(pString, "PDF center = ");
+        snprintf(pString,100,"PDF center = ");
         smean = getDouble(pString);
-        sprintf(pString, "PDF half base width (assumed isosceles) = ");
+        snprintf(pString,100,"PDF half base width (assumed isosceles) = ");
         sstdev = getDouble(pString);
       }
       else if (gtype == 4)
       {
         gtype = PSUADE_PDF_BETA;
-        sprintf(pString, "PDF alpha = ");
+        snprintf(pString,100,"PDF alpha = ");
         smean = getDouble(pString);
-        sprintf(pString, "PDF beta = ");
+        snprintf(pString,100,"PDF beta = ");
         sstdev = getDouble(pString);
       }
       else if (gtype == 5)
       {
         gtype = PSUADE_PDF_WEIBULL;
-        sprintf(pString, "PDF lambda = ");
+        snprintf(pString,100,"PDF lambda = ");
         smean = getDouble(pString);
-        sprintf(pString, "PDF k = ");
+        snprintf(pString,100,"PDF k = ");
         sstdev = getDouble(pString);
       }
       else if (gtype == 6)
       {
         gtype = PSUADE_PDF_GAMMA;
-        sprintf(pString, "PDF alpha = ");
+        snprintf(pString,100,"PDF alpha = ");
         smean = getDouble(pString);
-        sprintf(pString, "PDF beta = ");
+        snprintf(pString,100,"PDF beta = ");
         sstdev = getDouble(pString);
       }
       else if (gtype == 7)
       {
         gtype = PSUADE_PDF_EXPONENTIAL;
-        sprintf(pString, "PDF lambda = ");
+        snprintf(pString,100,"PDF lambda = ");
         smean = getDouble(pString);
         sstdev = 0.0;
       }
       else if (gtype == 8)
       {
         gtype = PSUADE_PDF_F;
-        sprintf(pString, "PDF d1 = ");
+        snprintf(pString,100,"PDF d1 = ");
         smean = getDouble(pString);
-        sprintf(pString, "PDF d2 = ");
+        snprintf(pString,100,"PDF d2 = ");
         sstdev = getDouble(pString);
       }
       else if (gtype == 9)
       {
         gtype = PSUADE_PDF_CAUCHY;
-        sprintf(pString, "PDF X0 = ");
+        snprintf(pString,100,"PDF X0 = ");
         smean = getDouble(pString);
-        sprintf(pString, "PDF gamma = ");
+        snprintf(pString,100,"PDF gamma = ");
         sstdev = getDouble(pString);
       }
       corMat.setDim(1,1);
@@ -16378,7 +16658,7 @@ int PsuadeBase::interpretInteractive()
       pdfman->initialize(1, &gtype, &smean, &sstdev, corMat, NULL, NULL);
       vecInps.setLength(iOne);
       vecOuts.setLength(iOne);
-      sprintf(pString, "Enter CDF value (0 - 1): ");
+      snprintf(pString,100,"Enter CDF value (0 - 1): ");
       ddata = getDouble(pString);
       vecInps.load(1, &ddata);
       slbound = -PSUADE_UNDEFINED;
@@ -16418,7 +16698,7 @@ int PsuadeBase::interpretInteractive()
       printf("of a selected output.\n");
       printDashes(PL_INFO, 0);
 
-      sprintf(pString, "Which output to use? (1 - %d) ", nOutputs_);
+      snprintf(pString,100,"Which output to use? (1 - %d) ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       KSDensity *ksd = new KSDensity();
@@ -16453,9 +16733,9 @@ int PsuadeBase::interpretInteractive()
         fprintf(fp, "%e\n", vecPp[ss]);
       fprintf(fp, "];\n"); 
       fprintf(fp,"plot(X,P)\n");
-      sprintf(pString,"Data Values");
+      snprintf(pString,100,"Data Values");
       fwritePlotXLabel(fp, pString);
-      sprintf(pString,"Probabilities");
+      snprintf(pString,100,"Probabilities");
       fwritePlotYLabel(fp, pString);
       fwritePlotAxes(fp);
       fclose(fp);
@@ -16529,10 +16809,10 @@ int PsuadeBase::interpretInteractive()
       printf("(identical due to nondeterministic simulations).\n");
       printDashes(PL_INFO, 0);
 
-      sprintf(pString, "Which output to use? (1 - %d) ", nOutputs_);
+      snprintf(pString,100,"Which output to use? (1 - %d) ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
-      sprintf(pString, "Chunk size? (1 - %d) ", nSamples_/2);
+      snprintf(pString,100,"Chunk size? (1 - %d) ", nSamples_/2);
       int    chunkSize = getInt(1, nSamples_/2, pString);
       chunkSize = nSamples_ / (nSamples_ / chunkSize);
       KSDensity *ksd = new KSDensity();
@@ -16662,7 +16942,7 @@ int PsuadeBase::interpretInteractive()
       if (status == 0)
       {
         printf("PSUADE can create the sample input data file for you.\n");
-        sprintf(pString,"Create the file ? (y or n) ");
+        snprintf(pString,100,"Create the file ? (y or n) ");
         getString(pString, winput);
         if (winput[0] == 'y')
         {
@@ -16786,9 +17066,9 @@ int PsuadeBase::interpretInteractive()
       printf("PDF presciption given by user (1D sample only).\n");
       printDashes(PL_INFO, 0);
 
-      sprintf(pString, "Enter desired sample size = ");
+      snprintf(pString,100,"Enter desired sample size = ");
       ns = getInt(10, 10000000, pString);
-      sprintf(pString, 
+      snprintf(pString,100, 
         "PDF type = (1) N (2) L (3) T (4) Beta (5) Exp (6) Weibull: ");
       gtype = getInt(1, 6, pString);
       if      (gtype == 1) gtype = PSUADE_PDF_NORMAL;
@@ -16797,11 +17077,11 @@ int PsuadeBase::interpretInteractive()
       else if (gtype == 4) gtype = PSUADE_PDF_BETA;
       else if (gtype == 5) gtype = PSUADE_PDF_EXPONENTIAL;
       else if (gtype == 6) gtype = PSUADE_PDF_WEIBULL;
-      sprintf(pString, "PDF parameter 1 (e.g. mean for N) = ");
+      snprintf(pString,100,"PDF parameter 1 (e.g. mean for N) = ");
       smean = getDouble(pString);
       if (gtype != PSUADE_PDF_EXPONENTIAL) 
       {
-        sprintf(pString, "PDF parameter 2 (e.g. std dev for N) = ");
+        snprintf(pString,100,"PDF parameter 2 (e.g. std dev for N) = ");
         sstdev = getDouble(pString);
       }
       else sstdev = 0.0;
@@ -16867,7 +17147,7 @@ int PsuadeBase::interpretInteractive()
         printf("queries from PSUADE.\n");
         continue;
       }
-      sprintf(pString,"Enter the name of the configure file to write to: ");
+      snprintf(pString,100,"Enter the name of the configure file to write to: ");
       getString(pString, dataFile);
       dataFile[strlen(dataFile)-1] = '\0';
       if (!strcmp(dataFile, "\0")) 
@@ -16972,10 +17252,10 @@ int PsuadeBase::interpretInteractive()
       printf("You should have subdirectories each of which is a job.\n");
       printf("The subdirectory names should be something like: \n");
       printf("<dir_prefix>xxx where xxx is a number from 1 to njobs.\n");
-      sprintf(pString,"Enter the subdirectory prefix now : ");
+      snprintf(pString,100,"Enter the subdirectory prefix now : ");
       getString(pString, winput);
       sscanf(winput, "%s", dirName);
-      sprintf(pString,
+      snprintf(pString,100,
           "Enter another level of subdirectory, if any : (or NONE) ");
       getString(pString, winput);
       sscanf(winput, "%s", subdirName);
@@ -16983,24 +17263,24 @@ int PsuadeBase::interpretInteractive()
       printf("(1) that a certain file does not exist\n");
       printf("(2) both (1) and that a pattern does not exist in a file\n");
       printf("(3) that certain pattern(s)s exist in a given file\n");
-      sprintf(pString,"Make your selection : ");
+      snprintf(pString,100,"Make your selection : ");
       choice = getInt(1, 3, pString);
       nPatterns = 0;
       if (choice == 1)
       {
-        sprintf(pString,"Enter the name of file that has to exist : ");
+        snprintf(pString,100,"Enter the name of file that has to exist : ");
         getString(pString, winput);
         sscanf(winput, "%s", checkFile);
       }
       else
       {
-        sprintf(pString,"Enter the name of file to check patterns: ");
+        snprintf(pString,100,"Enter the name of file to check patterns: ");
         getString(pString, winput);
         sscanf(winput, "%s", checkFile);
         if (choice == 2) nPatterns = 1;
         else
         {
-          sprintf(pString,"How many patterns (1 - 10)? ");
+          snprintf(pString,100,"How many patterns (1 - 10)? ");
           nPatterns = getInt(1, 10, pString);
         }
         strPatterns.setNumStrings(nPatterns);
@@ -17011,9 +17291,9 @@ int PsuadeBase::interpretInteractive()
           strPatterns.loadOneString(ii, pString);
         }
       }
-      sprintf(pString,"Enter the first job number to be probed (1 - ?): ");
+      snprintf(pString,100,"Enter the first job number to be probed (1 - ?): ");
       nJobs1 = getInt(1, 1000000, pString);
-      sprintf(pString,"Enter the last  job number to be probed (%d - ?): ",
+      snprintf(pString,100,"Enter the last  job number to be probed (%d - ?): ",
               nJobs1+1);
       nJobs2 = getInt(nJobs1+1, 1000000, pString);
       FILE *fErr = fopen("relaunchJobs.py", "w");
@@ -17036,9 +17316,9 @@ int PsuadeBase::interpretInteractive()
         if (choice == 1)
         {
           if (strncmp(subdirName, "NONE", 4) == 0)
-             sprintf(winput, "%s%d/%s", dirName, ii, checkFile);
+             snprintf(winput,10000,"%s%d/%s", dirName, ii, checkFile);
           else
-             sprintf(winput,"%s%d/%s/%s",dirName,ii,subdirName,checkFile);
+             snprintf(winput,10000,"%s%d/%s/%s",dirName,ii,subdirName,checkFile);
           fp = fopen(winput, "r");
           if (fp == NULL) 
           {
@@ -17059,9 +17339,9 @@ int PsuadeBase::interpretInteractive()
         if (choice == 2)
         {
           if (strncmp(subdirName, "NONE", 4) == 0)
-             sprintf(winput, "%s%d/%s", dirName, ii, checkFile);
+             snprintf(winput,10000,"%s%d/%s", dirName, ii, checkFile);
           else
-             sprintf(winput, "%s%d/%s/%s",dirName,ii,subdirName,checkFile);
+             snprintf(winput,10000,"%s%d/%s/%s",dirName,ii,subdirName,checkFile);
           fp = fopen(winput, "r");
           if (fp == NULL) 
           {
@@ -17080,8 +17360,8 @@ int PsuadeBase::interpretInteractive()
           else 
           {
             fclose(fp);
-            sprintf(command, "grep \"%s\" %s > /dev/null",strPatterns[0], 
-                    winput);
+            snprintf(command,5000,"grep \"%s\" %s > /dev/null",strPatterns[0], 
+                     winput);
             status = system(command);
             if (status != 0)
             {
@@ -17101,9 +17381,9 @@ int PsuadeBase::interpretInteractive()
         if (choice == 3)
         {
           if (strncmp(subdirName, "NONE", 4) == 0)
-             sprintf(winput, "%s%d/%s", dirName, ii, checkFile);
+             snprintf(winput,10000, "%s%d/%s", dirName, ii, checkFile);
           else
-             sprintf(winput, "%s%d/%s/%s", dirName, ii, subdirName, 
+             snprintf(winput,10000, "%s%d/%s/%s", dirName, ii, subdirName, 
                      checkFile);
           fp = fopen(winput, "r");
           if (fp == NULL) 
@@ -17125,8 +17405,8 @@ int PsuadeBase::interpretInteractive()
             fclose(fp);
             for (jj = 0; jj < nPatterns; jj++)
             {
-              sprintf(command, "grep \"%s\" %s > /dev/null", 
-                      strPatterns[jj], winput);
+              snprintf(command,5000,"grep \"%s\" %s > /dev/null", 
+                       strPatterns[jj], winput);
               status = system(command);
               if (status == 0)
               {
@@ -17196,17 +17476,17 @@ int PsuadeBase::interpretInteractive()
       printf("output, optionally sorted based on the input ");
       printf("or output values.\n");
       printDashes(PL_INFO, 0);
-      sprintf(pString, "Enter input number (1 - %d) : ", nInputs_);
+      snprintf(pString,100,"Enter input number (1 - %d) : ", nInputs_);
       iInd = getInt(1, nInputs_, pString);
       iInd--;
-      sprintf(pString,"Enter output number (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
-      sprintf(pString,"Sort the input (y or n) ? ");
+      snprintf(pString,100,"Sort the input (y or n) ? ");
       getString(pString, winput);
       if (winput[0] == 'n') 
       {
-        sprintf(pString,"Sort the output (y or n) ? ");
+        snprintf(pString,100,"Sort the output (y or n) ? ");
         getString(pString, winput);
         if (winput[0] == 'n') winput[0] = 'N'; 
         if (winput[0] == 'y') winput[0] = 'Y'; 
@@ -17259,20 +17539,20 @@ int PsuadeBase::interpretInteractive()
       printf("or output values.\n");
       printDashes(PL_INFO, 0);
  
-      sprintf(pString, "Enter input number 1 (1 - %d) : ", nInputs_);
+      snprintf(pString,100,"Enter input number 1 (1 - %d) : ", nInputs_);
       iInd1 = getInt(1, nInputs_, pString);
       iInd1--;
-      sprintf(pString, "Enter input number 2 (1 - %d) : ", nInputs_);
+      snprintf(pString,100,"Enter input number 2 (1 - %d) : ", nInputs_);
       iInd2 = getInt(1, nInputs_, pString);
       iInd2--;
-      sprintf(pString,"Enter output number (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
-      sprintf(pString,"Sort the inputs (y or n) ? ");
+      snprintf(pString,100,"Sort the inputs (y or n) ? ");
       getString(pString, winput);
       if (winput[0] == 'n') 
       {
-        sprintf(pString,"Sort the output (y or n) ? ");
+        snprintf(pString,100,"Sort the output (y or n) ? ");
         getString(pString, winput);
         if (winput[0] == 'n') winput[0] = 'N'; 
         if (winput[0] == 'y') winput[0] = 'Y'; 
@@ -17358,15 +17638,15 @@ int PsuadeBase::interpretInteractive()
       printf("output, optionally sorted based on the output values.\n");
       printDashes(PL_INFO, 0);
 
-      sprintf(pString,"Enter output number (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
 
-      sprintf(pString,"Sort the inputs (y or n) ? ");
+      snprintf(pString,100,"Sort the inputs (y or n) ? ");
       getString(pString, winput);
       if (winput[0] == 'n')
       {
-        sprintf(pString,"Sort the output (y or n) ? ");
+        snprintf(pString,100,"Sort the output (y or n) ? ");
         getString(pString, winput);
         if (winput[0] == 'y') winput[0] = 'Y';
       }
@@ -17453,7 +17733,7 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString,"Enter input number (1 - %d) : ",nInputs_);
+      snprintf(pString,100,"Enter input number (1 - %d) : ",nInputs_);
       iInd = getInt(1, nInputs_, pString);
       iInd--;
 
@@ -17527,7 +17807,7 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString,"Enter output number (1 - %d) : ",nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ",nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       vecWT.setLength(nSamples_);
@@ -17585,7 +17865,7 @@ int PsuadeBase::interpretInteractive()
         continue;
       }
       printf("This command shows the values of a selected sample point.\n");
-      sprintf(pString, "Enter sample number (1 - %d) : ", nSamples_);
+      snprintf(pString,100,"Enter sample number (1 - %d) : ", nSamples_);
       ind = getInt(1, nSamples_, pString);
       ind--;
       printf("Sample %7d : \n", ind+1);
@@ -17620,7 +17900,7 @@ int PsuadeBase::interpretInteractive()
       printAsterisks(PL_INFO, 0);
       printf("This command finds maximum value of a selected input.\n");
       printDashes(PL_INFO, 0);
-      sprintf(pString,"Enter input number (1 - %d) : ", nInputs_);
+      snprintf(pString,100,"Enter input number (1 - %d) : ", nInputs_);
       int inputID = getInt(1, nInputs_, pString);
       inputID--;
       double maxX = VecSamInputs_[inputID];
@@ -17660,7 +17940,7 @@ int PsuadeBase::interpretInteractive()
       printAsterisks(PL_INFO, 0);
       printf("This command computes the maximum value of a selected output.\n");
       printDashes(PL_INFO, 0);
-      sprintf(pString,"Enter output number (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       double maxY = VecSamOutputs_[outputID];
@@ -17701,7 +17981,7 @@ int PsuadeBase::interpretInteractive()
       printAsterisks(PL_INFO, 0);
       printf("This command finds minimum value of a selected input.\n");
       printDashes(PL_INFO, 0);
-      sprintf(pString,"Enter input number (1 - %d) : ", nInputs_);
+      snprintf(pString,100,"Enter input number (1 - %d) : ", nInputs_);
       int inputID = getInt(1, nInputs_, pString);
       inputID--;
       double minX = VecSamInputs_[inputID];
@@ -17741,7 +18021,7 @@ int PsuadeBase::interpretInteractive()
       printAsterisks(PL_INFO, 0);
       printf("This command finds the minimum value of a selected output.\n");
       printDashes(PL_INFO, 0);
-      sprintf(pString,"Enter output number (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       double minY = VecSamOutputs_[outputID];
@@ -17783,7 +18063,7 @@ int PsuadeBase::interpretInteractive()
       printAsterisks(PL_INFO, 0);
       printf("This command computes the vector 2-norm of a selected output.\n");
       printDashes(PL_INFO, 0);
-      sprintf(pString,"Enter output number (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       double onorm = 0.0;
@@ -17816,7 +18096,7 @@ int PsuadeBase::interpretInteractive()
       printAsterisks(PL_INFO, 0);
       printf("This command computes the vector sum of a selected output.\n");
       printDashes(PL_INFO, 0);
-      sprintf(pString,"Enter output number (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       double osum = 0.0;
@@ -17857,10 +18137,10 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString,"Enter input number (1 - %d) : ",nInputs_);
+      snprintf(pString,100,"Enter input number (1 - %d) : ",nInputs_);
       ind = getInt(1, nInputs_, pString);
       ind--;
-      sprintf(pString," Which option (1 or 2) : ");
+      snprintf(pString,100," Which option (1 or 2) : ");
       kk = getInt(1, 2, pString);
       if (kk == 1)
       {
@@ -17966,10 +18246,10 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString,"Enter output number (1 - %d) : ",nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ",nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
-      sprintf(pString," Which option (1 or 2) : ");
+      snprintf(pString,100," Which option (1 or 2) : ");
       kk = getInt(1, 2, pString);
       if (kk == 1)
       {
@@ -18077,15 +18357,15 @@ int PsuadeBase::interpretInteractive()
       if (!strcmp(command, "idelete"))
       {
         for (ii = 0; ii < nInputs_; ii++) vecIT[ii] = 1;
-        sprintf(pString,"How many inputs to delete? (1-%d) ",nInputs_-1);
+        snprintf(pString,100,"How many inputs to delete? (1-%d) ",nInputs_-1);
       }
       else
       {
         for (ii = 0; ii < nInputs_; ii++) vecIT[ii] = 0;
-        sprintf(pString,"How many inputs to keep? (1-%d) ",nInputs_-1);
+        snprintf(pString,100,"How many inputs to keep? (1-%d) ",nInputs_);
       }
       inpCnt = getInt(1, nInputs_-1, pString);
-      sprintf(pString,"Enter input number (1 - %d) : ", nInputs_);
+      snprintf(pString,100,"Enter input number (1 - %d) : ", nInputs_);
       for (ii = 0; ii < inpCnt; ii++)
       {
         iInd = getInt(1, nInputs_, pString);
@@ -18278,15 +18558,15 @@ int PsuadeBase::interpretInteractive()
       if (!strcmp(command, "odelete"))
       {
         for (ii = 0; ii < nOutputs_; ii++) vecIT[ii] = 1;
-        sprintf(pString,"How many outputs to delete? (1-%d) ",nOutputs_-1);
+        snprintf(pString,100,"How many outputs to delete? (1-%d) ",nOutputs_-1);
       }
       else
       {
         for (ii = 0; ii < nOutputs_; ii++) vecIT[ii] = 0;
-        sprintf(pString,"How many outputs to keep? (1-%d) ",nOutputs_-1);
+        snprintf(pString,100,"How many outputs to keep? (1-%d) ",nOutputs_);
       }
       outCnt = getInt(1, nOutputs_-1, pString);
-      sprintf(pString,"Enter output number (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
       for (ii = 0; ii < outCnt; ii++)
       {
         iInd = getInt(1, nOutputs_, pString);
@@ -18384,7 +18664,7 @@ int PsuadeBase::interpretInteractive()
       printf("Options are: \n");
       printf("1. Delete a range of sample points (e.g. [11-20])\n");
       printf("2. Delete a noncontiguous subset (e.g. [8 14 17 22 ..]\n");
-      sprintf(pString,"Which option ? (1 or 2 ) ");
+      snprintf(pString,100,"Which option ? (1 or 2 ) ");
       int option = getInt(1, 2, pString);
       
       int rl, ru;
@@ -18392,23 +18672,23 @@ int PsuadeBase::interpretInteractive()
       if (option == 1)
       {
         printf("Select sample range (lower and upper bounds) :\n");
-        sprintf(pString,"Lower bound ? (1 - %d) ", nSamples_-2);
+        snprintf(pString,100,"Lower bound ? (1 - %d) ", nSamples_-2);
         rl = getInt(1, nSamples_-2, pString);
         if (rl > 1)
         {
-          sprintf(pString,"Upper bound ? (%d - %d) ",rl,nSamples_);
+          snprintf(pString,100,"Upper bound ? (%d - %d) ",rl,nSamples_);
           ru = getInt(1, nSamples_, pString);
         }
         else
         {
-          sprintf(pString,"Upper bound ? (%d - %d) ",rl,nSamples_-1);
+          snprintf(pString,100,"Upper bound ? (%d - %d) ",rl,nSamples_-1);
           ru = getInt(1, nSamples_-1, pString);
         }
         for (ii = rl-1; ii < ru; ii++) vecIT[ii] = 1;
       }
       else
       {
-        sprintf(pString,"Enter sample number to delete (0 when done) : ");
+        snprintf(pString,100,"Enter sample number to delete (0 when done) : ");
         while (vecIT.sum() < nSamples_-1)
         {
           kk = getInt(0, nSamples_, pString);
@@ -18485,7 +18765,7 @@ int PsuadeBase::interpretInteractive()
       printf("Options are: \n");
       printf("1. Keep a range of sample points (e.g. [11-20])\n");
       printf("2. Keep a noncontiguous subset (e.g. [8 14 17 22 ..]\n");
-      sprintf(pString,"Which option ? (1 or 2 ) ");
+      snprintf(pString,100,"Which option ? (1 or 2 ) ");
       int option = getInt(1, 2, pString);
       
       int rl, ru;
@@ -18493,23 +18773,23 @@ int PsuadeBase::interpretInteractive()
       if (option == 1)
       {
         printf("Select sample range (lower and upper bounds) :\n");
-        sprintf(pString,"Lower bound ? (1 - %d) ", nSamples_-2);
+        snprintf(pString,100,"Lower bound ? (1 - %d) ", nSamples_-2);
         rl = getInt(1, nSamples_-2, pString);
         if (rl > 1)
         {
-          sprintf(pString,"Upper bound ? (%d - %d) ",rl,nSamples_);
+          snprintf(pString,100,"Upper bound ? (%d - %d) ",rl,nSamples_);
           ru = getInt(1, nSamples_, pString);
         }
         else
         {
-          sprintf(pString,"Upper bound ? (%d - %d) ",rl,nSamples_-1);
+          snprintf(pString,100,"Upper bound ? (%d - %d) ",rl,nSamples_-1);
           ru = getInt(1, nSamples_-1, pString);
         }
         for (ii = rl-1; ii < ru; ii++) vecIT[ii] = 1;
       }
       else
       {
-        sprintf(pString,"Enter sample number to keep (0 when done) : ");
+        snprintf(pString,100,"Enter sample number to keep (0 when done) : ");
         while (vecIT.sum() < nSamples_-1)
         {
           kk = getInt(0, nSamples_, pString);
@@ -18579,7 +18859,7 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString,"Name of the other sample file for comparison : ");
+      snprintf(pString,100,"Name of the other sample file for comparison : ");
       getString(pString, dataFile);
       kk = strlen(dataFile);
       dataFile[kk-1] = '\0';
@@ -18736,8 +19016,8 @@ int PsuadeBase::interpretInteractive()
       kk  = 0;
       while (kk < nInputs_)
       {
-        sprintf(pString,
-                "Enter the %d-th input (1 - %d) : ",kk+1,nInputs_);
+        snprintf(pString,100,
+                 "Enter the %d-th input (1 - %d) : ",kk+1,nInputs_);
         vecIT[kk] = getInt(1, nInputs_, pString);
         vecIT[kk] = vecIT[kk] - 1;
         kk++;
@@ -18853,8 +19133,8 @@ int PsuadeBase::interpretInteractive()
       kk  = 0;
       while (kk < nOutputs_)
       {
-        sprintf(pString,
-                "Enter the %d-th output (1 - %d) : ",kk+1,nOutputs_);
+        snprintf(pString,100,
+                 "Enter the %d-th output (1 - %d) : ",kk+1,nOutputs_);
         vecIT[kk] = getInt(1, nOutputs_, pString);
         vecIT[kk] = vecIT[kk] - 1;
         kk++;
@@ -18931,7 +19211,7 @@ int PsuadeBase::interpretInteractive()
         VecTagArray_.setLength(nSamples_);
         for (ii = 0; ii < nSamples_; ii++) VecTagArray_[ii] = 1;
       } 
-      sprintf(pString, "Enter input number (1 - %d) : ", nInputs_);
+      snprintf(pString,100,"Enter input number (1 - %d) : ", nInputs_);
       inputID = getInt(1, nInputs_, pString);
       inputID--;
       Xmin = VecSamInputs_[inputID];
@@ -18943,9 +19223,9 @@ int PsuadeBase::interpretInteractive()
         if (VecSamInputs_[sInd*nInputs_+inputID] > Xmax)
           Xmax = VecSamInputs_[sInd*nInputs_+inputID];
       printf("Xmin and Xmax found = %e %e.\n", Xmin, Xmax);
-      sprintf(pString,"Enter the lower threshold (Xmin = %e) : ",Xmin);
+      snprintf(pString,100,"Enter the lower threshold (Xmin = %e) : ",Xmin);
       threshL = getDouble(pString);
-      sprintf(pString,"Enter the upper threshold (Xmax = %e) : ",Xmax);
+      snprintf(pString,100,"Enter the upper threshold (Xmax = %e) : ",Xmax);
       threshU = getDouble(pString);
       if (threshL >= threshU)
       {
@@ -19018,7 +19298,7 @@ int PsuadeBase::interpretInteractive()
         VecTagArray_.setLength(nSamples_);
         for (ii = 0; ii < nSamples_; ii++) VecTagArray_[ii] = 1;
       } 
-      sprintf(pString, "Enter output number (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       Ymin = VecSamOutputs_[outputID];
@@ -19030,9 +19310,9 @@ int PsuadeBase::interpretInteractive()
         if (VecSamOutputs_[sInd*nOutputs_+outputID] > Ymax)
           Ymax = VecSamOutputs_[sInd*nOutputs_+outputID];
       printf("Ymin and Ymax found = %e %e.\n", Ymin, Ymax);
-      sprintf(pString,"Enter the lower threshold (Ymin = %e) : ",Ymin);
+      snprintf(pString,100,"Enter the lower threshold (Ymin = %e) : ",Ymin);
       threshL = getDouble(pString);
-      sprintf(pString,"Enter the upper threshold (Ymax = %e) : ",Ymax);
+      snprintf(pString,100,"Enter the upper threshold (Ymax = %e) : ",Ymax);
       threshU = getDouble(pString);
       if (threshL >= threshU)
       {
@@ -19086,7 +19366,7 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString,"Enter output number (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
       oInd = getInt(1, nOutputs_, pString);
       oInd--;
       Ymin = PSUADE_UNDEFINED;
@@ -19100,11 +19380,11 @@ int PsuadeBase::interpretInteractive()
       }
       printf("Lower and upper values for this output : %e %e\n",Ymin, Ymax);
       printf("Now specify the range of current values to be reset: \n");
-      sprintf(pString,"Enter the lower bound (inclusive) of this range : ");
+      snprintf(pString,100,"Enter the lower bound (inclusive) of this range : ");
       Ymin = getDouble(pString);
-      sprintf(pString,"Enter the upper bound (inclusive) of this range : ");
+      snprintf(pString,100,"Enter the upper bound (inclusive) of this range : ");
       Ymax = getDouble(pString);
-      sprintf(pString,"Enter the desired output value to be set to : ");
+      snprintf(pString,100,"Enter the desired output value to be set to : ");
       ddata = getDouble(pString);
       for (ii = 0; ii < nSamples_; ii++)
       {
@@ -19148,16 +19428,16 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString,"Enter input number (1 - %d) : ", nInputs_);
+      snprintf(pString,100,"Enter input number (1 - %d) : ", nInputs_);
       iInd = getInt(1, nInputs_, pString);
       iInd--;
       printf("Current lower bound for input %d = %16.8e\n",
              iInd+1,VecILowerBs_[iInd]);
-      sprintf(pString,"Enter new lower bound for input %d : ",iInd+1);
+      snprintf(pString,100,"Enter new lower bound for input %d : ",iInd+1);
       Xmin = getDouble(pString);
       printf("Current upper bound for input %d = %16.8e\n",
              iInd+1,VecIUpperBs_[iInd]);
-      sprintf(pString,"Enter new upper bound for input %d : ",iInd+1);
+      snprintf(pString,100,"Enter new upper bound for input %d : ",iInd+1);
       Xmax = getDouble(pString);
       if (Xmin >= Xmax)
       {
@@ -19237,7 +19517,7 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString,"Enter output number (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
       oInd = getInt(1, nOutputs_, pString);
       oInd--;
       double Ymax=-PSUADE_UNDEFINED, Ymin=PSUADE_UNDEFINED;
@@ -19249,10 +19529,10 @@ int PsuadeBase::interpretInteractive()
           Ymin = VecSamOutputs_[ss*nOutputs_+oInd];
       }
       printf("Current lower bound for output %d = %16.8e\n",oInd+1,Ymin);
-      sprintf(pString,"Enter new lower bound for output %d : ",oInd+1);
+      snprintf(pString,100,"Enter new lower bound for output %d : ",oInd+1);
       double newYmin = getDouble(pString);
       printf("Current upper bound for output %d = %16.8e\n",oInd+1,Ymax);
-      sprintf(pString,"Enter new upper bound for output %d : ",oInd+1);
+      snprintf(pString,100,"Enter new upper bound for output %d : ",oInd+1);
       double newYmax = getDouble(pString);
       if (newYmin >= newYmax)
       {
@@ -19309,7 +19589,7 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString,"Enter input number (1 - %d) : ", nInputs_);
+      snprintf(pString,100,"Enter input number (1 - %d) : ", nInputs_);
       iInd = getInt(1, nInputs_, pString);
       iInd--;
       Xmin = PSUADE_UNDEFINED;
@@ -19323,11 +19603,11 @@ int PsuadeBase::interpretInteractive()
       }
       printf("Lower and upper values for this input : %e %e\n",Xmin, Xmax);
       printf("Now specify the range of current values to be reset.\n");
-      sprintf(pString,"Enter the lower bound (inclusive) of this range : ");
+      snprintf(pString,100,"Enter the lower bound (inclusive) of this range : ");
       Xmin = getDouble(pString);
-      sprintf(pString,"Enter the upper bound (inclusive) of this range : ");
+      snprintf(pString,100,"Enter the upper bound (inclusive) of this range : ");
       Xmax = getDouble(pString);
-      sprintf(pString,"Enter the desired input value to be set to : ");
+      snprintf(pString,100,"Enter the desired input value to be set to : ");
       ddata = getDouble(pString);
       for (jj = 0; jj < nSamples_; jj++)
       {
@@ -19397,7 +19677,7 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString,"Enter input number (1 - %d) : ", nInputs_);
+      snprintf(pString,100,"Enter input number (1 - %d) : ", nInputs_);
       iInd = getInt(1, nInputs_, pString);
       iInd--;
       for (jj = 0; jj < nSamples_; jj++)
@@ -19467,7 +19747,7 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString,"Enter input number (1 - %d) : ", nInputs_);
+      snprintf(pString,100,"Enter input number (1 - %d) : ", nInputs_);
       iInd = getInt(1, nInputs_, pString);
       iInd--;
       for (jj = 0; jj < nSamples_; jj++)
@@ -19539,7 +19819,7 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString,"Enter input number (1 - %d) : ", nInputs_);
+      snprintf(pString,100,"Enter input number (1 - %d) : ", nInputs_);
       iInd = getInt(1, nInputs_, pString);
       iInd--;
       for (jj = 0; jj < nSamples_; jj++)
@@ -19609,7 +19889,7 @@ int PsuadeBase::interpretInteractive()
       printf("connecting all input and\n");
       printf("output values for all sample points.\n");
       printDashes(PL_INFO, 0);
-      sprintf(pString,"Number of inputs to plot (1 - %d) : ", nInputs_);
+      snprintf(pString,100,"Number of inputs to plot (1 - %d) : ", nInputs_);
       kk = getInt(1, nInputs_, pString);
       psIVector vecII;
       if (kk < nInputs_)
@@ -19617,7 +19897,7 @@ int PsuadeBase::interpretInteractive()
         vecII.setLength(kk);
         for (ii = 0; ii < kk; ii++)
         {
-          sprintf(pString,"Enter the %d-th input (1 - %d): ",ii+1,nInputs_);
+          snprintf(pString,100,"Enter the %d-th input (1 - %d): ",ii+1,nInputs_);
           vecII[ii] = getInt(1,nInputs_,pString);
           vecII[ii]--;
         }
@@ -19628,7 +19908,7 @@ int PsuadeBase::interpretInteractive()
         vecII.setLength(kk);
         for (ii = 0; ii < nInputs_; ii++) vecII[ii] = ii;
       }
-      sprintf(pString,"Number of outputs to plot (1 - %d) : ",nOutputs_);
+      snprintf(pString,100,"Number of outputs to plot (1 - %d) : ",nOutputs_);
       ll = getInt(1, nOutputs_, pString);
       vecIT.clean();
       if (ll < nOutputs_)
@@ -19636,7 +19916,7 @@ int PsuadeBase::interpretInteractive()
         vecIT.setLength(ll);
         for (ii = 0; ii < ll; ii++)
         {
-          sprintf(pString,"Enter the %d-th output (1 - %d): ",
+          snprintf(pString,100,"Enter the %d-th output (1 - %d): ",
                   ii+1, nOutputs_);
           vecIT[ii] = getInt(1,nOutputs_,pString);
           vecIT[ii]--;
@@ -19703,11 +19983,11 @@ int PsuadeBase::interpretInteractive()
       }
       fprintf(fp, "];\n"); 
       fprintf(fp,"plot(X',Y)\n");
-      sprintf(pString,"Input/Output Values");
+      snprintf(pString,100,"Input/Output Values");
       fwritePlotXLabel(fp, pString);
-      sprintf(pString,"Inputs 1:%d, Outputs %d:%d",kk,kk+1,kk+ll);
+      snprintf(pString,100,"Inputs 1:%d, Outputs %d:%d",kk,kk+1,kk+ll);
       fwritePlotYLabel(fp, pString);
-      sprintf(pString,"Trace Inputs/Outputs per sample point");
+      snprintf(pString,100,"Trace Inputs/Outputs per sample point");
       fwritePlotTitle(fp, pString);
       fwritePlotAxes(fp);
       if (plotScilab())
@@ -19744,16 +20024,16 @@ int PsuadeBase::interpretInteractive()
       printf("for all pairs of selected\n");
       printf("inputs.\n");
       printDashes(PL_INFO, 0);
-      sprintf(pString,"Number of inputs to use (2 - %d) : ",
-              nInputs_);
+      snprintf(pString,100,"Number of inputs to use (2 - %d) : ",
+               nInputs_);
       kk = getInt(2, nInputs_, pString);
       if (kk < nInputs_)
       {
         vecIT.setLength(kk);
         for (ii = 0; ii < kk; ii++)
         {
-          sprintf(pString,"Enter the %d-th input (1 - %d): ",
-                  ii+1, nInputs_);
+          snprintf(pString,100,"Enter the %d-th input (1 - %d): ",
+                   ii+1, nInputs_);
           vecIT[ii] = getInt(1,nInputs_,pString);
           vecIT[ii] = vecIT[ii] - 1;
         }
@@ -19793,13 +20073,13 @@ int PsuadeBase::interpretInteractive()
       //**/      fprintf(fp, "%e\n", VecSamInputs_[jj*nInputs_+ii]);
       //**/   fprintf(fp, "];"); 
       //**/}
-      sprintf(pString," plotMode  = 0 : plot all in a single plot");
+      snprintf(pString,100," plotMode  = 0 : plot all in a single plot");
       fwriteComment(fp, pString);
-      sprintf(pString," plotMode ~= 0 : plot one at a time");
+      snprintf(pString,100," plotMode ~= 0 : plot one at a time");
       fwriteComment(fp, pString);
-      sprintf(pString," ranflag: to distinguish between identical points");
+      snprintf(pString,100," ranflag: to distinguish between identical points");
       fwriteComment(fp, pString);
-      sprintf(pString,"         by adding a small perturbation (when on)");
+      snprintf(pString,100,"         by adding a small perturbation (when on)");
       fwriteComment(fp, pString);
       fprintf(fp,"plotMode = 0;\n");
       fprintf(fp,"ranflag  = 0;\n");
@@ -19915,8 +20195,8 @@ int PsuadeBase::interpretInteractive()
       printf("This command creates a histogram for the values ");
       printf("of a selected input.\n");
       printDashes(PL_INFO, 0);
-      sprintf(pString,"Which input to generate histogram (1 - %d) : ",
-              nInputs_);
+      snprintf(pString,100,"Which input to generate histogram (1 - %d) : ",
+               nInputs_);
       kk = getInt(1, nInputs_, pString);
       kk--;
       if (plotScilab()) fp = fopen("scilabihist.sci", "w");
@@ -19942,7 +20222,7 @@ int PsuadeBase::interpretInteractive()
         fprintf(fp, "bar(xk,nk/%d,1.0)\n",nSamples_);
       }
       fwritePlotAxes(fp);
-      sprintf(pString,"Sample Histogram for %s",StrInpNames_[kk]);
+      snprintf(pString,100,"Sample Histogram for %s",StrInpNames_[kk]);
       fwritePlotTitle(fp, pString);
       fwritePlotXLabel(fp, "Input Value");
       fwritePlotYLabel(fp, "Probabilities");
@@ -19986,10 +20266,10 @@ int PsuadeBase::interpretInteractive()
       printf("of 2 selected inputs\n");
       printf("using heat map instead of 3D bars.\n");
       printDashes(PL_INFO, 0);
-      sprintf(pString,"Select the first input (1 - %d) : ", nInputs_);
+      snprintf(pString,100,"Select the first input (1 - %d) : ", nInputs_);
       jj = getInt(1, nInputs_, pString);
       jj--;
-      sprintf(pString,"Select the second input (1 - %d) : ", nInputs_);
+      snprintf(pString,100,"Select the second input (1 - %d) : ", nInputs_);
       kk = getInt(1, nInputs_, pString);
       kk--;
       if (plotScilab())
@@ -20072,7 +20352,7 @@ int PsuadeBase::interpretInteractive()
       fprintf(fp,"ylabel('%s','FontWeight','bold','FontSize',12)\n",
               StrInpNames_[kk]);
       fwritePlotAxesNoGrid(fp);
-      sprintf(pString,"Sample Input Histogram");
+      snprintf(pString,100,"Sample Input Histogram");
       fwritePlotTitle(fp, pString);
       fclose(fp);
       printf("Histogram is available in matlabihist2.m\n");
@@ -20104,7 +20384,7 @@ int PsuadeBase::interpretInteractive()
       printf("This command creates histograms for the values ");
       printf("of selected outputs.\n");
       printDashes(PL_INFO, 0);
-      sprintf(pString,"Which output to generate histogram (1 - %d) : ",
+      snprintf(pString,100,"Which output to generate histogram (1 - %d) : ",
               nOutputs_);
       kk = getInt(1, nOutputs_, pString);
       kk--;
@@ -20131,8 +20411,8 @@ int PsuadeBase::interpretInteractive()
         fprintf(fp, "bar(yk,nk/%d,1.0)\n",nSamples_);
       }
       fwritePlotAxes(fp);
-      sprintf(pString,"Sample Output Histogram for %s",
-              StrOutNames_[kk]);
+      snprintf(pString,1000,"Sample Output Histogram for %s",
+               StrOutNames_[kk]);
       fwritePlotTitle(fp, pString);
       fwritePlotXLabel(fp, "Output Value");
       fwritePlotYLabel(fp, "Probabilities");
@@ -20221,15 +20501,15 @@ int PsuadeBase::interpretInteractive()
       printf("This command is similar to ihist except you can select ");
       printf("more than 1 input.\n");
       printDashes(PL_INFO, 0);
-      sprintf(pString,"Number of inputs to plot (1 - %d) : ", nInputs_);
+      snprintf(pString,100,"Number of inputs to plot (1 - %d) : ", nInputs_);
       kk = getInt(1, nInputs_, pString);
       vecIT.setLength(nInputs_);
       if (kk < nInputs_)
       {
         for (ii = 0; ii < kk; ii++)
         {
-          sprintf(pString,"Enter the %d-th input (1 - %d): ",
-                  ii+1, nInputs_);
+          snprintf(pString,100,"Enter the %d-th input (1 - %d): ",
+                   ii+1, nInputs_);
           vecIT[ii] = getInt(1,nInputs_,pString);
           vecIT[ii]--;
         }
@@ -20425,14 +20705,14 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString, "Enter output number (1 - %d) = ", nOutputs_);
+      snprintf(pString,100, "Enter output number (1 - %d) = ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       faType = PSUADE_RS_GP1;
       printf("This command may be very time-consuming to execute.\n");
       count = nSamples_ / 100;
       if (count > 4) count = 4;
-      sprintf(pString, "How many partitions (1 - %d) = ", count);
+      snprintf(pString,100,"How many partitions (1 - %d) = ", count);
       int nParts = getInt(1, count, pString);
       count = nSamples_ / nParts + 1;
       vecXT.setLength(count*nInputs_);
@@ -20506,7 +20786,7 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString, "Enter output number (1 - %d) = ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) = ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       faType = PSUADE_RS_SOTS;
@@ -20577,7 +20857,7 @@ int PsuadeBase::interpretInteractive()
       {
         printf("WARNING: sample size too small to give useful results\n");
       }
-      sprintf(pString, "Enter output number (1 - %d) = ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) = ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       int analysisMethod = PSUADE_ANA_DTEST;
@@ -20639,7 +20919,7 @@ int PsuadeBase::interpretInteractive()
         continue;
       }
 
-      sprintf(pString, "Enter output number (1 - %d) = ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) = ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       int analysisMethod = PSUADE_ANA_ETEST;
@@ -20665,17 +20945,24 @@ int PsuadeBase::interpretInteractive()
       {
         printf("gd_test: perform Gower distance analysis\n");
         printf("The power of this test has not been verified.\n");
-        printf("This test is not ready yet.\n");
+        //printf("This test is not ready yet.\n");
         printf("Syntax: gd_test (no argument needed)\n");
         continue;
       }
+      printAsterisks(PL_INFO, 0);
+      printDashes(PL_INFO, 0);
+      printf("Proceed ? (y or n to abort) ");
+      scanf("%s", lineIn2);
+      fgets(winput,5000,stdin);
+      if (lineIn2[0] != 'y') continue;
+
       if (nInputs_ <= 0 || psuadeIO_ == NULL || nSamples_ <= 0)
       {
         printf("ERROR: sample data not loaded yet.\n");
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString, "Enter output number (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       int analysisMethod = PSUADE_ANA_GOWER;
@@ -20714,7 +21001,7 @@ int PsuadeBase::interpretInteractive()
         continue;
       }
       faFlag = 3;
-      sprintf(pString, "Which output to use (1 - %d, 0 - all) ? ",nOutputs_);
+      snprintf(pString,100,"Which output to use (1 - %d, 0 - all) ? ",nOutputs_);
       outputID = getInt(0, nOutputs_, pString);
       psuadeIO_->getParameter("ana_outputid", pPtr);
       kk = pPtr.intData_;
@@ -20780,7 +21067,7 @@ int PsuadeBase::interpretInteractive()
         continue;
       }
       count = 0;
-      sprintf(pString,
+      snprintf(pString,100,
         "Sample taken from a file (n - sample from register)? (y or n) ");
       getString(pString, winput);
       psVector vecXVals;
@@ -20908,8 +21195,8 @@ int PsuadeBase::interpretInteractive()
           else
           {
             if (flag == 1)
-                 fprintf(fp, "%d %d %d\n", count, nInputs_, nOutputs_);
-            else fprintf(fp, "%d %d %d\n", count, nInputs_, 2*nOutputs_);
+                 fprintf(fp, "%d %d %d\n", count, nInputs_, 2*nOutputs_);
+            else fprintf(fp, "%d %d %d\n", count, nInputs_, nOutputs_);
           }
         }
         else fp = NULL;
@@ -21038,7 +21325,7 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(dataFile, "psComplete");
+      snprintf(dataFile,100,"psComplete");
       if ((fp=fopen(dataFile,"r")) != NULL)
       {
         printf("Please remove psComplete file and re-do.\n");
@@ -21051,7 +21338,7 @@ int PsuadeBase::interpretInteractive()
       count = 1;
       while ((fp=fopen(dataFile,"r")) == NULL)
       {
-        sprintf(winput, "rsevalDataIn.%d", count);
+        snprintf(winput,100,"rsevalDataIn.%d", count);
         printf("Now expecting a sample file called %s (or psComplete).\n", 
                winput);
         while ((fp=fopen(winput,"r")) == NULL)
@@ -21091,7 +21378,7 @@ int PsuadeBase::interpretInteractive()
           cmdStatus = 1;
           continue;
         }
-        sprintf(winput, "rsevalDataOut.%d", count);
+        snprintf(winput,100,"rsevalDataOut.%d", count);
         if ((fpOut=fopen(winput,"w")) == NULL)
         {
           printf("ERROR: cannot open output file.\n");
@@ -21170,7 +21457,7 @@ int PsuadeBase::interpretInteractive()
       }
 
       //**/ get more information
-      sprintf(pString,"Enter output number (1-based) : ");
+      snprintf(pString,100,"Enter output number (1-based) : ");
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
 
@@ -21190,7 +21477,7 @@ int PsuadeBase::interpretInteractive()
       printf("2   <data> <data> ... \n");
       printf("... <data> <data> ... \n");
       printf("PSUADE_END (optional)\n");
-      sprintf(pString, "File name ? ");
+      snprintf(pString,100,"File name ? ");
       getString(pString, dataFile);
       kk = strlen(dataFile);
       dataFile[kk-1] = '\0';
@@ -21376,12 +21663,12 @@ int PsuadeBase::interpretInteractive()
       printf("(a) regular (or design) inputs, and\n");
       printf("(b) uncertain inputs (with an uncertain sample)\n");
       printf("That is, you need to specify inputs are uncertain.\n\n");
-      sprintf(pString,"How many inputs are uncertain inputs ? ");
+      snprintf(pString,100,"How many inputs are uncertain inputs ? ");
       int nUParams = getInt(1, nInputs_, pString);
       printf("Now specify which inputs are uncertain inputs.\n");
       for (ii = 0; ii < nUParams; ii++)
       {
-        sprintf(pString,"Enter uncertain input number (1-based) : ");
+        snprintf(pString,100,"Enter uncertain input number (1-based) : ");
         kk = getInt(1, nInputs_, pString);
         kk--; 
         if (vecISet[kk] != 0)
@@ -21465,7 +21752,7 @@ int PsuadeBase::interpretInteractive()
       printf("2   <data> <data> ... \n");
       printf("... <data> <data> ... \n");
       printf("PSUADE_END (optional)\n");
-      sprintf(pString, "Enter sample file name ? ");
+      snprintf(pString,100,"Enter sample file name ? ");
       getString(pString, dataFile);
       kk = strlen(dataFile);
       dataFile[kk-1] = '\0';
@@ -21556,7 +21843,7 @@ int PsuadeBase::interpretInteractive()
       printf("2   <data> <data> ... \n");
       printf("... <data> <data> ... \n");
       printf("PSUADE_END (optional)\n");
-      sprintf(pString, "File name ? ");
+      snprintf(pString,100,"File name ? ");
       getString(pString, dataFile);
       kk = strlen(dataFile);
       dataFile[kk-1] = '\0';
@@ -21604,7 +21891,7 @@ int PsuadeBase::interpretInteractive()
         printf("         uncertain inputs %d.\n", nUParams);
         printf("You must delete %d inputs for compatibility.\n",
                nUInpsChk-nUParams);
-        sprintf(pString, "Which input to delete (1-%d)? ",nUInpsChk);
+        snprintf(pString,100,"Which input to delete (1-%d)? ",nUInpsChk);
         ii = 0;
         while (ii < nUInpsChk-nUParams)
         {
@@ -21816,7 +22103,7 @@ int PsuadeBase::interpretInteractive()
         cmdStatus = 1;
         continue;
       }
-      sprintf(pString, "Enter output number (1 - %d) : ", nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
       Ymax = - 1.0e35;
@@ -21829,11 +22116,11 @@ int PsuadeBase::interpretInteractive()
           Ymin = VecSamOutputs_[sInd*nOutputs_+outputID];
       }
       printf("Option to clip the created sample by bounding Y.\n");
-      sprintf(pString,"Enter the lower bound constraint (Ymin=%e) : ",
-              Ymin);
+      snprintf(pString,100,"Enter the lower bound constraint (Ymin=%e) : ",
+               Ymin);
       threshL = getDouble(pString);
-      sprintf(pString,"Enter the upper bound constraint (Ymax=%e) : ",
-              Ymax);
+      snprintf(pString,100,"Enter the upper bound constraint (Ymax=%e) : ",
+               Ymax);
       threshU = getDouble(pString);
       if (threshL >= threshU)
       {
@@ -21847,7 +22134,7 @@ int PsuadeBase::interpretInteractive()
       FuncApprox *faPtr = genFAInteractive(psuadeIO_, faFlag);
       faPtr->setOutputLevel(outputLevel_);
       //**/ create a large sample
-      sprintf(pString,
+      snprintf(pString,100,
             "Enter Monte Carlo sample size for probing (max=100000): ");
       kk = getInt(100, 100000, pString);
       Sampling *sampPtr = (Sampling *) SamplingCreateFromID(PSUADE_SAMP_MC);
@@ -21873,7 +22160,7 @@ int PsuadeBase::interpretInteractive()
         if (dtemp >= threshL && dtemp <= threshU) count++; 
         else                                      vecST[ii] = 0;
       } 
-      //**/sprintf(pString,"Generate 1D or 2D scatter plots (1 or 2): ");
+      //**/snprintf(pString,100,"Generate 1D or 2D scatter plots (1 or 2): ");
       //**/getString(pString, winput);
       winput[0] = '1';
       if (winput[0] == '1')
@@ -21903,7 +22190,7 @@ int PsuadeBase::interpretInteractive()
         {
           fwritePlotCLF(fp);
           fprintf(fp, "plot(X%d,Y,'X','MarkerSize',13)\n",iInd+1);
-          sprintf(pString, "%s vs %s",
+          snprintf(pString, 1000, "%s vs %s",
                   StrOutNames_[outputID],StrInpNames_[iInd]);
           fwritePlotTitle(fp, pString);
           fwritePlotXLabel(fp, StrInpNames_[iInd]);
@@ -22234,8 +22521,8 @@ int PsuadeBase::interpretInteractive()
       printf("Please enter the number of bins per input dimension.\n");
       for (ii = 0; ii < nInputs_; ii++)
       {
-        sprintf(pString,"Number of histogram bins for input %d (1-1000): ",
-                ii+1);
+        snprintf(pString,100,"Number of histogram bins for input %d (1-1000): ",
+                 ii+1);
         vecIT[ii] = getInt(1, 1000, pString);
       }
       PDFHistogram *pdfhist = new PDFHistogram(nSamples_, nInputs_, 
@@ -22309,8 +22596,8 @@ int PsuadeBase::interpretInteractive()
         continue;
       }
       vecIT.setLength(nInputs_);
-      sprintf(pString, "Approximate number of scenarios (2-%d): ",
-              nSamples_);
+      snprintf(pString,100,"Approximate number of scenarios (2-%d): ",
+               nSamples_);
       int nScen = getInt(2, nSamples_, pString);
       int nbins = 2;
       int nScenLast=-1;
@@ -22552,14 +22839,14 @@ int PsuadeBase::interpretInteractive()
       if (nInputs_ > 3)
       {
         printf("Currently, you can only select at most 3 inputs.\n");
-        sprintf(pString, "Enter the number of inputs to study (1 - 3) : ");
+        snprintf(pString,100,"Enter the number of inputs to study (1 - 3) : ");
         kk = getInt(1, 3, pString);
       }
       if (kk == 1) iplot2 = iplot3 = -2;
       if (kk == 2) iplot3 = -2;
       if (nInputs_ > kk)
       {
-        sprintf(pString, "Enter the first input (1 - %d) : ", nInputs_);
+        snprintf(pString,100,"Enter the first input (1 - %d) : ", nInputs_);
         iplot1 = getInt(1, nInputs_, pString);
         iplot1--;
         if (kk > 1)
@@ -22567,8 +22854,8 @@ int PsuadeBase::interpretInteractive()
           iplot2 = iplot1;
           while (iplot1 == iplot2)
           {
-            sprintf(pString, "Enter the second input (1 - %d), not %d : ",
-                    nInputs_, iplot1+1);
+            snprintf(pString,100,"Enter the second input (1 - %d), not %d : ",
+                     nInputs_, iplot1+1);
             iplot2 = getInt(1, nInputs_, pString);
             iplot2--;
             if (iplot1 == iplot2)
@@ -22580,7 +22867,7 @@ int PsuadeBase::interpretInteractive()
           iplot3 = 3 - iplot1 - iplot2;
           while (iplot3 < 0 || iplot3 == iplot1 || iplot3 == iplot2)
           {
-            sprintf(pString,
+            snprintf(pString,200,
               "Enter the input for t axis (1 - %d), not %d nor %d: ",
                     nInputs_, iplot1+1, iplot2+1);
             iplot3 = getInt(1, nInputs_, pString);
@@ -22903,7 +23190,7 @@ int PsuadeBase::interpretInteractive()
         for (jj = 0; jj < faLeng; jj++) faYOut[jj] /= Ymax;
         fprintf(fp, "A = [\n");
         vecVT.setLength(faLeng);
-        sprintf(pString,"How many smoothing step : (0 - 100) : ");
+        snprintf(pString,100,"How many smoothing step : (0 - 100) : ");
         int nSmooth = getInt(0, 1000, pString);
         for (jj = 0; jj < nSmooth; jj++)
         {
@@ -23320,12 +23607,12 @@ int PsuadeBase::interpretInteractive()
       printf("   line 1: snapshot 1 data\n");
       printf("   line 2: snapshot 2 data\n");
       printf("   ...\n");
-      sprintf(pString,"Enter your snapshot file name: ");
+      snprintf(pString,100,"Enter your snapshot file name: ");
       getString(pString, dataFile);
       dataFile[strlen(dataFile)-1] = '\0';
-      sprintf(pString,"How many snapshots are in the file? ");
+      snprintf(pString,100,"How many snapshots are in the file? ");
       int nSnaps = getInt(1, 1000000000, pString);
-      sprintf(pString,"Snapshot dimension (size of each snapshot)? ");
+      snprintf(pString,100,"Snapshot dimension (size of each snapshot)? ");
       int fieldSize = getInt(1, 1000000000, pString);
       psMatrix matSnapshots;
       matSnapshots.setDim(fieldSize,nSnaps);
@@ -23342,11 +23629,11 @@ int PsuadeBase::interpretInteractive()
         delete kpcaObj;
         continue;
       }
-      sprintf(pString, "Enter the desire reduced dimension: (1 - %d) ",
+      snprintf(pString,100,"Enter the desire reduced dimension: (1 - %d) ",
               matSnapshots.nrows());
       int rdim = getInt(1, matSnapshots.nrows(), pString);
       int kernel = kpcaObj->getKernel();
-      sprintf(pString,"Enter your desired model file name: ");
+      snprintf(pString,100,"Enter your desired model file name: ");
       getString(pString, dataFile);
       dataFile[strlen(dataFile)-1] = '\0';
       status = kpcaObj->genKPCAModelFile(matSnapshots,kernel,rdim,
@@ -23436,7 +23723,7 @@ int PsuadeBase::interpretInteractive()
       printf("Create a file called 'kpca_quit' to quit this command.\n");
       while (1)
       {
-        sprintf(kpcaReqFile, "kpca_request");
+        snprintf(kpcaReqFile,100,"kpca_request");
         fp = fopen(kpcaReqFile, "r");
         reqID = 0;
         if (fp == NULL) 
@@ -23444,7 +23731,7 @@ int PsuadeBase::interpretInteractive()
           reqID = -1;
           for (ii = 1; ii < 9; ii++)
           {
-            sprintf(kpcaReqFile, "kpca_request.%d", ii);
+            snprintf(kpcaReqFile,100,"kpca_request.%d", ii);
             fp = fopen(kpcaReqFile,"r");
             if (fp != NULL) 
             {
@@ -23596,17 +23883,17 @@ int PsuadeBase::interpretInteractive()
     }
      
     //**/ -------------------------------------------------------------
-    // +++ generate mcmc likelihood function 
+    // +++ generate mcmc likelihood function in Python 
     //**/ -------------------------------------------------------------
-    else if (!strcmp(command, "gen_likelihood"))
+    else if (!strcmp(command, "kpca_genscript"))
     {
       sscanf(lineIn,"%s %s",command,winput);
       if (!strcmp(winput, "-h"))
       {
-        printf("gen_likelihood: create a Python program to\n");
+        printf("kpca_genscript: create a Python program to\n");
         printf("     compute likelihood for KPCA-based MCMC.\n");
         printf("     This function is used in mcmc_with_kpca.\n");
-        printf("Syntax: gen_likelihood (no argument needed)\n");
+        printf("Syntax: kpca_genscript (no argument needed)\n");
       }
       //**/ explanation
       printf("Bayesian inference for high-dimensional correlated\n");
@@ -23621,7 +23908,7 @@ int PsuadeBase::interpretInteractive()
       printf(" p(X|U) - prior distribution of KPCA-reduced parameters\n\n");
       printf(" L(D|X) - likelihood of D given X\n\n");
       printf("This command helps create L(D|U) p(X|U) that can be\n");
-      printf("inserted into mcmc_with_dr for DR-based inference.\n\n");
+      printf("inserted into kpca_mcmc for DR-based inference.\n\n");
       printf("Please follow the instructions to create this likelihood\n");
       printf("function.\n");
       genKPCAMcmcWorkflow();
@@ -23629,17 +23916,17 @@ int PsuadeBase::interpretInteractive()
     }
 
     //**/ -------------------------------------------------------------
-    // +++ run MCMC with dimension reduction
+    // +++ run MCMC with dimension reduction (KPCA)
     //**/ -------------------------------------------------------------
-    else if (!strcmp(command, "mcmc_with_dr"))
+    else if (!strcmp(command, "kpca_mcmc"))
     {
       sscanf(lineIn,"%s %s",command,winput);
       if (!strcmp(winput, "-h"))
       {
-        printf("mcmc_with_dr: perform inference on high-dimensional\n");
+        printf("kpca_mcmc: perform inference on high-dimensional\n");
         printf("     inputs via dimension reduction methods such\n");
-        printf("     as KPCA (with gen_likelihood, kpca_create, ..).\n");
-        printf("Syntax: mcmc_with_dr (no argument needed)\n");
+        printf("     as KPCA (with kpca_genscript, kpca_create, ..).\n");
+        printf("Syntax: kpca_mcmc (no argument needed)\n");
       }
       //**/ explanation
       printAsterisks(PL_INFO, 0);
@@ -23656,7 +23943,7 @@ int PsuadeBase::interpretInteractive()
       printf("p(U) is assumed to be a top-hat function.\n");
       printf("Thus, the only information needed from users are\n");
       printf("A likelihood function to compute L(D|X) p(X|U)\n");
-      printf("- Use gen_likelihood to create this function\n");
+      printf("- Use kpca_genscript to create this function\n");
       printf("An optional file that has the initial guess for U\n");
       printf("MCMC parameters such as maximum iterations\n");
       printDashes(PL_INFO, 0);
@@ -23718,7 +24005,7 @@ int PsuadeBase::interpretInteractive()
       Xnames.setNumStrings(kk);
       for (ii = 0; ii < kk; ii++)
       {
-        sprintf(pString, "X%d", ii+1);
+        snprintf(pString,100,"X%d", ii+1);
         Xnames.loadOneString(ii, pString);
       }
       psStrings Yname;
@@ -23778,7 +24065,7 @@ int PsuadeBase::interpretInteractive()
       printf("        Also, the driver and opt_driver fields in this ");
       printf("file should\n");
       printf("        point to the model simulator.\n");
-      sprintf(pString,"Enter the name of this PSUADE input file: ");
+      snprintf(pString,100,"Enter the name of this PSUADE input file: ");
       getString(pString, dataFile);
       kk = strlen(dataFile);
       dataFile[kk-1] = '\0';
@@ -23882,7 +24169,7 @@ int PsuadeBase::interpretInteractive()
       }
 
       //**/ select output
-      sprintf(pString,"Enter output number (1 - %d) : ",nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ",nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
 
@@ -23921,67 +24208,67 @@ int PsuadeBase::interpretInteractive()
         if (VecInpPDFs_.length() == 0 || VecInpPDFs_[ii] == 0)
         {
           printf("Lower bounds = %e\n", VecILowerBs_[ii]);
-          sprintf(pString, "Enter lower bound for input lower bound: ");
+          snprintf(pString,100,"Enter lower bound for input lower bound: ");
           vecVT[ii*2] = getDouble(pString); 
-          sprintf(pString, "Enter upper bound for input lower bound: ");
+          snprintf(pString,100,"Enter upper bound for input lower bound: ");
           vecWT[ii*2] = getDouble(pString); 
           printf("Upper bounds = %e\n", VecIUpperBs_[ii]);
-          sprintf(pString, "Enter lower bound for input upper bound: ");
+          snprintf(pString,100,"Enter lower bound for input upper bound: ");
           vecVT[ii*2+1] = getDouble(pString); 
-          sprintf(pString, "Enter upper bound for input upper bound: ");
+          snprintf(pString,100,"Enter upper bound for input upper bound: ");
           vecWT[ii*2+1] = getDouble(pString); 
         }
         else if (VecInpPDFs_[ii] == PSUADE_PDF_NORMAL)
         {
           printf("Normal distribution mean = %e\n", VecInpMeans_[ii]);
-          sprintf(pString, "Enter lower bound for input mean : ");
+          snprintf(pString,100,"Enter lower bound for input mean : ");
           vecVT[ii*2] = getDouble(pString); 
-          sprintf(pString, "Enter upper bound for input mean : ");
+          snprintf(pString,100,"Enter upper bound for input mean : ");
           vecWT[ii*2] = getDouble(pString); 
           printf("Normal distribution std dev = %e\n", VecInpStds_[ii]);
-          sprintf(pString, "Enter lower bound for input std dev : ");
+          snprintf(pString,100,"Enter lower bound for input std dev : ");
           vecVT[ii*2+1] = getDouble(pString); 
-          sprintf(pString, "Enter upper bound for input std dev : ");
+          snprintf(pString,100,"Enter upper bound for input std dev : ");
           vecWT[ii*2+1] = getDouble(pString); 
         }
         else if (VecInpPDFs_[ii] == PSUADE_PDF_LOGNORMAL)
         {
           printf("LogNormal distribution mean = %e\n",VecInpMeans_[ii]);
-          sprintf(pString, "Enter lower bound for input mean : ");
+          snprintf(pString,100,"Enter lower bound for input mean : ");
           vecVT[ii*2] = getDouble(pString); 
-          sprintf(pString, "Enter upper bound for input mean : ");
+          snprintf(pString,100,"Enter upper bound for input mean : ");
           vecWT[ii*2] = getDouble(pString); 
           printf("LogNormal distribution std dev = %e\n",VecInpStds_[ii]);
-          sprintf(pString, "Enter lower bound for input std dev : ");
+          snprintf(pString,100,"Enter lower bound for input std dev : ");
           vecVT[ii*2+1] = getDouble(pString); 
-          sprintf(pString, "Enter upper bound for input std dev : ");
+          snprintf(pString,100,"Enter upper bound for input std dev : ");
           vecWT[ii*2+1] = getDouble(pString); 
         }
         else if (VecInpPDFs_[ii] == PSUADE_PDF_BETA)
         {
           printf("Beta distribution alpha = %e\n",VecInpMeans_[ii]);
-          sprintf(pString, "Enter lower bound for input alpha : ");
+          snprintf(pString,100,"Enter lower bound for input alpha : ");
           vecVT[ii*2] = getDouble(pString); 
-          sprintf(pString, "Enter upper bound for input alpha : ");
+          snprintf(pString,100,"Enter upper bound for input alpha : ");
           vecWT[ii*2] = getDouble(pString); 
           printf("Beta distribution beta = %e\n", VecInpStds_[ii]);
-          sprintf(pString, "Enter lower bound for input beta : ");
+          snprintf(pString,100,"Enter lower bound for input beta : ");
           vecVT[ii*2+1] = getDouble(pString); 
-          sprintf(pString, "Enter upper bound for input beta : ");
+          snprintf(pString,100,"Enter upper bound for input beta : ");
           vecWT[ii*2+1] = getDouble(pString); 
         }
         else if (VecInpPDFs_[ii] == PSUADE_PDF_TRIANGLE)
         {
           printf("Triangle distribution mean = %e\n",VecInpMeans_[ii]);
-          sprintf(pString, "Enter lower bound for input mean : ");
+          snprintf(pString,100,"Enter lower bound for input mean : ");
           vecVT[ii*2] = getDouble(pString); 
-          sprintf(pString, "Enter upper bound for input mean : ");
+          snprintf(pString,100,"Enter upper bound for input mean : ");
           vecWT[ii*2] = getDouble(pString); 
           printf("Triangle distribution half width = %e\n",
                  VecInpStds_[ii]);
-          sprintf(pString, "Enter lower bound for input half width : ");
+          snprintf(pString,100,"Enter lower bound for input half width : ");
           vecVT[ii*2+1] = getDouble(pString); 
-          sprintf(pString, "Enter upper bound for input half width : ");
+          snprintf(pString,100,"Enter upper bound for input half width : ");
           vecWT[ii*2+1] = getDouble(pString); 
         }
         else 
@@ -24099,14 +24386,14 @@ int PsuadeBase::interpretInteractive()
         fprintf(fp, "X = 1:%d;\n", count);
         fprintf(fp, "X = 0.001 * X;\n");
         fprintf(fp, "plot(Y,X)\n");
-        sprintf(winput, "Cumulative Distributions");
+        snprintf(winput,100,"Cumulative Distributions");
         fwritePlotTitle(fp, winput);
         fwritePlotAxes(fp);
         if (StrOutNames_[outputID] != NULL) 
-             sprintf(winput, "%s", StrOutNames_[outputID]);
-        else sprintf(winput, "Output Values");
+             snprintf(winput,200,"%s", StrOutNames_[outputID]);
+        else snprintf(winput,200,"Output Values");
         fwritePlotXLabel(fp, winput);
-        sprintf(winput, "Probabilities");
+        snprintf(winput,100,"Probabilities");
         fwritePlotYLabel(fp, winput);
         if (ss == 0)
         {
@@ -24173,7 +24460,7 @@ int PsuadeBase::interpretInteractive()
       }
 
       //**/ select output
-      sprintf(pString,"Enter output number (1 - %d) : ",nOutputs_);
+      snprintf(pString,100,"Enter output number (1 - %d) : ",nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
 
@@ -24187,9 +24474,9 @@ int PsuadeBase::interpretInteractive()
       kk = 1;
       while (kk > 0)
       {
-        sprintf(pString,
-                "Select epistemic parameters (1 - %d, 0 if done) : ",
-                nInputs_); 
+        snprintf(pString,100,
+                 "Select epistemic parameters (1 - %d, 0 if done) : ",
+                 nInputs_); 
         kk = getInt(0, nInputs_, pString);
         if (kk > 0)
         {
@@ -24426,14 +24713,14 @@ int PsuadeBase::interpretInteractive()
           fprintf(fp, "drawnow\n");
           if (ss == 0)
           {
-            sprintf(winput, "Cumulative Distributions");
+            snprintf(winput,100,"Cumulative Distributions");
             fwritePlotTitle(fp, winput);
             fwritePlotAxes(fp);
             if (StrOutNames_[outputID] != NULL) 
-                 sprintf(winput,"%s",StrOutNames_[outputID]);
-            else sprintf(winput,"Output Values");
+                 snprintf(winput,1000,"%s",StrOutNames_[outputID]);
+            else snprintf(winput,1000,"Output Values");
             fwritePlotXLabel(fp, winput);
-            sprintf(winput, "Probabilities");
+            snprintf(winput,100,"Probabilities");
             fwritePlotYLabel(fp, winput);
             if (plotScilab())
                  fprintf(fp, "set(gca(),\"auto_clear\",\"off\")\n");
@@ -24561,8 +24848,8 @@ int PsuadeBase::interpretInteractive()
       }
       for (ii = 0; ii < nInputs_; ii++)
       {
-        sprintf(pString,"New value for input %d? (%e - %e) ",ii+1,
-                VecILowerBs_[ii], VecIUpperBs_[ii]);
+        snprintf(pString,100,"New value for input %d? (%e - %e) ",ii+1,
+                 VecILowerBs_[ii], VecIUpperBs_[ii]);
         ddata = getDouble(pString);
         if (ddata < VecILowerBs_[ii] || ddata > VecIUpperBs_[ii])
           printf("WARNING: data out of range (extrapolation).\n");
@@ -24699,7 +24986,7 @@ int PsuadeBase::interpretInteractive()
       printf("3. auxiliary optimization driver (aux_opt_driver) \n");
       printf("4. ensemble simulation driver (ensemble_driver) \n");
       printf("5. ensemble optimization driver (ensemble_opt_driver) \n");
-      sprintf(pString, "Enter (1 - 5): ");
+      snprintf(pString,100,"Enter (1 - 5): ");
       kk = getInt(1,5,pString);
       printf("Enter name of the driver : ");
       fgets(dataFile, 5000, stdin);
@@ -24753,7 +25040,7 @@ int PsuadeBase::interpretInteractive()
         //**/printf("Two modes to start Matlab: \n");
         //**/printf("1. desktop mode (create a matlab window)\n");
         //**/printf("2. nodesktop mode (use current window for matlab)\n");
-        //**/sprintf(pString,"Start Matlab in desktop mode (y or n)? ");
+        //**/snprintf(pString,100,"Start Matlab in desktop mode (y or n)? ");
         //**/getString(pString, winput);
         winput[0] = 'y';
         if (winput[0] == 'y') strcpy(command, "matlab");
@@ -24782,14 +25069,14 @@ int PsuadeBase::interpretInteractive()
       printf("4. MCMC specification file\n");
       printf("5. MCMC posterior file\n");
       printf("6. S-type PDF sample file\n");
-      sprintf(pString, "Enter your selection : ");
+      snprintf(pString,100,"Enter your selection : ");
       int option = getInt(1,6,pString);
       printf("Please enter your sample file: ");
       scanf("%s", cString);
       fgets(winput, 1000, stdin);
       if (option == 1 || option == 2)
       {
-        sprintf(pString, "How many inputs are in this sample file? ");
+        snprintf(pString,100,"How many inputs are in this sample file? ");
         kk = getInt(1,10000000,pString);
         status = checkOUUFileFormat(cString, option, kk, outputLevel_);
       }
@@ -25163,8 +25450,9 @@ void PsuadeBase::displayHelpMenu(char *winput, char *pString)
     printf("\trssobol1b  (RS-based Sobol' main effect + bootstrap)\n");
     printf("\trssobol2b  (RS-based Sobol' 2-way analysis + bootstrap)\n");
     printf("\trssoboltsib(RS-based Sobol' total effect + bootstrap)\n");
-    printf("\taeua       (RS-based aleatoric-epistemic analysis)\n");
-    printf("\tsoua       (RS-based 2nd order analysis: PDF variation)\n");
+    printf("\trsaeua     (RS-based aleatoric-epistemic analysis)\n");
+    printf("\trssoua     (RS-based 2nd order analysis: PDF variation)\n");
+    printf("\trsshapley  (RS-based Shapley values)\n");
   }
   else if (!strcmp(winput, "uqsa"))
   {
@@ -25178,8 +25466,9 @@ void PsuadeBase::displayHelpMenu(char *winput, char *pString)
     printf("\trssobol1b  (RS-based Sobol' main effect + bootstrap)\n");
     printf("\trssobol2b  (RS-based Sobol' 2-way analysis + bootstrap)\n");
     printf("\trssoboltsib(RS-based Sobol' total effect + bootstrap)\n");
-    printf("\taeua       (RS-based aleatoric-epistemic analysis)\n");
-    printf("\tsoua       (RS-based 2nd order analysis: PDF variation)\n");
+    printf("\trsaeua     (RS-based aleatoric-epistemic analysis)\n");
+    printf("\trssoua     (RS-based 2nd order analysis: PDF variation)\n");
+    printf("\trsshapley  (RS-based Shapley values)\n");
     printf("\tNOTE: use 'help uqsa long' for more detailed information\n");
   }
   else if (!strcmp(winput, "calibration"))
@@ -25192,7 +25481,8 @@ void PsuadeBase::displayHelpMenu(char *winput, char *pString)
     printf("\tmcmc_dm     (Search good discrepancy model for inference)\n");
     printf("\tmcmc_set_option (set rsmcmc option)\n");
     printf("\tmcmc        (Perform simulator-based - not RS-based MCMC)\n");
-    printf("\tmo_opt      (Perform RS-based multi-objective optimization)\n");
+    printf("\tmcmc_direct (Create posteriors from a sample and likelihoods)\n");
+    printf("\tcompute-LogL(Compute -log(likelihood) given 1 sample point)\n");
   }
   else if (!strcmp(winput, "optimization"))
   {
@@ -25211,6 +25501,8 @@ void PsuadeBase::displayHelpMenu(char *winput, char *pString)
     printf("- MOO    for multi-objective optimization\n");
     printf("- Nomad  for continuous and/or integer optimization\n");
     printf("- OUU    for optimization under uncertainty\n");
+    printf("The optimization method available in command mode is:\n");
+    printf("\tmo_opt      (Perform RS-based multi-objective optimization)\n");
   }
   else if (!strcmp(winput, "plot") && !strcmp(pString, "long"))
   { 
@@ -25452,14 +25744,14 @@ void PsuadeBase::displayHelpMenu(char *winput, char *pString)
     printf("writing the result to\n");
     printf("a file.\n");
     printDashes(PL_INFO, 0);
-    printf("\tgen_likelihood(Create Python script to compute likelihood\n");
+    printf("\tkpca_genscript(Create Python script to compute likelihood\n");
     printf("* This command creates a Python script for ");
     printf("computing likelihood values\n");
-    printf("* for MCMC. It is especially made to work with 'mcmc_with_dr'.\n");
+    printf("* for MCMC. It is especially made to work with 'kpca_mcmc'.\n");
     printDashes(PL_INFO, 0);
-    printf("\tmcmc_with_dr  (Perform MCMC with dimension reduction)\n");
+    printf("\tkpca_mcmc     (Perform MCMC with dimension reduction)\n");
     printf("* This command calls the Metropolis-Hastings MCMC using likelihood\n");
-    printf("* function created by gen_likelihood.\n");
+    printf("* function created by kpca_genscript.\n");
     printDashes(PL_INFO, 0);
     printf("\topca          (Principal component analysis: on outputs)\n");
     printEquals(PL_INFO, 0);
@@ -25470,8 +25762,8 @@ void PsuadeBase::displayHelpMenu(char *winput, char *pString)
     printf("\tkpca_forward  (Transform from physical to KPCA space)\n");
     printf("\tkpca_inverse  (Transform from KPCA to physical space)\n");
     printf("\tkpca_server   (Run kpca_inverse continuously in server mode)\n");
-    printf("\tgen_likelihood(Create Python script to compute likelihood)\n");
-    printf("\tmcmc_with_dr  (Perform MCMC with dimension reduction)\n");
+    printf("\tkpca_genscript(Create Python script to compute likelihood)\n");
+    printf("\tkpca_mcmc     (Perform MCMC with dimension reduction)\n");
     printf("\topca          (Principal component analysis: on outputs)\n");
     printf("\tNOTE: use 'help kpca long' for more detailed information\n");
   }
@@ -25573,7 +25865,7 @@ void PsuadeBase::collapseSample()
   printf("(4) combine duplicate sample points by taking std dev\n");
   printf("(5) combine duplicate sample points by taking max\n");
   printf("(6) partition duplicate sample points into bins (quantiles)\n");
-  sprintf(charString,"Select option (1-6): ");
+  snprintf(charString,100,"Select option (1-6): ");
   option = getInt(1, 6, charString);
   vecTags.setLength(nSamples_);
   for (sInd = 0; sInd < nSamples_; sInd++) vecTags[sInd] = 1;
@@ -25655,7 +25947,7 @@ void PsuadeBase::collapseSample()
       fp = fopen("psuadeRmDupMedian.m", "w");
       for (kk = 0; kk < nUniques; kk++)
       {
-        sprintf(charString, "A%d = [", kk+1); 
+        snprintf(charString,100, "A%d = [", kk+1); 
         if (fp != NULL) fprintf(fp, "%s\n", charString);
         for (sInd = 0; sInd < nSamples_; sInd++)
         {
@@ -25951,19 +26243,19 @@ void PsuadeBase::collapseSample()
 
     int outputID, nlevels, nUniques=0, maxReps=0, entryValid;
     double PLower=0, PUpper=1;
-    sprintf(charString, "Which output is to be used? (1 - %d) ",
-            nOutputs_);
+    snprintf(charString,100,"Which output is to be used? (1 - %d) ",
+             nOutputs_);
     outputID = getInt(1, nOutputs_, charString);
     outputID--;
-    sprintf(charString,"How many levels to partition the output? (2-20) ");
+    snprintf(charString,100,"How many levels to partition the output? (2-20) ");
     nlevels = getInt(2, 20, charString);
-    sprintf(charString,"Lower probability bound for binning (>0, <=0.25) : ");
+    snprintf(charString,100,"Lower probability bound for binning (>0, <=0.25) : ");
     while (PLower <= 0 || PLower > 0.5)
       PLower = getDouble(charString);
-    sprintf(charString,"Upper probability bound for binning (>=0.75, <1) : ");
+    snprintf(charString,100,"Upper probability bound for binning (>=0.75, <1) : ");
     while (PUpper >= 1 || PUpper <= 0.5)
       PUpper = getDouble(charString);
-    sprintf(charString, "Bins are equally spaced? (y or n) ");
+    snprintf(charString,100,"Bins are equally spaced? (y or n) ");
     getString(charString, pString);
     psVector vecBinLocs;
     vecBinLocs.setLength(nlevels);
@@ -25979,7 +26271,7 @@ void PsuadeBase::collapseSample()
       printf("Level 1 = %e\n", PLower);
       for (ii = 1; ii < nlevels-1; ii++)
       {
-        sprintf(charString, "Enter level %d value = ", ii+1);
+        snprintf(charString,100,"Enter level %d value = ", ii+1);
         entryValid = 0;
         while (entryValid == 0)
         {

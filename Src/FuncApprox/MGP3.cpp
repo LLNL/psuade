@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <math.h>
 
 #include "GP3.h"
@@ -38,6 +39,9 @@
 #include "Psuade.h"
 #include "Sampling.h"
 #include "MainEffectAnalyzer.h"
+#ifdef PSUADE_OMP
+#include <omp.h>
+#endif
 
 #define PABS(x) ((x) > 0 ? (x) : (-(x)))
 
@@ -48,8 +52,20 @@ MGP3::MGP3(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
 {
   int    ii, idata;
   double ddata;
-  char   *strPtr, winput[1000], equal[100], pString[1000];
+  char   *strPtr, winput[1000], equal[100], pString[101];
   faID_ = PSUADE_RS_MGP3;
+
+  //**/ =======================================================
+  //**/ clean up previously-generated files
+  //**/ =======================================================
+  FILE *fp = fopen(".psuade_gp3", "r");
+  if (fp != NULL)
+  {
+    printf("MGP3 INFO: Found parameter file for GP3 = .psuade_gp3\n");
+    printf("           To avoid confusion, this file is to be deleted.\n"); 
+    fclose(fp);
+    unlink(".psuade_gp3");
+  }
 
   //**/ =======================================================
   //**/ set internal parameters and initialize stuff
@@ -73,7 +89,7 @@ MGP3::MGP3(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
     if (nInputs_ > 30)
     {
       printf("Since nInputs > 30, you may want to consider using HGP3.\n");
-      sprintf(pString, "Use HGP3? (y or n) ");
+      snprintf(pString,100,"Use HGP3? (y or n) ");
       getString(pString, winput);
       if (winput[0] == 'y') useHGP_ = 1; 
     }
@@ -86,9 +102,10 @@ MGP3::MGP3(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
   for (ii = 0; ii < nInputs_; ii++) vecXd_[ii] = 0.05;
   if (psConfig_.RSExpertModeIsOn() && psConfig_.InteractiveIsOn())
   {
-    printf("You can improve smoothness across partitions by allowing\n");
-    printf("overlaps. The recommended overlap is 0.1 (or 10%%).\n");
-    sprintf(pString, "Enter the degree of overlap (0 - 0.4) : ");
+    printf("You can improve smoothness across partitions by allowing ");
+    printf("overlaps.\n");
+    printf("The recommended overlap is 0.05 (or 5%%).\n");
+    snprintf(pString,100,"Enter the degree of overlap (0 - 0.4) : ");
     ddata = getDouble(pString);
     if (ddata < 0 || ddata > 0.4)
     {
@@ -99,8 +116,8 @@ MGP3::MGP3(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
     for (ii = 0; ii < nInputs_; ii++) vecXd_[ii] = ddata;
     printf("You can decide the sample size of each partition.\n");
     printf("Larger sample size per partition will take more setup time.\n");
-    printf("The default is 1000 (will have more if there is overlap).\n");
-    sprintf(pString, "Enter the partition sample size (500 - 10000) : ");
+    printf("The default is 500 (will have more if there is overlap).\n");
+    snprintf(pString,100,"Enter the partition sample size (500 - 10000) : ");
     partSize_ = getInt(200, 20000, pString);
   }
 
@@ -125,8 +142,57 @@ MGP3::MGP3(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
   //if (idata > nInputs_) idata = nInputs_;
   nPartitions_ = 1 << idata;
   if (psConfig_.InteractiveIsOn())
-    printf("MGP3: number of partitions = %d (psize=%d)\n", nPartitions_,
+    printf("MGP3: Number of partitions = %d (psize=%d)\n", nPartitions_,
            partSize_);
+
+  //**/ now get user GP parameters
+  nStarts_ = 2;
+  expPower_ = 2.0;
+  if (psConfig_.InteractiveIsOn() && psConfig_.RSExpertModeIsOn())
+  {
+    printOutTS(PL_INFO,"MGP3 default exponential degree = %e\n",expPower_);
+    snprintf(pString,100,"Set the exponential degree to ? [1.5,2.0] ");
+    expPower_ = 1;
+    while (expPower_ < 1.5 || expPower_ > 2)
+      expPower_ = getDouble(pString);
+    snprintf(pString,100,"GP_power = %e", expPower_);
+    psConfig_.putParameter(pString);
+    if (useHGP_ == 0)
+    {
+      printOutTS(PL_INFO,
+           "MGP3 default optimization nstarts = %d\n",nStarts_);
+      snprintf(pString,100,"Set the number of optimization starts to ? [1 - 20] ");
+      nStarts_ = getInt(1, 20, pString);
+      printf("MGP3: Optimization num_starts = %d\n", nStarts_);
+      snprintf(pString,100,"GP_nstarts = %d", nStarts_);
+      psConfig_.putParameter(pString);
+    }
+  }
+  else
+  {
+    char winput1[1000], winput2[1000];
+    char *cString = psConfig_.getParameter("GP_power");
+    if (cString != NULL)
+    {
+      sscanf(cString, "%s %s %lg", winput1, winput2, &expPower_);
+      if (expPower_ < 1.5 || expPower_ > 2)
+      {
+        printOutTS(PL_INFO,"MGP3 exponential (%e) invalid - reset to 2\n",
+                   expPower_);
+        expPower_ = 2.0;
+      }
+      if (psConfig_.InteractiveIsOn())
+        printOutTS(PL_INFO,"MGP3 exponential degree set to %e\n",expPower_);
+    }
+    cString = psConfig_.getParameter("GP_nstarts");
+    if (cString != NULL)
+    {
+      sscanf(cString, "%s %s %d", winput1, winput2, &nStarts_);
+      if (psConfig_.InteractiveIsOn())
+        printOutTS(PL_INFO,
+           "MGP3: Number of optimization starts = %d\n",nStarts_);
+    }
+  }
 }
 
 // ************************************************************************
@@ -189,6 +255,7 @@ int MGP3::initialize(double *XIn, double *YIn)
   MainEffectAnalyzer *me = new MainEffectAnalyzer();
   psConfig_.AnaExpertModeSaveAndReset();
   psConfig_.RSExpertModeSaveAndReset();
+  psConfig_.InteractiveSaveAndReset();
   turnPrintTSOff();
   vecVces.setLength(nInputs_);
   me->computeVCECrude(nInputs_,nSamples_,XIn,YIn,VecLBs_.getDVector(),
@@ -196,6 +263,7 @@ int MGP3::initialize(double *XIn, double *YIn)
   delete me;
   psConfig_.RSExpertModeRestore();
   psConfig_.AnaExpertModeRestore();
+  psConfig_.InteractiveRestore();
   vecI.setLength(nInputs_);
   for (ii = 0; ii < nInputs_; ii++) vecI[ii] = ii;
   ddata = 0;
@@ -204,8 +272,9 @@ int MGP3::initialize(double *XIn, double *YIn)
   sortDbleList2a(nInputs_, vecVces.getDVector(), vecI.getIVector());
   if (psConfig_.InteractiveIsOn() && outputLevel_ > 1)
   {
+    printf("MGP3: Run sensitivity analysis to determine partitioning.\n");
     for (ii = 0; ii < nInputs_; ii++)
-      printf("VCE %d = %e\n", vecI[ii], vecVces[ii]);
+      printf("  VCE %d = %e\n", vecI[ii]+1, vecVces[ii]);
   }
 
   //**/ actual division into boxes
@@ -233,7 +302,7 @@ int MGP3::initialize(double *XIn, double *YIn)
         for (jj = 0; jj < nInputs_; jj++)
           printf("vce %3d = %e\n", vecI[jj]+1, vecVces[jj]);
       }
-      printf("Selected input for binary partitioning %d = %d\n",ii+1, 
+      printf("MGP3: Input selected for binary partitioning = %d\n",
              index+1);
     }
     incr = 1 << (nSubs - ii - 1);
@@ -336,52 +405,81 @@ int MGP3::initialize(double *XIn, double *YIn)
     total += samCnt;
     if (psConfig_.InteractiveIsOn() && outputLevel_ >= 0)
     {
-      printf("Partition %d has %d sample points (ovlap=%e).\n",ii+1,
+      printf("MGP3: Partition %d has %d sample points (ovlap=%e).\n",ii+1,
              samCnt, vecXd_[0]);
     }
   }
   if (psConfig_.InteractiveIsOn() && outputLevel_ >= 0)
   {
-    printf("Sample size = %d\n",nSamples_);
-    printf("Total sample sizes from all partitions = %d\n",total);
-    printf("INFO: Total from all partitions may be larger than original\n");
-    printf("      sample due to overlap. If the total is too large so\n");
-    printf("      that it is close to the original size, partitioning\n");
-    printf("      is not worthwhile -> you may want to reduce overlap.\n");
+    printf("MGP3: Original sample size = %d\n",nSamples_);
+    printf("MGP3: Total sample sizes from all partitions = %d\n",total);
+    printf("INFO: Total from all partitions may be larger than ");
+    printf("original sample\n");
+    printf("      due to overlap. If the total is too large so ");
+    printf("that it is close\n");
+    printf("      to the original size, partitioning is not ");
+    printf("worthwhile ==>\n");
+    printf("      You may want to reduce overlap.\n");
   }
 
-  //**/ now set up GP
+  //**/ turn these feature off to prevent too many interactive questions
+  psConfig_.AnaExpertModeSaveAndReset();
   psConfig_.RSExpertModeSaveAndReset();
+  psConfig_.InteractiveSaveAndReset();
 
-  char *tArgv[1], pString[1000];
-  strcpy(pString, "no_checking");
+  //**/ instantiate response surface for each partition
+  char *tArgv[2], pString[1000], pString2[1000];
   tArgv[0] = (char *) pString;
+  for (ii = 0; ii < nPartitions_; ii++)
+  {
+    if (boxes_[ii]->nSamples_ > 0)
+    {
+      if (useHGP_)
+      { 
+        boxes_[ii]->rsPtr_ = new HGP3(nInputs_, boxes_[ii]->nSamples_);
+        strcpy(pString, "no_checking");
+        boxes_[ii]->rsPtr_->setParams(1, tArgv);
+      }
+      else
+      {
+        boxes_[ii]->rsPtr_ = new GP3(nInputs_, boxes_[ii]->nSamples_);
+        strcpy(pString, "hyperparam_file");
+        snprintf(pString2,100,"psuade_gp3.%d", ii+1);
+        tArgv[1] = (char *) pString2;
+        boxes_[ii]->rsPtr_->setParams(2, tArgv);
+      }
+      boxes_[ii]->rsPtr_->setOutputLevel(0);
+      boxes_[ii]->rsPtr_->setBounds(boxes_[ii]->vecLBs_.getDVector(),
+                                    boxes_[ii]->vecUBs_.getDVector());
+    }
+  }
+
+  //**/ restore settings
+  psConfig_.RSExpertModeRestore();
+  psConfig_.AnaExpertModeRestore();
+  psConfig_.InteractiveRestore();
 
 #pragma omp parallel private(ii)
+{
 #pragma omp for
   for (ii = 0; ii < nPartitions_; ii++)
   {
     if (boxes_[ii]->nSamples_ > 0)
     {
       if (psConfig_.InteractiveIsOn() && outputLevel_ > 1)
-        printf("MGP3: processing partition %d (%d)\n",ii+1,nPartitions_);
-      if (useHGP_)
-      { 
-        boxes_[ii]->rsPtr_ = new HGP3(nInputs_, boxes_[ii]->nSamples_);
-        boxes_[ii]->rsPtr_->setParams(1, tArgv);
-      }
-      else
-        boxes_[ii]->rsPtr_ = new GP3(nInputs_, boxes_[ii]->nSamples_);
-      boxes_[ii]->rsPtr_->setOutputLevel(0);
-      boxes_[ii]->rsPtr_->setBounds(boxes_[ii]->vecLBs_.getDVector(),
-                                    boxes_[ii]->vecUBs_.getDVector());
+#ifdef PSUADE_OMP
+        printf("MGP3: Processing partition %d (%d,mypid=%d)\n",ii+1,
+               nPartitions_,omp_get_thread_num());
+#else
+        printf("MGP3: Processing partition %d (%d)\n",ii+1,nPartitions_);
+#endif
       boxes_[ii]->rsPtr_->initialize(boxes_[ii]->vecX_.getDVector(),
                                      boxes_[ii]->vecY_.getDVector());
       if (psConfig_.InteractiveIsOn() && outputLevel_ > 1)
-        printf("MGP3: processing partition %d completed\n",ii+1);
+        printf("MGP3: Processing partition %d completed\n",ii+1);
     }
   }
-  psConfig_.RSExpertModeRestore();
+}
   turnPrintTSOn();
 
   if (psConfig_.InteractiveIsOn() && outputLevel_ > 1)

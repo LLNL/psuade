@@ -60,7 +60,7 @@ extern "C" {
 // ------------------------------------------------------------------------
 HGP3::HGP3(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
 {
-  char pString[1000], winput1[1000], winput2[1000], *cString=NULL;
+  char pString[101], winput1[1000], winput2[1000], *cString=NULL;
 
   faID_ = PSUADE_RS_HGP3;
   haveQuantiles_ = 0;
@@ -77,25 +77,25 @@ HGP3::HGP3(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
   if (psConfig_.InteractiveIsOn() && psConfig_.RSExpertModeIsOn())
   {
     printOutTS(PL_INFO,"* Default exponential degree = %e\n",expPower_);
-    sprintf(pString,"Set the exponential degree to? [1.5,2.0] ");
+    snprintf(pString,100,"Set the exponential degree to? [1.5,2.0] ");
     while (expPower_ < 1.5 || expPower_ > 2)
       expPower_ = getDouble(pString);
     printf("Exponential degree = %e\n", expPower_);
-    sprintf(pString, "HGP3_power = %e", expPower_);
+    snprintf(pString,100,"GP_power = %e", expPower_);
     psConfig_.putParameter(pString);
-    sprintf(pString,
+    snprintf(pString,100,
             "Is the last input variable quantile variable? (y or n) ");
     getString(pString, winput1);
     if (winput1[0] == 'y') 
     {
       haveQuantiles_ = 1;
-      sprintf(pString, "HGP3_haveQuantiles");
+      snprintf(pString,100,"HGP3_haveQuantiles");
       psConfig_.putParameter(pString);
     }
   }
   else
   {
-    cString = psConfig_.getParameter("HGP3_power");
+    cString = psConfig_.getParameter("GP_power");
     if (cString != NULL)
     {
       sscanf(cString, "%s %s %lg", winput1, winput2, &expPower_);
@@ -555,7 +555,7 @@ int HGP3::train()
                nInputs_-1);
         if (psConfig_.MasterModeIsOn())
         {
-          sprintf(pString,"Is the last input a quantile variable? ");
+          snprintf(pString,100,"Is the last input a quantile variable? ");
           getString(pString, winput);
           if (winput[0] == 'y') haveQuantiles_ = 1;
         }
@@ -586,14 +586,14 @@ int HGP3::train()
   //**/ ----------------------------------------------------------
   int    nhypers = 5, optimizeFlag = 1;
   double dtmp;
-  char   configCmd[1000], *cString;
+  char   configCmd[101], *cString;
   if (haveQuantiles_) nhypers++;
   VecHypers_.setLength(nhypers);
 
   //**/ ask users to provide hyperparameters
   if (psConfig_.RSExpertModeIsOn() && psConfig_.InteractiveIsOn())
   {
-    sprintf(pString,"Use user-provided hyperparameters? (y or n) ");
+    snprintf(pString,100,"Use user-provided hyperparameters? (y or n) ");
     getString(pString, winput);
     if (winput[0] == 'y')
     {
@@ -606,7 +606,7 @@ int HGP3::train()
         printf("Hyperparameter 6: quantile variable\n");
       for (ii = 0; ii < VecHypers_.length(); ii++)
       {
-        sprintf(pString,"Enter hyperparameter %d : ",ii+1);
+        snprintf(pString,100,"Enter hyperparameter %d : ",ii+1);
         VecHypers_[ii] = getDouble(pString);
       }
       optimizeFlag = 0;
@@ -617,7 +617,7 @@ int HGP3::train()
   {
     for (ii = 0; ii < nhypers; ii++)
     {
-      sprintf(configCmd, "HGP_Hyperparam%d", ii+1);
+      snprintf(configCmd,100,"HGP_Hyperparam%d", ii+1);
       cString = psConfig_.getParameter(configCmd);
       if (cString == NULL) break;
       else
@@ -914,7 +914,7 @@ int HGP3::train()
     }
     for (ii = 0; ii < VecHypers_.length(); ii++)
     {
-      sprintf(configCmd, "HGP_Hyperparam%d %e",ii+1,VecHypers_[ii]);
+      snprintf(configCmd,100,"HGP_Hyperparam%d %e",ii+1,VecHypers_[ii]);
       psConfig_.putParameter(configCmd);
     }
   }

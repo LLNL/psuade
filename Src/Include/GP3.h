@@ -49,6 +49,7 @@ public:
    psMatrix CMatrix_;
    double   expPower_;
    int      nStarts_;
+   char     hyperParamFile_[1000];
 
 public:
 

@@ -122,7 +122,7 @@ int PsuadeBase::genBatchFile(int genFlag)
   //**/ ----------------------------------------------------------------
   printOutTS(PL_INFO, 
      "INFO: your specified batch file will be appended with .Tmplt.\n");
-  sprintf(pString, "Enter the name of the batch file: ");
+  snprintf(pString,100,"Enter the name of the batch file: ");
   getString(pString, batchName);
   strcpy(&batchName[strlen(batchName)-1], ".Tmplt\0");
   fp = fopen(batchName, "w");
@@ -131,7 +131,7 @@ int PsuadeBase::genBatchFile(int genFlag)
     printOutTS(PL_ERROR, "ERROR: Cannot open file %s.\n", batchName);
     return 1;
   }
-  sprintf(pString,
+  snprintf(pString,100,
       "Enter the absolute path of the run directory (no / at end): ");
   getString(pString, dirName);
   dirName[strlen(dirName)-1] = '\0';
@@ -185,7 +185,7 @@ int PsuadeBase::genDriver(int genFlag)
   //**/ ----------------------------------------------------------------
   //**/ ask for file type
   //**/ ----------------------------------------------------------------
-  sprintf(pString,"(1) C or (2) Python driver (1 or 2) ? ");
+  snprintf(pString,100,"(1) C or (2) Python driver (1 or 2) ? ");
   driverID = getInt(1, 2, pString);
   if (genFlag == 1)
   {
@@ -195,10 +195,10 @@ int PsuadeBase::genDriver(int genFlag)
   else
   {
     if (driverID == 1)
-       sprintf(pString,
+       snprintf(pString,100,
             "Enter the name of the driver (with .c at the end) : ");
     else
-       sprintf(pString,
+       snprintf(pString,100,
             "Enter the name of the driver (with .py at the end) : ");
     getString(pString, driverName);
     driverName[strlen(driverName)-1] = '\0';
@@ -222,7 +222,7 @@ int PsuadeBase::genDriver(int genFlag)
     }
     else
     {
-      sprintf(pString, "File exists. Override ? (y or n) ");
+      snprintf(pString,100,"File exists. Override ? (y or n) ");
       getString(pString, response);
       if (response[0] != 'y') return 1;
       else
@@ -331,7 +331,7 @@ int PsuadeBase::genDriver(int genFlag)
   if (genFlag == 1) nInputs = 3;
   else
   {
-    sprintf(pString,"How many uncertain variables? ");
+    snprintf(pString,100,"How many uncertain variables? ");
     nInputs = getInt(1, 10000000, pString);
   }
   fprintf(dfp,"nInputs = %d\n", nInputs);
@@ -341,7 +341,7 @@ int PsuadeBase::genDriver(int genFlag)
   {
     for (ii = 0; ii < nInputs; ii++)
     {
-      sprintf(pString, "Enter the name of input variable %d : ",ii+1);
+      snprintf(pString,100,"Enter the name of input variable %d : ",ii+1);
       getString(pString, response);
       response[strlen(response)-1] = '\0';
       fprintf(dfp,"\"%s\"", response);
@@ -370,7 +370,7 @@ int PsuadeBase::genDriver(int genFlag)
        "During preprocessing, these symbols will be replaced by the\n");
     printOutTS(PL_INFO, 
        "application driver with the actual sample values.\n");
-    sprintf(pString,
+    snprintf(pString,100,
        "How many application files contains uncertain input variables? ");
     nFiles = getInt(0, 1000, pString);
     if (nFiles > 0) appInFiles  = new char*[nFiles];
@@ -379,7 +379,7 @@ int PsuadeBase::genDriver(int genFlag)
   fprintf(dfp,"# ====> files to set the input variables\n");
   if (nFiles > 0)
   {
-    sprintf(pString,
+    snprintf(pString,100,
        "Where can your application template be found(absolute path):");
     getString(pString, response);
     response[strlen(response)-1] = '/';
@@ -389,11 +389,11 @@ int PsuadeBase::genDriver(int genFlag)
   for (ii = 0; ii < nFiles; ii++)
   {
     appInFiles[ii] = new char[200];
-    sprintf(pString,
+    snprintf(pString,100,
         "Enter the name of application input template file %d : ",ii+1);
     getString(pString, appInFiles[ii]);
     targetFiles[ii] = new char[200];
-    sprintf(pString,
+    snprintf(pString,100,
             "Enter the name of application input file %d : ", ii+1);
     getString(pString, targetFiles[ii]);
   }
@@ -426,7 +426,7 @@ int PsuadeBase::genDriver(int genFlag)
        "You might have a template batch file for your computer.\n");
     printOutTS(PL_INFO, 
        "Or, you might have use 'genbatchfile' to generate one.\n");
-    sprintf(pString, "Do you have a batch file ? (y or n) ");
+    snprintf(pString,100,"Do you have a batch file ? (y or n) ");
     getString(pString, winput);
   }
   if (winput[0] == 'y')
@@ -434,16 +434,16 @@ int PsuadeBase::genDriver(int genFlag)
     fprintf(dfp,"# ====> files to set up the batch file \n");
     printOutTS(PL_INFO, 
        "INFO: batch template files are to be modified with run numbers.\n");
-    sprintf(pString,"Where can your batch template be found(absolute path):");
+    snprintf(pString,100,"Where can your batch template be found(absolute path):");
     getString(pString, response);
     response[strlen(response)-1] = '/';
     response[strlen(response)] = '\0';
     fprintf(dfp,"batchDir = \"%s\"\n", response);
-    sprintf(pString,"What is the name of your batch template file? ");
+    snprintf(pString,100,"What is the name of your batch template file? ");
     getString(pString, response);
     response[strlen(response)-1] = '\0';
     fprintf(dfp,"batchTmpltFile = \"%s\"\n", response); 
-    sprintf(pString,"What is the name of your target batch file ? ");
+    snprintf(pString,100,"What is the name of your target batch file ? ");
     getString(pString, response);
     response[strlen(response)-1] = '\0';
     fprintf(dfp,"batchFile = \"%s\"\n\n", response); 
@@ -456,13 +456,13 @@ int PsuadeBase::genDriver(int genFlag)
   {
     printOutTS(PL_INFO, 
        "INFO: Support files are files needed to run but not modified.\n");
-    sprintf(pString,
+    snprintf(pString,100,
          "How many other support files are needed to run the code ? ");
     nSupportFiles = getInt(0, 100, pString);
   }
   if (nSupportFiles > 0)
   {
-    sprintf(pString,
+    snprintf(pString,100,
        "Where can these support files be found(absolute path):");
     getString(pString, response);
     response[strlen(response)-1] = '/';
@@ -471,7 +471,7 @@ int PsuadeBase::genDriver(int genFlag)
     fprintf(dfp,"supportFiles = [");
     for (ii = 0; ii < nSupportFiles; ii++)
     {
-      sprintf(pString,
+      snprintf(pString,100,
           "Enter enter the name (absolute path) of support file %d : ",
           ii+1);
       getString(pString, response);
@@ -754,7 +754,7 @@ int PsuadeBase::genDriver(int genFlag)
     fprintf(dfp,"\n   if doAnalysis == 1:\n");
     fprintf(dfp,"      runApplication(batchFile)\n\n");
     fprintf(dfp,"#     runApplication(appInputFiles[0])\n\n");
-    sprintf(pString, "How many outputs are there ? ");
+    snprintf(pString,100,"How many outputs are there ? ");
     nOutputs = getInt(1, 100000, pString);
   }
   fprintf(dfp,"   outData = range(%d)\n",nOutputs);
@@ -822,7 +822,7 @@ int PsuadeBase::genSetup(int genFlag, char *filename)
 
   if (genFlag == 0 || genFlag == 2)
   {
-    sprintf(pString,"Enter the name of the PSUADE input file : ");
+    snprintf(pString,100,"Enter the name of the PSUADE input file : ");
     getString(pString, dataFile);
     dataFile[strlen(dataFile)-1] = '\0';
     if (!strcmp(dataFile, "\0")) 
@@ -830,7 +830,7 @@ int PsuadeBase::genSetup(int genFlag, char *filename)
       printOutTS(PL_ERROR, "ERROR : invalid file name.\n");
       return 1;
     }
-    sprintf(pString,"Enter the number of inputs (> 0) : ");
+    snprintf(pString,100,"Enter the number of inputs (> 0) : ");
     nInputs = getInt(1, 10000000, pString);
   }
   else
@@ -849,15 +849,15 @@ int PsuadeBase::genSetup(int genFlag, char *filename)
   {
     for (iInd = 0; iInd < nInputs; iInd++)
     {
-      sprintf(pString, "name for input %d ? ", iInd+1);
+      snprintf(pString,100,"name for input %d ? ", iInd+1);
       getString(pString, inputNames[iInd]);
       inputNames[iInd][strlen(inputNames[iInd])-1] = '\0';
       vecLBs[iInd] = vecUBs[iInd] = 0.0;
       while (vecLBs[iInd] >= vecUBs[iInd])
       {
-        sprintf(pString, "lower bound for input %d ? ", iInd+1);
+        snprintf(pString,100,"lower bound for input %d ? ", iInd+1);
         vecLBs[iInd] = getDouble(pString);
-        sprintf(pString,"upper bound for input %d (> lower bound)? ",
+        snprintf(pString,100,"upper bound for input %d (> lower bound)? ",
                 iInd+1);
         vecUBs[iInd] = getDouble(pString);
       }
@@ -879,15 +879,15 @@ int PsuadeBase::genSetup(int genFlag, char *filename)
     printOutTS(PL_INFO, 
        "=> density functions, you will have to modify the file\n");
     printOutTS(PL_INFO, "=> yourself after this session.\n");
-    sprintf(pString,"Enter the number of outputs (> 0) : ");
+    snprintf(pString,100,"Enter the number of outputs (> 0) : ");
     nOutputs = getInt(1, 100000, pString);
     outputNames = new char*[nOutputs];
     for (oInd = 0; oInd < nOutputs; oInd++) 
     {
-       sprintf(pString, "name for output %d ? ", oInd+1);
-       outputNames[oInd] = new char[200];
-       getString(pString, outputNames[oInd]);
-       outputNames[oInd][strlen(outputNames[oInd])-1] = '\0';
+      snprintf(pString,100,"name for output %d ? ", oInd+1);
+      outputNames[oInd] = new char[200];
+      getString(pString, outputNames[oInd]);
+      outputNames[oInd][strlen(outputNames[oInd])-1] = '\0';
     }
   }
   else 
@@ -914,7 +914,7 @@ int PsuadeBase::genSetup(int genFlag, char *filename)
       printOutTS(PL_INFO," FAST  - Fourier Amplitude Sampling Test\n");
       printOutTS(PL_INFO," FF4   - Fractional Factorial with Resolution IV\n");
       printOutTS(PL_INFO," FF5   - Fractional Factorial with Resolution V\n");
-      sprintf(pString, "Sampling Method ? ");
+      snprintf(pString,100,"Sampling Method ? ");
       getString(pString, winput);
       winput[strlen(winput)-1] = '\0';
       if (!strcmp(winput,"MC"))         samplingMethod = 0;
@@ -935,17 +935,17 @@ int PsuadeBase::genSetup(int genFlag, char *filename)
       printOutTS(PL_INFO, 
          "If you do not understand what number of replications\n");
       printOutTS(PL_INFO, "means, enter 1 for now.\n");
-      sprintf(pString, "Number of replications (>= 1) ? ");
+      snprintf(pString,100,"Number of replications (>= 1) ? ");
       nReps = getInt(1, 10000000, pString);
     }
     if (samplingMethod==0 || samplingMethod==6 || samplingMethod==7)
     {
-      sprintf(pString, "Sample size (> 0) ? ");
+      snprintf(pString,100,"Sample size (> 0) ? ");
       nSamples = getInt(1, 10000000, pString);
     }
     else if (samplingMethod == 1)
     {
-      sprintf(pString,"Number of levels in each input (> 1) ? ");
+      snprintf(pString,100,"Number of levels in each input (> 1) ? ");
       ii = getInt(1, 10000000, pString);
       nSamples = ii;
       for (jj = 1; jj < nInputs; jj++) nSamples *= ii;
@@ -955,7 +955,7 @@ int PsuadeBase::genSetup(int genFlag, char *filename)
       nSamples = 0;
       while (nSamples <= 0 || nSamples%nReps != 0)
       {
-        sprintf(pString,"sample size (multiple of %d) ? ", nReps);
+        snprintf(pString,100,"sample size (multiple of %d) ? ", nReps);
         nSamples = getInt(1, 10000000, pString);
       }
     }
@@ -964,7 +964,7 @@ int PsuadeBase::genSetup(int genFlag, char *filename)
       nSamples = 0;
       while (nSamples <= 0 || (nSamples%nReps != 0))
       {
-        sprintf(pString,"number of levels per input (> 1, prime) ? ");
+        snprintf(pString,100,"number of levels per input (> 1, prime) ? ");
         ii = getInt(2, 1000000, pString);
         nSamples = ii * ii * nReps;
       }
@@ -972,7 +972,7 @@ int PsuadeBase::genSetup(int genFlag, char *filename)
     }
     else if (samplingMethod == 5)
     {
-      sprintf(pString,"sample size (multiple of %d) ? ", nInputs+1);
+      snprintf(pString,100,"sample size (multiple of %d) ? ", nInputs+1);
       nSamples = getInt(nInputs+1, 10000, pString);
       nSamples = nSamples / (nInputs + 1) * (nInputs + 1);
     }
@@ -984,7 +984,7 @@ int PsuadeBase::genSetup(int genFlag, char *filename)
     randomize = 0;
     if (samplingMethod >= 1 && samplingMethod <= 4)
     {
-      sprintf(pString,
+      snprintf(pString,100,
               "Do you want to add random noise to the sample? (y or n) ");
       getString(pString, winput);
       if (winput[0] == 'y') randomize = 1;
@@ -1054,8 +1054,8 @@ int PsuadeBase::genSetup(int genFlag, char *filename)
       while (fp2 == NULL)
       {
         printf("Enter the absolute path for the following.\n");
-        sprintf(pString,
-                "Driver program name : (enter NONE if not needed) ");
+        snprintf(pString,100,
+                 "Driver program name : (enter NONE if not needed) ");
         getString(pString, winput);
         winput[strlen(winput)-1] = '\0';
         if (!strcmp(winput, "NONE")) break;

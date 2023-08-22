@@ -305,8 +305,8 @@ double PRSFuncApproxAnalyzer::analyze(aData &adata)
       printOutTS(PL_INFO,"and turn on config \n");
       printOutTS(PL_INFO,"option in your data file.\n");
       printDashes(PL_INFO, 0);
-      sprintf(pString,"Enter the number of groups to validate : (2 - %d) ",
-                      nSamples);
+      snprintf(pString,100,"Enter the number of groups to validate : (2 - %d) ",
+               nSamples);
       numCVGroups = getInt(1, nSamples, pString);
       printOutTS(PL_INFO, "RSFA: number of CV groups = %d\n",numCVGroups);
       nSubSamples = nSamples / numCVGroups;
@@ -319,7 +319,7 @@ double PRSFuncApproxAnalyzer::analyze(aData &adata)
          printOutTS(PL_INFO,"      Each CV group has <= %d sample points\n",
                     nSubSamples);
       }
-      sprintf(pString, "Random selection of leave-out groups ? (y or n) ");
+      snprintf(pString,100,"Random selection of leave-out groups ? (y or n) ");
       getString(pString, winput);
       if (winput[0] == 'y') ranFlag = 1;
       printOutTS(PL_INFO,"PRSA: Cross validation (CV) begins...\n");

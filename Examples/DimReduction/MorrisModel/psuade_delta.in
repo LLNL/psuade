@@ -34,8 +34,8 @@ APPLICATION
    driver = ./morris_simulator
 END
 ANALYSIS
-#  analyzer method = DELTA
-   analyzer method = ETA
+   analyzer method = DELTA
+#  analyzer method = ETA
    analyzer output_id  = 1
    printlevel 1
 #  ana_expert

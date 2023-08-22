@@ -47,7 +47,7 @@ MTGP::MTGP(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
 {
   int    ii, idata;
   double ddata;
-  char   *strPtr, winput[1000], equal[100], pString[1000];
+  char   *strPtr, winput[1000], equal[100], pString[101];
   faID_ = PSUADE_RS_MTGP;
   nPartitions_ = 0;
 
@@ -79,7 +79,7 @@ MTGP::MTGP(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
   {
     printf("You can improve smoothness across partitions by allowing\n");
     printf("overlaps. The recommended overlap is 0.1 (or 10%%).\n");
-    sprintf(pString, "Enter the degree of overlap (0 - 0.4) : ");
+    snprintf(pString,100,"Enter the degree of overlap (0 - 0.4) : ");
     ddata = getDouble(pString);
     if (ddata < 0 || ddata > 0.4)
     {
@@ -91,7 +91,7 @@ MTGP::MTGP(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
     printf("You can decide the sample size of each partition.\n");
     printf("Larger sample size per partition will take more setup time.\n");
     printf("The default is 300 (will have more if there is overlap).\n");
-    sprintf(pString, "Enter the partition sample size (300 - 1000) : ");
+    snprintf(pString,100,"Enter the partition sample size (300 - 1000) : ");
     partSize_ = getInt(100, 3000, pString);
   }
 

@@ -8,7 +8,7 @@ enable_testing ()
 set (PROJECT_NAME psuade)
 # The version number.
 set (psuade_VERSION_MAJOR 2)
-set (psuade_VERSION_MINOR 1)
+set (psuade_VERSION_MINOR 2)
 set (psuade_VERSION_PATCH 0)
 
 set (PROJECT_INCLUDE_DIR "${PROJECT_BINARY_DIR}/include")
@@ -296,6 +296,30 @@ if (USE_COBYLA)
   add_definitions(-DHAVE_COBYLA)
 endif (USE_COBYLA)
 
+#EARTH
+if(EXISTS "${PROJECT_SOURCE_DIR}/External/EARTH")
+  option (USE_EARTH
+        "Build and use the EARTH library." OFF)
+endif() 
+if (USE_EARTH)
+  include_directories ("${PROJECT_SOURCE_DIR}/External/EARTH")
+  add_subdirectory (External/EARTH) 
+  set (EXTRA_LIBS  earth ${EXTRA_LIBS})
+  add_definitions(-DHAVE_EARTH)
+endif (USE_EARTH)
+
+#GPMC doesn't work on Windows
+if(EXISTS "${PROJECT_SOURCE_DIR}/External/GPMC" AND NOT MINGW)
+  option (USE_GPMC
+        "Build and use the GPMC library." OFF)
+endif() 
+if (USE_GPMC)
+  include_directories ("${PROJECT_SOURCE_DIR}/External/GPMC")
+  add_subdirectory (External/GPMC) 
+  set (EXTRA_LIBS ${EXTRA_LIBS} gpmc)
+  add_definitions(-DHAVE_GPMC)
+endif (USE_GPMC)
+
 #LINCOA
 if(EXISTS "${PROJECT_SOURCE_DIR}/External/LINCOA")
   option (USE_LINCOA
@@ -309,6 +333,19 @@ if (USE_LINCOA)
   add_definitions(-DHAVE_LINCOA)
 endif (USE_LINCOA)
 
+#NEWUOA
+if(EXISTS "${PROJECT_SOURCE_DIR}/External/NEWUOA")
+  option (USE_NEWUOA
+        "Build and use the NEWUOA library." ON)
+endif() 
+if (USE_NEWUOA)
+  enable_language(Fortran)
+  include_directories ("${PROJECT_SOURCE_DIR}/External/NEWUOA")
+  add_subdirectory (External/NEWUOA) 
+  set (EXTRA_LIBS ${EXTRA_LIBS} newuoa)
+  add_definitions(-DHAVE_NEWUOA)
+endif (USE_NEWUOA)
+
 #LBFGS
 if(EXISTS "${PROJECT_SOURCE_DIR}/External/L-BFGS-B-C")
   option (USE_LBFGS
@@ -320,6 +357,18 @@ if (USE_LBFGS)
   set (EXTRA_LIBS ${EXTRA_LIBS} lbfgs)
   add_definitions(-DHAVE_LBFGS)
 endif (USE_LBFGS)
+
+#NOMAD
+if(EXISTS "${PROJECT_SOURCE_DIR}/External/NOMAD")
+  option (USE_NOMAD
+        "Build and use the NOMAD library." ON)
+endif() 
+if (USE_NOMAD)
+  include_directories ("${PROJECT_SOURCE_DIR}/External/NOMAD")
+  add_subdirectory (External/NOMAD) 
+  set (EXTRA_LIBS ${EXTRA_LIBS} nomad)
+  add_definitions(-DHAVE_NOMAD)
+endif (USE_NOMAD)
 
 #optional libraries, see if dir exists, then see if user wants it.  If both yes, build it.
 if(EXISTS "${PROJECT_SOURCE_DIR}/External/MARS")
@@ -351,6 +400,19 @@ if (USE_METIS)
   add_definitions(-DHAVE_METIS)
 endif (USE_METIS)
 
+#MINPACK
+if(EXISTS "${PROJECT_SOURCE_DIR}/External/MINPACK")
+  option (USE_MINPACK
+        "Build and use the MINPACK library." OFF)
+endif() 
+if (USE_MINPACK)
+  enable_language(Fortran)
+  include_directories ("${PROJECT_SOURCE_DIR}/External/MINPACK")
+  add_subdirectory (External/MINPACK) 
+  set (EXTRA_LIBS ${EXTRA_LIBS} minpack)
+  add_definitions(-DHAVE_MINPACK)
+endif (USE_MINPACK)
+
 #SVM 
 if(EXISTS "${PROJECT_SOURCE_DIR}/External/SVM")
   option (USE_SVM
@@ -363,6 +425,49 @@ if (USE_SVM)
   add_definitions(-DHAVE_SVM)
 endif (USE_SVM)
 
+#TGP  (Apparently an R library)
+if(EXISTS "${PROJECT_SOURCE_DIR}/External/TGP/")
+  option (USE_TGP
+        "Build and use the TGP library." OFF)
+endif() 
+if (USE_TGP)
+  set(USE_R ON)
+  include_directories ("${PROJECT_SOURCE_DIR}/External/TGP/src")
+  include_directories ("${PROJECT_SOURCE_DIR}/External/R-2.4.0/nmath")
+  add_subdirectory (External/TGP/src) 
+  set (EXTRA_LIBS tgp ${EXTRA_LIBS})
+  add_definitions(-DHAVE_TGP)
+else(USE_TGP)
+  set(USE_R OFF)
+endif (USE_TGP)
+
+#TPROS
+if(EXISTS "${PROJECT_SOURCE_DIR}/External/TPROS")
+  option (USE_TPROS
+        "Build and use the TPROS library." OFF)
+endif() 
+if (USE_TPROS)
+  include_directories ("${PROJECT_SOURCE_DIR}/External/TPROS")
+  add_subdirectory (External/TPROS) 
+  set (EXTRA_LIBS tpros ${EXTRA_LIBS})
+  add_definitions(-DHAVE_TPROS)
+endif (USE_TPROS)
+
+
+#R-2.4.0
+#if(EXISTS "${PROJECT_SOURCE_DIR}/External/R-2.4.0/nmath")
+#  option (USE_NMATH
+#        "Build and use the R-2.4.0 NMATH library." OFF)
+#endif() 
+if (USE_R)
+  include_directories ("${PROJECT_SOURCE_DIR}/External/R-2.4.0/nmath")
+  add_subdirectory (External/R-2.4.0/nmath) 
+  set (EXTRA_LIBS ${EXTRA_LIBS} nmath)
+  add_definitions(-DHAVE_R)
+endif (USE_R)
+
+
+
 ###################################################
 # Lapack and BLAS are weird special cases, because we may find
 # them or build it ourselves, so it gets this special section
@@ -370,6 +475,7 @@ endif (USE_SVM)
 #Lapack and BLAS are required, but we should only build them
 #if the aren't already installed  (Or if we're doing a release. Can't expect users to have them.)
 #(Ordering is a little silly to get the link order right)
+
 
 find_package(LAPACK)
 if(LAPACK_FOUND AND NOT CMAKE_BUILD_TYPE MATCHES Release AND NOT MINGW)

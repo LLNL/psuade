@@ -102,7 +102,7 @@ if len(varNames) == nInputs and len(meanData) == nInputs:
    plt.title('Parameter Importance Plot', fontsize=15, fontweight='bold')
    for axis in ['top', 'bottom', 'left', 'right']:
       ax.spines[axis].set_linewidth(4)
-   plt.grid(b=True)
+   #plt.grid(b=True)
    saveFile = 'psu_moat.png'
    plt.savefig(saveFile)
    print('The plot has been saved to ' + saveFile)

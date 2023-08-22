@@ -20,6 +20,7 @@ n
 100
 3
 1.05
+n
 ################################################
 # Now MCMCPostSample is available. You may run
 # python view_mcmcposteriors.py < pyScript.in

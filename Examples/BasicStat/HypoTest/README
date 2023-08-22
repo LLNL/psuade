@@ -6,7 +6,7 @@ http://www.physics.csbsju.edu/stats/KS-test.html
 The t-test example shows that large non-normality causes problems 
 for t-test even for large sample.  In this case K-S does fine.
 
-1. use 2stest: try t-test and KS test
+1. Use the 2stest command: try t-test and KS test
    
    data set: 2sdata1a, 2sdata1b 
              This data set is non-normal and their means differ
@@ -19,15 +19,16 @@ for t-test even for large sample.  In this case K-S does fine.
              the NULL hypothesis) even though the sample size is quite
              large. KS works better (it rejects H0).
 
-2. use 1stest
+2. use the 1stest command
 
 a. distribution fit: 
    * gauss1a: use normal with mean = 0.1, std = 2
    * gauss1b: use normal with mean = 0.1, std = 2
 
 b. chi-squared or distribution fit (normal)
-   * gauss1c 
-     mean = 0.1, std = 2
+   * gauss1c: mean = 0.1, std = 2.5
+   * Try 1stest with option (1) and try target s.d. such as 1, 2, 2.5, 
+     3, 10
 
 3. You can also create your own sample for test
 

@@ -100,7 +100,7 @@ ax.set_ylabel(ylabel, fontsize=14, fontweight='bold')
 ax.set_zlabel(zlabel, fontsize=14, fontweight='bold')
 title = 'Scatter Plot'
 plt.title(title, fontsize=14, fontweight='bold')
-plt.grid(b=True)
+#plt.grid(b=True)
 for axis in ['top', 'bottom', 'left', 'right']:
    ax.spines[axis].set_linewidth(4)
 plt.show()

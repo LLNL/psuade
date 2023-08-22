@@ -4,8 +4,8 @@
 
 int main(int argc, char **argv)
 {
-   int    nInputs;
-   double X, Y, error;
+   int    nInputs, ii;
+   double X, Y;
    FILE   *fIn  = fopen(argv[1], "r");
    FILE   *fOut;
                                                                                 
@@ -15,11 +15,15 @@ int main(int argc, char **argv)
       exit(1);
    }
    fscanf(fIn, "%d", &nInputs);
-   fscanf(fIn, "%lg", &X);
-   Y = X;
+   Y = 0;
+   for (ii = 0; ii < nInputs; ii++)
+   {
+     fscanf(fIn, "%lg", &X);
+     Y += (X - 0.5);
+   }
+   fclose(fIn);
    fOut = fopen(argv[2], "w");
-   error = Y - 0.5;
-   fprintf(fOut, " %24.16e\n", error);
+   fprintf(fOut, " %24.16e\n", Y);
    fclose(fOut);
 }
 

@@ -66,6 +66,7 @@ private:
    psVector VecST_;
    psVector VecPE_;
 
+public:
    int MOATAnalyze(int, int, double *, double *, double *, double *, 
                    double *, double *, double*);
 };

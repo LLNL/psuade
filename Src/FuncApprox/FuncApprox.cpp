@@ -34,6 +34,7 @@
 #include "GP1.h"
 #include "GP3.h"
 #include "MGP3.h"
+#include "MDNN.h"
 #include "TBGP.h"
 #include "MTGP.h"
 #include "SVM.h"
@@ -133,7 +134,7 @@ FuncApprox::FuncApprox(const FuncApprox & fa)
 // ------------------------------------------------------------------------
 FuncApprox & FuncApprox::operator=(const FuncApprox & fa)
 {
-  if(this == &fa)  return *this;
+  if (this == &fa) return *this;
   
   outputLevel_ = fa.outputLevel_;
   nSamples_ = fa.nSamples_;
@@ -334,7 +335,7 @@ int FuncApprox::initInputScaling(double *XIn, double *XOut, int flag)
   response[0] = 'n';
   if (flag != 1 && psConfig_.RSExpertModeIsOn())
   {
-    sprintf(pString, "Scale the sample matrix ? (y or n) ");
+    snprintf(pString,100,"Scale the sample matrix ? (y or n) ");
     getString(pString, response);
   }
   if (flag == 1 || response[0] == 'y')
@@ -363,7 +364,8 @@ int FuncApprox::initInputScaling(double *XIn, double *XOut, int flag)
       for (jj = 0; jj < nSamples_; jj++)
         XOut[jj*nInputs_+ii] = (XIn[jj*nInputs_+ii]-VecXMeans_[ii])/
                                 VecXStds_[ii];
-      if (outputLevel_ > 3 || psConfig_.RSExpertModeIsOn())
+      if (psConfig_.InteractiveIsOn() && 
+          (outputLevel_ > 3 && psConfig_.RSExpertModeIsOn()))
         printf("Input %d scaling info : mean, std = %e %e\n",ii+1,
                 VecXMeans_[ii], VecXStds_[ii]);
     }
@@ -604,6 +606,9 @@ void printThisFA(int faType)
     case PSUADE_RS_MGP3: 
          printf("Multi-Gaussian Process (Tong)\n"); 
          break;
+    case PSUADE_RS_MDNN: 
+         printf("Multi-Domain Neural Network (Tong)\n"); 
+         break;
     case PSUADE_RS_HLEG: 
          printf("Homogeneous Legendre Regression\n"); 
          break;
@@ -692,6 +697,7 @@ int writeFAInfo(int level)
    printf(" RBF  - for small to medium data set (too expensive otherwise).\n");
    printf(" MRBF - for larger data set (> 2000).\n");
    printf(" MGP3 - (Gaussian process) for larger data set (> 2000).\n");
+   printf(" MDNN - (Neural Network process) for larger data set (> 2000).\n");
    printf(" MTGP - (multiple TGP) for larger data set (> 2000).\n");
    printf(" MMARS - (multiple MARS) for even larger data set (> 20000).\n");
    printf(" HLR - Legendre polynomial for homogeneous (isotropic) inputs\n");
@@ -802,6 +808,7 @@ int writeFAInfo(int level)
   }
   printf("34. User-modified general nonlinear function\n");
   printf("    (Need to modify the PsuadeRegression.cpp file)\n");
+  printf("35. Multi-domain neural network (for large samples)\n");
   return PSUADE_NUM_RS;
 }
 
@@ -825,7 +832,7 @@ FuncApprox *genFA(int faType, int nInputs, int outLevel, int nSamples)
     while (rsType < 0 || rsType >= PSUADE_NUM_RS)
     {
       writeFAInfo(outLevel);
-      sprintf(winput, "Please enter your choice ? ");
+      snprintf(winput,100,"Please enter your choice ? ");
       rsType = getInt(0, PSUADE_NUM_RS, winput);
     }
   }
@@ -840,6 +847,8 @@ FuncApprox *genFA(int faType, int nInputs, int outLevel, int nSamples)
   else if (rsType == PSUADE_RS_GP1) faPtr = new GP1(nInputs, nSamples);
   else if (rsType == PSUADE_RS_GP3) 
   {
+#if 0
+    // disable automatic switching to MGP3 for large sample size 
     faPtr = NULL;
     //**/ if override, do not switch to MGP3
     strPtr = psConfig_.getParameter("RS_no_multi_domain");
@@ -863,6 +872,8 @@ FuncApprox *genFA(int faType, int nInputs, int outLevel, int nSamples)
       }
       else faPtr = new GP3(nInputs, nSamples);
     }
+#endif
+    faPtr = new GP3(nInputs, nSamples);
   }
   else if (rsType == PSUADE_RS_SVM) faPtr = new SVM(nInputs, nSamples);
   else if (rsType == PSUADE_RS_REGRGL)
@@ -926,6 +937,8 @@ FuncApprox *genFA(int faType, int nInputs, int outLevel, int nSamples)
        faPtr = new MRBF(nInputs, nSamples);
   else if (rsType == PSUADE_RS_MGP3)
        faPtr = new MGP3(nInputs, nSamples);
+  else if (rsType == PSUADE_RS_MDNN)
+       faPtr = new MDNN(nInputs, nSamples);
   else if (rsType == PSUADE_RS_MMARS)
        faPtr = new MMars(nInputs, nSamples);
   else if (faType == PSUADE_RS_LOCAL)
@@ -1002,7 +1015,7 @@ FuncApprox *genFAInteractive(PsuadeData *psuadeIO, int flag)
     while (faType < 0 || faType >= PSUADE_NUM_RS)
     {
       writeFAInfo(printLevel);
-      sprintf(winput, "Please enter your choice ? ");
+      snprintf(winput,100,"Please enter your choice ? ");
       faType = getInt(0, PSUADE_NUM_RS-1, winput);
     }
   }
@@ -1048,6 +1061,9 @@ FuncApprox *genFAInteractive(PsuadeData *psuadeIO, int flag)
        faPtr = new GP1(nInputs, nSamples);
   else if (faType == PSUADE_RS_GP3)
   {
+#if 0
+    //**/ March 2023: let's not do this automatically. Let users
+    //**/             decide
     faPtr = NULL;
     //**/ if override, do not switch to MGP3
     strPtr = psConfig_.getParameter("RS_no_multi_domain");
@@ -1070,6 +1086,8 @@ FuncApprox *genFAInteractive(PsuadeData *psuadeIO, int flag)
       }
       else faPtr = new GP3(nInputs, nSamples);
     }
+#endif
+    faPtr = new GP3(nInputs, nSamples);
   }
   else if (faType == PSUADE_RS_SVM)
           faPtr = new SVM(nInputs, nSamples);
@@ -1145,6 +1163,8 @@ FuncApprox *genFAInteractive(PsuadeData *psuadeIO, int flag)
        faPtr = new MRBF(nInputs, nSamples);
   else if (faType == PSUADE_RS_MGP3)
        faPtr = new MGP3(nInputs, nSamples);
+  else if (faType == PSUADE_RS_MDNN)
+       faPtr = new MDNN(nInputs, nSamples);
   else if (faType == PSUADE_RS_MMARS)
        faPtr = new MMars(nInputs, nSamples);
   else if (faType == PSUADE_RS_LOCAL)

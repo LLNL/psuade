@@ -665,14 +665,14 @@ double TwoParamAnalyzer::analyze(aData &adata)
      "to enter 'no index reuse' below at the first iteration and 'yes'\n");
     printOutTS(PL_INFO, 
      "afterward until the final refinement.\n");
-    sprintf(pString,"Perform bootstrap interaction analysis? (y or n) ");
+    snprintf(pString,100,"Perform bootstrap interaction analysis? (y or n) ");
     getString(pString, winput);
 
     //**/ will probably not be needed
     int numBS=0;
     if (winput[0] == 'y')
     {
-      sprintf(pString,"Enter number of bootstrap samples (>=100): ");
+      snprintf(pString,100,"Enter number of bootstrap samples (>=100): ");
       numBS = getInt(100, 2000, pString);
       psVector vecXX;
       vecXX.setLength(nInputs*nSamples);
@@ -685,7 +685,7 @@ double TwoParamAnalyzer::analyze(aData &adata)
       if (fp1 != NULL)
       {
         printOutTS(PL_INFO, ".IE_bootstrap_indset file found.\n");
-        sprintf(pString,"Re-use file? (y or n) ");
+        snprintf(pString,100,"Re-use file? (y or n) ");
         getString(pString, winput);
         if (winput[0] == 'y')
         {
@@ -1243,7 +1243,7 @@ int TwoParamAnalyzer::computeVCECrude(int nInputs, int nSamples,
   if (psConfig_.AnaExpertModeIsOn())
   {
     printEquals(PL_INFO, 0);
-    sprintf(pString,
+    snprintf(pString,100,
         "Number of levels for 2-way analysis (>= 4, default = %d): ",
         nIntervals);
     nIntervals = getInt(4, nSamples, pString);
@@ -1263,7 +1263,7 @@ int TwoParamAnalyzer::computeVCECrude(int nInputs, int nSamples,
          "* Number of levels for 2-way analysis defaulted to %d\n", 
          nIntervals);
     } 
-    sprintf(pString,
+    snprintf(pString,100,
             "Number of levels for main effect (>= %d): ",nIntervals);
     nIntervals1 = getInt(nIntervals, nSamples, pString);
     nSize1 = nSamples / nIntervals1;
@@ -1403,8 +1403,8 @@ int TwoParamAnalyzer::computeVCECrude(int nInputs, int nSamples,
           nFilled++;
         }
       }
-      printf("(INFO) Inputs %4d %4d: %d out of %d boxes populated.\n",ii+1,
-             ii2+1,nFilled,nIntervals*nIntervals);
+      printf("(2PARAM INFO) Inputs %4d %4d: %d out of %d boxes populated.\n",
+             ii+1, ii2+1,nFilled,nIntervals*nIntervals);
 
       for (ss = 0; ss < nSamples; ss++)
       {
@@ -1496,13 +1496,13 @@ int TwoParamAnalyzer::genPlots(aData &adata)
     else              fp = fopen("matlabie.m", "w");
     if (fp != NULL)
     {
-      sprintf(pString,
+      snprintf(pString,100,
           " This file contains Sobol' two-parameter indices");
       fwriteComment(fp, pString);
-      sprintf(pString,
+      snprintf(pString,100,
           " set sortFlag = 1 and set nn to be the number");
       fwriteComment(fp, pString);
-      sprintf(pString," of inputs to display.");
+      snprintf(pString,100," of inputs to display.");
       fwriteComment(fp, pString);
       fprintf(fp, "sortFlag = 0;\n");
       fprintf(fp, "nn = %d;\n", nInputs_);

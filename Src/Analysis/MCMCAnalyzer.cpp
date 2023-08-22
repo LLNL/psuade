@@ -243,7 +243,7 @@ double MCMCAnalyzer::analyze(aData &adata)
     bfmode_ = 0;
     haveOMP = 1;
     printf("MCMC INFO: Will use OMP version of MCMC.\n");
-    if (nOutputs == 1)
+    if (adata.nOutputs_ == 1)
     {
       printf("MCMC INFO: PSUADE has detected that you are using OpenMP.\n");
       return analyze_omp(adata);
@@ -389,7 +389,7 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
                            dummySample);
     if (status == -1) 
     {
-      printf("MCMC ERROR: response surface index file error\n");
+      printf("MCMC_Gibbs ERROR: response surface index file error\n");
       return PSUADE_UNDEFINED;
     }
     dataPtr->getParameter("ana_rstype", pPtr);
@@ -415,9 +415,9 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
         (vecDesignP.length() > 0 && vecDesignP[ii] == 1))
     {
       printOutTS(PL_ERROR,
-        "MCMC ERROR: inactive input %d cannot be design parameter\n",ii+1);
+        "MCMC_Gibbs ERROR: inactive input %d cannot be design parameter\n",ii+1);
       for (jj = 0; jj < nInputs; jj++)
-        printf("Parameter type %d = %d (1 = inactive), RS index = %d\n",
+        printf("  Parameter type %d = %d (-1 = inactive), RS index = %d\n",
                jj+1, vecDesignP[jj], vecRSIndices[jj]);
       return PSUADE_UNDEFINED;
     }
@@ -494,7 +494,7 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
   int burnInSamples = 1000;
   int nbins = 20;
   printEquals(PL_INFO, 0);
-  printOutTS(PL_INFO,"*** CURRENT SETTINGS OF MCMC PARAMETERS: \n\n");
+  printOutTS(PL_INFO,"*** CURRENT SETTINGS OF MCMC_Gibbs PARAMETERS: \n\n");
   printOutTS(PL_INFO,"MCMC Burn-in sample size       (default) = %d\n", 
              burnInSamples);
   printOutTS(PL_INFO,"MCMC maximum number of samples (default) = %d\n", 
@@ -510,10 +510,10 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
   if (psConfig_.AnaExpertModeIsOn())
   {
     //**/ change sampling information
-    sprintf(pString,"Enter maximum sample size (100000-1000000): ");
+    snprintf(pString,1000,"Enter maximum sample size (100000-1000000): ");
     kk = getInt(100000, 10000000, pString);
     maxGlobalIts = kk / maxSamples;
-    sprintf(pString,"Enter the number of histogram bins (5 - 25) : ");
+    snprintf(pString,1000,"Enter the number of histogram bins (5 - 25) : ");
     nbins = getInt(5, 50, pString);
   }
 
@@ -534,7 +534,7 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
     printOutTS(PL_INFO,
        "just a selected few (in case there are too many inputs).\n");
     printf("Select inputs for which posterior plots are to be created:\n");
-    sprintf(pString,
+    snprintf(pString,1000,
             "Enter input number (-1 for all, 0 to terminate) : ");
     kk = 1;
     vecPlotIndices.setLength(nInputs);
@@ -609,12 +609,12 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
        "(If not, a constant discrepancy function is to be created.)\n");
     printOutTS(PL_INFO,
          "NOTE: if you don't know what this is, just say NO.\n");
-    sprintf(pString,"===> Add discrepancy function ? (y or n) ");
+    snprintf(pString,1000,"===> Add discrepancy function ? (y or n) ");
     getString(pString, lineIn);
     if (lineIn[0] == 'y') modelFormFlag = 1;
     if (modelFormFlag == 1)
     {
-      sprintf(pString,
+      snprintf(pString,1000,
         "===> Add discrepancy to (1) all or (2) selected outputs ? ");
       kk = getInt(1,2,pString);
       if (kk == 1)
@@ -627,7 +627,7 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
         vecModelForms.setLength(nOutputs);
         for (ii = 0; ii < nOutputs; ii++)
         {
-          sprintf(pString,"Add discrepancy to output %d ? (y or n) ",
+          snprintf(pString,1000,"Add discrepancy to output %d ? (y or n) ",
                   ii+1);
           getString(pString, lineIn);
           if (lineIn[0] == 'y') vecModelForms[ii] = 1;
@@ -651,26 +651,6 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
       fgets(lineIn,1000,stdin);
       if (pString[0] == 'y') modelFormConst = 1;
     }
-
-    //**/ add posterior propagation
-    //printEquals(PL_INFO, 0);
-    //printOutTS(PL_INFO,
-    //   "*** OPTION TO CREATE A SAMPLE FROM POSTERIOR DISTRIBUTIONS:\n\n");
-    //printOutTS(PL_INFO,
-    //   "In addition to generating posterior distributions, you can ");
-    //printOutTS(PL_INFO, "also draw\n");
-    //printOutTS(PL_INFO,
-    //   "a sample from them. The posterior sample can be used as prior ");
-    //printOutTS(PL_INFO, "sample\n");
-    //printOutTS(PL_INFO,
-    //     "for another simulator/emulator.\n");
-    //printOutTS(PL_INFO,
-    //     "NOTE: if you don't know what this is, just say no.\n");
-    //**/ June 2022 : just turn this on
-    //printf("==> Create posterior samples for input parameters? (y/n) ");
-    //scanf("%s", pString);
-    //fgets(lineIn,1000,stdin);
-    //if (pString[0] == 'y') genPosteriors = 1;
   } 
   printEquals(PL_INFO, 0);
 
@@ -768,7 +748,7 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
            maxPts);
     printf("NOTE: Larger sample size gives more accurate posteriors,\n");
     printf("      but it is more expensive computationally.\n");
-    sprintf(pString,
+    snprintf(pString,1000,
             "Enter new sample size (%d - %d): ",nbins,nbins*10);
     maxPts = getInt(nbins, nbins*50, pString);
     maxPts = maxPts / nbins * nbins;
@@ -803,9 +783,9 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
   double psrfThreshold=1.05;
   if (psConfig_.AnaExpertModeIsOn())
   {
-    sprintf(pString, "How many MCMC chains? (2-20, default=3) : ");
+    snprintf(pString,1000,"How many MCMC chains? (2-20, default=3) : ");
     numChains = getInt(2,20,pString);
-    sprintf(pString, "PSRF threshold? (1.0 - 1.2, default = 1.05) : ");
+    snprintf(pString,1000,"PSRF threshold? (1.0 - 1.2, default = 1.05) : ");
     psrfThreshold = getDouble(pString);
     if (psrfThreshold < 1.0 || psrfThreshold > 1.2)
     {
@@ -956,7 +936,7 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
       ddata = vecRanSeeds[iChain*nInputs+ii];
       if (igFlag == 1 && iChain == 0)
       {
-        sprintf(pString,
+        snprintf(pString,1000,
              "Enter initial value for input %d (midpoint=%e) : ",
              ii+1,0.5*(xLower[ii]+xUpper[ii]));
         ddata = getDouble(pString);
@@ -989,7 +969,7 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
   // run the Gibbs algorithm
   //**/ ------------------------------------------------------------------
   printAsterisks(PL_INFO, 0);
-  printOutTS(PL_INFO, "MCMC (Gibbs) begins ... \n");
+  printOutTS(PL_INFO, "MCMC_Gibbs begins ... \n");
   fflush(stdout);
   globalIts = chainCnt = 0;
 
@@ -1005,8 +985,8 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
     {
       //**/ initially, set LPTAU/LHS initial guess for the calibration
       //**/ parameters. Otherwise, retrieve the last input values
-      printOutTS(PL_INFO,"MCMC_G : Chain %d, iteration = %d\n",iChain+1,
-                 globalIts+1);
+      printOutTS(PL_INFO,"MCMC_Gibbs : Chain %d, iteration = %d\n",
+                 iChain+1,globalIts+1);
       if (iChain == 0) chainCntSave = chainCnt;
       else             chainCnt     = chainCntSave;
       //**/ insert seed points initially
@@ -1088,7 +1068,7 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
               if (fp == NULL)
               {
                 printOutTS(PL_WARN,
-                  "MCMC ERROR: cannot write to MCMCDistTrack.m file.\n");
+                  "MCMC_Gibbs ERROR: Cannot write to MCMCDistTrack.m\n");
               }
               else
               {
@@ -1524,7 +1504,7 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
 
             //**/ if the distribution is nonzero, select a point for X[ii]
             if (printLevel > 4)
-              printOutTS(PL_INFO,"proposal distribution max = %e\n", 
+              printOutTS(PL_INFO,"Proposal distribution max = %e\n", 
                          (double) vecXDist[maxPts]);
             if (vecXDist[maxPts] - vecXDist[0] > 1.0e-16)
             {
@@ -1617,7 +1597,7 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
                         ddata > (index+1.0)/maxPts)
                     {
                       printOutTS(PL_INFO,
-                         "MCMC INFO: something is wrong in interpolation.\n");
+                         "MCMC_Gibbs INFO: ERROR in interpolation.\n");
                       printOutTS(PL_INFO,
                          "           Offending ddata = %e (%e, %e)\n",
                       ddata,(index-1.0)/maxPts,(index+1.0)/maxPts);
@@ -1657,7 +1637,7 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
               XGuess[ii] = Xtemp;
               if (printLevel > 2)
                 printOutTS(PL_INFO,
-                     "MCMC iteration %7d : no modification in input %d\n",
+                     "MCMC_Gibbs iteration %7d : No change in input %d\n",
                      mcmcIts+1,ii+1);
             }
             if (masterOption == 1 && fp != NULL)
@@ -1799,7 +1779,7 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
         }
         if (nChainGood <= 1)
         {
-          printOutTS(PL_ERROR,"MCMC ERROR: too few chains <= 1.\n");
+          printOutTS(PL_ERROR,"MCMC_Gibbs ERROR: too few chains <= 1.\n");
           printOutTS(PL_ERROR,
              "Suggestion: You may want to relax the experimental data\n");
           printOutTS(PL_ERROR,"     uncertainties (make them larger).\n");
@@ -1860,7 +1840,7 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
         vecPsrfs[ii] = ddata2;
         if (ddata2 < psrfThreshold)
         {
-          printOutTS(PL_INFO,"MCMC INFO : PSRF < %e ==> converged.\n",
+          printOutTS(PL_INFO,"MCMC_Gibbs INFO : PSRF < %e ==> converged.\n",
                      psrfThreshold);
           mcmcFail--;
         }
@@ -1929,12 +1909,14 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
           (vecDesignP.length() == 0 || vecDesignP[ii] == 0))
       {
         printOutTS(PL_INFO,
-             "MCMC: input %3d value at peak of likelihood = %e\n",
+             "MCMC_Gibbs: input %3d value at peak of likelihood = %e\n",
                    ii+1, vecXmax[ii]);
         ddata = vecMeans_[ii];
-        printOutTS(PL_INFO,"MCMC: input %3d mean    = %e\n", ii+1, ddata);
+        printOutTS(PL_INFO,
+                   "MCMC_Gibbs: input %3d mean    = %e\n", ii+1, ddata);
         ddata = vecSigmas_[ii];
-        printOutTS(PL_INFO,"MCMC: input %3d std dev = %e\n", ii+1, ddata);
+        printOutTS(PL_INFO,
+                   "MCMC_Gibbs: input %3d std dev = %e\n", ii+1, ddata);
         vecMostLikelyInputs_[ii] = vecXmax[ii];
       }
     }
@@ -1951,7 +1933,7 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
       }
     }
     printOutTS(PL_INFO,
-      "MCMC_GIBBS: MLE Negative log likelihood = %e\n",Ymax);
+      "MCMC_Gibbs: MLE Negative log likelihood = %e\n",Ymax);
     printAsterisks(PL_INFO, 0);
 
     //**/ ----------------------------------------------------------------
@@ -1980,7 +1962,7 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
             fprintf(fp,"nk = nk / %d;\n", chainCnt);
             fprintf(fp,"bar(nx, nk)\n");
             fprintf(fp,"%%plot(X%d)\n", ii+1);
-            sprintf(pString, "Input %d", ii+1);
+            snprintf(pString,100,"Input %d", ii+1);
             fwritePlotTitle(fp, pString);
             fwritePlotXLabel(fp, "Input Value");
             fwritePlotYLabel(fp, "Input Count");
@@ -1996,18 +1978,18 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
         fclose(fp);
         fp = NULL;
         printOutTS(PL_INFO,
-           "MCMC: A file called MCMCChainHistogram.m has been created.\n");
+           "MCMC_Gibbs INFO: MCMCChainHistogram.m has been created.\n");
         printOutTS(PL_INFO,
            "      Use Matlab to view the histograms of all chains for\n");
         printOutTS(PL_INFO,"      all inputs to assess convergence.\n");
-        sprintf(pString, "Enter 1 to continue or 0 to terminate : ");
+        snprintf(pString,100,"Enter 1 to continue or 0 to terminate : ");
         ii = getInt(0, 10, pString);
         if (ii == 0) break;
       }
       else
       {
         printOutTS(PL_INFO,
-             "MCMC INFO: cannot create MCMCChainHistogram.m file\n");
+             "MCMC_Gibbs INFO: cannot create MCMCChainHistogram.m\n");
       } 
     }
 
@@ -2031,7 +2013,7 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
     if (fp != NULL)
     {
       printOutTS(PL_INFO,
-           "MCMC INFO: psuade_stop FILE FOUND - TERMINATE MCMC.\n");
+           "MCMC_Gibbs INFO: psuade_stop FILE FOUND - TERMINATE MCMC.\n");
       fclose(fp);
       fp = NULL;
       strcpy(pString, "psuade_stop");
@@ -2046,7 +2028,7 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
     if (fp != NULL)
     {
       printOutTS(PL_INFO,
-           "MCMC INFO: psuade_nogm FILE FOUND. GM mode is now off.\n");
+           "MCMC_Gibbs INFO: psuade_nogm FILE FOUND. GM mode is now off.\n");
       fclose(fp);
       fp = NULL;
       psConfig_.GMModeOff();
@@ -2058,7 +2040,7 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
     if (fp != NULL)
     {
       printOutTS(PL_INFO,
-           "MCMC INFO: psuade_gm FILE FOUND. GM mode is now on.\n");
+           "MCMC_Gibbs INFO: psuade_gm FILE FOUND. GM mode is now on.\n");
       fclose(fp);
       fp = NULL;
       psConfig_.GMModeOn();
@@ -2076,7 +2058,7 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
     if (fp != NULL)
     {
       printOutTS(PL_INFO,
-           "MCMC INFO: psuade_print FILE FOUND. Print level is set to 3.\n");
+        "MCMC_Gibbs INFO: psuade_print FILE FOUND. Set print level = 3.\n");
       fclose(fp);
       fp = NULL;
       printLevel = 3;
@@ -2100,9 +2082,9 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
     }
     if (mcmcFail == 1) 
       printOutTS(PL_INFO,
-           "MCMC maximum iterations exceeded but no convergence.\n");
+           "MCMC_Gibbs maximum iterations exceeded but no convergence.\n");
   }
-  else printOutTS(PL_INFO, "MCMC iterations completed\n");
+  else printOutTS(PL_INFO, "MCMC_Gibbs iterations completed\n");
   printEquals(PL_INFO, 0);
 
   //**/ ---------------------------------------------------------------
@@ -2270,7 +2252,7 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
     fp = fopen("MCMCPostSample", "w");
     if (fp != NULL)
     {
-      printf("MCMC: posterior sample generation: \n");
+      printf("MCMC_Gibbs: posterior sample generation: \n");
       fprintf(fp, "PSUADE_BEGIN\n");
       cnt = nChainGood * chainCnt;
       if (cnt > 50000) cnt = 50000;
@@ -2396,13 +2378,14 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
 
   if (modelFormFlag == 1)
   {
-    sprintf(pString, "psDiscrepancyModel1");
+    snprintf(pString,100,"psDiscrepancyModel1");
     filePtr1 = new PsuadeData();
     status = filePtr1->readPsuadeFile(pString);
     if (status != 0)
     {
       printOutTS(PL_ERROR,
-        "MCMC ERROR: cannot read file %s in PSUADE format.\n",pString);
+        "MCMC_Gibbs ERROR: cannot read file %s in PSUADE format.\n",
+        pString);
       delete filePtr1;
       exit(1);
     } 
@@ -2430,7 +2413,7 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
     for (ii = 1; ii < nOutputs; ii++)
     {
       filePtr2 = new PsuadeData();
-      sprintf(pString, "psDiscrepancyModel%d", ii+1);
+      snprintf(pString,100,"psDiscrepancyModel%d", ii+1);
       status = filePtr2->readPsuadeFile(pString);
       if (status != 0) break;
       filePtr2->getParameter("input_ninputs", pPtr);
@@ -2448,12 +2431,12 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
           vecAllOuts[jj*nOutputs+ii] = pOutputs.dbleArray_[jj];
       }
       pOutputs.clean();
-      sprintf(pString, "Y%d", ii+1);
+      snprintf(pString,100,"Y%d", ii+1);
       strNames.loadOneString(ii, pString);
     }
     if (nOutputs == 1)
     { 
-      sprintf(pString, "psDiscrepancyModel");
+      snprintf(pString,100,"psDiscrepancyModel");
       filePtr1->writePsuadeFile(pString, 0);
     }
     else if (ii == nOutputs)
@@ -2463,16 +2446,16 @@ double MCMCAnalyzer::analyze_gibbs(aData &adata)
       for (jj = 0; jj < nSams; jj++) vecStates[jj] = 1;
       filePtr1->updateOutputSection(nSams,nOutputs,vecAllOuts.getDVector(),
                        vecStates.getIVector(),strNames.getStrings());
-      sprintf(pString, "psDiscrepancyModel");
+      snprintf(pString,100,"psDiscrepancyModel");
       filePtr1->writePsuadeFile(pString, 0);
-      printOutTS(PL_INFO,
-           "MCMC INFO: a sample (inputs/outputs) the discrepancy model\n");
+      printOutTS(PL_INFO,"MCMC_Gibbs INFO: A sample (inputs/outputs) ");
+      printOutTS(PL_INFO,"for the discrepancy model\n");
       printOutTS(PL_INFO,"           is now in psDiscrepancyModel.\n");
     }
     else
     {
       printOutTS(PL_INFO,
-           "MCMC INFO: unsuccessful creation of discrepancy sample file\n");
+         "MCMC_Gibbs INFO: Unsuccessful creation of discrepancy sample file\n");
     }
     delete filePtr1;
   }
@@ -2859,7 +2842,7 @@ double MCMCAnalyzer::analyze_bf(aData &adata)
     for (ii = 0; ii < nOutputs; ii++)
     {
       faType = -1;
-      sprintf(pString,
+      snprintf(pString,100,
         "Enter file name (PSUADE format) for output %d : ", ii+1);
       getString(pString, lineIn);
       kk = strlen(lineIn);
@@ -2951,12 +2934,12 @@ double MCMCAnalyzer::analyze_bf(aData &adata)
   if (psConfig_.AnaExpertModeIsOn())
   {
     //**/ change sampling information
-    sprintf(pString,
+    snprintf(pString,100,
             "Enter maximum inference sample size (500000 - 5000000): ");
     maxSamples = getInt(1000, 50000000, pString);
     if (maxSamples < 500000) maxSamples = 500000;
     if (nInputs >= 10 && maxSamples < 1000000) maxSamples = 1000000;
-    sprintf(pString,"Enter the number of histogram bins (10 - 25) : ");
+    snprintf(pString,100,"Enter the number of histogram bins (10 - 25) : ");
     nbins = getInt(10, 50, pString);
   }
   if (psConfig_.AnaExpertModeIsOn())
@@ -2971,7 +2954,7 @@ double MCMCAnalyzer::analyze_bf(aData &adata)
     printOutTS(PL_INFO,
         "just a selected few (in case there are too many inputs).\n");
     printf("Select inputs for which posterior plots are to be generated.\n");
-    sprintf(pString,"Enter input number (-1 for all, 0 to terminate) : ");
+    snprintf(pString,100,"Enter input number (-1 for all, 0 to terminate) : ");
     kk = 1;
     vecPlotInds.setLength(nInputs);
     nPlots = 0;
@@ -3042,12 +3025,12 @@ double MCMCAnalyzer::analyze_bf(aData &adata)
     printOutTS(PL_INFO,"is to be created).\n");
     printOutTS(PL_INFO,
          "NOTE: if you don't know what this is, just say NO.\n");
-    sprintf(pString,"===> Add discrepancy function ? (y or n) ");
+    snprintf(pString,100,"===> Add discrepancy function ? (y or n) ");
     getString(pString, lineIn);
     if (lineIn[0] == 'y') modelFormFlag = 1;
     if (modelFormFlag == 1)
     {
-      sprintf(pString,
+      snprintf(pString,100,
         "===> Add discrepancy to (1) all or (2) selected outputs ? ");
       kk = getInt(1,2,pString);
       if (kk == 1)
@@ -3060,7 +3043,7 @@ double MCMCAnalyzer::analyze_bf(aData &adata)
         vecModelForms.setLength(nOutputs);
         for (ii = 0; ii < nOutputs; ii++)
         {
-          sprintf(pString,"Add discrepancy to output %d ? (y or n) ",
+          snprintf(pString,100,"Add discrepancy to output %d ? (y or n) ",
                   ii+1);
           getString(pString, lineIn);
           if (lineIn[0] == 'y') vecModelForms[ii] = 1;
@@ -3092,7 +3075,7 @@ double MCMCAnalyzer::analyze_bf(aData &adata)
     printOutTS(PL_INFO,
        "NOTE: if you don't know what this is, just say no.\n");
     //**/ June 2022 : just turn this on
-    //sprintf(pString,
+    //snprintf(pString,100,
     //   "==> Create posterior sample for the input parameters? (y/n) ");
     //getString(pString, lineIn);
     //if (lineIn[0] == 'y') genPosteriors = 1;
@@ -3497,9 +3480,10 @@ double MCMCAnalyzer::analyze_bf(aData &adata)
           tmpStds[(printStep-1)+ii2*100] = sqrt(YT2); 
           if (printStep > 2) 
           {
-            jj = checkConvergence(3,&tmpMeans[ii2*100+printStep-3],
-                         &tmpStds[ii2*100+printStep-3],ss-samInc);
-            if (jj == 1)
+            YT1 = 1.05;
+            YT2 = checkConvergence(3,&tmpMeans[ii2*100+printStep-3],
+                         &tmpStds[ii2*100+printStep-3],ss-samInc,YT1);
+            if (YT2 < 1.05)
             {
               passCnt++;
               printf("MCMC_BF input %3d converged.\n",ii2+1);
@@ -3861,8 +3845,8 @@ double MCMCAnalyzer::analyze_bf(aData &adata)
         vecQuanMax[ii] = (int) (ddata * vecQuanMax[ii]);
       if (vecQuanMax.sum() > maxPostSam)
       {
-        printf("MCMC ERROR: Something is wrong. Consult the developers.\n");
-        printf("     ERROR in file %s, line %d.\n", __FILE__, __LINE__);
+        printf("MCMC_BF ERROR: Something is wrong. Consult developers.\n");
+        printf("        ERROR in file %s, line %d.\n",__FILE__,__LINE__);
         printf("     vecQuanMax.sum, maxPostSam = %d %d\n",vecQuanMax.sum(),
                maxPostSam);
         exit(1);
@@ -4077,7 +4061,7 @@ double MCMCAnalyzer::analyze_bf(aData &adata)
   if (modelFormFlag == 1)
   {
     //**/ this file contains all discrepancy data
-    sprintf(pString, "psDiscrepancyModel1");
+    snprintf(pString,100,"psDiscrepancyModel1");
     filePtr1 = new PsuadeData();
     status = filePtr1->readPsuadeFile(pString);
     if (status != 0)
@@ -4116,7 +4100,7 @@ double MCMCAnalyzer::analyze_bf(aData &adata)
     for (ii = 1; ii < nOutputs; ii++)
     {
       filePtr2 = new PsuadeData();
-      sprintf(pString, "psDiscrepancyModel%d", ii+1);
+      snprintf(pString,100,"psDiscrepancyModel%d", ii+1);
       status = filePtr2->readPsuadeFile(pString);
       if (status != 0) break;
       filePtr2->getParameter("input_ninputs", pPtr);
@@ -4134,12 +4118,12 @@ double MCMCAnalyzer::analyze_bf(aData &adata)
           vecAllOuts[jj*nOutputs+ii] = pOutputs.dbleArray_[jj];
       }
       pOutputs.clean();
-      sprintf(pString, "Y%d", ii+1);
+      snprintf(pString,100,"Y%d", ii+1);
       strNames.loadOneString(ii, pString);
     }
     if (nOutputs == 1)
     {
-      sprintf(pString, "psDiscrepancyModel");
+      snprintf(pString,100,"psDiscrepancyModel");
       filePtr1->writePsuadeFile(pString, 0);
     }
     else if (ii == nOutputs)
@@ -4150,16 +4134,16 @@ double MCMCAnalyzer::analyze_bf(aData &adata)
       for (jj = 0; jj < nSams; jj++) vecST[jj] = 1;
       filePtr1->updateOutputSection(nSams,nOutputs,vecAllOuts.getDVector(),
                       vecST.getIVector(),strNames.getStrings());
-      sprintf(pString, "psDiscrepancyModel");
+      snprintf(pString,100,"psDiscrepancyModel");
       filePtr1->writePsuadeFile(pString, 0);
-      printOutTS(PL_INFO,
-           "MCMC INFO: a sample (inputs/outputs) the discrepancy model\n");
-      printOutTS(PL_INFO,"           is now in psDiscrepancyModel.\n");
+      printOutTS(PL_INFO,"MCMC_BF INFO: A sample (inputs/outputs) ");
+      printOutTS(PL_INFO,"for the discrepancy model\n");
+      printOutTS(PL_INFO,"              is now in psDiscrepancyModel.\n");
     }
     else
     {
       printOutTS(PL_INFO,
-           "MCMC INFO: discrepancy sample file successfully created.\n");
+        "MCMC_BF INFO: Discrepancy sample file successfully created.\n");
     }
     delete filePtr1;
   }
@@ -4267,7 +4251,7 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
       printf("The sample size is %d\n", UParamsSample.nrows());
       imax = UParamsSample.nrows();
       if (imax > 1000) imax = 1000;
-      sprintf(pString,
+      snprintf(pString,100,
          "Enter the sub-sample size to use for inference (1 - %d): ",imax);
       UParamsNumToUse = getInt(1, imax, pString);
 
@@ -4302,7 +4286,7 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
   else if (mode_ == 0)
   {
     printOutTS(PL_INFO,
-         "MCMC INFO: since ioPtr=NULL, assume MARS as reponse surface.\n");
+      "MCMC_BF2 INFO: Since ioPtr=NULL, assume MARS as reponse surface.\n");
   }
 
   //**/ ---------------------------------------------------------------
@@ -4331,7 +4315,7 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
     printf("E.g. Experimental data size = 10, number of unique ");
     printf("experiments = 5\n");
     printf("     ==> number of replications = 2.\n");
-    sprintf(pString, 
+    snprintf(pString,100, 
        "Enter the number of replications for each unique experiment: ");
     dnReps = getInt(1, dnSamples, pString);
   }
@@ -4339,7 +4323,7 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
   //**/ compatibility error checking
   if (dstatus != 0.0)
   {
-    printf("MCMC ERROR: fail to read experimental data file.\n");
+    printf("MCMC_BF2 ERROR: fail to read experimental data file.\n");
     return PSUADE_UNDEFINED;
   }
   for (ii = 0; ii < nInputs; ii++)
@@ -4383,7 +4367,7 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
         "methods). Otherwise, no RS uncertainties will be included.\n");
     printOutTS(PL_INFO,
         "NOTE: if you don't know what this is, just say no below.\n");
-    sprintf(pString,
+    snprintf(pString,100,
        "===> Include response surface uncertainties? (y or n) ");
     getString(pString, lineIn);
     if (lineIn[0] == 'y') rsErrFlag = 1;
@@ -4396,11 +4380,11 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
   //**/ ---------------------------------------------------------------
   FuncApprox **faPtrs=NULL;
   printOutTS(PL_INFO,
-       "MCMC INFO: CREATING RESPONSE SURFACES FOR ALL OUTPUTS.\n");
+       "MCMC_BF2 INFO: CREATING RESPONSE SURFACES FOR ALL OUTPUTS.\n");
   //**/ if sample has already been loaded
   if (nSamples <= 0)
   {
-    printOutTS(PL_ERROR, "MCMC ERROR: no sample loaded yet.\n");
+    printOutTS(PL_ERROR, "MCMC_BF2 ERROR: No sample loaded yet.\n");
     return PSUADE_UNDEFINED;
   }
   else
@@ -4412,7 +4396,7 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
     {
       faType = -1;
       printOutTS(PL_INFO,
-           "MCMC INFO: CREATING RESPONSE SURFACE FOR OUTPUT %d.\n",ii+1);
+       "MCMC_BF2 INFO: CREATING RESPONSE SURFACE FOR OUTPUT %d.\n",ii+1);
       faPtrs[ii] = genFA(faType, nInputs, iZero, nSamples);
       faPtrs[ii]->setNPtsPerDim(16);
       faPtrs[ii]->setBounds(lower, upper);
@@ -4423,7 +4407,7 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
       if (status != 0)
       {
         printOutTS(PL_ERROR,
-             "MCMC ERROR: Unable to create response surface.\n");
+             "MCMC_BF2 ERROR: Unable to create response surface.\n");
         printOutTS(PL_ERROR,"            Consult PSUADE developers.\n");
         for (kk = 0; kk < ii; kk++) delete [] faPtrs[kk];
         delete [] faPtrs;
@@ -4451,13 +4435,13 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
   if (psConfig_.AnaExpertModeIsOn())
   {
     //**/ change sampling information
-    sprintf(pString,
+    snprintf(pString,100,
             "Enter maximum inference sample size (500000 - 5000000): ");
     maxSamples = getInt(1000, 50000000, pString);
     if (maxSamples < 500000) maxSamples = 500000;
     if (nInputs >= 10 && maxSamples < 1000000)
       maxSamples = 1000000;
-    sprintf(pString,"Enter the number of histogram bins (10 - 25) : ");
+    snprintf(pString,100,"Enter the number of histogram bins (10 - 25) : ");
     nbins = getInt(10, 50, pString);
   }
   if (psConfig_.AnaExpertModeIsOn())
@@ -4472,7 +4456,7 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
     printOutTS(PL_INFO,
         "just a selected few (in case there are too many inputs).\n");
     printf("Select inputs for which posterior plots are to be generated.\n");
-    sprintf(pString,"Enter input number (-1 for all, 0 to terminate) : ");
+    snprintf(pString,100,"Enter input number (-1 for all, 0 to terminate) : ");
     kk = 1;
     vecPlotInds.setLength(nInputs);
     nPlots = 0;
@@ -4520,7 +4504,8 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
           vecPlotInds[nPlots++] = ii;
   }
   printOutTS(PL_INFO,
-       "MCMC Plot summary: input number to be plotted are (%d):\n",nPlots);
+       "MCMC_BF2 Plot summary: input number to be plotted are (%d):\n",
+       nPlots);
   for (ii = 0; ii < nPlots; ii++)
     printOutTS(PL_INFO, "   Input %4d\n", vecPlotInds[ii]+1);
 
@@ -4545,13 +4530,13 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
     printOutTS(PL_INFO,"is to be created).\n");
     printOutTS(PL_INFO,
          "NOTE: if you don't know what this is, just say NO.\n");
-    sprintf(pString,
+    snprintf(pString,100,
             "===> Add discrepancy function ? (y or n) ");
     getString(pString, lineIn);
     if (lineIn[0] == 'y') modelFormFlag = 1;
     if (modelFormFlag == 1)
     {
-      sprintf(pString,
+      snprintf(pString,100,
         "===> Add discrepancy to (1) all or (2) selected outputs ? ");
       kk = getInt(1,2,pString);
       if (kk == 1)
@@ -4564,7 +4549,7 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
         vecModelForms.setLength(nOutputs);
         for (ii = 0; ii < nOutputs; ii++)
         {
-          sprintf(pString,"Add discrepancy to output %d ? (y or n) ",
+          snprintf(pString,100,"Add discrepancy to output %d ? (y or n) ",
                   ii+1);
           getString(pString, lineIn);
           if (lineIn[0] == 'y') vecModelForms[ii] = 1;
@@ -4583,7 +4568,7 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
     }
     if (modelFormFlag == 1 && dnSamples > 1 && dnInputs > 0)
     {
-      sprintf(pString,"===> Model form a constant function ? (y or n) ");
+      snprintf(pString,100,"===> Model form a constant function ? (y or n) ");
       getString(pString, lineIn);
       if (lineIn[0] == 'y') modelFormConst = 1;
     }
@@ -4602,7 +4587,7 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
     printOutTS(PL_INFO,
        "NOTE: if you don't know what this is, just say no.\n");
     //**/ June 2022 : just turn this on
-    //sprintf(pString,
+    //snprintf(pString,100,
     //        "==> Create posterior sample for the input parameters? (y/n) ");
     //getString(pString, lineIn);
     //if (lineIn[0] == 'y') genPosteriors = 1;
@@ -4796,7 +4781,7 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
   if (samInc*dnSamples*UParamsNumToUse*nInputs > 2000000000 ||
       samInc*dnSamples*UParamsNumToUse*nInputs < 0)
   {
-    printf("MCMC_bf2 ERROR: number of uncertain sample too large.\n");
+    printf("MCMC_BF2 ERROR: number of uncertain sample too large.\n");
     printf("         Try something less than %d\n",
            2000000000/(dnSamples*samInc*nInputs));
     exit(1);
@@ -5119,10 +5104,11 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
           tmpStds[(printStep-1)+ii2*100] = sqrt(YT2); 
           if (printStep > 2) 
           {
-            jj = checkConvergence(3,&tmpMeans[ii2*100+printStep-3],
+            YT1 = 1.05;
+            YT2 = checkConvergence(3,&tmpMeans[ii2*100+printStep-3],
                      &tmpStds[ii2*100+printStep-3],
-                     sTotal-samInc*UParamsNumToUse);
-            if (jj == 1)
+                     sTotal-samInc*UParamsNumToUse,YT1);
+            if (YT2 < 1.05)
             {
               passCnt++;
               printf("MCMC_BF2: input %3d converged.\n",ii2+1);
@@ -5141,8 +5127,10 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
       if (fp != NULL)
       {
         fclose(fp);
-        printf("MCMC_bf2: file psuade_stop found => terminate\n");
+        printf("MCMC_BF2: file psuade_stop found => terminate\n");
         maxSamples = sTotal;
+        strcpy(pString, "psuade_stop");
+        unlink(pString);
       }
     }
 
@@ -5151,7 +5139,7 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
       fp = fopen("psuade_print", "r");
       if (fp != NULL)
       {
-        printOutTS(PL_INFO, "MCMC INFO: print level set to 2\n");
+        printOutTS(PL_INFO, "MCMC_BF2 INFO: print level set to 2\n");
         printLevel = 2;
         fclose(fp);
       }
@@ -5169,11 +5157,13 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
             fprintf(fp2, "%e ", inferenceSamIns[jj*nInputs+ii2]);
           fprintf(fp2, "%e\n", inferenceSamOut[jj]);
         }
-        printf("INFO: psuadeMCMC.store has interim MCMC samples/likelihood\n");
+        printf("MCMC_BF2 INFO: psuadeMCMC.store has interim MCMC samples\n");
         fclose(fp2);
       }
     }
-    printf("INFO: Create a 'psuade_stop' file to terminate MCMC gracefully.\n");
+    printf("MCMC_BF2 INFO: To terminate MCMC gracefully, create ");
+    printf("a 'psuade_stop'\n");
+    printf("               file in working directory.\n");
   }
 
   //**/ normalize inferenceSamOut so that they are not too small
@@ -5236,7 +5226,7 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
       index = (int) (YT1 * nbins);
       if (index > nbins)
       {
-        printOutTS(PL_ERROR,"MCMC binning error 1 in file %s, line %d.\n",
+        printOutTS(PL_ERROR,"MCMC_BF2 binning error 1 in file %s, line %d.\n",
                    __FILE__, __LINE__);
         printOutTS(PL_ERROR,"Sample input %d = %e\n", ii2+1, 
                    inferenceSamIns[ss*nInputs+ii2]);
@@ -5248,7 +5238,7 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
       }
       if (index < 0)
       {
-        printOutTS(PL_ERROR,"MCMC binning error 2 in file %s, line %d.\n",
+        printOutTS(PL_ERROR,"MCMC_BF2 binning error 2 in file %s, line %d.\n",
                    __FILE__, __LINE__);
         printOutTS(PL_ERROR,"Sample input %d = %e\n", ii2+1, 
                    inferenceSamIns[ss*nInputs+ii2]);
@@ -5359,7 +5349,7 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
     if (dmax == 0)
     {
       printOutTS(PL_ERROR,
-           "MCMC_BF: ERROR encountered in posterior sample generation.\n");
+           "MCMC_BF2: ERROR encountered in posterior sample generation.\n");
       fp = NULL;
     }
     else 
@@ -5553,7 +5543,7 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
       fclose(fp);
     }
     printOutTS(PL_INFO,
-         "MCMC: 'MCMCPostSample' file has a posterior sample.\n");
+         "MCMC_BF2: 'MCMCPostSample' file has a posterior sample.\n");
   }
 
   //**/ ---------------------------------------------------------------
@@ -5566,13 +5556,13 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
 
   if (modelFormFlag == 1)
   {
-    sprintf(pString, "psDiscrepancyModel1");
+    snprintf(pString,100,"psDiscrepancyModel1");
     filePtr1 = new PsuadeData();
     status = filePtr1->readPsuadeFile(pString);
     if (status != 0)
     {
        printOutTS(PL_ERROR,
-            "MCMC ERROR: cannot read file %s in PSUADE format.\n",
+            "MCMC_BF2 ERROR: cannot read file %s in PSUADE format.\n",
             pString);
        exit(1);
     }
@@ -5602,7 +5592,7 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
     for (ii = 1; ii < nOutputs; ii++)
     {
       filePtr2 = new PsuadeData();
-      sprintf(pString, "psDiscrepancyModel%d", ii+1);
+      snprintf(pString,100,"psDiscrepancyModel%d", ii+1);
       status = filePtr2->readPsuadeFile(pString);
       if (status != 0) break;
       filePtr2->getParameter("input_ninputs", pPtr);
@@ -5620,12 +5610,12 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
           vecAllOuts[jj*nOutputs+ii] = pOutputs.dbleArray_[jj];
       }
       pOutputs.clean();
-      sprintf(pString, "Y%d", ii+1);
+      snprintf(pString,100,"Y%d", ii+1);
       strNames.loadOneString(ii, pString);
     }
     if (nOutputs == 1)
     {
-       sprintf(pString, "psDiscrepancyModel");
+       snprintf(pString,100,"psDiscrepancyModel");
        filePtr1->writePsuadeFile(pString, 0);
     }
     else if (ii == nOutputs)
@@ -5636,17 +5626,17 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
       filePtr1->updateOutputSection(nSams,nOutputs,
                  vecAllOuts.getDVector(),states,
                  strNames.getStrings());
-      sprintf(pString, "psDiscrepancyModel");
+      snprintf(pString,100,"psDiscrepancyModel");
       filePtr1->writePsuadeFile(pString, 0);
-      printOutTS(PL_INFO,
-           "MCMC INFO: a sample (inputs/outputs) the discrepancy model\n");
-      printOutTS(PL_INFO,"           is now in psDiscrepancyModel.\n");
+      printOutTS(PL_INFO,"MCMC_BF2 INFO: A sample (inputs/outputs) \n");
+      printOutTS(PL_INFO,"for the discrepancy model is\n");
+      printOutTS(PL_INFO,"               is now in psDiscrepancyModel.\n");
       delete [] states;
     }
     else
     {
       printOutTS(PL_INFO,
-           "MCMC INFO: unsuccessful creation of discrepancy sample file\n");
+        "MCMC_BF2 INFO: Unsuccessful creation of discrepancy sample file\n");
     }
     delete filePtr1;
   }
@@ -5695,7 +5685,7 @@ double MCMCAnalyzer::analyze_bf2(aData &adata)
 // ------------------------------------------------------------------------
 double MCMCAnalyzer::analyze_sim(aData &adata)
 {
-  int    ii, ii2, jj, jj2, iOne=1, iZero=0;
+  int    ii, ii2, jj, jj2, iOne=1, iZero=0, status;
   double ddata;
   char   pString[1000];
   pData  pdata, pdata2;
@@ -5724,7 +5714,7 @@ double MCMCAnalyzer::analyze_sim(aData &adata)
   if (dataPtr == NULL)
   {
     printOutTS(PL_ERROR,
-         "MCMC ERROR: Direct simulation mode is requested but no\n");
+         "MCMC_sim ERROR: Direct simulation mode is requested but no\n");
     printOutTS(PL_ERROR,
          "     information on the simulator is given (missing\n");
     printOutTS(PL_ERROR,
@@ -5732,31 +5722,6 @@ double MCMCAnalyzer::analyze_sim(aData &adata)
     return PSUADE_UNDEFINED;
   }
   dataPtr->getParameter("input_names", pdata);
-
-  //**/ ---------------------------------------------------------------
-  //**/ actual simulator is to be used, nOutputs has to be 1 (for now)
-  //**/ ---------------------------------------------------------------
-#if 0
-  if (nOutputs > 1)
-  {
-    printOutTS(PL_ERROR,
-         "MCMC ERROR: Direct simulation mode does not support\n");
-    printOutTS(PL_ERROR,"     nOutputs > 1 at present.\n");
-    printOutTS(PL_ERROR,
-         "     Only response surface mode supports nOutputs > 1.\n");
-    printOutTS(PL_ERROR,
-         "     Suggestion: for simple cases with no design parameters\n");
-    printOutTS(PL_ERROR,
-         "            and no discrepancy modeling, nOutputs > 1\n");
-    printOutTS(PL_ERROR,
-         "            can be reduced to one output by computing the\n");
-    printOutTS(PL_ERROR,
-         "            likelihood function yourself and use zero mean\n");
-    printOutTS(PL_ERROR,
-         "            std dev = 1 for your one output).\n");
-    return PSUADE_UNDEFINED;
-  }
-#endif
 
   //**/ ---------------------------------------------------------------
   //**/ display header 
@@ -5793,6 +5758,34 @@ double MCMCAnalyzer::analyze_sim(aData &adata)
   }
 
   //**/ ---------------------------------------------------------------
+  //**/ option to continue from previous run
+  //**/ ---------------------------------------------------------------
+  int  useHist = 0;
+  FILE *fpSave = NULL, *fpHist = NULL;
+  fpHist = fopen("mcmc_sim.sav", "r");
+  if (fpHist != NULL)
+  {
+    printf("NOTE: MCMC_sim detects a MCMC history file mcmc_sim.sav.\n");
+    printf("If previous simulation-based inference has ");
+    printf("been terminated abruptly,\n");
+    printf("mcmc_sim.sav will have stored the history ");
+    printf("and can be restarted from\n");
+    printf("where it was.\n");
+    printf("Do you want to restart using mcmc_sim.sav ? (y or n) ");
+    scanf("%s", pString);
+    if (pString[0] == 'y') 
+    {
+      useHist = 1;
+      fclose(fpHist);
+      status = rename("mcmc_sim.sav", "mcmc_sim.sav1");
+      printf("MCMC_sim INFO: Your mcmc_sim.sav has been ");
+      printf("saved in mcmc_sim.sav1\n"); 
+    }
+    fgets(pString,1000,stdin);
+    fpHist = NULL;
+  }
+
+  //**/ ---------------------------------------------------------------
   //**/ clean up important psuade signal files (e.g. psuade_stop)
   //**/ allocate space for keeping track of posterior statistics
   //**/ ---------------------------------------------------------------
@@ -5819,29 +5812,109 @@ double MCMCAnalyzer::analyze_sim(aData &adata)
   //**/ special set up (sample size) using interactive mode
   //    ==> burnInSamples, maxSamples, nbins, vecPlotIndices
   //**/ ---------------------------------------------------------------
-  int maxSamples = 10000;
-  int burnInSamples = 100;
-  int nbins = 20;
+  int    maxSamples = 2000, burnInSamples = 100, nbins = 20;
+  double propScale=0.25;
   printEquals(PL_INFO, 0);
-  printOutTS(PL_INFO,"*** CURRENT SETTINGS OF MCMC PARAMETERS: \n\n");
-  printOutTS(PL_INFO,"MCMC_sim Burn-in sample size      (default) = %d\n", 
-             burnInSamples);
-  printOutTS(PL_INFO,"MCMC_sim maximum sample size      (default) = %d\n", 
-             maxSamples);
-  printOutTS(PL_INFO,"MCMC_sim no. of bins in histogram (default) = %d\n",
-             nbins);
+  printOutTS(PL_INFO,"*** CURRENT SETTINGS OF MCMC_sim PARAMETERS: \n\n");
+  printOutTS(PL_INFO,"Burn-in sample size         = %d\n",burnInSamples);
+  printOutTS(PL_INFO,"Maximum MCMC samples        = %d\n",maxSamples);
+  printOutTS(PL_INFO,"Proposal distribution scale = %e\n",propScale);
+  printOutTS(PL_INFO,"No. of bins in histogram    = %d\n",nbins);
   printOutTS(PL_INFO,
-     "NOTE: histogram nBins  - define granularity of histogram bar graph\n");
+     "NOTE: Proposal distribution is Normal(X_i,sig^2) and sig = scale.\n");
+  printOutTS(PL_INFO,
+     "NOTE: Histogram nBins = granularity of histogram bar graph\n");
   printOutTS(PL_INFO, 
      "Turn on ana_expert mode to change these default settings.\n\n");
-  if (psConfig_.AnaExpertModeIsOn())
+
+  //**/ ---------------------------------------------------------------
+  //**/ open a file to save history
+  //**/ ---------------------------------------------------------------
+  fpSave = fopen("mcmc_sim.sav", "w");
+  if (fpSave == NULL)
   {
-    sprintf(pString,"Enter burn in sample size (0 - 1000): ");
-    burnInSamples = getInt(0, 1000, pString);
-    sprintf(pString,"Enter maximum MCMC sample (100 - 10000) : ");
-    maxSamples = getInt(100, 10000, pString);
+    printf("MCMC_sim INFO: Cannot open mcmc_sim.sav. ");
+    printf("History will not be saved.\n");
   }
 
+  //**/ ---------------------------------------------------------------
+  //**/ if user wishes to restart, open the history file
+  //**/ ---------------------------------------------------------------
+  if (useHist == 1)
+  {
+    fpHist = fopen("mcmc_sim.sav1", "r");
+    if (fpHist == NULL)
+    {
+      useHist = 0;
+      printf("MCMC_sim ERROR: Failed to open history file.\n");
+      printf("INFO: Will start from beginning (no restart).\n");
+    }
+    else
+    {
+      fscanf(fpHist, "%d %d", &burnInSamples, &maxSamples);
+      if (burnInSamples < 0)
+      {
+        printf("MCMC_sim ERROR: burn-in nSamples < 0\n");
+        printf("NOTE: Check the first line of your mcmc_sim.sav1 file.\n");
+        fclose(fpHist);
+        exit(1);
+      }
+      for (ii = 0; ii < vecDesignP.length(); ii++)
+      {
+        fscanf(fpHist, "%d", &jj);
+        if (jj != vecDesignP[ii])
+        {
+          printf("MCMC_sim ERROR: Input %d mismatch (design parameter).\n", 
+                 jj+1);
+          printf("NOTE: Check the second line of your mcmc_sim.sav1 file.\n");
+          fclose(fpHist);
+          exit(1);
+        }
+      } 
+    } 
+  } 
+
+  //**/ ---------------------------------------------------------------
+  //**/ if not restart, users may select sample size options
+  //**/ as well as design parameter selection 
+  //**/ (second line,
+  //**/ ---------------------------------------------------------------
+  int adaptive=0;
+  if (useHist == 0 && psConfig_.AnaExpertModeIsOn())
+  {
+    snprintf(pString,100,"Enter burn in sample size (0 - 1000): ");
+    burnInSamples = getInt(0, 1000, pString);
+    snprintf(pString,100,"Enter maximum MCMC sample (100 - 10000) : ");
+    maxSamples = getInt(100, 10000, pString);
+    snprintf(pString,100,
+            "Enter proposal distribution scale (>0, <1, 0 - adaptive) : ");
+    propScale = getDouble(pString);
+    if (propScale == 0) 
+    {
+      adaptive = 1;
+      propScale = 0.25;
+    }
+    else if (propScale < 0 || propScale > 1)
+    {
+      printf("MCMC_sim ERROR: Invalid proposal distribution scale.\n");
+      printf("                Set to default = 0.25.\n");
+      propScale = 0.25;
+    }
+  }
+  if (fpSave != NULL)
+  {
+    fprintf(fpSave, "%d %d\n", burnInSamples, maxSamples);
+    for (ii = 0; ii < vecDesignP.length(); ii++)
+    {
+      jj = vecDesignP[ii];
+      fprintf(fpSave, "%d ", jj);
+    }
+    if (vecDesignP.length() > 0) fprintf(fpSave,"\n");
+  } 
+
+  //**/ ---------------------------------------------------------------
+  //**/ set up posterior plotting (not including design parameters)
+  //**/ ---------------------------------------------------------------
   psIVector vecPlotIndices;
   vecPlotIndices.setLength(nInputs);
   int nPlots = 0;  
@@ -5949,7 +6022,7 @@ double MCMCAnalyzer::analyze_sim(aData &adata)
   double **mcmcChain = matXChains.getMatrix2D();
 
   //**/ set initial guess
-  if (psConfig_.AnaExpertModeIsOn())
+  if (useHist == 0 && psConfig_.AnaExpertModeIsOn())
   {
     printf("Do you want to set your own initial guess ? (y or n) ");
     scanf("%s", pString);
@@ -5967,17 +6040,26 @@ double MCMCAnalyzer::analyze_sim(aData &adata)
     if (inputPDFs[ii] != NULL)
          vecXGuess[ii] = pdfMeans[ii];
     else vecXGuess[ii] = 0.5 * (xUpper[ii] + xLower[ii]);
-    if ((vecDesignP.length() == 0 || vecDesignP[ii] == 0) && 
-        igFlag == 1) 
+    if (vecDesignP.length() == 0 || vecDesignP[ii] == 0)
     {
-      sprintf(pString,
+      if (igFlag == 1) 
+      {
+        snprintf(pString,100,
            "Enter initial value for input %d (suggested=%e) : ",
            ii+1,vecXGuess[ii]);
-      vecXGuess[ii] = getDouble(pString);
+        vecXGuess[ii] = getDouble(pString);
+      }
+      if (printLevel > 2) 
+        printf("Initial guess %d = %e\n",ii+1,vecXGuess[ii]);
     }
-    if (printLevel > 2) 
-      printf("Initial guess %d = %e\n",ii+1,vecXGuess[ii]);
     mcmcChain[0][ii] = vecXGuess[ii];
+    if (useHist == 1 && fpHist != NULL)
+    {
+      fscanf(fpHist, "%lg", &ddata);
+      mcmcChain[0][ii] = ddata;
+    }
+    if (fpSave != NULL)
+      fprintf(fpSave, "%e ", mcmcChain[0][ii]);
   }
 
   //**/ evaluate at the seed point
@@ -5986,48 +6068,60 @@ double MCMCAnalyzer::analyze_sim(aData &adata)
   double mcmcMean = 0, mcmcStdvs = 0.0, loglikelihood;
   if (dnInputs > 0)
   {
-    loglikelihood = 0;
-    for (ii = 0; ii < dnSamples; ii++)
+    //**/ if use history, get loglikelihood from history file
+    if (useHist == 1 && fpHist != NULL)
+      fscanf(fpHist, "%lg", &loglikelihood); 
+    else
     {
-      offset = 0;
-      for (jj = 0; jj < nInputs; jj++)
+      loglikelihood = 0;
+      for (ii = 0; ii < dnSamples; ii++)
       {
-        if (vecDesignP.length() > 0 && vecDesignP[jj] == 1) 
+        offset = 0;
+        for (jj = 0; jj < nInputs; jj++)
         {
-          vecXGuess[jj] = matExpInps.getEntry(ii,offset);
-          offset++;
+          if (vecDesignP.length() > 0 && vecDesignP[jj] == 1) 
+          {
+            vecXGuess[jj] = matExpInps.getEntry(ii,offset);
+            offset++;
+          }
         }
+        funcIO->evaluate(ii+1,nInputs,vecXGuess.getDVector(),nOutputs,
+                         vecFuncY.getDVector(),0);
+        YT = 0;
+        for (jj = 0; jj < nOutputs; jj++)
+        {
+          vecYGuess[ii*nOutputs+jj] = vecFuncY[jj];
+          YT += (pow(vecFuncY[jj]-matExpMeans.getEntry(ii,jj),2.0)/
+                 pow(matExpStdvs.getEntry(ii,jj),2.0));
+        }
+        loglikelihood += YT;
       }
-      funcIO->evaluate(ii+1,nInputs,vecXGuess.getDVector(),nOutputs,
-                       vecFuncY.getDVector(),0);
-      YT = 0;
-      for (jj = 0; jj < nOutputs; jj++)
-      {
-        vecYGuess[ii*nOutputs+jj] = vecFuncY[jj];
-        YT += (pow(vecFuncY[jj]-matExpMeans.getEntry(ii,jj),2.0)/
-               pow(matExpStdvs.getEntry(ii,jj),2.0));
-      }
-      loglikelihood += YT;
     }
   }
   else
   //**/ no design inputs ==> hence number of experiements expected=1
   {
-    funcIO->evaluate(iOne,nInputs,vecXGuess.getDVector(),nOutputs,
-                     vecFuncY.getDVector(),0);
-    loglikelihood = 0.0;
-    for (jj = 0; jj < nOutputs; jj++)
-      loglikelihood += (pow(vecFuncY[jj]-matExpMeans.getEntry(0,jj),2.0)/
-                        pow(matExpStdvs.getEntry(0,jj),2.0));
-    if (printLevel > 3)
+    if (useHist == 1 && fpHist != NULL)
+      fscanf(fpHist, "%lg", &loglikelihood); 
+    else
     {
-      printf("MCMC_sim Iteration = 0 : \n"); 
-      for (jj = 0; jj < nInputs; jj++)
-        printf("   Input  %d = %e\n", jj+1, vecXGuess[jj]);
+      funcIO->evaluate(iOne,nInputs,vecXGuess.getDVector(),nOutputs,
+                     vecFuncY.getDVector(),0);
+      loglikelihood = 0.0;
       for (jj = 0; jj < nOutputs; jj++)
-        printf("   Output %d = %e\n", jj+1, vecFuncY[jj]);
+        loglikelihood += (pow(vecFuncY[jj]-matExpMeans.getEntry(0,jj),2.0)/
+                          pow(matExpStdvs.getEntry(0,jj),2.0));
+      if (printLevel > 3)
+      {
+        printf("MCMC_sim Iteration = 0 : \n"); 
+        for (jj = 0; jj < nInputs; jj++)
+          printf("   Input  %d = %e\n", jj+1, vecXGuess[jj]);
+        for (jj = 0; jj < nOutputs; jj++)
+          printf("   Output %d = %e\n", jj+1, vecFuncY[jj]);
+      }
     }
   }
+  if (fpSave != NULL) fprintf(fpSave, "%e\n", loglikelihood);
   loglikelihood /= (double) dnReps;
   if (printLevel > 1) 
     printf("Negative logLikelihood for initial guess = %e\n",
@@ -6047,41 +6141,74 @@ double MCMCAnalyzer::analyze_sim(aData &adata)
   printOutTS(PL_INFO, "MCMC_sim (MH, simulator) begins ... \n");
   fflush(stdout);
 
-  int    mcmcIts = 0, nAccept=1, errFlag;
-  double c12=PSUADE_UNDEFINED, c11, c1, prior, ddata2, propScale=0.5;
+  int    mcmcIts = 0, nAccept=1, nAcceptAll=1,errFlag, rejectOrAccept;
+  double c12=PSUADE_UNDEFINED, c11, c1, prior, ddata2;
   double alpha, dOne=1, d5=5, dNeg5=-5;
   psVector vecLast;
   vecLast.setLength(nInputs);
   while (mcmcIts < maxSamples)
   {
+    //**/ update iteration index
     mcmcIts++;
-    printOutTS(PL_INFO,
-      "MCMC_sim : iteration = %5d (psuade_stop: terminate)\n", mcmcIts);
-    printOutTS(PL_INFO,
-      "                         (psuade_print: print=2)\n");
 
-    //**/ save the current location
+    //**/ save iteration index
+    if (fpSave != NULL) fprintf(fpSave, "%d ", mcmcIts);
+
+    //**/ if use history, make sure iteration indices match
+    //**/ if not, turn off history and continue
+    if (useHist == 1 && fpHist != NULL)
+    {
+      fscanf(fpHist, "%d", &ii);
+      if (ii != mcmcIts)
+      {
+        printf("MCMC_sim INFO: History ends at iteration %d.\n",
+               mcmcIts);
+        fclose(fpHist);
+        fpHist = NULL;
+        useHist = 0;
+      }
+    }
+    printOutTS(PL_INFO,
+      "MCMC_sim : Iteration = %5d ('touch' psuade_stop to terminate)\n", 
+      mcmcIts);
+    //printOutTS(PL_INFO,
+    //  "                             (psuade_print: print=2)\n");
+
+    //**/ save the current values of the calibration parameters
     vecLast = vecXGuess;
     errFlag = 0;
     prior   = 1;
 
     //**/ generate proposal sample point
+    if (useHist == 1 && fpHist != NULL) 
+      printf("History %d inputs = ", mcmcIts);
     for (ii = 0; ii < nInputs; ii++)
     {
+      //**/ only for uncertain parameters (length=0 means all
+      //**/ are uncertain, or vecDesignP[ii] = 0 means uncertain
       if (vecDesignP.length() == 0 || vecDesignP[ii] == 0) 
       {
-        normalPdf->genSample(iOne, &ddata, &dNeg5, &d5); 
-        ddata = vecXGuess[ii] + ddata*propScale*(xUpper[ii]-xLower[ii]);
-        if (ddata < xLower[ii]) 
+        if (useHist == 1 && fpHist != NULL)
+          fscanf(fpHist, "%lg", &ddata);
+        else
         {
-          ddata = xLower[ii];
-          errFlag = 1;
+          normalPdf->genSample(iOne, &ddata, &dNeg5, &d5); 
+
+          //**/ save the value of the current calibration parameters
+
+          ddata = vecXGuess[ii] + ddata*propScale*(xUpper[ii]-xLower[ii]);
+          if (ddata < xLower[ii]) 
+          {
+            ddata = xLower[ii];
+            errFlag = 1;
+          }
+          if (ddata > xUpper[ii]) 
+          {
+            ddata = xUpper[ii];
+            errFlag = 1;
+          }
         }
-        if (ddata > xUpper[ii]) 
-        {
-          ddata = xUpper[ii];
-          errFlag = 1;
-        }
+        if (fpSave != NULL) fprintf(fpSave, "%24.16e ", ddata);
         vecXGuess[ii] = ddata;
         if (inputPDFs[ii] != NULL)
         {
@@ -6094,40 +6221,50 @@ double MCMCAnalyzer::analyze_sim(aData &adata)
 
     //**/ evaluate and compute likelihood
     if (printLevel > 3) printf("MCMC_sim Iteration = %d : \n",mcmcIts); 
-    loglikelihood = 0;
-    for (ii = 0; ii < dnSamples; ii++)
+    if (useHist == 1 && fpHist != NULL)
     {
-      if (printLevel > 3) 
-        printf("    Experimental sample %d : \n",ii+1); 
-      offset = 0;
-      for (jj = 0; jj < nInputs; jj++)
-      {
-        if (vecDesignP.length() > 0 && vecDesignP[jj] == 1) 
-        {
-          //**/ is this correct?
-          vecXGuess[jj] = matExpInps.getEntry(ii,offset);
-          offset++;
-        }
-      }
-      ii2 = mcmcIts*dnSamples+ii+1;
-      funcIO->evaluate(ii2,nInputs,vecXGuess.getDVector(),nOutputs,
-                       vecFuncY.getDVector(),0);
-      YT = 0;
-      for (jj = 0; jj < nOutputs; jj++)
-      {
-        vecYGuess[ii*nOutputs+jj] = vecFuncY[jj];
-        YT += pow(vecFuncY[jj]-matExpMeans.getEntry(ii,jj),2.0)/
-              pow(matExpStdvs.getEntry(ii,jj),2.0);
-      }
-      if (printLevel > 3)
-      {
-        for (jj = 0; jj < nInputs; jj++)
-          printf("        Input  %d = %e\n", jj+1, vecXGuess[jj]);
-        for (jj = 0; jj < nOutputs; jj++)
-          printf("        Output %d = %e\n", jj+1, vecFuncY[jj]);
-      }
-      loglikelihood += YT;
+      //**/ if restart, just read the loglikelihood
+      fscanf(fpHist, "%lg", &loglikelihood);
+      printf(" - negative log(likelihood) = %e\n", loglikelihood);
     }
+    else
+    {
+      //**/ otherwise, compute the loglikelihood
+      loglikelihood = 0;
+      for (ii = 0; ii < dnSamples; ii++)
+      {
+        if (printLevel > 3) 
+          printf("    Experimental sample %d : \n",ii+1); 
+        offset = 0;
+        for (jj = 0; jj < nInputs; jj++)
+        {
+          if (vecDesignP.length() > 0 && vecDesignP[jj] == 1) 
+          {
+            vecXGuess[jj] = matExpInps.getEntry(ii,offset);
+            offset++;
+          }
+        }
+        ii2 = mcmcIts*dnSamples+ii+1;
+        funcIO->evaluate(ii2,nInputs,vecXGuess.getDVector(),nOutputs,
+                         vecFuncY.getDVector(),0);
+        YT = 0;
+        for (jj = 0; jj < nOutputs; jj++)
+        {
+          vecYGuess[ii*nOutputs+jj] = vecFuncY[jj];
+          YT += pow(vecFuncY[jj]-matExpMeans.getEntry(ii,jj),2.0)/
+                pow(matExpStdvs.getEntry(ii,jj),2.0);
+        }
+        if (printLevel > 3)
+        {
+          for (jj = 0; jj < nInputs; jj++)
+            printf("        Input  %d = %e\n", jj+1, vecXGuess[jj]);
+          for (jj = 0; jj < nOutputs; jj++)
+            printf("        Output %d = %e\n", jj+1, vecFuncY[jj]);
+        }
+        loglikelihood += YT;
+      }
+    }
+    if (fpSave != NULL) fprintf(fpSave, "%24.16e ", loglikelihood);
     loglikelihood /= (double) dnReps;
     if (printLevel > 3)
       printf("    Negative loglikelihood = %e\n",loglikelihood); 
@@ -6150,15 +6287,38 @@ double MCMCAnalyzer::analyze_sim(aData &adata)
     //**/ compute c11 = log(posterior)
     c11 = prior - 0.5 * loglikelihood;
     
-    if      (c12 == PSUADE_UNDEFINED) c12 = c11;
-    else if (errFlag > 0)             vecXGuess = vecLast;
-    else
+    //**/ if restart, read accept (1) or reject (0)
+    rejectOrAccept = 0;
+    if (useHist == 1 && fpHist != NULL)
+      fscanf(fpHist, "%d", &rejectOrAccept);
+
+    //**/ first iteration
+    if (c12 == PSUADE_UNDEFINED) c12 = c11;
+
+    //**/ XGuess outside domain boundaries ==> should be reject
+    //**/ errFlag can only be > 0 if history is not used (see above)
+    if (errFlag > 0)
     {
-      c1 = c11 - c12;
-      alpha = c1;
-      if (alpha > 0) alpha = 0;
-      ddata = log(PSUADE_drand());
-      if (ddata < alpha)
+      vecXGuess = vecLast;
+      if (rejectOrAccept != 0)
+      {
+        printf("MCMC_sim ERROR: Proposal sample outside domain ");
+        printf("but history says\n");
+        printf("                otherwise (%d).\n",rejectOrAccept);
+        exit(1);
+      }
+    }
+
+    //**/ if XGuess is not outside domain,
+    if (errFlag == 0)
+    {
+      //**/ if history says reject, then reject
+      if (useHist == 1 && fpHist != NULL && rejectOrAccept == 0)
+      {
+        vecXGuess = vecLast;
+      }
+      //**/ if history says accept, then accept
+      if (useHist == 1 && fpHist != NULL && rejectOrAccept == 1)
       {
         c12 = c11;
         if (mcmcIts > burnInSamples)
@@ -6167,28 +6327,63 @@ double MCMCAnalyzer::analyze_sim(aData &adata)
             matXChains.setEntry(nAccept,ii,vecXGuess[ii]);
           matXChains.setEntry(nAccept,nInputs,loglikelihood);
           nAccept++;
-          printf("     MCMC_sim its = %d: Accept (%e < %e?)\n",
-                 mcmcIts,ddata,alpha);
+          printf("     MCMC_sim its = %d: Accept (%e < %e?) - %% = %e\n",
+                 mcmcIts,ddata,alpha,100.0*nAccept/(mcmcIts-burnInSamples+1));
+        }
+        nAcceptAll++;
+      }
+      //**/ if history is not used, do MH step
+      if (useHist == 0)
+      {
+        c1 = c11 - c12;
+        alpha = c1;
+        if (alpha > 0) alpha = 0;
+
+        ddata = log(PSUADE_drand());
+        if (ddata < alpha)
+        {
+          c12 = c11;
+          if (mcmcIts > burnInSamples)
+          {
+            for (ii = 0; ii < nInputs; ii++)
+              matXChains.setEntry(nAccept,ii,vecXGuess[ii]);
+            matXChains.setEntry(nAccept,nInputs,loglikelihood);
+            nAccept++;
+            printf("     MCMC_sim its = %d: Accept (%10.3e < %10.3e?) ",
+                   mcmcIts,ddata,alpha);
+            printf("-> = %4.2f %%\n",
+                   100.0*nAccept/(mcmcIts-burnInSamples+1));
+            rejectOrAccept = 1;
+          }
+          nAcceptAll++;
+        }
+        else
+        {
+          vecXGuess = vecLast;
         }
       }
-      else
-      {
-        vecXGuess = vecLast;
-      }
     }
+    if (fpSave != NULL) fprintf(fpSave, "%d ",rejectOrAccept);
 
-    if (mcmcIts > burnInSamples)
+    if (useHist == 0 && mcmcIts < burnInSamples)
     {
-      ddata = 1.0 * nAccept / (mcmcIts - burnInSamples);
-#if 0
+      ddata = 1.0 * nAcceptAll / mcmcIts;
       //**/ adjust to make sure acceptance rate is at least 50%
-      //**/ Why doesn't this work but the one in analyze_mh does
-      if (ddata < 0.25 && propScale > 0.01) propScale *= 0.5;
-      if (ddata > 0.75 && propScale < 1.0)  propScale *= 2.0;
-#endif
+      //if (ddata < 0.25 && propScale > 0.01) propScale *= 0.5;
+      //if (ddata > 0.75 && propScale < 1.0)  propScale *= 2.0;
+      if (adaptive == 1)
+      {
+        if (ddata < 0.25) propScale *= 0.5;
+        if (ddata > 0.75) propScale *= 2.0;
+        if (propScale < 0.01) propScale = 0.01;
+        if (propScale > 1.00) propScale = 1.00;
+      }
       printf(" Acceptance rate so far (its,nc,ps=%d,%d,%5.3f) = %e %%\n",
              mcmcIts,nAccept,propScale,ddata*100);
     }
+    if (useHist == 1 && fpHist != NULL)
+      fscanf(fpHist, "%lg", &propScale);
+    if (fpSave != NULL) fprintf(fpSave, "%e\n", propScale);
 
      //**/ compute convergence statistics
     if (mcmcIts % 100 == 0 && nAccept > 10)
@@ -6228,6 +6423,9 @@ double MCMCAnalyzer::analyze_sim(aData &adata)
       printOutTS(PL_ERROR,
         "MCMC_sim INFO: psuade_stop FILE FOUND - TERMINATE MCMC.\n");
       fclose(fp);
+      fp = NULL;
+      strcpy(pString, "psuade_stop");
+      unlink(pString);
       break;
     }
     if (printLevel < 2)
@@ -6241,10 +6439,15 @@ double MCMCAnalyzer::analyze_sim(aData &adata)
       }
     }
   }
+  fclose(fpSave);
+  if (fpHist != NULL) fclose(fpHist);
   printf("MCMC_sim Optimal Solution: \n");
   for (jj = 0; jj < vecXBest.length(); jj++)
+  {
     if (vecDesignP.length() == 0 || vecDesignP[jj] == 0) 
       printf("   Input %d = %e\n",jj+1,vecXBest[jj]);
+  }
+  printf("Optimal negative log likelihood = %e\n",minLoglikelihood);
 
   //**/ ---------------------------------------------------------------
   //**/  MCMC completed, next step: generate the posterior sample file
@@ -6510,11 +6713,6 @@ double MCMCAnalyzer::analyze_sim(aData &adata)
 // ------------------------------------------------------------------------
 double MCMCAnalyzer::analyze_mh(aData &adata)
 {
-  int    ii, ii2, jj, kk, status, iZero=0, faType;
-  double ddata;
-  char   pString[1000];
-  FILE   *fp=NULL;
-
   //**/ ---------------------------------------------------------------
   //**/ extract data from aData object (passed in from outside)
   //**/ ---------------------------------------------------------------
@@ -6540,9 +6738,7 @@ double MCMCAnalyzer::analyze_mh(aData &adata)
     dataPtr->getParameter("ana_rsindexfile", pPtr);
     if (strcmp(pPtr.strArray_[0], "NONE"))
     {
-      printf("ERROR: MCMC Metropolis-Hastings does not support ");
-      printf("response surface\n");
-      printf("       index file.\n");
+      printf("MCMC_MH ERROR: Response surface index file is not supported.\n");
       exit(1);
     }
   }
@@ -6607,6 +6803,7 @@ double MCMCAnalyzer::analyze_mh(aData &adata)
   //**/ This option allows one to disable a certain input in the MCMC
   //**/ optimization ==> faPtrs, vecRSInds, vecRSVals.
   //**/ ---------------------------------------------------------------
+  int faType;
   if (dataPtr != NULL)
   {
     dataPtr->getParameter("ana_rstype", pPtr);
@@ -6615,20 +6812,21 @@ double MCMCAnalyzer::analyze_mh(aData &adata)
   else
   {
     printOutTS(PL_INFO,
-         "MCMC INFO: ioPtr=NULL ==> assume MARS as reponse surface.\n");
+       "MCMC_MH INFO: ioPtr=NULL ==> assume MARS as reponse surface.\n");
     faType = PSUADE_RS_MARS;
   }
   printOutTS(PL_INFO,
-       "MCMC INFO: CREATING RESPONSE SURFACES FOR ALL OUTPUTS.\n");
+       "MCMC_MH INFO: CREATING RESPONSE SURFACES FOR ALL OUTPUTS.\n");
   FuncApprox **faPtrs = new FuncApprox*[nOutputs];
 
+  int ii, kk, iZero=0, status;
   psVector vecSamOut1;
   vecSamOut1.setLength(nSamples);
   for (ii = 0; ii < nOutputs; ii++)
   {
     faType = -1;
     printOutTS(PL_INFO,
-         "MCMC INFO: CREATING RESPONSE SURFACE FOR OUTPUT %d.\n",ii+1);
+       "MCMC_MH INFO: CREATING RESPONSE SURFACE FOR OUTPUT %d.\n",ii+1);
     faPtrs[ii] = genFA(faType, nInputs, iZero, nSamples);
     faPtrs[ii]->setNPtsPerDim(16);
     faPtrs[ii]->setBounds(xLower, xUpper);
@@ -6640,27 +6838,43 @@ double MCMCAnalyzer::analyze_mh(aData &adata)
     if (status != 0)
     {
       printOutTS(PL_ERROR,
-           "MCMC ERROR: Unable to create response surface.\n");
+        "MCMC_MH ERROR: Unable to create response surface.\n");
       printOutTS(PL_ERROR,"            Consult PSUADE developers.\n");
       for (kk = 0; kk < ii; kk++) delete [] faPtrs[kk];
       delete [] faPtrs;
       return PSUADE_UNDEFINED;
     }
   }
+  int  rsErrFlag=0;
+  char pString[1000], lineIn[1000];
+  if (psConfig_.AnaExpertModeIsOn())
+  {
+    //**/ change sampling information
+    printf("Include RS uncertainty in inference ? (y or n) ");
+    scanf("%s", pString);
+    if (pString[0] == 'y') rsErrFlag = 1;
+    fgets(lineIn,1000,stdin);
+  }
 
   //**/ ---------------------------------------------------------------
   //**/ special set up (sample size) using interactive mode
   //    ==> burnInSamples, maxSamples, nbins, vecPlotInds, nPlots
   //**/ ---------------------------------------------------------------
-  int nPlots, maxSamples = 100000, burnInSamples=1000, nbins = 20;
+  int    nPlots, maxSamples=100000, burnInSamples=1000, nbins=20;
+  int    adaptiveMode=0;
+  double propScale=0.25;
   psIVector vecPlotInds;
   printEquals(PL_INFO, 0);
-  printOutTS(PL_INFO,"*** CURRENT SETTINGS OF MCMC PARAMETERS: \n\n");
-  printOutTS(PL_INFO,"MCMC Burn-in sample size      (default) = %d\n", 
+  printOutTS(PL_INFO,"*** CURRENT SETTINGS OF MCMC_MH PARAMETERS: \n\n");
+  printOutTS(PL_INFO,"Burn-in sample size         = %d\n", 
              burnInSamples);
-  printOutTS(PL_INFO,"MCMC maximum iterations       (default) = %d\n", 
+  printOutTS(PL_INFO,"Maximum MCMC samples        = %d\n", 
              maxSamples);
-  printOutTS(PL_INFO,"MCMC no. of bins in histogram (default) = %d\n",nbins);
+  printOutTS(PL_INFO,"Proposal distribution scale = %e\n",propScale);
+
+  printOutTS(PL_INFO,"No. of bins in histogram    = %d\n",nbins);
+  printOutTS(PL_INFO,
+     "NOTE: Proposal distribution is Normal(X_i,sig^2) and sig = scale.\n");
   printOutTS(PL_INFO,
      "NOTE: histogram nBins  - define granularity of histogram bar graph\n");
   printOutTS(PL_INFO, 
@@ -6668,10 +6882,23 @@ double MCMCAnalyzer::analyze_mh(aData &adata)
   if (psConfig_.AnaExpertModeIsOn())
   {
     //**/ change sampling information
-    sprintf(pString,"Enter maximum iterations (1000 - 1000000): ");
+    snprintf(pString,100,"Enter maximum iterations (1000 - 1000000): ");
     maxSamples = getInt(1000, 10000000, pString);
-    sprintf(pString,"Enter the number of histogram bins (5 - 25) : ");
+    snprintf(pString,100,"Enter the number of histogram bins (5 - 25) : ");
     nbins = getInt(5, 50, pString);
+    snprintf(pString,100,"Proposal distribution scale (>0, <1, 0 = adaptive) : ");
+    propScale = getDouble(pString);
+    if (propScale == 0)
+    {
+      adaptiveMode = 1;
+      propScale = 0.25;
+    }
+    else if (propScale < 0 || propScale > 1)
+    {
+      printf("MCMC_MH ERROR: Invalid proposal distribution scale.\n");
+      printf("               Set to default = 0.25.\n");
+      propScale = 0.25;
+    }
   }
   if (psConfig_.AnaExpertModeIsOn())
   {
@@ -6685,7 +6912,7 @@ double MCMCAnalyzer::analyze_mh(aData &adata)
     printOutTS(PL_INFO,
          "just a selected few (in case there are too many inputs).\n");
     printf("Select inputs for which posterior plots are to be generated.\n");
-    sprintf(pString,"Enter input number (-1 for all, 0 to terminate) : ");
+    snprintf(pString,100,"Enter input number (-1 for all, 0 to terminate) : ");
     kk = 1;
     vecPlotInds.setLength(nInputs);
     nPlots = 0;
@@ -6725,10 +6952,9 @@ double MCMCAnalyzer::analyze_mh(aData &adata)
         vecPlotInds[nPlots++] = ii;
   }
   printOutTS(PL_INFO, 
-       "MCMC Plot summary: input number to be plotted are (%d):\n",nPlots);
+    "MCMC_MH Plot summary: input number to be plotted are (%d):\n",nPlots);
   for (ii = 0; ii < nPlots; ii++)
     printOutTS(PL_INFO, "   Input %4d\n", vecPlotInds[ii]+1);
-
 
   //**/ ---------------------------------------------------------------
   // setup input PDF, if there is any
@@ -6825,28 +7051,50 @@ double MCMCAnalyzer::analyze_mh(aData &adata)
   }
   if (printLevel > 2) printEquals(PL_INFO, 0);
 
+  //**/ ------------------------------------------------------------------
+  //**/ get information on how many chains to use and threshold for
+  //**/ convergence check
+  //**/ ------------------------------------------------------------------
+  int    numChains=1;
+  double psrfThreshold=1.05;
+  if (psConfig_.AnaExpertModeIsOn())
+  {
+    snprintf(pString,100,"How many MCMC chains? (1-20, default=1) : ");
+    numChains = getInt(1,20,pString);
+    if (numChains > 1)
+    {
+      snprintf(pString,100,"PSRF threshold? (1.0 - 1.2, default = 1.05) : ");
+      psrfThreshold = getDouble(pString);
+      if (psrfThreshold < 1.0 || psrfThreshold > 1.2)
+      {
+        printOutTS(PL_INFO,
+             "MCMC : invalid PSRF threshold ==> reset to 1.05.\n");
+        psrfThreshold = 1.05;
+      }
+    }
+  }
+
   //**/ ---------------------------------------------------------------
-  //    set up for MCMC iterations
+  //    initialize object variables
   //**/ ---------------------------------------------------------------
-  int    index, index2;
-  double ddata2;
-  psVector vecRange, vecXmax;
-  psMatrix matXChains;
   //**/ ----- for storing the input ranges
+  psVector vecRange;
   vecRange.setLength(nInputs);
   for (ii = 0; ii < nInputs; ii++) 
     vecRange[ii] = xUpper[ii] - xLower[ii]; 
   //**/ ----- for keeping track of posterior statistics
   vecMeans_.setLength(nInputs_);
   vecSigmas_.setLength(nInputs_);
-  //**/ ----- for keeping the point of maximum likelihood
-  vecXmax.setLength(nInputs);
-  for (ii = 0; ii < nInputs; ii++) vecXmax[ii] = 0;
   vecMostLikelyInputs_.setLength(nInputs_);
   vecMostLikelyOutputs_.setLength(nOutputs_);
-  //**/ ----- for saving the input values at each iteration
-  matXChains.setDim(maxSamples,nInputs+1);
-  //**/ ----- for tracking the frequency of visits
+  //**/ ----- for keeping the point of maximum likelihood
+  psVector vecXmax;
+  vecXmax.setLength(nInputs);
+
+  //**/ ---------------------------------------------------------------
+  //**/ initialization for binning
+  //**/ ---------------------------------------------------------------
+  int ii2, jj;
   int **bins = new int*[nbins];
   for (ii = 0; ii < nbins; ii++)
   {
@@ -6869,23 +7117,51 @@ double MCMCAnalyzer::analyze_mh(aData &adata)
     }
   }
 
-  //**/ ---------------------------------------------------------------
-  // run the Metropolis Hasting algorithm
-  //**/ ---------------------------------------------------------------
-  int    iOne=1, igFlag=0;
-  double dZero=0, dOne=1.0, propScale=0.5;
-  psVector vecXGuess, vecYGuess, vecXGuessLast;
-  vecXGuess.setLength(dnSamples*nInputs);
-  vecXGuessLast.setLength(nInputs);
-  vecYGuess.setLength(dnSamples*nOutputs);
-  PDFBase *normalPtr = (PDFBase *) new PDFNormal(dZero,dOne);
-  double *XGuess = vecXGuess.getDVector();
-  double *YGuess = vecYGuess.getDVector();
+  //**/ ------------------------------------------------------------------
+  //**/ generate LHS or LPTAU MCMC seed points for different chains
+  //**/ ------------------------------------------------------------------
+  Sampling *sampler;
+  if (nInputs > 50) sampler = SamplingCreateFromID(PSUADE_SAMP_LHS);
+  else              sampler = SamplingCreateFromID(PSUADE_SAMP_LPTAU);
+  sampler->setInputBounds(nInputs, xLower, xUpper);
+  sampler->setOutputParams(1);
+  sampler->setSamplingParams(numChains, 1, 0);
+  sampler->initialize(0);
+  psVector vecRanSeeds;
+  vecRanSeeds.setLength(numChains*nInputs);
+  psVector  vecOT;
+  psIVector vecST;
+  vecOT.setLength(numChains);
+  vecST.setLength(numChains);
+  sampler->getSamples(numChains,nInputs,1,vecRanSeeds.getDVector(),
+                      vecOT.getDVector(),vecST.getIVector());
+  delete sampler;
 
-  //**/ set initial guess
-  if (psConfig_.AnaExpertModeIsOn())
+  //**/ ---------------------------------------------------------------
+  //**/ for the accepted input values at each iteration and chain
+  //**/ then store the system initial guesses in matXChains
+  //**/ ---------------------------------------------------------------
+  psMatrix **matXChains = new psMatrix*[numChains];
+  for (ii = 0; ii < numChains; ii++)
   {
-    printf("Do you want to set your own initial guess ? (y or n) ");
+    matXChains[ii] = new psMatrix();
+    matXChains[ii]->setDim(maxSamples*2,nInputs+1);
+  }
+  double ddata = -1;
+  for (kk = 0; kk < numChains; kk++)
+  {
+    for (ii = 0; ii < nInputs; ii++)
+      matXChains[kk]->setEntry(0,ii,vecRanSeeds[kk*nInputs+ii]);
+    matXChains[kk]->setEntry(0,nInputs,ddata);
+  }
+
+  //**/ ---------------------------------------------------------------
+  //**/ user may modify initial guess, if requested
+  //**/ ---------------------------------------------------------------
+  int igFlag=0;
+  if (psConfig_.AnaExpertModeIsOn() && numChains == 1)
+  {
+    printf("Set your own MCMC input initial guess? (y or n) ");
     scanf("%s", pString);
     if (pString[0] == 'y')
     {
@@ -6896,219 +7172,459 @@ double MCMCAnalyzer::analyze_mh(aData &adata)
     }
     fgets(pString,1000,stdin);
   }
-  for (ii = 0; ii < nInputs; ii++)
+  if (igFlag == 1)
   {
-    //**/ default = mid point
-    vecXGuess[ii] = 0.5 * (xUpper[ii] + xLower[ii]);
-    if (igFlag == 1)
+    for (ii = 0; ii < nInputs; ii++)
     {
-      sprintf(pString,
-           "Enter initial value for input %d (midpoint=%e) : ",
-           ii+1,vecXGuess[ii]);
-      vecXGuess[ii] = getDouble(pString);
+      if (vecDesignP.length() == 0 || vecDesignP[ii] == 0) 
+      {
+        snprintf(pString,100,
+             "Enter initial value for input %d (range=[%e,%e] : ",
+             ii+1,xLower[ii],xUpper[ii]);
+        ddata = getDouble(pString);
+        matXChains[0]->setEntry(0,ii,ddata);
+      }
     }
-    matXChains.setEntry(0,ii,vecXGuess[ii]);
   }
-  ddata = -1;
-  matXChains.setEntry(0,nInputs,ddata);
 
+  //**/ ---------------------------------------------------------------
+  // allocate memory for running the Metropolis Hasting algorithm
+  //**/ vecXGuess is to be used for all dnSamples but vecXGuessLasst
+  //**/ is used to store only one sample point but for all chains
+  //**/ ---------------------------------------------------------------
+  int    iOne=1;
+  //**/ memory for proposal points and response surface evaluation
+  psVector vecXGuess, vecYGuess, vecYStdev, vecXGuessLast;
+  vecXGuess.setLength(dnSamples*nInputs);
+  vecYGuess.setLength(dnSamples*nOutputs);
+  vecYStdev.setLength(dnSamples*nOutputs);
+  vecXGuessLast.setLength(nInputs*numChains);
+  double *XGuess = vecXGuess.getDVector();
+  double *YGuess = vecYGuess.getDVector();
+  double *YStdev = vecYStdev.getDVector();
+  for (kk = 0; kk < numChains; kk++)
+  {
+    for (ii = 0; ii < nInputs; ii++)
+      vecXGuessLast[kk*nInputs+ii] = matXChains[kk]->getEntry(0,ii);
+  }
+  //**/ for generating random proposal point 
+  double dZero=0, dOne=1.0;
+  PDFBase *normalPtr = (PDFBase *) new PDFNormal(dZero,dOne);
+  //**/ for MH acceptance accounting
+  psIVector vecChainNAccepts, vecChainNAcceptsAll;
+  vecChainNAccepts.setLength(numChains);
+  vecChainNAcceptsAll.setLength(numChains);
+  //**/ for convergence testing
+  psVector vecChainMeans, vecChainStds, vecPsrfs, vecTmpMeans, vecTmpStdvs;
+  vecChainMeans.setLength(numChains);
+  vecChainStds.setLength(numChains);
+  vecPsrfs.setLength(nInputs);
+  vecTmpMeans.setLength(3*nInputs);
+  vecTmpStdvs.setLength(3*nInputs);
+  double *tmpMeans = vecTmpMeans.getDVector();
+  double *tmpStdvs = vecTmpStdvs.getDVector();
+  //**/ MH parameters 
+  psVector vecPropScale, vecC12;
+  vecPropScale.setLength(numChains);
+  vecC12.setLength(numChains);
+  for (ii = 0; ii < numChains; ii++) vecPropScale[ii] = propScale;
+  for (ii = 0; ii < numChains; ii++) vecC12[ii] = PSUADE_UNDEFINED;
+
+  //**/ ---------------------------------------------------------------
   //**/ iterate
+  //**/ ---------------------------------------------------------------
   printAsterisks(PL_INFO, 0);
-  printOutTS(PL_INFO, "MCMC-MH begins ... \n");
-  printOutTS(PL_INFO, 
-       "NOTE: Proposal distribution scale has been set to %e.\n",
-       propScale);
+  printf("MCMC_MH begins ... \n");
+  printf("NOTE: Proposal distribution scale has been set to %e.\n",
+         propScale);
+  if (adaptiveMode == 1)
+    printf("      This scale will be adaptively modified during burn-in.\n"); 
   fflush(stdout);
-  int mcmcIts = 0, ss, kk2, samInc=maxSamples/100;
-  int numAccepts = 0, count, errFlag;
-  double prior, c12=PSUADE_UNDEFINED, c11, c1, chiSq, dmean, dstdv;
-  double alpha, dFive=5.0, dFiveM=-5, chiSqMin=PSUADE_UNDEFINED;
-  while (mcmcIts < maxSamples)
+  int mcmcIts=0, tmpIts, iChain, ss, samInc=maxSamples/100, convChkCnt=0;
+  int count, errFlag, passCnt, mcmcFail=nInputs;
+  double prior, c11, c1, chiSq, dmean, dstdv, alpha, estdv, ddata2;
+  double dFive=5.0, dFiveM=-5, chiSqMin=PSUADE_UNDEFINED, WStat, BStat, Ymax; 
+  FILE *fp=NULL;
+
+  while ((vecChainNAccepts.sum() < maxSamples) && (mcmcIts < maxSamples*2))
   {
     count = mcmcIts % samInc;
-    if (count == 0)
+    //**/ if there is only one chain, no convergence check is done
+    if (count == 0 && numChains == 1)
     {
-      printf("NOTE: MH will run %d iterations with NO CONVERGENCE CHECK.\n",
-             maxSamples);
-      printf("NOTE: CONVERGENCE CHECK will be implemented in future versions.\n");
-      printf("To terminate gracefully, create an empty file ");
-      printf("called psuade_stop in\n");
-      printf("the work directory.\n");
-      printf("To turn on higher print level on the fly, create ");
-      printf("an empty file called\n");
-      printf("psuade_print in the work directory.\n");
+      printAsterisks(PL_INFO, 0);
+      printf("NOTE: MH will run %d iterations non-stop ",maxSamples);
+      printf("even though convergence\n");
+      printf("      will be performed. To terminate gracefully, ");
+      printf("create an empty file\n");
+      printf("      called psuade_stop in the work directory.\n");
+      printAsterisks(PL_INFO, 0);
       fflush(stdout);
     }
     //**/ inner iteration
-    for (ss = 0; ss < samInc; ss++)
+    for (iChain = 0; iChain < numChains; iChain++)
     {
-      mcmcIts++;
-      //**/ Save current values
+      tmpIts = mcmcIts;
+      //**/ obtain the last guess
       for (ii = 0; ii < nInputs; ii++) 
-        vecXGuessLast[ii] = vecXGuess[ii];
-      //**/ draw a random point from normal distribution
-      //**/ and put it into vecXGuess
-      errFlag = 0;
-      prior = 1.0;
-      for (ii = 0; ii < nInputs; ii++) 
+        vecXGuess[ii] = vecXGuessLast[iChain*nInputs+ii];
+      for (ss = 0; ss < samInc; ss++)
       {
-        if (vecDesignP.length() == 0 || vecDesignP[ii] == 0) 
+        tmpIts++;
+        //**/ Save current values
+        for (ii = 0; ii < nInputs; ii++) 
+          vecXGuessLast[iChain*nInputs+ii] = vecXGuess[ii];
+        //**/ draw a random point from normal distribution
+        //**/ and put it into vecXGuess
+        errFlag = 0;
+        prior = 1.0;
+        for (ii = 0; ii < nInputs; ii++) 
         {
-          normalPtr->genSample(iOne, &ddata,&dFiveM,&dFive);
-          ddata = vecXGuess[ii] + ddata * propScale * vecRange[ii];
-          //**/ should bound this
-          if (ddata < xLower[ii]) 
+          if (vecDesignP.length() == 0 || vecDesignP[ii] == 0) 
           {
-            ddata = xLower[ii];
-            errFlag = 1;
-          }
-          if (ddata > xUpper[ii]) 
-          {
-            ddata = xUpper[ii];
-            errFlag = 1;
-          }
-          vecXGuess[ii] = ddata;
-          if (inputPDFs[ii] != NULL)
-          {
-            inputPDFs[ii]->getPDF(iOne, &ddata, &ddata2);
-            prior *= ddata2;
-          }  
-        }
-      }
-      prior = log(prior);
-
-      //**/ fill up vecXGuess sample point
-      for (kk = 0; kk < dnSamples; kk++)
-      {
-        if (kk > 0)
-        {
-          for (ii = 0; ii < nInputs; ii++)
-            vecXGuess[kk*nInputs+ii] = vecXGuess[ii];
-        }
-        count = 0;
-        for (ii = 0; ii < nInputs; ii++)
-        {
-          //**/ design inputs
-          if (vecDesignP.length() > 0 && vecDesignP[ii] == 1) 
-          {
-            vecXGuess[kk*nInputs+ii] = matExpInps.getEntry(kk,count);
-            count++;
+            normalPtr->genSample(iOne, &ddata,&dFiveM,&dFive);
+            ddata = vecXGuess[ii] + ddata * vecPropScale[iChain] * vecRange[ii];
+            //**/ should bound this
+            if (ddata < xLower[ii]) 
+            {
+              ddata = xLower[ii];
+              errFlag = 1;
+            }
+            if (ddata > xUpper[ii]) 
+            {
+              ddata = xUpper[ii];
+              errFlag = 1;
+            }
+            vecXGuess[ii] = ddata;
+            if (inputPDFs[ii] != NULL)
+            {
+              inputPDFs[ii]->getPDF(iOne, &ddata, &ddata2);
+              prior *= ddata2;
+            }
           }
         }
-      }
+        prior = log(prior);
 
-      //**/ evaluate proposal sample 
-      for (ii = 0; ii < nOutputs; ii++)
-        faPtrs[ii]->evaluatePoint(dnSamples,XGuess,
-                                  &(YGuess[ii*dnSamples]));
-
-      //**/ compute chi-squared
-      chiSq = 0.0;
-      for (ii = 0; ii < nOutputs; ii++)
-      {
+        //**/ fill up vecXGuess sample point
         for (kk = 0; kk < dnSamples; kk++)
         {
-          dmean = matExpMeans.getEntry(kk,ii);
-          dstdv = matExpStdvs.getEntry(kk,ii);
-          chiSq += pow((YGuess[ii*dnSamples+kk]-dmean)/dstdv,2.0);
-          if (printLevel >= 5)
-          {
-            printf("Simulation vs experiment %d %d = %e %e\n",ii+1,kk+1,
-                   YGuess[ii*dnSamples+kk],dmean);
-            printf("Current chiSq = %e\n",chiSq);
-          }
-        }
-      }
-      chiSq /= (double) dnReps;
-      if (chiSq < chiSqMin)
-      {
-        for (ii = 0; ii < nInputs; ii++)
-          vecXmax[ii] = vecXGuess[ii];
-        chiSqMin = chiSq;
-      }
-
-      /* compute c11 = log(posterior)  */
-      c11 = prior - 0.5 * chiSq;
-
-      if (c12 == PSUADE_UNDEFINED) c12 = c11;
-      else if (errFlag > 0)
-      {
-        for (ii = 0; ii < nInputs; ii++)
-          vecXGuess[ii] = vecXGuessLast[ii];
-      }
-      else
-      {
-        c1 = c11 - c12;
-        alpha = c1;
-        if (alpha > 0) alpha = 0;
-        ddata = log(PSUADE_drand());
-        if (ddata < alpha)
-        {
-          if (printLevel > 4)
-            printf("     MCMC_MH its = %d: Accept (%e < %e?)\n",
-                   mcmcIts,ddata,alpha);
-          c12 = c11;
-          if (mcmcIts > burnInSamples)
+          if (kk > 0)
           {
             for (ii = 0; ii < nInputs; ii++)
-              matXChains.setEntry(numAccepts,ii,XGuess[ii]);
-            matXChains.setEntry(numAccepts,nInputs,chiSq);
-            numAccepts++;
+              vecXGuess[kk*nInputs+ii] = vecXGuess[ii];
           }
+          count = 0;
+          for (ii = 0; ii < nInputs; ii++)
+          {
+            //**/ design inputs
+            if (vecDesignP.length() > 0 && vecDesignP[ii] == 1) 
+            {
+              vecXGuess[kk*nInputs+ii] = matExpInps.getEntry(kk,count);
+              count++;
+            }
+          }
+        }
+
+        //**/ evaluate proposal sample 
+        for (ii = 0; ii < nOutputs; ii++)
+        {
+          if (rsErrFlag == 0)
+            faPtrs[ii]->evaluatePoint(dnSamples,XGuess,
+                                      &(YGuess[ii*dnSamples]));
+          else
+            faPtrs[ii]->evaluatePointFuzzy(dnSamples,XGuess,
+                   &(YGuess[ii*dnSamples]),&(YStdev[ii*dnSamples]));
+        }
+
+        //**/ compute chi-squared
+        chiSq = 0.0;
+        for (ii = 0; ii < nOutputs; ii++)
+        {
+          for (kk = 0; kk < dnSamples; kk++)
+          {
+            dmean = matExpMeans.getEntry(kk,ii);
+            dstdv = matExpStdvs.getEntry(kk,ii);
+            estdv = YStdev[ii*dnSamples+kk];
+            if (rsErrFlag == 0)
+              chiSq += pow((YGuess[ii*dnSamples+kk]-dmean)/dstdv,2.0);
+            else
+              chiSq += pow((YGuess[ii*dnSamples+kk]-dmean),2.0)/
+                       (dstdv*dstdv+estdv*estdv);
+          }
+        }
+        chiSq /= (double) dnReps;
+        //**/ chiSqMin is a global variable for all chains
+        if (chiSq < chiSqMin)
+        {
+          for (ii = 0; ii < nInputs; ii++)
+            vecXmax[ii] = vecXGuess[ii];
+          chiSqMin = chiSq;
+        }
+  
+        /* compute c11 = log(posterior)  */
+        c11 = prior - 0.5 * chiSq;
+
+        if (vecC12[iChain] == PSUADE_UNDEFINED) vecC12[iChain] = c11;
+        else if (errFlag > 0)
+        {
+          for (ii = 0; ii < nInputs; ii++)
+            vecXGuess[ii] = vecXGuessLast[iChain*nInputs+ii];
         }
         else
         {
-          if (printLevel > 4)
-            printf("     MCMC_MH its = %d: Reject (%e > %e?)\n",
-                   mcmcIts,ddata,alpha);
-          //**/ restore the last one
-          for (ii = 0; ii < nInputs; ii++)
-            vecXGuess[ii] = vecXGuessLast[ii];
+          c1 = c11 - vecC12[iChain];
+          alpha = c1;
+          if (alpha > 0) alpha = 0;
+          ddata = log(PSUADE_drand());
+          if (ddata < alpha)
+          {
+            if (printLevel > 4)
+              printf("     MCMC_MH chain %d, its = %d: Accept (%e < %e?)\n",
+                     iChain+1,tmpIts,ddata,alpha);
+            vecC12[iChain] = c11;
+            if (tmpIts > burnInSamples)
+            {
+              for (ii = 0; ii < nInputs; ii++)
+                matXChains[iChain]->setEntry(vecChainNAccepts[iChain],
+                                             ii,XGuess[ii]);
+              matXChains[iChain]->setEntry(vecChainNAccepts[iChain],
+                                           nInputs,chiSq);
+              vecChainNAccepts[iChain]++;
+            }
+            vecChainNAcceptsAll[iChain]++;
+          }
+          else
+          {
+            if (printLevel > 4)
+              printf("     MCMC_MH chain %d, its = %d: Reject (%e > %e?)\n",
+                     iChain+1, tmpIts,ddata,alpha);
+            //**/ restore the last one
+            for (ii = 0; ii < nInputs; ii++)
+              vecXGuess[ii] = vecXGuessLast[iChain*nInputs+ii];
+          }
+        } 
+        //**/ adaptive step 
+        if (tmpIts < burnInSamples && adaptiveMode == 1)
+        {
+          ddata = 1.0 * vecChainNAcceptsAll[iChain] / tmpIts;
+          //**/ adjust to make sure acceptance rate is at least 50%
+          if (ddata < 0.25 && vecPropScale[iChain] > 0.01) 
+          {
+            vecPropScale[iChain] *= 0.5;
+            printf("INFO: Chain %d, MCMC iter = %d, new prob. scale = %e\n",
+                   iChain+1,tmpIts,vecPropScale[iChain]);
+          }
+          if (ddata > 0.75 && vecPropScale[iChain] < 1.0)
+          {
+            vecPropScale[iChain] *= 2.0;
+            printf("INFO: Chain %d, MCMC iter = %d, new prob. scale = %e\n",
+                   iChain+1,tmpIts,vecPropScale[iChain]);
+          }
         }
-      } 
+      }
+      //**/ store the current guess for this chain
+      for (ii = 0; ii < nInputs; ii++) 
+        vecXGuessLast[iChain*nInputs+ii] = vecXGuess[ii];
+      if (tmpIts > burnInSamples)
+      {
+        ddata = 1.0 * vecChainNAccepts[iChain] / (tmpIts - burnInSamples);
+        if (numChains > 1)
+          printf("Chain %d: Current acceptance rate ", iChain+1);
+        else
+          printf("Current acceptance rate ");
+        printf("(its,na,ps=%d,%d,%5.3f) = %4.2f %%\n",
+               tmpIts,vecChainNAccepts[iChain],vecPropScale[iChain],ddata*100);
+      }
     }
- 
-    if (mcmcIts > burnInSamples)
-    {
-      ddata = 1.0 * numAccepts / (mcmcIts - burnInSamples);
-#if 1
-      //**/ adjust to make sure acceptance rate is at least 50%
-      if (ddata < 0.25 && propScale > 0.01) propScale *= 0.5;
-      if (ddata > 0.75 && propScale < 1.0)  propScale *= 2.0;
-#endif
-      printf(" Acceptance rate so far (its,nc,ps=%d,%d,%5.3f) = %e %%\n",
-             mcmcIts,numAccepts,propScale,ddata*100);
-    }
+    mcmcIts += samInc;
 
-    //**/ now compute convergence statistics
-    if (mcmcIts > burnInSamples && numAccepts > 10)
+    //**/ now compute convergence statistics (only for numChains = 1
+    if (mcmcIts > burnInSamples && numChains == 1 && vecChainNAccepts[0] > 10)
     {
+      printAsterisks(PL_INFO, 0);
+      printOutTS(PL_INFO, "Iteration %d summary: \n", mcmcIts);
+      printDashes(PL_INFO, 0);
+      //**/ compute individual input statistics
       for (ii = 0; ii < nInputs; ii++) 
       {
         if (vecDesignP.length() == 0 || vecDesignP[ii] == 0) 
         {
           printOutTS(PL_INFO,
-               "MCMC: input %3d value at peak of likelihood = %e\n",
+               "MCMC_MH: input %3d value at peak of likelihood = %e\n",
                ii+1, vecXmax[ii]);
           vecMeans_[ii] = 0;
-          for (jj = 0; jj < numAccepts; jj++)
-            vecMeans_[ii] += matXChains.getEntry(jj,ii);
-          vecMeans_[ii] /= (double) numAccepts;
-          printOutTS(PL_INFO,"MCMC: input %3d mean    = %e\n", ii+1, 
-                     vecMeans_[ii]);
+          for (jj = 0; jj < vecChainNAccepts[0]; jj++)
+            vecMeans_[ii] += matXChains[0]->getEntry(jj,ii);
+          vecMeans_[ii] /= (double) vecChainNAccepts[0];
+          printOutTS(PL_INFO,"MCMC_MH: input %3d mean    = %e\n", ii+1, 
+                   vecMeans_[ii]);
           vecSigmas_[ii] = 0;
-          for (jj = 0; jj < numAccepts; jj++)
+          for (jj = 0; jj < vecChainNAccepts[0]; jj++)
           {
-            ddata = matXChains.getEntry(jj,ii);
+            ddata = matXChains[0]->getEntry(jj,ii);
             vecSigmas_[ii] += pow(ddata-vecMeans_[ii],2.0);
           }
-          vecSigmas_[ii] /= (double) numAccepts;
+          vecSigmas_[ii] /= (double) vecChainNAccepts[0];
           vecSigmas_[ii] = sqrt(vecSigmas_[ii]);
-          printOutTS(PL_INFO,"MCMC: input %3d std dev = %e\n", ii+1,
+          printOutTS(PL_INFO,"MCMC_MH: input %3d std dev = %e\n", ii+1,
                      vecSigmas_[ii]);
+          vecMostLikelyInputs_[ii] = vecXmax[ii];
+          if (convChkCnt < 3)
+          {
+            vecTmpMeans[ii*3+convChkCnt] = vecMeans_[ii];
+            vecTmpStdvs[ii*3+convChkCnt] = vecSigmas_[ii];
+          }
+          else
+          {
+            for (jj = 1; jj < convChkCnt; jj++)
+            {
+              vecTmpMeans[ii*3+jj-1] = vecTmpMeans[ii*3+jj];
+              vecTmpStdvs[ii*3+jj-1] = vecTmpStdvs[ii*3+jj];
+            }
+            vecTmpMeans[ii*3+convChkCnt-1] = vecMeans_[ii];
+            vecTmpStdvs[ii*3+convChkCnt-1] = vecSigmas_[ii];
+          }
+        }
+      }
+
+      //**/ compute best negative loglikelihood
+      Ymax = PSUADE_UNDEFINED;
+      for (iChain = 0; iChain < numChains; iChain++)
+      {
+        for (jj = 0; jj < vecChainNAccepts[iChain]; jj++)
+        {
+          ddata = matXChains[iChain]->getEntry(jj,nInputs);
+          if (ddata < Ymax) Ymax = ddata;
+        }
+      }
+      printOutTS(PL_INFO,
+         "MCMC_MH: MLE Negative log likelihood = %e\n",Ymax);
+
+      //**/ convergence check
+      if (convChkCnt < 3) convChkCnt++;
+      passCnt = 0;
+      if (convChkCnt >= 3)
+      {
+        for (ii = 0; ii < nInputs; ii++)
+        {
+          if (vecDesignP.length() == 0 || vecDesignP[ii] == 0)
+          {
+            ddata = checkConvergence(3,&tmpMeans[ii*3],&tmpStdvs[ii*3],
+                                  vecChainNAccepts[0],psrfThreshold);
+            if (ddata < psrfThreshold)
+            {
+              passCnt++;
+              printf("MCMC_MH: input %3d converged.\n",ii+1);
+            }
+          }
+        }
+      }
+      if (vecDesignP.length() == 0) kk = nInputs;
+      else                          kk = nInputs - vecDesignP.sum();
+      if (passCnt == kk)
+      {
+        printf("NOTE: Convergence achieved, but MCMC will continue.\n");
+      }
+      printDashes(PL_INFO, 0);
+    }
+    status = 1;
+    for (iChain = 0; iChain < numChains; iChain++)
+      if (vecChainNAccepts[iChain] < 100) status = 0; 
+
+    //**/ ----------------------------------------------------------------
+    //**/ for numChains>1, compute convergence statistics (PSRF)
+    //**/ ----------------------------------------------------------------
+    if (status == 1 && numChains > 1)
+    {
+      printAsterisks(PL_INFO, 0);
+      printOutTS(PL_INFO, "Iteration %d summary: \n", mcmcIts);
+      printDashes(PL_INFO, 0);
+      //**/ compute basic statistics for each input
+      kk = vecChainNAccepts.sum() / numChains;
+      for (ii = 0; ii < nInputs; ii++)
+      {
+        if (vecDesignP.length() == 0 || vecDesignP[ii] == 0)
+        {
+          //**/ update vecMeans_ and vecSigmas_
+          ddata = 0.0;
+          for (iChain = 0; iChain < numChains; iChain++)
+          {
+            for (jj = 0; jj < vecChainNAccepts[iChain]; jj++)
+               ddata += matXChains[iChain]->getEntry(jj,ii);
+          }
+          ddata /= (double) (numChains * kk);
+          vecMeans_[ii] = ddata;
+          ddata2 = 0.0;
+          for (iChain = 0; iChain < numChains; iChain++)
+          {
+            for (jj = 0; jj < vecChainNAccepts[iChain]; jj++)
+              ddata2 += pow(matXChains[iChain]->getEntry(jj,ii)-ddata,2.0);
+          }
+          ddata2 /= (double) (kk*numChains-1);
+          vecSigmas_[ii] = sqrt(ddata2);
+          printOutTS(PL_INFO,
+             "MCMC_MH: input %3d value at peak of likelihood = %e\n",
+                   ii+1, vecXmax[ii]);
+          ddata = vecMeans_[ii];
+          printOutTS(PL_INFO,
+                     "MCMC_MH: input %3d mean    = %e\n", ii+1, ddata);
+          ddata = vecSigmas_[ii];
+          printOutTS(PL_INFO,
+                     "MCMC_MH: input %3d std dev = %e\n", ii+1, ddata);
           vecMostLikelyInputs_[ii] = vecXmax[ii];
         }
       }
+      Ymax = PSUADE_UNDEFINED;
+      for (iChain = 0; iChain < numChains; iChain++)
+      {
+        for (jj = 0; jj < vecChainNAccepts[iChain]; jj++)
+        {
+          ddata = matXChains[iChain]->getEntry(jj,nInputs);
+          if (ddata < Ymax) Ymax = ddata;
+        }
+      }
+      printOutTS(PL_INFO,
+                 "MCMC_MH: MLE Negative log likelihood = %e\n",Ymax);
+
+      //**/ convergence check
+      for (ii = 0; ii < nInputs; ii++)
+      {
+        if (vecDesignP.length() == 0 || vecDesignP[ii] == 0)
+        {
+          //**/ check that if a chain does not walk at all and turn it off
+          for (iChain = 0; iChain < numChains; iChain++)
+          {
+            ddata = 0.0;
+            for (jj = 0; jj < vecChainNAccepts[iChain]; jj++)
+              ddata += matXChains[iChain]->getEntry(jj,ii);
+            ddata /= (double) (vecChainNAccepts[iChain]);
+            ddata2 = 0.0;
+            for (jj = 0; jj < vecChainNAccepts[iChain]; jj++) 
+               ddata2 += pow(matXChains[iChain]->getEntry(jj,ii)-ddata,2.0);
+            ddata2 /= (double) (vecChainNAccepts[iChain] - 1);
+            vecChainMeans[iChain] = ddata;
+            vecChainStds[iChain] = ddata2;
+          }
+          //**/ compute PSRF
+          ddata = checkConvergence(numChains, vecChainMeans.getDVector(),
+                        vecChainStds.getDVector(),kk,psrfThreshold); 
+          if (ddata < psrfThreshold)
+          {
+            printOutTS(PL_INFO,"MCMC_MH INFO : PSRF %e < %e ==> converged.\n",
+                       ddata, psrfThreshold);
+            mcmcFail--;
+          }
+        }
+      }
+
+      //**/ if all inputs convergence (twice consecutively), exit
+      if (mcmcFail == 0 && mcmcIts > 1) 
+      {
+        printOutTS(PL_INFO,
+                   "MCMC_MH INFO: All inputs converged.\n");
+        if (convChkCnt > 2) break;
+      }
+      else convChkCnt = 0;
     }
 
     //**/ these are features for better run time diagnostics
@@ -7121,13 +7637,14 @@ double MCMCAnalyzer::analyze_mh(aData &adata)
       fp = NULL;
       strcpy(pString, "psuade_stop");
       unlink(pString);
+      break;
     }
 
     fp = fopen("psuade_print", "r");
     if (fp != NULL)
     {
       printOutTS(PL_INFO,
-           "MCMC INFO: psuade_print FILE FOUND. Print level is set to 5.\n");
+        "MCMC_MH INFO: psuade_print FILE FOUND. Set print level to 5.\n");
       fclose(fp);
       fp = NULL;
       printLevel = 5;
@@ -7135,11 +7652,17 @@ double MCMCAnalyzer::analyze_mh(aData &adata)
       unlink(pString);
     }
   }
+  if (vecChainNAccepts.sum() < maxSamples) 
+  {
+    printf("INFO: Maybe due to low acceptance rate, posterior ");
+    printf("sample size is < %d\n", maxSamples);
+  }
   printEquals(PL_INFO, 0);
 
   //**/ ---------------------------------------------------------------
   //**/ create binning
   //**/ ---------------------------------------------------------------
+  int index, index2;
   for (ii = 0; ii < nInputs; ii++) 
     for (jj = 0; jj < nbins; jj++) bins[jj][ii] = 0;
   for (ii = 0; ii < nInputs; ii++) 
@@ -7147,38 +7670,41 @@ double MCMCAnalyzer::analyze_mh(aData &adata)
       for (jj = 0; jj < nbins; jj++)
         for (kk = 0; kk < nbins; kk++)
           bins2[jj][kk][ii][ii2] = 0;
-  for (ss = 0; ss < numAccepts; ss++) 
-  { 
-    for (ii = 0; ii < nInputs; ii++) 
-    {
-      ddata = matXChains.getEntry(ss,ii);
-      ddata = (ddata - xLower[ii]) / (xUpper[ii] - xLower[ii]);
-      index = (int) (ddata * nbins);
-      if (index > nbins)
-        printOutTS(PL_ERROR,"MCMC binning error 1 in file %s, line %d.\n",
-                   __FILE__, __LINE__);
-      if (index < 0)
-        printOutTS(PL_ERROR,"MCMC binning error 2 in file %s, line %d.\n",
-                   __FILE__, __LINE__);
-      if (index >= nbins) index = nbins - 1;
-      if (index <  0)     index = 0;
-      bins[index][ii]++;
-    }
-    for (ii = 0; ii < nInputs; ii++) 
-    {
-      ddata = matXChains.getEntry(ss,ii);
-      ddata = (ddata - xLower[ii]) / (xUpper[ii] - xLower[ii]);
-      index = (int) (ddata * nbins);
-      if (index >= nbins) index = nbins - 1;
-      if (index <  0)     index = 0;
-      for (jj = 0; jj < nInputs; jj++) 
+  for (iChain = 0; iChain < numChains; iChain++) 
+  {
+    for (ss = 0; ss < vecChainNAccepts[iChain]; ss++) 
+    { 
+      for (ii = 0; ii < nInputs; ii++) 
       {
-        ddata2 = matXChains.getEntry(ss,jj);
-        ddata2 = (ddata2 - xLower[jj]) / (xUpper[jj] - xLower[jj]);
-        index2 = (int) (ddata2 * nbins);
-        if (index2 >= nbins) index2 = nbins - 1;
-        if (index2 <  0)     index2 = 0;
-        bins2[index][index2][ii][jj]++;
+        ddata = matXChains[iChain]->getEntry(ss,ii);
+        ddata = (ddata - xLower[ii]) / (xUpper[ii] - xLower[ii]);
+        index = (int) (ddata * nbins);
+        if (index > nbins)
+          printOutTS(PL_ERROR,"MCMC_MH binning error 1 in file %s, line %d.\n",
+                     __FILE__, __LINE__);
+        if (index < 0)
+          printOutTS(PL_ERROR,"MCMC_MH binning error 2 in file %s, line %d.\n",
+                     __FILE__, __LINE__);
+        if (index >= nbins) index = nbins - 1;
+        if (index <  0)     index = 0;
+        bins[index][ii]++;
+      }
+      for (ii = 0; ii < nInputs; ii++) 
+      {
+        ddata = matXChains[iChain]->getEntry(ss,ii);
+        ddata = (ddata - xLower[ii]) / (xUpper[ii] - xLower[ii]);
+        index = (int) (ddata * nbins);
+        if (index >= nbins) index = nbins - 1;
+        if (index <  0)     index = 0;
+        for (jj = 0; jj < nInputs; jj++) 
+        {
+          ddata2 = matXChains[iChain]->getEntry(ss,jj);
+          ddata2 = (ddata2 - xLower[jj]) / (xUpper[jj] - xLower[jj]);
+          index2 = (int) (ddata2 * nbins);
+          if (index2 >= nbins) index2 = nbins - 1;
+          if (index2 <  0)     index2 = 0;
+          bins2[index][index2][ii][jj]++;
+        }
       }
     }
   }
@@ -7221,6 +7747,7 @@ double MCMCAnalyzer::analyze_mh(aData &adata)
       }
     }
   }
+  int    kk2;
   double ddata1;
   for (ii = 0; ii < nInputs; ii++)
   {
@@ -7287,7 +7814,7 @@ double MCMCAnalyzer::analyze_mh(aData &adata)
       kk = 0;
       for (jj = 0; jj < nInputs; jj++)
         if (vecDesignP.length() == 0 || vecDesignP[jj] == 0) kk++; 
-      fprintf(fp, "%d %d\n", numAccepts,kk);
+      fprintf(fp, "%d %d\n", vecChainNAccepts.sum(),kk);
       if (qData.strArray_ != NULL)
       {
         fprintf(fp, "# ");
@@ -7296,18 +7823,23 @@ double MCMCAnalyzer::analyze_mh(aData &adata)
             fprintf(fp,"%s ", qData.strArray_[jj]);
         fprintf(fp, "\n");
       }
-      for (ss = 0; ss < numAccepts; ss++)
-      { 
-        fprintf(fp, "%d ", ss+1);
-        for (jj = 0; jj < nInputs; jj++)
-        {
-          if (vecDesignP.length() == 0 || vecDesignP[jj] == 0)
+      count = 0;
+      for (iChain = 0; iChain < numChains; iChain++)
+      {
+        for (ss = 0; ss < vecChainNAccepts[iChain]; ss++)
+        { 
+          fprintf(fp, "%d ", count+ss+1);
+          for (jj = 0; jj < nInputs; jj++)
           {
-            ddata = matXChains.getEntry(ss,jj);
-            fprintf(fp, "%e ", ddata);
+            if (vecDesignP.length() == 0 || vecDesignP[jj] == 0)
+            {
+              ddata = matXChains[iChain]->getEntry(ss,jj);
+              fprintf(fp, "%e ", ddata);
+            }
           }
+          fprintf(fp, "\n");
         }
-        fprintf(fp, "\n");
+        count += vecChainNAccepts[iChain];
       }
       fprintf(fp, "PSUADE_END\n");
       fprintf(fp, "Best negLogLikelihood = %e (Ideal=0)\n",chiSqMin);
@@ -7321,7 +7853,7 @@ double MCMCAnalyzer::analyze_mh(aData &adata)
       fclose(fp);
     }
     printOutTS(PL_INFO,
-         "MCMC: 'MCMCPostSample' file has a posterior sample.\n");
+         "MCMC_MH: 'MCMCPostSample' file has a posterior sample.\n");
   }
 
   //**/ ---------------------------------------------------------------
@@ -7345,6 +7877,12 @@ double MCMCAnalyzer::analyze_mh(aData &adata)
     delete [] bins2[jj];
   }
   delete [] bins2;
+  if (matXChains != NULL)
+  {
+    for (iChain = 0; iChain < numChains; iChain++) 
+      delete matXChains[iChain];
+    delete [] matXChains;
+  }
   if (faPtrs != NULL)
   {
     for (ii = 0; ii < nOutputs; ii++) 
@@ -7359,12 +7897,6 @@ double MCMCAnalyzer::analyze_mh(aData &adata)
 // ------------------------------------------------------------------------
 double MCMCAnalyzer::analyze_omp(aData &adata)
 {
-  int myPID=0;
-#ifdef PSUADE_OMP
-  myPID = omp_get_thread_num();
-  int nThreads = omp_get_num_threads();
-#endif
-
   //**/ ---------------------------------------------------------------
   //**/ display header 
   //**/ ---------------------------------------------------------------
@@ -7412,7 +7944,8 @@ double MCMCAnalyzer::analyze_omp(aData &adata)
   int dnInputs  = matExpInps.ncols();
   if (dstatus != 0.0)
   {
-    printOutTS(PL_ERROR,"MCMC_OMP ERROR: cannot read experimental data\n");
+    printOutTS(PL_ERROR,
+         "MCMC_OMP ERROR: cannot read experimental data\n");
     return PSUADE_UNDEFINED;
   }
 
@@ -7423,7 +7956,7 @@ double MCMCAnalyzer::analyze_omp(aData &adata)
   char lineIn[1001], pString[1001];
   if (psConfig_.AnaExpertModeIsOn())
   {
-    sprintf(pString,
+    snprintf(pString,100,
             "Include response surface uncertainties? (y or n) ");
     getString(pString, lineIn);
     if (lineIn[0] == 'y') rsErrFlag = 1;
@@ -7548,16 +8081,16 @@ double MCMCAnalyzer::analyze_omp(aData &adata)
          "keep the inference cost reasonable.\n");
     printf("Sample size to construct proposal distributions.\n");
     printf("Default is %d.\n",maxPts);
-    sprintf(pString,
+    snprintf(pString,100,
             "Enter new sample size (%d - %d): ",nbins*3,nbins*10);
     maxPts = getInt(nbins*3, nbins*10, pString);
     maxPts = maxPts / nbins * nbins;
     printOutTS(PL_INFO,
          "Proposal distribution sample size = %d.\n",maxPts);
 
-    sprintf(pString, "How many MCMC chains? (2-20, default=3) : ");
+    snprintf(pString,100,"How many MCMC chains? (2-20, default=3) : ");
     numChains = getInt(2,20,pString);
-    sprintf(pString,"PSRF threshold? (1.0 - 1.2, default = 1.05) : ");
+    snprintf(pString,100,"PSRF threshold? (1.0 - 1.2, default = 1.05) : ");
     psrfThreshold = getDouble(pString);
     if (psrfThreshold < 1.0 || psrfThreshold > 1.2)
     {
@@ -7647,7 +8180,7 @@ double MCMCAnalyzer::analyze_omp(aData &adata)
   //**/ ---------------------------------------------------------------
   // obtain response surface type
   //**/ ---------------------------------------------------------------
-  int iOne=1, iZero=0, faType=-1, ii2;
+  int iOne=1, iZero=0, faType=-1, ii2, myPID=0;
   FuncApprox *faPtr = genFA(faType, nInputs, iZero, nSamples);
   faType = faPtr->getID();
   delete faPtr;
@@ -7860,7 +8393,11 @@ double MCMCAnalyzer::analyze_omp(aData &adata)
  
       //**/ now compute convergence statistics
 #pragma omp critical
+#ifdef PSUADE_OMP
+      if (omp_get_thread_num() == 0)
+#else
       if (myPID == 0)
+#endif
       {
         globalIts++;
         printEquals(PL_INFO, 0);
@@ -7923,7 +8460,7 @@ double MCMCAnalyzer::analyze_omp(aData &adata)
           psrfs[ii] = ddata2;
           if (ddata2 < psrfThreshold)
           {
-            printOutTS(PL_INFO,"MCMC INFO : PSRF < %e ==> converged.\n",
+            printOutTS(PL_INFO,"MCMC_OMP INFO : PSRF < %e ==> converged.\n",
                        psrfThreshold);
             mcmcFail--;
           }
@@ -7952,12 +8489,12 @@ double MCMCAnalyzer::analyze_omp(aData &adata)
           if (vecDesignP.length() == 0 || vecDesignP[ii] == 0) 
           {
             printOutTS(PL_INFO,
-                 "MCMC: input %3d value at peak of likelihood = %e\n",
+                 "MCMC_OMP: input %3d value at peak of likelihood = %e\n",
                  ii+1, Xmax[ii]);
             ddata = vecMeans_[ii]*(XUpperB[ii]-XLowerB[ii])+XLowerB[ii];
-            printOutTS(PL_INFO,"MCMC: input %3d mean    = %e\n",ii+1,ddata);
+            printOutTS(PL_INFO,"MCMC_OMP: input %3d mean    = %e\n",ii+1,ddata);
             ddata = vecSigmas_[ii]*(XUpperB[ii]-XLowerB[ii]);
-            printOutTS(PL_INFO,"MCMC: input %3d std dev = %e\n",ii+1,ddata);
+            printOutTS(PL_INFO,"MCMC_OMP: input %3d std dev = %e\n",ii+1,ddata);
           }
         }
         printEquals(PL_INFO, 0);
@@ -7983,7 +8520,7 @@ double MCMCAnalyzer::analyze_omp(aData &adata)
     }
     if (mcmcFail == 1 && myPID == 0) 
       printOutTS(PL_INFO,
-           "MCMC maximum iterations exceeded but no convergence.\n");
+           "MCMC_OMP maximum iterations exceeded but no convergence.\n");
   }
   else if (myPID == 0) printOutTS(PL_INFO, "MCMC iterations completed\n");
 
@@ -8159,7 +8696,7 @@ double MCMCAnalyzer::analyze_omp(aData &adata)
     fclose(fp);
   }
   printOutTS(PL_INFO,
-        "MCMC: 'MCMCPostSample' file has a posterior sample.\n");
+        "MCMC_OMP: 'MCMCPostSample' file has a posterior sample.\n");
 
   //**/ ---------------------------------------------------------------
   // clean up
@@ -8802,6 +9339,198 @@ double MCMCAnalyzer::analyzeDirect(McmcData &mdata)
 }
 
 // ************************************************************************
+// Compute likelihood only
+// ------------------------------------------------------------------------
+double MCMCAnalyzer::computeLikelihood(aData &adata)
+{
+  //**/ ---------------------------------------------------------------
+  //**/ extract data from aData object (passed in from outside)
+  //**/ ---------------------------------------------------------------
+  int printLevel = adata.printLevel_;
+  int nInputs    = adata.nInputs_;
+  int nOutputs   = adata.nOutputs_;
+  int nSamples   = adata.nSamples_;
+  double *sampIns = adata.sampleInputs_;
+  double *samOuts = adata.sampleOutputs_;
+  double *xLower  = adata.iLowerB_;
+  double *xUpper  = adata.iUpperB_;
+  PsuadeData *dataPtr = adata.ioPtr_;
+
+  //**/ ---------------------------------------------------------------
+  // get experimental data information from the spec file
+  //**/ ==> vecDesignP, matExpInps, matExpMeans, matExpStdvs
+  //**/ ---------------------------------------------------------------
+  int       dnReps=1;
+  psIVector vecDesignP; 
+  psMatrix  matExpInps, matExpMeans, matExpStdvs; 
+  double dstatus = readSpecFile(nInputs,nOutputs,vecDesignP,matExpInps,
+                   matExpMeans, matExpStdvs, dnReps, printLevel);
+  if (dstatus != 0.0) return PSUADE_UNDEFINED;
+  int dnSamples = matExpMeans.nrows();
+  int dnInputs  = matExpInps.ncols();
+
+  //**/ ---------------------------------------------------------------
+  //**/ create response surface for use in computing likelihood
+  //**/ ==> faPtrs.
+  //**/ ---------------------------------------------------------------
+  int   faType=0;
+  pData pPtr;
+  if (dataPtr != NULL)
+  {
+    dataPtr->getParameter("ana_rstype", pPtr);
+    faType = pPtr.intData_;
+  }
+  else
+  {
+    printOutTS(PL_INFO,
+       "ComputeLikelihood INFO: ioPtr=NULL ==> assume MARS as RS.\n");
+    faType = PSUADE_RS_MARS;
+  }
+  printOutTS(PL_INFO,
+       "ComputeLikelihood INFO: CREATING RESPONSE SURFACES.\n");
+  FuncApprox **faPtrs = new FuncApprox*[nOutputs];
+
+  int ii, kk, status, iZero=0;
+  psVector vecSamOut1;
+  vecSamOut1.setLength(nSamples);
+  for (ii = 0; ii < nOutputs; ii++)
+  {
+    faType = -1;
+    printOutTS(PL_INFO,
+       "ComputeLikelihood INFO: CREATING RS FOR OUTPUT %d.\n",ii+1);
+    faPtrs[ii] = genFA(faType, nInputs, iZero, nSamples);
+    faPtrs[ii]->setNPtsPerDim(16);
+    faPtrs[ii]->setBounds(xLower, xUpper);
+    faPtrs[ii]->setOutputLevel(0);
+    for (kk = 0; kk < nSamples; kk++) 
+      vecSamOut1[kk] = samOuts[kk*nOutputs+ii];
+
+    status = faPtrs[ii]->initialize(sampIns, vecSamOut1.getDVector());
+    if (status != 0)
+    {
+      printOutTS(PL_ERROR,
+        "ComputeLikelihood ERROR: Unable to create response surface.\n");
+      printOutTS(PL_ERROR,"       Consult PSUADE developers.\n");
+      for (kk = 0; kk < ii; kk++) delete [] faPtrs[kk];
+      delete [] faPtrs;
+      return PSUADE_UNDEFINED;
+    }
+  }
+  int  rsErrFlag=0;
+  char pString[1000], lineIn[1000];
+  if (psConfig_.AnaExpertModeIsOn())
+  {
+    //**/ change sampling information
+    printf("Include RS uncertainty in likelihood ? (y or n) ");
+    scanf("%s", pString);
+    if (pString[0] == 'y') rsErrFlag = 1;
+    fgets(lineIn,1000,stdin);
+  }
+
+  //**/ ---------------------------------------------------------------
+  // run the Metropolis Hasting algorithm
+  //**/ ---------------------------------------------------------------
+  psVector vecXGuess, vecYGuess, vecYStdev;
+  vecXGuess.setLength(dnSamples*nInputs);
+  vecYGuess.setLength(dnSamples*nOutputs);
+  vecYStdev.setLength(dnSamples*nOutputs);
+  double *XGuess = vecXGuess.getDVector();
+  double *YGuess = vecYGuess.getDVector();
+  double *YStdev = vecYStdev.getDVector();
+  double chiSq, dmean, dstdv, estdv;
+  int count;
+
+  //**/ loop until user wants to terminate
+  while (1)
+  {
+    //**/ input calibration parameter values 
+    for (ii = 0; ii < nInputs; ii++)
+    {
+      //**/ default = mid point
+      vecXGuess[ii] = 0.5 * (xUpper[ii] + xLower[ii]);
+      if (vecDesignP.length() == 0 || vecDesignP[ii] == 0) 
+      {
+        snprintf(pString,100,
+           "Please enter calibration value for input %d : ",ii+1);
+        vecXGuess[ii] = getDouble(pString);
+      }
+    }
+
+    //**/ fill up vecXGuess sample point
+    for (kk = 0; kk < dnSamples; kk++)
+    {
+      if (kk > 0)
+      {
+        for (ii = 0; ii < nInputs; ii++)
+          vecXGuess[kk*nInputs+ii] = vecXGuess[ii];
+      }
+      count = 0;
+      for (ii = 0; ii < nInputs; ii++)
+      {
+        //**/ design inputs
+        if (vecDesignP.length() > 0 && vecDesignP[ii] == 1) 
+        {
+          vecXGuess[kk*nInputs+ii] = matExpInps.getEntry(kk,count);
+          count++;
+        }
+      }
+    }
+
+    //**/ evaluate proposal sample 
+    for (ii = 0; ii < nOutputs; ii++)
+    {
+      if (rsErrFlag == 0)
+        faPtrs[ii]->evaluatePoint(dnSamples,XGuess,
+                                  &(YGuess[ii*dnSamples]));
+      else
+        faPtrs[ii]->evaluatePointFuzzy(dnSamples,XGuess,
+               &(YGuess[ii*dnSamples]),&(YStdev[ii*dnSamples]));
+    }
+
+    //**/ compute chi-squared
+    chiSq = 0.0;
+    for (ii = 0; ii < nOutputs; ii++)
+    {
+      for (kk = 0; kk < dnSamples; kk++)
+      {
+        dmean = matExpMeans.getEntry(kk,ii);
+        dstdv = matExpStdvs.getEntry(kk,ii);
+        estdv = YStdev[ii*dnSamples+kk];
+        if (rsErrFlag == 0)
+          chiSq += pow((YGuess[ii*dnSamples+kk]-dmean)/dstdv,2.0);
+        else
+          chiSq += pow((YGuess[ii*dnSamples+kk]-dmean),2.0)/
+                       (dstdv*dstdv+estdv*estdv);
+        if (printLevel >= 5)
+        {
+          printf("Simulation vs experiment %d %d = %e %e\n",ii+1,kk+1,
+                 YGuess[ii*dnSamples+kk],dmean);
+        }
+      }
+    }
+    chiSq /= (double) dnReps;
+    chiSq *= 0.5;
+    printf("Negative log-likelihood = %e\n", chiSq);
+
+    printf("Evaluate another point ? (y or n) ");
+    scanf("%s", pString);
+    fgets(lineIn,1000,stdin);
+    if (pString[0] != 'y') break;
+  }
+
+  //**/ ---------------------------------------------------------------
+  // clean up
+  //**/ ---------------------------------------------------------------
+  if (faPtrs != NULL)
+  {
+    for (ii = 0; ii < nOutputs; ii++) 
+      if (faPtrs[ii] != NULL) delete faPtrs[ii];
+    delete [] faPtrs;
+  }
+  return 0.0;
+}
+
+// ************************************************************************
 // write to matlab file 
 // ------------------------------------------------------------------------
 double MCMCAnalyzer::genMatlabFile(int nInputs,double *lower,double *upper,
@@ -8829,11 +9558,11 @@ double MCMCAnalyzer::genMatlabFile(int nInputs,double *lower,double *upper,
     printOutTS(PL_ERROR, "ERROR: cannot open %s file.\n", cfname);
     return 0;
   }
-  sprintf(pString,"This file shows posteriors plots");
+  snprintf(pString,100,"This file shows posteriors plots");
   fwriteComment(fp, pString);
-  sprintf(pString,"ns  - set to 1 for 1-step smoothing of 2D contours");
+  snprintf(pString,100,"ns  - set to 1 for 1-step smoothing of 2D contours");
   fwriteComment(fp, pString);
-  sprintf(pString,"ns1 - set to 1 for 1-step smoothing of 1D histgrams");
+  snprintf(pString,100,"ns1 - set to 1 for 1-step smoothing of 1D histgrams");
   fwriteComment(fp, pString);
   fprintf(fp, "ns  = 0;\n");
   fprintf(fp, "ns1 = 0;\n");
@@ -9660,6 +10389,8 @@ double MCMCAnalyzer::readSpecFile(int nInputs, int nOutputs,
   matExpStdvs.setFormat(PS_MAT1D);
   matExpMeans.setDim(dnSamples, nOutputs);
   matExpStdvs.setDim(dnSamples, nOutputs);
+
+  int stdAllOnes=1;
   for (ii = 0; ii < dnSamples; ii++)
   {
     fscanf(fp, "%d", &kk);
@@ -9688,22 +10419,55 @@ double MCMCAnalyzer::readSpecFile(int nInputs, int nOutputs,
       fscanf(fp, "%lg %lg", &ddata, &ddata2);
       matExpMeans.setEntry(ii, jj, ddata);
       matExpStdvs.setEntry(ii, jj, ddata2);
+      if (ddata2 != 1) stdAllOnes = 0;
       if (printLevel > 0)
          printOutTS(PL_INFO,"      Data mean/stdev = %16.8e %16.8e\n",
                     ddata, ddata2);
       if (ddata2 < 0.0)
       {
         fclose(fp);
-        printOutTS(PL_ERROR,"MCMC ERROR: std dev in spec file <= 0.\n");
-        printOutTS(PL_ERROR,"==> check the last entry in line %d\n", ii+3);
-        printOutTS(PL_ERROR,"   ** Use showformat in command line mode\n");
-        printOutTS(PL_ERROR,"   ** to verify your spec file format.\n");
+        printf("MCMC ERROR: std dev in spec file <= 0.\n");
+        printf("==> check the last entry in line %d\n", ii+3);
+        printf("   ** Use showformat in command line mode\n");
+        printf("   ** to verify your specification file format.\n");
         return PSUADE_UNDEFINED;
       }
     }
   }
   fclose(fp);
   printEquals(PL_INFO, 0);
+  //**/ In case all standard deviation = 1, print a message
+#if 0
+  if (stdAllOnes == 1)
+  {
+    printf("MCMC INFO: std dev in specification file = 1.\n");
+    printf("     The standard deviations in the specification ");
+    printf("file is expected to\n");
+    printf("     reflect experimental uncertainties. Setting ");
+    printf("them to all ones - \n");
+    printf("     which may be because there is a lack of ");
+    printf("information - can alter\n");
+    printf("     the posterior distributions substantially. ");
+    printf("As such, we recommend\n");
+    printf("     that the MCMCPostSample file be examined ");
+    printf("after inference to see\n");
+    printf("     whether the negative log-likelihoods for all ");
+    printf("experimental outputs\n");
+    printf("     (in the MLE statistics section) may be either ");
+    printf("too small or too\n");
+    printf("     large. If they are all small, this may explain ");
+    printf("why the posterior\n");
+    printf("     distributions may be too flat. If they are all ");
+    printf("large, this may\n");
+    printf("     explain why the posterior distributions may be ");
+    printf("too narrow. Please\n");
+    printf("     try your best to prescribe experimental ");
+    printf("standard deviations more\n";
+    printf("     carefully so that the inference results make ");
+    printf("sense and are thus\n");
+    printf("     more  defensible.\n");
+  }
+#endif
   return 0;
 }
 
@@ -9728,11 +10492,11 @@ int MCMCAnalyzer::setParams(int argc, char **argv)
 // ************************************************************************
 // check convergence 
 // ------------------------------------------------------------------------
-int MCMCAnalyzer::checkConvergence(int num, double *means, double *stds,
-                                   int leng)
+double MCMCAnalyzer::checkConvergence(int num, double *means, double *stds,
+                                      int leng, double thresh)
 {
   int    ii;
-  double WStat, BStat, ddata, ddata2, thresh=1.02;
+  double WStat, BStat, ddata, ddata2;
   //**/ compute PSRF
   WStat = 0.0;
   for (ii = 0; ii < num; ii++) WStat += stds[ii];
@@ -9751,8 +10515,7 @@ int MCMCAnalyzer::checkConvergence(int num, double *means, double *stds,
   if (ddata < 0) ddata2 = PSUADE_UNDEFINED;
   else           ddata2 = sqrt(ddata);
   printf("MCMC convergence check: %e <? %e\n", ddata2, thresh);
-  if (ddata2 < thresh) return 1;
-  else                 return 0;
+  return ddata2;
 }
 
 // ************************************************************************
@@ -9765,158 +10528,6 @@ MCMCAnalyzer& MCMCAnalyzer::operator=(const MCMCAnalyzer &)
    exit(1);
    return (*this);
 }
-
-#if 0
-// ************************************************************************
-// read in response surface index file
-// rsIndices[ii] == -1  ==> fixed parameters
-// samMatrix ==> if there is any uncertain parameter, it has the sample
-// ------------------------------------------------------------------------
-int MCMCAnalyzer::readIndexFile(PsuadeData *dataPtr, psIVector &rsIndices, 
-                          psVector &rsValues, psMatrix &samMatrix)
-{
-  int    kk, ii, nInputs, nSamp, numUParams=0, status;
-  double ddata;
-  char   *rsFile;
-  pData  pPtr;
-  string   sampleFileName, str2;
-  ifstream infile;
-
-  dataPtr->getParameter("input_ninputs", pPtr);
-  nInputs = pPtr.intData_;
-  dataPtr->getParameter("ana_rsindexfile", pPtr);
-  rsFile = pPtr.strArray_[0];
-  if (strcmp(rsFile, "NONE"))
-  {
-    printOutTS(PL_INFO,
-         "MCMC: A response surface index file has been specified.\n");
-
-    infile.open(rsFile, ios::in);
-    if (!infile.is_open())
-    {
-      printOutTS(PL_ERROR,
-         "MCMC ERROR: rs_index_file %s not found.\n",rsFile);
-      return -1;
-    }
-    else
-    {
-      printOutTS(PL_INFO,"INFO: rs_index_file %s found.\n",rsFile);
-      infile >> kk;
-      if (kk != nInputs)
-      {
-        printOutTS(PL_ERROR,
-             "MCMC ERROR: invalid nInputs in rs_index_file (%d != %d).\n",
-             kk, nInputs);
-        printOutTS(PL_ERROR,"  Data format should be: \n");
-        printOutTS(PL_ERROR,
-             "  line 1: nInputs in rs data (driver) file\n");
-        printOutTS(PL_ERROR,
-             "  line 2: 1 1 <Input 1 is a calibration parameter>\n");
-        printOutTS(PL_ERROR,
-             "  line 3: 2 0 val <Input 2 is a parameter fixed at val>\n");
-        printOutTS(PL_ERROR,
-             "  line 4: 3 999 1 uSamp <Input 3 is an uncertain parameter>\n");
-        printOutTS(PL_ERROR,"  (999   means uncertain parameter)\n");
-        printOutTS(PL_ERROR,"  (1     means first column in uSamp)\n");
-        printOutTS(PL_ERROR,"  (uSamp is a sample file)\n");
-        printOutTS(PL_ERROR,"  ...\n");
-        infile.close();
-        return -1;
-      }
-      rsIndices.setLength(nInputs);
-      rsValues.setLength(nInputs);
-      sampleFileName = "none";
-      for (ii = 0; ii < nInputs; ii++)
-      {
-        rsIndices[ii] = 0;
-        infile >> kk;
-        //**/ first number must be a sequential input number
-        if (kk != ii+1)
-        {
-          printOutTS(PL_ERROR,
-               "MCMC ERROR: 1st index in indexFile = %d (must be %d)).\n",
-               kk, ii+1);
-          printOutTS(PL_ERROR,"  Data format should be: \n");
-          printOutTS(PL_ERROR,
-               "  line 1: nInputs in rs data (driver) file\n");
-          printOutTS(PL_ERROR,
-               "  line 2: 1 1 <Input 1 is a calibration parameter>\n");
-          printOutTS(PL_ERROR,
-               "  line 3: 2 0 val <Input 2 is a parameter fixed at val>\n");
-          printOutTS(PL_ERROR,
-               "  line 4: 3 999 1 uSamp <Input 3 is an uncertain parameter>\n");
-          printOutTS(PL_ERROR,"  (999   means uncertain parameter)\n");
-          printOutTS(PL_ERROR,"  (1     means first column in uSamp)\n");
-          printOutTS(PL_ERROR,"  (uSamp is a sample file)\n");
-          printOutTS(PL_ERROR,"  ...\n");
-          infile.close();
-          return -1;
-        }
-        //**/ second number is the input number, 0, or 999
-        infile >> kk;
-        rsIndices[ii] = kk;
-        if (rsIndices[ii] == 0)
-          printOutTS(PL_INFO,"MCMC INFO: input %3d inactive\n",ii+1);
-
-        //**/ if uncertain parameter, get index and sample file 
-        if (rsIndices[ii] == 999)
-        {
-          infile >> kk;
-          infile >> str2;
-          if (sampleFileName.compare("none") == 0) sampleFileName = str2;
-          else if (sampleFileName.compare(str2) != 0)
-          {
-            printOutTS(PL_ERROR,
-                 "MCMC readIndexFile ERROR: sample file for all\n");
-            printOutTS(PL_ERROR,
-                 "         uncertain parameters must be the same.\n");
-            exit(1);
-          }
-          numUParams++;
-          rsIndices[ii] = kk + 1000;
-        }
-        else if (rsIndices[ii] < 0 || rsIndices[ii] > nInputs)
-        {
-          printOutTS(PL_ERROR,
-               "MCMC readIndexFile ERROR: input %3d = %d invalid\n",ii+1,
-               rsIndices[ii]);
-          infile.close();
-          return -1;
-        }
-
-        rsIndices[ii] = rsIndices[ii] - 1;
-        if (rsIndices[ii] >= -1 && rsIndices[ii] < nInputs)
-        {
-          infile >> ddata;
-          rsValues[ii] = ddata;
-        }
-      }
-      infile.close();
-      printOutTS(PL_INFO, "Response surface index information: \n");
-      for (ii = 0; ii < nInputs; ii++)
-      {
-        if (rsIndices[ii] == -1)
-          printOutTS(PL_INFO, "Input %4d: fixed at default value  = %e\n",
-                     ii+1, rsValues[ii]);
-        else if (rsIndices[ii] >= 1000)
-          printOutTS(PL_INFO, "Input %4d: uncertain, sample index = %4d\n",
-                     ii+1, rsIndices[ii]-999);
-        else
-          printOutTS(PL_INFO, "Input %4d: calibration/design parameter\n",
-                     ii+1);
-      }
-      //**/ if there is any uncertain parameter, read in the sample
-      if (numUParams > 0)
-      {
-        status = readSampleInputFile(sampleFileName.c_str(),rsIndices,
-                                     samMatrix);
-        if (status < 0) return -1;
-      }
-    }
-  }
-  return 0;
-}
-#endif
 
 // ************************************************************************
 // read in response surface index file
@@ -10374,7 +10985,7 @@ double MCMCAnalyzer::createDiscrepancyFunctions(int nInputs, int nOutputs,
              "You can choose the nominal values, or it will be\n");
         printOutTS(PL_INFO,
              "set to the input means or mid points of the ranges.\n");
-        sprintf(pString, "Set nomininal values yourself ? (y or n) ");
+        snprintf(pString,100,"Set nomininal values yourself ? (y or n) ");
         getString(pString, lineIn);
         if (lineIn[0] == 'y')
         {
@@ -10387,7 +10998,7 @@ double MCMCAnalyzer::createDiscrepancyFunctions(int nInputs, int nOutputs,
               printOutTS(PL_INFO,
                   "Input %d has lower and upper bounds = %e %e\n",
                   ii2+1, lower[ii2], upper[ii2]);
-              sprintf(pString, 
+              snprintf(pString,100, 
                       "Nominal value for input %d : ",ii2+1);
               vecOneSample[ii2] = getDouble(pString);
               vecSettings[ii2]  = vecOneSample[ii2];
@@ -10447,7 +11058,7 @@ double MCMCAnalyzer::createDiscrepancyFunctions(int nInputs, int nOutputs,
           vecLowers[cnt] = lower[ii2];
           vecUppers[cnt] = upper[ii2];
           if (qData.strArray_ == NULL)
-               sprintf(pString, "X%d", ii2+1);
+               snprintf(pString,100,"X%d", ii2+1);
           else strcpy(pString, qData.strArray_[ii2]);
           Xnames.loadOneString(cnt, pString);
           cnt++;
@@ -10476,13 +11087,13 @@ double MCMCAnalyzer::createDiscrepancyFunctions(int nInputs, int nOutputs,
     vecStates.setLength(ExpNSamples);
     for (kk = 0; kk < ExpNSamples; kk++) vecStates[kk] = 1;
     Ynames.setNumStrings(1);
-    sprintf(pString, "Y%d", ii+1);
+    snprintf(pString,100,"Y%d", ii+1);
     Ynames.loadOneString(0, pString);
     dPtr->updateOutputSection(ExpNSamples,iOne,
                  &discSamOutputs[ii*ExpNSamples],
                  vecStates.getIVector(),Ynames.getStrings());
     dPtr->updateMethodSection(PSUADE_SAMP_MC, ExpNSamples, 1, -1, -1);
-    sprintf(pString, "psDiscrepancyModel%d", ii+1);
+    snprintf(pString,100,"psDiscrepancyModel%d", ii+1);
     dPtr->writePsuadeFile(pString, 0);
 
     //**/ ---------------------------------------------------------------
@@ -10510,12 +11121,12 @@ double MCMCAnalyzer::createDiscrepancyFunctions(int nInputs, int nOutputs,
       if (pOrder > 0)
       {
         printf("3. Use polynomial function of order %d.\n",pOrder);
-        sprintf(pString, "Response surface for output %d? (0-3) ",ii+1);
+        snprintf(pString,100,"Response surface for output %d? (0-3) ",ii+1);
         rstype = getInt(0,3,pString);
       }
       else
       {
-        sprintf(pString, "Response surface for output %d? (0-1) ",ii+1);
+        snprintf(pString,100,"Response surface for output %d? (0-1) ",ii+1);
         rstype = getInt(0,1,pString);
       }
       if (rstype > 0)
@@ -10910,7 +11521,7 @@ double MCMCAnalyzer::analyzeDirect_nors(McmcData &mdata)
     {
       vecPlotInds[ii] = ii;
       qdata.strArray_[ii] = new char[100];
-      sprintf(qdata.strArray_[ii], "X%d", ii+1);
+      snprintf(qdata.strArray_[ii],100,"X%d", ii+1);
     }
   }
   qdata.nStrings_ = nInputs;
@@ -10966,7 +11577,7 @@ double MCMCAnalyzer::createPosteriorFromLikelihoods(psVector vecSamIns,
 
   //**/ get sample size from user
   char pString[1000];
-  sprintf(pString, 
+  snprintf(pString,100, 
      "Size of the sample to be created (>=10k, default=50k) ? ");
   int maxPostSam = getInt(10000, 200000, pString);
 

@@ -77,7 +77,7 @@ int LSASampling::initialize(int initLevel)
     printf("one of the 2 faces\n");
     printf("for each input. So the default nSamples = nInputs + 1.\n");
     printf("However, you can define more points per input dimension.\n");
-    sprintf(pString,"How many points per input dimension (default=1)? ");
+    snprintf(pString,100,"How many points per input dimension (default=1)? ");
     nPtsPerInput_ = getInt(1,10000,pString);
   }
   nSamples_ = nPtsPerInput_ * nInputs_ + 1;

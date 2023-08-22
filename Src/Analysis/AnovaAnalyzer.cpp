@@ -152,7 +152,7 @@ double AnovaAnalyzer::analyze(aData &adata)
   printf("2. Legendre polynomial\n");
   printf("3. Gaussian process\n");
   faType = -1;
-  sprintf(pString, "Enter your response surface choice ? ");
+  snprintf(pString,100,"Enter your response surface choice ? ");
   while (faType < 0 || faType > 3) faType = getInt(1, 3, pString);
   if      (faType == 1) faType = PSUADE_RS_MARS;
   else if (faType == 2) faType = PSUADE_RS_REGRL;

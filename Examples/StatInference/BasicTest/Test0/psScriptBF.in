@@ -6,7 +6,6 @@ ana_expert
 rsmcmc
 y
 3
-
 mcmcFile
 n
 1
@@ -16,9 +15,9 @@ n
 n
 ################################################
 # Now MCMCPostSample is available. You may run
-# python view_mcmcposteriors.py < pyScript.in
-# to view the posteriors (which will also be
-# stored in the psu_mcmcpost.png file).
+# python view_mcmcposteriors.py to view the
+# posteriors (which will also be stored in the
+# psu_mcmcpost.png file).
 ################################################
 q
 

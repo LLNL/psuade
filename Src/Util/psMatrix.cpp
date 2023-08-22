@@ -426,7 +426,7 @@ int psMatrix::setDim(int nrows, int ncols)
   //**/ clean it first, if needed
   clean();
 
-  //**/ load from the incoming matrix
+  //**/ allocate matrix and set to 0
   nRows_ = nrows;
   nCols_ = ncols;
   if (nRows_ <= 0 || nCols_ <= 0) return -1;

@@ -49,8 +49,10 @@
 #include "PrintingTS.h"
 #include "PsuadeConfig.h"
 #include "psVector.h"
+#include "ProbMatrix.h"
 #include "MainEffectAnalyzer.h"
 #include "TwoParamAnalyzer.h"
+#include "ShapleyAnalyzer.h"
 
 // ------------------------------------------------------------------------
 // local includes : function approximator and others
@@ -71,7 +73,7 @@
 int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
 {
   int    ss, ii, jj, kk, status, outputID, flag, faType;
-  int    nSamples, outputLevel, nInputs, nOutputs, *sampleStates=NULL;
+  int    nSamples, nInputs, nOutputs, *sampleStates=NULL;
   double ddata, *sampleInputs=NULL, *sampleOutputs=NULL; 
   double *iLowerB=NULL, *iUpperB=NULL;
   char   command[1001], winput[1001], pString[1001], dataFile[1001];
@@ -88,7 +90,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
   //**/ session == NULL when help (-h) is issued
   if (session == NULL)
   {
-    nSamples = outputLevel = nInputs = nOutputs = 0;
+    nSamples = nInputs = nOutputs = 0;
     sampleInputs = sampleOutputs = NULL;
     sampleStates = NULL;
     psuadeIO = NULL;
@@ -98,7 +100,6 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
   else
   {
     nSamples = session->nSamples_;
-    outputLevel = session->outputLevel_;
     nInputs = session->nInputs_;
     nOutputs = session->nOutputs_;
     sampleInputs  = session->vecSamInputs_.getDVector();
@@ -167,7 +168,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
 
     //**/ query user for output ID
     sscanf(lineIn,"%s %s", command, winput);
-    sprintf(pString, "Enter output number (1 - %d) : ", nOutputs);
+    snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs);
     outputID = getInt(1, nOutputs, pString);
     outputID--;
 
@@ -176,7 +177,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     printf("Select between the two options below: \n");
     printf("1. PSUADE will generate the sample\n");
     printf("2. User will provide the sample (in PSUADE data format)\n");
-    sprintf(pString, "Enter 1 or 2 : ");
+    snprintf(pString,100,"Enter 1 or 2 : ");
     int    samSrc = getInt(1, 2, pString);
     int    uaNSams;
     psVector  vecUAInps, vecUAOuts;
@@ -184,7 +185,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     if (samSrc == 1)
     {
       printf("PSUADE will generate a sample for uncertainty analysis.\n");
-      sprintf(pString, "Sample size ? (10000 - 100000) ");
+      snprintf(pString,100,"Sample size ? (10000 - 100000) ");
       uaNSams = getInt(10000, 100000, pString);
       vecUAInps.setLength(uaNSams * nInputs);
       psuadeIO->getParameter("ana_use_input_pdfs", pPtr);
@@ -291,7 +292,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     printf("it creates a\n");
     printf("   probability distribution enveloped by the max/min ");
     printf("distributions.\n");
-    sprintf(pString,"Enter 1 (average case) or 2 (worst case) analysis : ");
+    snprintf(pString,100,"Enter 1 (average case) or 2 (worst case) analysis : ");
     int uaMethod = getInt(1,2,pString);
     uaMethod--;
 
@@ -318,7 +319,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         return 1;
       }
       faPtrUA->setBounds(iLowerB, iUpperB);
-      faPtrUA->setOutputLevel(outputLevel);
+      faPtrUA->setOutputLevel(outputLevel_);
       psVector vecYOut;
       vecYOut.setLength(nSamples);
       for (ss = 0; ss < nSamples; ss++)
@@ -824,7 +825,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
 
     //**/ query user for output ID
     sscanf(lineIn,"%s %s", command, winput);
-    sprintf(pString, "Enter output number (1 - %d) : ", nOutputs);
+    snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs);
     outputID = getInt(1, nOutputs, pString);
     outputID--;
 
@@ -833,7 +834,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     printf("Select between the two options below: \n");
     printf("1. PSUADE will generate the sample\n");
     printf("2. User will provide the sample (in PSUADE data format)\n");
-    sprintf(pString, "Enter 1 or 2 : ");
+    snprintf(pString,100,"Enter 1 or 2 : ");
     int samSrc = getInt(1, 2, pString);
 
     //**/ generate a sample or get from user a sample for evaluation 
@@ -844,7 +845,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     if (samSrc == 1)
     {
       printf("PSUADE will generate a sample for uncertainty analysis.\n");
-      sprintf(pString, "Sample size ? (10000 - 100000) ");
+      snprintf(pString,100,"Sample size ? (10000 - 100000) ");
       uaNSams = getInt(10000, 100000, pString);
       vecUAInps.setLength(uaNSams * nInputs);
       psuadeIO->getParameter("ana_use_input_pdfs", pPtr);
@@ -931,7 +932,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
 
     //**/ need information to get bootstrapped sample
-    sprintf(pString, 
+    snprintf(pString,100, 
       "How many bootstraps to create from the loaded sample (10 - 300) : ");
     int numBS = getInt(10, 300, pString);
     double bsPC=0;
@@ -1155,12 +1156,12 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     fgets(winput,5000,stdin);
     if (lineIn2[0] != 'y') return 0;
 
-    sprintf(pString, "Enter output number (1 - %d) : ", nOutputs);
+    snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs);
     outputID = getInt(1, nOutputs, pString);
     outputID--;
 
     faType = -1;
-    sprintf(pString, "Enter your response surface choice ? ");
+    snprintf(pString,100,"Enter your response surface choice ? ");
     while (faType < 0 || faType > PSUADE_NUM_RS)
     {
       writeFAInfo(outputLevel_);
@@ -1179,7 +1180,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     int saveDiag = pPtr.intData_;
     psuadeIO->getParameter("ana_rstype", pPtr);
     int saveRS = pPtr.intData_;
-    psuadeIO->updateAnalysisSection(-1,-1,faType,outputLevel,-1,-1);
+    psuadeIO->updateAnalysisSection(-1,-1,faType,outputLevel_,-1,-1);
     anaManager->analyze(psuadeIO, 0, NULL, outputID);
     psuadeIO->updateAnalysisSection(-1,-1,saveRS,saveDiag,-1,-1);
     //**/ get the statistics
@@ -1401,13 +1402,13 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     fgets(winput,5000,stdin);
     if (lineIn2[0] != 'y') return 0;
 
-    sprintf(pString, "Enter output number (1 - %d) : ", nOutputs);
+    snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs);
     outputID = getInt(1, nOutputs, pString);
     outputID--;
 
     //**/ get RS type from user
     faType = -1;
-    sprintf(pString, "Enter your response surface choice ? ");
+    snprintf(pString,100,"Enter your response surface choice ? ");
     while (faType < 0 || faType > PSUADE_NUM_RS)
     {
       writeFAInfo(outputLevel_);
@@ -1427,7 +1428,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     int saveDiag = pPtr.intData_;
     psuadeIO->getParameter("ana_rstype", pPtr);
     int saveRS = pPtr.intData_;
-    psuadeIO->updateAnalysisSection(-1,-1,faType,outputLevel,-1,-1);
+    psuadeIO->updateAnalysisSection(-1,-1,faType,outputLevel_,-1,-1);
     anaManager->analyze(psuadeIO, 0, NULL, outputID);
     psuadeIO->updateAnalysisSection(-1,-1,saveRS,saveDiag,-1,-1);
 
@@ -1616,12 +1617,12 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     fgets(winput,5000,stdin);
     if (lineIn2[0] != 'y') return 0;
 
-    sprintf(pString, "Enter output number (1 - %d) : ", nOutputs);
+    snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs);
     outputID = getInt(1, nOutputs, pString);
     outputID--;
 
     faType = -1;
-    sprintf(pString, "Enter your response surface choice ? ");
+    snprintf(pString,100,"Enter your response surface choice ? ");
     while (faType < 0 || faType > PSUADE_NUM_RS)
     {
       writeFAInfo(outputLevel_);
@@ -1640,7 +1641,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     int saveDiag = pPtr.intData_;
     psuadeIO->getParameter("ana_rstype",pPtr);
     int saveRS = pPtr.intData_;
-    psuadeIO->updateAnalysisSection(-1,-1,faType,outputLevel,-1,-1);
+    psuadeIO->updateAnalysisSection(-1,-1,faType,outputLevel_,-1,-1);
     anaManager->analyze(psuadeIO, 0, NULL, outputID);
     psuadeIO->updateAnalysisSection(-1,-1,saveRS,saveDiag,-1,-1);
     delete anaManager;
@@ -1675,12 +1676,12 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     fgets(winput,5000,stdin);
     if (lineIn2[0] != 'y') return 0;
 
-    sprintf(pString, "Enter output number (1 - %d) : ", nOutputs);
+    snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs);
     outputID = getInt(1, nOutputs, pString);
     outputID--;
 
     faType = -1;
-    sprintf(pString, "Enter your response surface choice ? ");
+    snprintf(pString,100,"Enter your response surface choice ? ");
     while (faType < 0 || faType > PSUADE_NUM_RS)
     {
       writeFAInfo(outputLevel_);
@@ -1699,7 +1700,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     int saveDiag = pPtr.intData_;
     psuadeIO->getParameter("ana_rstype",pPtr);
     int saveRS = pPtr.intData_;
-    psuadeIO->updateAnalysisSection(-1,-1,faType,outputLevel,-1,-1);
+    psuadeIO->updateAnalysisSection(-1,-1,faType,outputLevel_,-1,-1);
     anaManager->analyze(psuadeIO, 0, NULL, outputID);
     psuadeIO->updateAnalysisSection(-1,-1,saveRS,saveDiag,-1,-1);
     delete anaManager;
@@ -1755,13 +1756,13 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     if (lineIn2[0] != 'y') return 0;
 
     //**/ get which output to analyze
-    sprintf(pString, "Enter output number (1 - %d) : ", nOutputs);
+    snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs);
     outputID = getInt(1, nOutputs, pString);
     outputID--;
 
     //**/ get which response surface to use
     faType = -1;
-    sprintf(pString, "Enter your response surface choice ? ");
+    snprintf(pString,100,"Enter your response surface choice ? ");
     while (faType < 0 || faType > PSUADE_NUM_RS)
     {
       writeFAInfo(outputLevel_);
@@ -1797,7 +1798,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
 
     //**/ set up for iterations
     psVector vecTT;
-    sprintf(pString, 
+    snprintf(pString,100, 
           "How many bootstrapped samples to use (5 - 300) : ");
     int numBS = getInt(5, 300, pString);
     vecTT.setLength(numBS*nInputs);
@@ -1822,6 +1823,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     //**/ iterate
 #pragma omp parallel shared(vecTT,sampleInputs,sampleStates,sampleOutputs,psuadeIO) \
     private(kk,jj,ss,ii,nSamples2,ind,vecXT,vecYT,vecST,vecIT,psIO,anaManager,pNames,pIpdfs,pImeans,pIstds,pIcor)
+{
 #pragma omp for
     for (kk = 0; kk < numBS; kk++)
     {
@@ -1887,6 +1889,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       delete anaManager;
       delete psIO;
     }
+} /* omp */
 
     //**/ postprocessing
     psVector vecMT;
@@ -2098,13 +2101,13 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     if (lineIn2[0] != 'y') return 0;
 
     //**/ get output
-    sprintf(pString, "Enter output number (1 - %d) : ", nOutputs);
+    snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs);
     outputID = getInt(1, nOutputs, pString);
     outputID--;
 
     //**/ get which response surface to use
     faType = -1;
-    sprintf(pString, "Enter your response surface choice ? ");
+    snprintf(pString,100,"Enter your response surface choice ? ");
     while (faType < 0 || faType > PSUADE_NUM_RS)
     {
       writeFAInfo(outputLevel_);
@@ -2139,7 +2142,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
 
     //**/ set up for iterations
-    sprintf(pString, "How many bootstrapped samples to use (5 - 300) : ");
+    snprintf(pString,100,"How many bootstrapped samples to use (5 - 300) : ");
     int numBS = getInt(5, 300, pString);
 
     //**/ need to turn off expert modes, so save them first
@@ -2163,6 +2166,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     //**/ iterate
 #pragma omp parallel shared(vecTT,sampleInputs,sampleStates,sampleOutputs,psuadeIO) \
     private(kk,jj,ss,ii,nSamples2,ind,vecXT,vecYT,vecST,vecIT,psIO,anaManager,pNames,pIpdfs,pImeans,pIstds,pIcor)
+{
 #pragma omp for
     for (kk = 0; kk < numBS; kk++)
     {
@@ -2228,6 +2232,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       delete anaManager;
       delete psIO;
     }
+} /* omp */
     
     //**/ compute mean and std dev
     for (ii = 0; ii < nInputs; ii++)
@@ -2530,13 +2535,13 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     if (lineIn2[0] != 'y') return 0;
 
     //**/ get output information
-    sprintf(pString, "Enter output number (1 - %d) : ", nOutputs);
+    snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs);
     outputID = getInt(1, nOutputs, pString);
     outputID--;
 
     //**/ get which response surface to use
     faType = -1;
-    sprintf(pString, "Enter your response surface choice ? ");
+    snprintf(pString,100,"Enter your response surface choice ? ");
     while (faType < 0 || faType > PSUADE_NUM_RS)
     {
       writeFAInfo(outputLevel_);
@@ -2571,7 +2576,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
 
     //**/ set up for iterations
-    sprintf(pString, "How many bootstrapped samples to use (5 - 300) : ");
+    snprintf(pString,100,"How many bootstrapped samples to use (5 - 300) : ");
     int numBS = getInt(5, 300, pString);
 
     //**/ need to turn off expert modes, so save them first
@@ -2869,10 +2874,10 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
 
     psuadeIO->getParameter("ana_rstype", pPtr);
     faType = pPtr.intData_;
-    sprintf(pString, "Enter output number (1 - %d) : ", nOutputs);
+    snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs);
     outputID = getInt(1, nOutputs, pString);
     outputID--;
-    sprintf(pString,
+    snprintf(pString,100,
         "Sample size for generating distribution? (10000 - 100000) ");
     int nSamp = getInt(10000, 100000, pString);
     int saveFlag = 0;
@@ -2890,7 +2895,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     faPtr = genFA(faType, nInputs, -1, nSamples);
     faPtr->setNPtsPerDim(32);
     faPtr->setBounds(iLowerB, iUpperB);
-    faPtr->setOutputLevel(outputLevel);
+    faPtr->setOutputLevel(outputLevel_);
     psVector vecYT;
     if (nOutputs > 1)
     {
@@ -3180,7 +3185,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       printf("Deterministic RS used ==> no RS uncertainties.\n");
       fprintf(fp, "subplot(2,2,3)\n");
       fwritePlotTitle(fp, "Prob. Dist. (RS with uncertainties)");
-      sprintf(pString, "Deterministic RS: no RS uncertainties");
+      snprintf(pString,100,"Deterministic RS: no RS uncertainties");
       fwriteComment(fp, pString);
     }
     if (faType == PSUADE_RS_MARS || faType == PSUADE_RS_RBF ||
@@ -3274,7 +3279,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
      
     //**/ query user for output ID
     sscanf(lineIn,"%s %s", command, winput);
-    sprintf(pString, "Enter output number (1 - %d) : ", nOutputs);
+    snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs);
     outputID = getInt(1, nOutputs, pString);
     outputID--;
 
@@ -3330,7 +3335,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     printf("Select between the two options below: \n");
     printf("1. PSUADE will generate the sample\n");
     printf("2. User will provide the sample (in PSUADE data format)\n");
-    sprintf(pString, "Enter 1 or 2 : ");
+    snprintf(pString,100,"Enter 1 or 2 : ");
     int samSrc = getInt(1, 2, pString);
 
     //**/ generate a sample or get from user a sample for evaluation 
@@ -3341,7 +3346,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     if (samSrc == 1)
     {
       printf("PSUADE will generate a sample for uncertainty analysis.\n");
-      sprintf(pString, "Sample size ? (10000 - 100000) ");
+      snprintf(pString,100,"Sample size ? (10000 - 100000) ");
       uaNSams = getInt(10000, 100000, pString);
       vecUAInps.setLength(uaNSams * nInputs);
       psuadeIO->getParameter("ana_use_input_pdfs", pPtr);
@@ -3447,11 +3452,11 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       printf("1. use bootstrapping + RS (or deterministic RS, e.g. MARS)\n");
       printf("2. use stochastic RS (Kriging, MARS+Bootstrap, regression)\n");
       printf("3. use (2) but perform worst-case analysis (2 - average case)\n");
-      sprintf(pString, "Select 1, 2, or 3 : ");
+      snprintf(pString,100,"Select 1, 2, or 3 : ");
       uaMethod = getInt(1, 3, pString);
       if (uaMethod == 1)
       {
-        sprintf(pString, "How many bootstrapped samples to use (10 - 300) : ");
+        snprintf(pString,100,"How many bootstrapped samples to use (10 - 300) : ");
         numBS = getInt(10, 300, pString);
       }
     }
@@ -4175,10 +4180,10 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     psVector   vecOut, vecLower, vecUpper;
     psuadeIO->getParameter("ana_rstype", pPtr);
     faType = pPtr.intData_;
-    sprintf(pString, "Enter output number (1 - %d) : ", nOutputs);
+    snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs);
     outputID = getInt(1, nOutputs, pString);
     outputID--;
-    sprintf(pString,
+    snprintf(pString,100,
            "Sample size for generating distribution? (10000 - 100000) ");
     int nSamp = getInt(10000, 100000, pString);
     flag = 0;
@@ -4192,7 +4197,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     faPtr = genFA(faType, nInputs, -1, nSamples);
     faPtr->setNPtsPerDim(32);
     faPtr->setBounds(iLowerB, iUpperB);
-    faPtr->setOutputLevel(outputLevel);
+    faPtr->setOutputLevel(outputLevel_);
     psVector vecYT;
     if (nOutputs > 1)
     {
@@ -4610,7 +4615,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         }
            
         //**/ set up for iterations
-        sprintf(pString, "How many bootstrapped samples to use (10 - 300) : ");
+        snprintf(pString,100,"How many bootstrapped samples to use (10 - 300) : ");
         nbs = getInt(1, 300, pString);
         printf("Write the CDFs to a matlab/scilab file? (y or n) ");
         scanf("%s", winput);
@@ -5111,7 +5116,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     if (lineIn2[0] != 'y') return 0;
 
     //**/ get output information
-    sprintf(pString, "Enter output number (1 - %d) : ", nOutputs);
+    snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs);
     outputID = getInt(1, nOutputs, pString);
     outputID--;
 
@@ -5120,7 +5125,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     printf("1. Sobol' main effect using McKay's method (replicated LH).\n");
     printf("2. Sobol' main effect method using on numerical integration. \n");
     printf("3. Sobol' total sensitivity using numerical integration.\n");
-    sprintf(pString, "Which  method (1, 2, or 3) ? ");
+    snprintf(pString,100,"Which  method (1, 2, or 3) ? ");
     int method = getInt(1, 3, pString);
     int analysisMethod, iOne=1;
     if      (method == 1) analysisMethod = PSUADE_ANA_ME;
@@ -5164,7 +5169,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     for (ii = 0; ii < count2; ii++) vecIT[ii] = 1;
 
     //**/ set up for iterations
-    sprintf(pString, "How many times to run it (10 - 1000) : ");
+    snprintf(pString,100,"How many times to run it (10 - 1000) : ");
     int count = getInt(10, 1000, pString);
     vecTT.setLength(count*nInputs);
     psuadeIO->getParameter("ana_use_input_pdfs", pPtr);
@@ -5336,18 +5341,18 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     if (faPtr == NULL) {printf("ERROR detected.\n"); return 1;}
     faPtr->setNPtsPerDim(nPtsPerDim);
     faPtr->setBounds(iLowerB, iUpperB);
-    faPtr->setOutputLevel(outputLevel);
+    faPtr->setOutputLevel(outputLevel_);
     psVector vecInpSettings;
     vecInpSettings.setLength(nInputs);
 
     int iplot1, iInd1, jplot, sInd;
-    sprintf(pString, "Enter the input for x axis (1 - %d) : ", nInputs);
+    snprintf(pString,100,"Enter the input for x axis (1 - %d) : ", nInputs);
     iplot1 = getInt(1, nInputs, pString);
     iplot1--;
 
     if (nInputs > 1)
     {
-      sprintf(pString,"Set other inputs at their mid points? (y or n) ");
+      snprintf(pString,100,"Set other inputs at their mid points? (y or n) ");
       getString(pString, winput);
       if (winput[0] == 'y')
       {
@@ -5364,7 +5369,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         {
           if (iInd1 != iplot1)
           {
-            sprintf(pString,
+            snprintf(pString,100,
                     "Enter nominal value for input %d (%e - %e): ", 
                     iInd1+1, iLowerB[iInd1], iUpperB[iInd1]);
             vecInpSettings[iInd1] = getDouble(pString);
@@ -5374,7 +5379,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       }
     }
     jplot = 0;
-    sprintf(pString, "Enter output number (1 - %d) : ", nOutputs);
+    snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs);
     jplot = getInt(1, nOutputs, pString);
     jplot--;
 
@@ -5432,7 +5437,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       fwritePlotAxes(fp);
       fwritePlotXLabel(fp, inputNames[iplot1]);
       fwritePlotYLabel(fp, outputNames[jplot]);
-      sprintf(winput, "Plot for %s", outputNames[jplot]);
+      snprintf(winput,100,"Plot for %s", outputNames[jplot]);
       fwritePlotTitle(fp, winput);
       fclose(fp);
       printf("scilabrs1.sci is now available.\n");
@@ -5479,24 +5484,24 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         if (faYOut[sInd] > Ymax) Ymax = faYOut[sInd];
       printf("Ymin and Ymax found = %e %e.\n", Ymin, Ymax);
       printf("You can set thresholds to cut out certain regions.\n");
-      sprintf(pString,"Set lower threshold for output? (y or n) : ");
+      snprintf(pString,100,"Set lower threshold for output? (y or n) : ");
       getString(pString, winput);
       fprintf(fp, "yminFlag = 0;\n");
       double thresh;
       if (winput[0] == 'y')
       {
-        sprintf(pString,"Enter the lower threshold (min = %e) : ", 
+        snprintf(pString,100,"Enter the lower threshold (min = %e) : ", 
                 Ymin);
         thresh = getDouble(pString);
         fprintf(fp, "ymin = %e;\n", thresh);
         fprintf(fp, "plot(X,ones(%d,1)*ymin,'r-')\n",faLeng);
       }
-      sprintf(pString,"Set upper threshold for output? (y or n) : ");
+      snprintf(pString,100,"Set upper threshold for output? (y or n) : ");
       getString(pString, winput);
       if (winput[0] == 'y')
       {
-        sprintf(pString,"Enter the upper threshold (max = %e) : ", 
-                   Ymax);
+        snprintf(pString,100,"Enter the upper threshold (max = %e) : ", 
+                 Ymax);
         thresh = getDouble(pString);
         fprintf(fp, "ymax = %e;\n", thresh);
         fprintf(fp, "plot(X,ones(%d,1)*ymax,'r-')\n",faLeng);
@@ -5509,7 +5514,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       fwritePlotAxes(fp);
       fwritePlotXLabel(fp, inputNames[iplot1]);
       fwritePlotYLabel(fp, outputNames[jplot]);
-      sprintf(winput, "Plot for %s", outputNames[jplot]);
+      snprintf(winput,100,"Plot for %s", outputNames[jplot]);
       fwritePlotTitle(fp, winput);
       fclose(fp);
       printf("matlabrs1.m is now available.\n");
@@ -5551,17 +5556,17 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     if (faPtr == NULL) {printf("ERROR detected.\n"); return 1;}
     faPtr->setNPtsPerDim(nPtsPerDim);
     faPtr->setBounds(iLowerB, iUpperB);
-    faPtr->setOutputLevel(outputLevel);
+    faPtr->setOutputLevel(outputLevel_);
     psVector vecInpSettings;
     vecInpSettings.setLength(nInputs);
     int    iplot1, iInd1, jplot, sInd;
 
-    sprintf(pString, "Enter the input for x axis (1 - %d) : ", nInputs);
+    snprintf(pString,100,"Enter the input for x axis (1 - %d) : ", nInputs);
     iplot1 = getInt(1, nInputs, pString);
     iplot1--;
     if (nInputs > 1)
     {
-      sprintf(pString,"Set other inputs at their mid points? (y or n) ");
+      snprintf(pString,100,"Set other inputs at their mid points? (y or n) ");
       getString(pString, winput);
       if (winput[0] == 'y')
       {
@@ -5578,7 +5583,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         {
           if (iInd1 != iplot1)
           {
-            sprintf(pString,
+            snprintf(pString,100,
                   "Enter nominal value for input %d (%e - %e): ", 
                   iInd1+1, iLowerB[iInd1], iUpperB[iInd1]);
             vecInpSettings[iInd1] = getDouble(pString);
@@ -5587,7 +5592,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         }
       }
     }
-    sprintf(pString, "Enter output number (1 - %d) : ", nOutputs);
+    snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs);
     jplot = getInt(1, nOutputs, pString);
     jplot--;
 
@@ -5644,7 +5649,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       fwritePlotAxes(fp);
       fwritePlotXLabel(fp, inputNames[iplot1]);
       fwritePlotYLabel(fp, outputNames[jplot]);
-      sprintf(winput, "Plot for %s", outputNames[jplot]);
+      snprintf(winput,100,"Plot for %s", outputNames[jplot]);
       fwritePlotTitle(fp, winput);
       fclose(fp);
       printf("scilabrs1s.sci is now available.\n");
@@ -5685,24 +5690,24 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         if (vecFaYOut[sInd] > Ymax) Ymax = vecFaYOut[sInd];
       printf("Ymin and Ymax found = %e %e.\n", Ymin, Ymax);
       printf("You can set thresholds to cut out certain regions.\n");
-      sprintf(pString,"Set lower threshold for output? (y or n) : ");
+      snprintf(pString,100,"Set lower threshold for output? (y or n) : ");
       getString(pString, winput);
       fprintf(fp, "yminFlag = 0;\n");
       double thresh;
       if (winput[0] == 'y')
       {
-        sprintf(pString,"Enter the lower threshold (min = %e) : ", 
-                Ymin);
+        snprintf(pString,100,"Enter the lower threshold (min = %e) : ", 
+                 Ymin);
         thresh = getDouble(pString);
         fprintf(fp, "ymin = %e;\n", thresh);
         fprintf(fp, "plot(X,ones(%d,1)*ymin,'r-')\n",nPtsPerDim);
       }
-      sprintf(pString,"Set upper threshold for output? (y or n) : ");
+      snprintf(pString,100,"Set upper threshold for output? (y or n) : ");
       getString(pString, winput);
       if (winput[0] == 'y')
       {
-        sprintf(pString,"Enter the upper threshold (max = %e) : ", 
-                   Ymax);
+        snprintf(pString,100,"Enter the upper threshold (max = %e) : ", 
+                 Ymax);
         thresh = getDouble(pString);
         fprintf(fp, "ymax = %e;\n", thresh);
         fprintf(fp, "plot(X,ones(%d,1)*ymax,'r-')\n",nPtsPerDim);
@@ -5710,7 +5715,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       fwritePlotAxes(fp);
       fwritePlotXLabel(fp, inputNames[iplot1]);
       fwritePlotYLabel(fp, outputNames[jplot]);
-      sprintf(winput, "Plot for %s", outputNames[jplot]);
+      snprintf(winput,100,"Plot for %s", outputNames[jplot]);
       fwritePlotTitle(fp, winput);
       fclose(fp);
       printf("matlabrs1s.m is now available.\n");
@@ -5759,22 +5764,22 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
 
     //**/ set up the function approximator
     int nPtsPerDim = 64;
-    sprintf(pString, "Grid resolution ? (32 - 256) ");
+    snprintf(pString,100,"Grid resolution ? (32 - 256) ");
     nPtsPerDim = getInt(32, 256, pString);
     int faFlag = 1;
     FuncApprox *faPtr = genFAInteractive(psuadeIO, faFlag);
     if (faPtr == NULL) {printf("ERROR detected.\n"); return 1;}
     faPtr->setNPtsPerDim(nPtsPerDim);
     faPtr->setBounds(iLowerB, iUpperB);
-    faPtr->setOutputLevel(outputLevel);
+    faPtr->setOutputLevel(outputLevel_);
     psVector vecInpSettings;
     vecInpSettings.setLength(nInputs);
 
     int iplot1, iplot2, iInd1, sInd, jplot;
-    sprintf(pString, "Enter the input for x axis (1 - %d) : ", nInputs);
+    snprintf(pString,100,"Enter the input for x axis (1 - %d) : ", nInputs);
     iplot1 = getInt(1, nInputs, pString);
     iplot1--;
-    sprintf(pString, "Enter the input for y axis (1 - %d) : ", nInputs);
+    snprintf(pString,100,"Enter the input for y axis (1 - %d) : ", nInputs);
     iplot2 = getInt(1, nInputs, pString);
     iplot2--;
 
@@ -5782,7 +5787,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     if (iplot1 != iplot2) p2cnt++;
     if (nInputs-p2cnt > 0)
     {
-      sprintf(pString,
+      snprintf(pString,100,
               "Set other inputs at their mid points? (y or n) ");
       getString(pString, winput);
       if (winput[0] == 'y')
@@ -5800,7 +5805,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         {
           if (iInd1 != iplot1 && iInd1 != iplot2)
           {
-            sprintf(pString,
+            snprintf(pString,100,
                   "Enter nominal value for input %d (%e - %e): ", 
                   iInd1+1, iLowerB[iInd1], iUpperB[iInd1]);
             vecInpSettings[iInd1] = getDouble(pString);
@@ -5810,7 +5815,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       }
     }
     jplot = 0;
-    sprintf(pString, "Enter output number (1 - %d) : ", nOutputs);
+    snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs);
     jplot = getInt(1, nOutputs, pString);
     jplot--;
 
@@ -5868,7 +5873,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       fwritePlotXLabel(fp, inputNames[iplot1]);
       fwritePlotYLabel(fp, inputNames[iplot2]);
       fwritePlotZLabel(fp, outputNames[jplot]);
-      sprintf(winput, "Mesh Plot for %s", outputNames[jplot]);
+      snprintf(winput,100,"Mesh Plot for %s", outputNames[jplot]);
       fwritePlotTitle(fp, winput);
       fprintf(fp,"a=gca();\n");
       fprintf(fp,"a.data_bounds=[%e,%e;%e,%e];\n",iLowerB[iplot1],
@@ -5900,7 +5905,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       fwritePlotAxes(fp);
       fwritePlotXLabel(fp, inputNames[iplot1]);
       fwritePlotYLabel(fp, inputNames[iplot2]);
-      sprintf(winput, "Contour Plot for %s", outputNames[jplot]);
+      snprintf(winput,100,"Contour Plot for %s", outputNames[jplot]);
       fwritePlotTitle(fp, winput);
       fprintf(fp,"drawnow\n");
       fclose(fp);
@@ -5957,14 +5962,14 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         if (faYOut[sInd] > Ymax) Ymax = faYOut[sInd];
       printf("Ymin and Ymax found = %e %e.\n", Ymin, Ymax);
       printf("You can set thresholds to cut out certain regions.\n");
-      sprintf(pString,"Set lower threshold for output? (y or n) : ");
+      snprintf(pString,100,"Set lower threshold for output? (y or n) : ");
       getString(pString, winput);
       fprintf(fp, "n1 = 0;\n");
       fprintf(fp, "n2 = 0;\n");
       double thresh;
       if (winput[0] == 'y')
       {
-        sprintf(pString,"Enter the lower threshold (min = %e) : ",Ymin);
+        snprintf(pString,100,"Enter the lower threshold (min = %e) : ",Ymin);
         thresh = getDouble(pString);
         fprintf(fp, "ymin = %e;\n", thresh);
         fprintf(fp, "[ia,ja,aa] = find(A<ymin);\n");
@@ -5974,11 +5979,11 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         fprintf(fp, "end;\n");
         fprintf(fp, "n1 = length(ia);\n");
       }
-      sprintf(pString,"Set upper threshold for output? (y or n) : ");
+      snprintf(pString,100,"Set upper threshold for output? (y or n) : ");
       getString(pString, winput);
       if (winput[0] == 'y')
       {
-        sprintf(pString,"Enter the upper threshold (max = %e) : ",Ymax);
+        snprintf(pString,100,"Enter the upper threshold (max = %e) : ",Ymax);
         thresh = getDouble(pString);
         fprintf(fp, "ymax = %e;\n", thresh);
         fprintf(fp, "[ia,ja,aa] = find(A>ymax);\n");
@@ -6004,7 +6009,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       fwritePlotXLabel(fp, inputNames[iplot1]);
       fwritePlotYLabel(fp, inputNames[iplot2]);
       fwritePlotZLabel(fp, outputNames[jplot]);
-      sprintf(winput, "Mesh Plot for %s", outputNames[jplot]);
+      snprintf(winput,100,"Mesh Plot for %s", outputNames[jplot]);
       fwritePlotTitle(fp, winput);
       fprintf(fp,"colorbar\n");
       fprintf(fp,"subplot(1,2,2)\n");
@@ -6020,7 +6025,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       fwritePlotYLabel(fp, inputNames[iplot2]);
       fprintf(fp,"colorbar\n");
       fprintf(fp,"colormap(jet)\n");
-      sprintf(winput,"Contour Plot for %s", outputNames[jplot]);
+      snprintf(winput,100,"Contour Plot for %s", outputNames[jplot]);
       fwritePlotTitle(fp, winput);
       fclose(fp);
       printf("matlabrs2.m is now available for response surface and ");
@@ -6074,26 +6079,26 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
 
     //**/ set up the function approximator
     int nPtsPerDim = 16;
-    sprintf(pString, "Grid resolution ? (16 - 32) ");
+    snprintf(pString,100,"Grid resolution ? (16 - 32) ");
     nPtsPerDim = getInt(16, 32, pString);
     int faFlag = 1;
     FuncApprox *faPtr = genFAInteractive(psuadeIO, faFlag);
     if (faPtr == NULL) {printf("ERROR detected.\n"); return 1;}
     faPtr->setNPtsPerDim(nPtsPerDim);
     faPtr->setBounds(iLowerB, iUpperB);
-    faPtr->setOutputLevel(outputLevel);
+    faPtr->setOutputLevel(outputLevel_);
 
     //**/ ask users to specify the three inputs and one output
     int iplot1, iplot2, iplot3;
     psVector vecInpSettings;
     vecInpSettings.setLength(nInputs);
-    sprintf(pString, "Enter the input for x axis (1 - %d) : ", nInputs);
+    snprintf(pString,100,"Enter the input for x axis (1 - %d) : ", nInputs);
     iplot1 = getInt(1, nInputs, pString);
     iplot1--;
-    sprintf(pString, "Enter the input for y axis (1 - %d) : ", nInputs);
+    snprintf(pString,100,"Enter the input for y axis (1 - %d) : ", nInputs);
     iplot2 = getInt(1, nInputs, pString);
     iplot2--;
-    sprintf(pString, "Enter the input for z axis (1 - %d) : ", nInputs);
+    snprintf(pString,100,"Enter the input for z axis (1 - %d) : ", nInputs);
     iplot3 = getInt(1, nInputs, pString);
     iplot3--;
 
@@ -6102,7 +6107,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     if (iplot3 != iplot1 && iplot3 != iplot2) pcnt++;
     if (nInputs-pcnt > 0)
     {
-      sprintf(pString,
+      snprintf(pString,100,
               "Set other inputs at their mid points? (y or n) ");
       getString(pString, winput);
       if (winput[0] == 'y')
@@ -6121,7 +6126,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
           if (iInd1 != iplot1 && iInd1 != iplot2 && iInd1 != iplot3)
           {
             vecInpSettings[iInd1] = iLowerB[iInd1] - 1.0;
-            sprintf(pString,
+            snprintf(pString,100,
                   "Enter nominal value for input %d (%e - %e): ", 
                   iInd1+1, iLowerB[iInd1], iUpperB[iInd1]);
             while (vecInpSettings[iInd1] < iLowerB[iInd1] ||
@@ -6132,7 +6137,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         }
       }
     }
-    sprintf(pString, "Enter the output number (1 - %d) : ", nOutputs);
+    snprintf(pString,100,"Enter the output number (1 - %d) : ", nOutputs);
     jplot = getInt(1, nOutputs, pString);
     jplot--;
 
@@ -6159,11 +6164,11 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     double threshL = GYmin - 0.2 * PABS(GYmax-GYmin);
     double gamma = threshL;
     printf("You can set thresholds to cut out certain regions.\n");
-    sprintf(pString,"Set lower threshold for output? (y or n) ");
+    snprintf(pString,100,"Set lower threshold for output? (y or n) ");
     getString(pString, winput);
     if (winput[0] == 'y')
     {
-      sprintf(pString,"Enter the lower threshold (min = %e): ",GYmin);
+      snprintf(pString,100,"Enter the lower threshold (min = %e): ",GYmin);
       threshL = getDouble(pString);
       if (threshL < GYmin)
       {
@@ -6173,11 +6178,11 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
     int    ind;
     double threshU = GYmax + 0.2 * PABS(GYmax-GYmin);
-    sprintf(pString,"Set upper threshold for output? (y or n) ");
+    snprintf(pString,100,"Set upper threshold for output? (y or n) ");
     getString(pString, winput);
     if (winput[0] == 'y')
     {
-      sprintf(pString,"Enter the upper threshold (max = %e): ",GYmax);
+      snprintf(pString,100,"Enter the upper threshold (max = %e): ",GYmax);
       threshU = getDouble(pString);
       if (threshU > GYmax)
       {
@@ -6399,26 +6404,26 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
 
     //**/ set up the function approximator
     int nPtsPerDim = 16;
-    sprintf(pString, "Grid resolution ? (16 - 32) ");
+    snprintf(pString,100,"Grid resolution ? (16 - 32) ");
     nPtsPerDim = getInt(16, 32, pString);
     int faFlag = 1;
     FuncApprox *faPtr = genFAInteractive(psuadeIO, faFlag);
     if (faPtr == NULL) {printf("ERROR detected.\n"); return 1;}
     faPtr->setNPtsPerDim(nPtsPerDim);
     faPtr->setBounds(iLowerB, iUpperB);
-    faPtr->setOutputLevel(outputLevel);
+    faPtr->setOutputLevel(outputLevel_);
 
     //**/ ask users to specify the three inputs and one output
     int iplot1, iplot2, iplot3, jplot, iInd1, sInd;
     psVector vecInpSettings;
     vecInpSettings.setLength(nInputs);
-    sprintf(pString, "Enter the input for x axis (1 - %d) : ", nInputs);
+    snprintf(pString,100,"Enter the input for x axis (1 - %d) : ", nInputs);
     iplot1 = getInt(1, nInputs, pString);
     iplot1--;
-    sprintf(pString, "Enter the input for y axis (1 - %d) : ", nInputs);
+    snprintf(pString,100,"Enter the input for y axis (1 - %d) : ", nInputs);
     iplot2 = getInt(1, nInputs, pString);
     iplot2--;
-    sprintf(pString, "Enter the input for z axis (1 - %d) : ", nInputs);
+    snprintf(pString,100,"Enter the input for z axis (1 - %d) : ", nInputs);
     iplot3 = getInt(1, nInputs, pString);
     iplot3--;
     int pmcnt=1;
@@ -6426,7 +6431,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     if (iplot3 != iplot1 && iplot3 != iplot2) pmcnt++;
     if (nInputs-pmcnt > 0)
     {
-      sprintf(pString,"Set other inputs at their mid points ? (y or n) ");
+      snprintf(pString,100,"Set other inputs at their mid points ? (y or n) ");
       getString(pString, winput);
       if (winput[0] == 'y')
       {
@@ -6443,7 +6448,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         {
           if (iInd1 != iplot1 && iInd1 != iplot2 && iInd1 != iplot3)
           {
-            sprintf(pString,"Enter setting for input %d (%e - %e): ", 
+            snprintf(pString,100,"Enter setting for input %d (%e - %e): ", 
                     iInd1+1, iLowerB[iInd1], iUpperB[iInd1]);
             vecInpSettings[iInd1] = getDouble(pString);
           }
@@ -6451,7 +6456,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         }
       }
     }
-    sprintf(pString,"Enter the output number (1 - %d) : ", nOutputs);
+    snprintf(pString,100,"Enter the output number (1 - %d) : ", nOutputs);
     jplot = getInt(1, nOutputs, pString);
     jplot--;
 
@@ -6483,19 +6488,19 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     printf("\nYmin and Ymax found = %e %e.\n", GYmin, GYmax);
     double threshL = GYmin - 0.2 * PABS(GYmin);
     printf("You can set thresholds to cut out certain regions.\n");
-    sprintf(pString, "Set lower threshold for output? (y or n) ");
+    snprintf(pString,100,"Set lower threshold for output? (y or n) ");
     getString(pString, winput);
     if (winput[0] == 'y')
     {
-      sprintf(pString,"Enter the lower threshold (min = %e): ",GYmin);
+      snprintf(pString,100,"Enter the lower threshold (min = %e): ",GYmin);
       threshL = getDouble(pString);
     }
     double threshU = GYmax + 0.2 * PABS(GYmax);
-    sprintf(pString, "Set upper threshold for output? (y or n) ");
+    snprintf(pString,100,"Set upper threshold for output? (y or n) ");
     getString(pString, winput);
     if (winput[0] == 'y')
     {
-      sprintf(pString,"Enter the upper threshold (min = %e): ",GYmax);
+      snprintf(pString,100,"Enter the upper threshold (min = %e): ",GYmax);
       threshU = getDouble(pString);
     }
     fprintf(fp,"twoPlots = 1;\n");
@@ -6626,29 +6631,29 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     //**/ set up the function approximator
     int nPtsPerDim = 16;
     printf("NOTE: if matlab crashes, it may be due to high grid resolution\n");
-    sprintf(pString, "Grid resolution ? (16 - 32) ");
+    snprintf(pString,100,"Grid resolution ? (16 - 32) ");
     nPtsPerDim = getInt(16, 32, pString);
     int faFlag = 1;
     FuncApprox *faPtr = genFAInteractive(psuadeIO, faFlag);
     if (faPtr == NULL) {printf("ERROR detected.\n"); return 1;}
     faPtr->setNPtsPerDim(nPtsPerDim);
     faPtr->setBounds(iLowerB, iUpperB);
-    faPtr->setOutputLevel(outputLevel);
+    faPtr->setOutputLevel(outputLevel_);
 
     //**/ ask users to specify the three inputs and one output
     int iplot1, iplot2, iplot3, iplot4, iInd1;
     psVector vecInpSettings;
     vecInpSettings.setLength(nInputs);
-    sprintf(pString, "Enter the input for x axis (1 - %d) : ", nInputs);
+    snprintf(pString,100,"Enter the input for x axis (1 - %d) : ", nInputs);
     iplot1 = getInt(1, nInputs, pString);
     iplot1--;
-    sprintf(pString, "Enter the input for y axis (1 - %d) : ", nInputs);
+    snprintf(pString,100,"Enter the input for y axis (1 - %d) : ", nInputs);
     iplot2 = getInt(1, nInputs, pString);
     iplot2--;
-    sprintf(pString, "Enter the input for z axis (1 - %d) : ", nInputs);
+    snprintf(pString,100,"Enter the input for z axis (1 - %d) : ", nInputs);
     iplot3 = getInt(1, nInputs, pString);
     iplot3--;
-    sprintf(pString, "Enter the input for t axis (1 - %d) : ", nInputs);
+    snprintf(pString,100,"Enter the input for t axis (1 - %d) : ", nInputs);
     iplot4 = getInt(1, nInputs, pString);
     iplot4--;
 
@@ -6659,7 +6664,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
 
     if (nInputs-p4cnt > 0)
     {
-      sprintf(pString,"Set other inputs at their mid points ? (y/n) ");
+      snprintf(pString,100,"Set other inputs at their mid points ? (y/n) ");
       getString(pString, winput);
       if (winput[0] == 'y')
       {
@@ -6679,7 +6684,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
               iInd1 != iplot4)
           {
              vecInpSettings[iInd1] = iLowerB[iInd1] - 1.0;
-             sprintf(pString,
+             snprintf(pString,100,
                    "Enter nominal value for input %d (%e - %e): ", 
                    iInd1+1, iLowerB[iInd1], iUpperB[iInd1]);
              while (vecInpSettings[iInd1] < iLowerB[iInd1] ||
@@ -6691,7 +6696,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       }
     }
     int jplot=0, sInd;
-    sprintf(pString, "Enter the output number (1 - %d) : ", nOutputs);
+    snprintf(pString,100,"Enter the output number (1 - %d) : ", nOutputs);
     jplot = getInt(1, nOutputs, pString);
     jplot--;
 
@@ -6715,20 +6720,20 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     printf("\nYmin and Ymax found = %e %e.\n", GYmin, GYmax);
     double threshL = GYmin - 0.2 * PABS(GYmax - GYmin);
     printf("You can set thresholds to cut out certain regions.\n");
-    sprintf(pString,"Set lower threshold for output? (y or n) ");
+    snprintf(pString,100,"Set lower threshold for output? (y or n) ");
     double gamma = threshL;
     getString(pString, winput);
     if (winput[0] == 'y')
     {
-      sprintf(pString,"Enter the lower threshold (min = %e): ",GYmin);
+      snprintf(pString,100,"Enter the lower threshold (min = %e): ",GYmin);
       threshL = getDouble(pString);
     }
     double threshU = GYmax + 0.2 * PABS(GYmax - GYmin);
-    sprintf(pString,"Set upper threshold for output? (y or n) ");
+    snprintf(pString,100,"Set upper threshold for output? (y or n) ");
     getString(pString, winput);
     if (winput[0] == 'y')
     {
-      sprintf(pString,"Enter the upper threshold (max = %e): ",GYmax);
+      snprintf(pString,100,"Enter the upper threshold (max = %e): ",GYmax);
       threshU = getDouble(pString);
     }
 
@@ -6968,7 +6973,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     psVector vecInpSettings;
     vecInpSettings.setLength(nInputs);
     iplot1 = iplot2 = iplot3 = iplot4 = -1;
-    sprintf(pString, "Enter the input for x axis (1 - %d) : ", nInputs);
+    snprintf(pString,100,"Enter the input for x axis (1 - %d) : ", nInputs);
     iplot1 = getInt(1, nInputs, pString);
     iplot1--;
     count = 1;
@@ -6978,7 +6983,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       iplot2 = iplot1;
       while (iplot1 == iplot2)
       {
-        sprintf(pString, "Y-axis input ? (1-%d, 0 if not used, not %d) ",
+        snprintf(pString,100,"Y-axis input ? (1-%d, 0 if not used, not %d) ",
                 nInputs, iplot1+1);
         iplot2 = getInt(0, nInputs, pString);
         iplot2--;
@@ -6996,7 +7001,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         iplot3 = iplot1;
         while (iplot3 == iplot1 || iplot3 == iplot2)
         {
-          sprintf(pString,
+          snprintf(pString,100,
              "Z axis input ? (1-%d, 0 if not used, not %d nor %d) ",
              nInputs, iplot1+1, iplot2+1);
           iplot3 = getInt(0, nInputs, pString);
@@ -7009,10 +7014,10 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       if (iplot3 != -1) count++;
       if (nInputs >= 4 && iplot3 != -1)
       {
-        while (iplot4 < 0 || iplot4 == iplot1 || iplot4 == iplot2 || 
+        while (iplot4 < 0 || iplot4 == iplot1 || iplot4 == iplot2 ||  
                iplot4 == iplot3)
         {
-          sprintf(pString,
+          snprintf(pString,100,
              "Enter the input for t axis (1 - %d), not %d nor %d,%d: ",
                   nInputs, iplot1+1, iplot2+1, iplot3+1);
           iplot4 = getInt(1, nInputs, pString);
@@ -7020,13 +7025,13 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
           if (iplot4 == iplot1 || iplot4 == iplot2 || iplot4 == iplot3)
              printf("ERROR: duplicate input number %d.\n",iplot4+1);
         }
-      }
+      } 
       if (iplot4 != -1) count++;
     }
     strcpy(winput, "y");
     if (nInputs > count)
     {
-      sprintf(pString,"Set other inputs at their mid points ? (y/n) ");
+      snprintf(pString,100,"Set other inputs at their mid points ? (y/n) ");
       getString(pString, winput);
     }
     if (winput[0] == 'y')
@@ -7047,7 +7052,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
             iInd1 != iplot4)
         {
           vecInpSettings[iInd1] = iLowerB[iInd1] - 1.0;
-          sprintf(pString,
+          snprintf(pString,100,
                   "Enter nominal value for input %d (%e - %e): ", 
                   iInd1+1, iLowerB[iInd1], iUpperB[iInd1]);
           while (vecInpSettings[iInd1] < iLowerB[iInd1] ||
@@ -7073,7 +7078,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     printf("7. MarsBagg\n");
     printf("8. Tree GP\n");
     printf("9. Kriging\n");
-    sprintf(pString, "Enter your choice: (1, 2, ..., 9) ");
+    snprintf(pString,100,"Enter your choice: (1, 2, ..., 9) ");
     int faType = getInt(1, 9, pString);
     if      (faType == 1) faType = PSUADE_RS_REGR1;
     else if (faType == 2) faType = PSUADE_RS_REGR2;
@@ -7089,11 +7094,11 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     if (faPtr == NULL) {printf("ERROR detected.\n"); return 1;}
     faPtr->setNPtsPerDim(nPtsPerDim);
     faPtr->setBounds(iLowerB, iUpperB);
-    faPtr->setOutputLevel(outputLevel);
+    faPtr->setOutputLevel(outputLevel_);
 
     //**/ ask users to specify the three inputs and one output
     int jplot = 0;
-    sprintf(pString, "Enter the output number (1 - %d) : ",nOutputs);
+    snprintf(pString,100,"Enter the output number (1 - %d) : ",nOutputs);
     jplot = getInt(1, nOutputs, pString);
     jplot--;
 
@@ -7194,7 +7199,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       fwritePlotAxes(fp);
       fwritePlotXLabel(fp, inputNames[iplot1]);
       fwritePlotYLabel(fp, outputNames[jplot]);
-      sprintf(winput, "Std. Dev. Plot for %s", outputNames[jplot]);
+      snprintf(winput,100,"Std. Dev. Plot for %s", outputNames[jplot]);
       fwritePlotTitle(fp, winput);
     }
     else if (count == 2)
@@ -7229,7 +7234,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         fwritePlotXLabel(fp, inputNames[iplot1]);
         fwritePlotYLabel(fp, inputNames[iplot2]);
         fwritePlotZLabel(fp, outputNames[jplot]);
-        sprintf(winput, "Std. Dev. Plot for %s", outputNames[jplot]);
+        snprintf(winput,100,"Std. Dev. Plot for %s", outputNames[jplot]);
         fwritePlotTitle(fp, winput);
         fprintf(fp, "scf(2);\n");
         fprintf(fp, "a=gca();\n");
@@ -7258,7 +7263,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         fwritePlotAxes(fp);
         fwritePlotXLabel(fp, inputNames[iplot1]);
         fwritePlotYLabel(fp, inputNames[iplot2]);
-        sprintf(winput, "Std. Dev. Plot for %s", outputNames[jplot]);
+        snprintf(winput,100,"Std. Dev. Plot for %s", outputNames[jplot]);
         fwritePlotTitle(fp, winput);
       }
       else
@@ -7269,7 +7274,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         fwritePlotXLabel(fp, inputNames[iplot1]);
         fwritePlotYLabel(fp, inputNames[iplot2]);
         fwritePlotZLabel(fp, outputNames[jplot]);
-        sprintf(winput, "Std. Dev. Plot for %s", outputNames[jplot]);
+        snprintf(winput,100,"Std. Dev. Plot for %s", outputNames[jplot]);
         fwritePlotTitle(fp, winput);
         fprintf(fp, "colorbar\n");
         fprintf(fp, "subplot(1,2,2)\n");
@@ -7278,7 +7283,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         fwritePlotAxes(fp);
         fwritePlotXLabel(fp, inputNames[iplot1]);
         fwritePlotYLabel(fp, inputNames[iplot2]);
-        sprintf(winput, "Std. Dev. Plot for %s", outputNames[jplot]);
+        snprintf(winput,100,"Std. Dev. Plot for %s", outputNames[jplot]);
         fwritePlotTitle(fp, winput);
         fprintf(fp, "colorbar\n");
         fprintf(fp, "colormap(jet)\n");
@@ -7381,7 +7386,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       fwritePlotXLabel(fp, inputNames[iplot2]);
       fwritePlotYLabel(fp, inputNames[iplot1]);
       fwritePlotZLabel(fp, inputNames[iplot3]);
-      sprintf(winput, "Std. Dev. Plot for %s", outputNames[jplot]);
+      snprintf(winput,100,"Std. Dev. Plot for %s", outputNames[jplot]);
       fwritePlotTitle(fp, winput);
       fprintf(fp,"cin = input('generate slices ? (y or n) ','s');\n");
       fprintf(fp,"if (cin == 'y')\n");
@@ -7412,7 +7417,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       fwritePlotXLabel(fp, inputNames[iplot2]);
       fwritePlotYLabel(fp, inputNames[iplot1]);
       fwritePlotZLabel(fp, inputNames[iplot3]);
-      sprintf(winput, "Std. Dev. Slice Plot for %s", outputNames[jplot]);
+      snprintf(winput,100,"Std. Dev. Slice Plot for %s", outputNames[jplot]);
       fwritePlotTitle(fp, winput);
       fprintf(fp, "   view(3)\n");
       fprintf(fp, "   colorbar\n");
@@ -7593,34 +7598,34 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
 
     //**/ set up the function approximator
     int nPtsPerDim = 32;
-    sprintf(pString, "Grid resolution ? (32 - 256) ");
+    snprintf(pString,100,"Grid resolution ? (32 - 256) ");
     nPtsPerDim = getInt(32, 256, pString);
     int faFlag = 1;
     FuncApprox *faPtr = genFAInteractive(psuadeIO, faFlag);
     if (faPtr == NULL) {printf("ERROR detected.\n"); return 1;}
     faPtr->setNPtsPerDim(nPtsPerDim);
     faPtr->setBounds(iLowerB, iUpperB);
-    faPtr->setOutputLevel(outputLevel);
+    faPtr->setOutputLevel(outputLevel_);
 
     //**/ ask users to specify the 2 inputs 
     int iplot1, iplot2, iInd1;
     psVector vecInpSettings;
     vecInpSettings.setLength(nInputs);
     iplot1 = iplot2 = -1;
-    sprintf(pString, "Enter the input for x axis (1 - %d) : ", nInputs);
+    snprintf(pString,100,"Enter the input for x axis (1 - %d) : ", nInputs);
     iplot1 = getInt(1, nInputs, pString);
     iplot1--;
     iplot2 = iplot1;
     while (iplot1 == iplot2)
     {
-      sprintf(pString,"Enter the input for y axis (1 - %d), not %d : ",
+      snprintf(pString,100,"Enter the input for y axis (1 - %d), not %d : ",
              nInputs, iplot1+1);
       iplot2 = getInt(1, nInputs, pString);
       iplot2--;
       if (iplot1 == iplot2)
         printf("ERROR: duplicate input number %d.\n", iplot2+1);
     }
-    sprintf(pString,"Set other inputs at their mid points ? (y or n) ");
+    snprintf(pString,100,"Set other inputs at their mid points ? (y or n) ");
     getString(pString, winput);
     if (winput[0] == 'y')
     {
@@ -7641,7 +7646,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
           while (vecInpSettings[iInd1] < iLowerB[iInd1] ||
                  vecInpSettings[iInd1] > iUpperB[iInd1])
           {
-            sprintf(pString,
+            snprintf(pString,100,
                     "Enter nominal value for input %d (%e - %e):",
                     iInd1+1, iLowerB[iInd1], iUpperB[iInd1]);
             vecInpSettings[iInd1] = getDouble(pString);
@@ -7663,7 +7668,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     
     //**/ ask users to specify the output set
     int rsiNOutputs = 2;
-    sprintf(pString,"How many outputs to use ? (2 - %d) ",nOutputs);
+    snprintf(pString,100,"How many outputs to use ? (2 - %d) ",nOutputs);
     rsiNOutputs = getInt(2, nOutputs, pString);
 
     //**/ get the collection of output set
@@ -7677,7 +7682,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     {
       for (ii = 0; ii < rsiNOutputs; ii++)
       {
-        sprintf(pString,"Enter the %d-th output index (1 - %d) : ",
+        snprintf(pString,100,"Enter the %d-th output index (1 - %d) : ",
                 ii+1, nOutputs);
         vecRsiSet[ii] = getInt(1, nOutputs, pString);
         vecRsiSet[ii]--;
@@ -7719,11 +7724,11 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
          if (faYOut[sInd] > Ymax) Ymax = faYOut[sInd];
 
        printf("Ymin and Ymax = %e %e\n", Ymin, Ymax);
-       sprintf(pString,
+       snprintf(pString,100,
                "Enter the lower threshold for output %d (min = %16.8e) : ",
                jplot+1, Ymin);
        threshL = getDouble(pString);
-       sprintf(pString,
+       snprintf(pString,100,
                "Enter the upper threshold for output %d (max = %16.8e) : ",
                jplot+1, Ymax);
        threshU = getDouble(pString);
@@ -7914,27 +7919,27 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
 
     //**/ set up the function approximator
     int nPtsPerDim = 24;
-    sprintf(pString, "Grid resolution ? (16 - 32) ");
+    snprintf(pString,100,"Grid resolution ? (16 - 32) ");
     nPtsPerDim = getInt(16, 32, pString);
     int faFlag = 1;
     FuncApprox *faPtr = genFAInteractive(psuadeIO, faFlag);
     if (faPtr == NULL) {printf("ERROR detected.\n"); return 1;}
     faPtr->setNPtsPerDim(nPtsPerDim);
     faPtr->setBounds(iLowerB, iUpperB);
-    faPtr->setOutputLevel(outputLevel);
+    faPtr->setOutputLevel(outputLevel_);
 
     //**/ ask users to specify the three inputs and one output
     int iplot1, iplot2, iplot3, iInd1, sInd;
     psVector vecInpSettings;
     vecInpSettings.setLength(nInputs);
     iplot1 = iplot2 = iplot3 = -1;
-    sprintf(pString, "Enter the input for x axis (1 - %d) : ", nInputs);
+    snprintf(pString,100,"Enter the input for x axis (1 - %d) : ", nInputs);
     iplot1 = getInt(1, nInputs, pString);
     iplot1--;
     iplot2 = iplot1;
     while (iplot1 == iplot2)
     {
-      sprintf(pString,"Enter the input for y axis (1 - %d), not %d : ",
+      snprintf(pString,100,"Enter the input for y axis (1 - %d), not %d : ",
               nInputs, iplot1+1);
       iplot2 = getInt(1, nInputs, pString);
       iplot2--;
@@ -7944,7 +7949,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     if (nInputs == 3) iplot3 = 3 - iplot1 - iplot2;
     while (iplot3 < 0 || iplot3 == iplot1 || iplot3 == iplot2)
     {
-      sprintf(pString,
+      snprintf(pString,100,
               "Enter the input for z axis (1 - %d), not %d nor %d: ",
               nInputs, iplot1+1, iplot2+1);
       iplot3 = getInt(1, nInputs, pString);
@@ -7952,7 +7957,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       if (iplot3 == iplot1 || iplot3 == iplot2)
         printf("ERROR: duplicate input number %d.\n",iplot3+1);
     }
-    sprintf(pString,"Set other inputs at their mid points ? (y or n) ");
+    snprintf(pString,100,"Set other inputs at their mid points ? (y or n) ");
     getString(pString, winput);
     if (winput[0] == 'y')
     {
@@ -7970,7 +7975,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         if (iInd1 != iplot1 && iInd1 != iplot2 && iInd1 != iplot3)
         {
           vecInpSettings[iInd1] = iLowerB[iInd1] - 1.0;
-          sprintf(pString,
+          snprintf(pString,100,
                   "Enter nominal value for input %d (%e - %e): ", 
                   iInd1+1, iLowerB[iInd1], iUpperB[iInd1]);
           while (vecInpSettings[iInd1] < iLowerB[iInd1] ||
@@ -7990,7 +7995,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
 
     //**/ ask users to specify the output set
     int rsiNOutputs = 1;
-    sprintf(pString,"How many outputs to use ? (2 - %d) ",nOutputs);
+    snprintf(pString,100,"How many outputs to use ? (2 - %d) ",nOutputs);
     rsiNOutputs = getInt(2, nOutputs, pString);
 
     psVector vecThreshLs, vecThreshUs;
@@ -8007,7 +8012,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     {
       for (ii = 0; ii < rsiNOutputs; ii++)
       {
-        sprintf(pString,"Enter the %d-th output index (1 - %d) : ",
+        snprintf(pString,100,"Enter the %d-th output index (1 - %d) : ",
                 ii+1, nOutputs);
         rsiSet[ii] = getInt(1, nOutputs, pString);
         rsiSet[ii]--;
@@ -8051,10 +8056,10 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       printf("\nOutput %d : Ymin and Ymax found = %e %e.\n", jplot+1,
              GYmin, GYmax);
       //**/vecThreshL = GYmin - 0.2 * PABS(GYmin);
-      sprintf(pString,"Enter the lower threshold (min = %e) : ", GYmin);
+      snprintf(pString,100,"Enter the lower threshold (min = %e) : ", GYmin);
       vecThreshLs[ii] = getDouble(pString);
       //**/vecThreshU = GYmax + 0.2 * PABS(GYmax);
-      sprintf(pString,"Enter the upper threshold (max = %e) : ", GYmax);
+      snprintf(pString,100,"Enter the upper threshold (max = %e) : ", GYmax);
       vecThreshUs[ii] = getDouble(pString);
       if (ii == 0) gamma = vecThreshLs[ii];  
       else         gamma = (gamma<vecThreshLs[ii]) ? gamma:vecThreshLs[ii];
@@ -8286,27 +8291,27 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
 
     //**/ set up the function approximator
     int nPtsPerDim = 24;
-    sprintf(pString, "Grid resolution ? (16 - 32) ");
+    snprintf(pString,100,"Grid resolution ? (16 - 32) ");
     nPtsPerDim = getInt(16, 32, pString);
     int faFlag = 1;
     FuncApprox *faPtr = genFAInteractive(psuadeIO, faFlag);
     if (faPtr == NULL) {printf("ERROR detected.\n"); return 1;}
     faPtr->setNPtsPerDim(nPtsPerDim);
     faPtr->setBounds(iLowerB, iUpperB);
-    faPtr->setOutputLevel(outputLevel);
+    faPtr->setOutputLevel(outputLevel_);
 
     //**/ ask users to specify the three inputs and one output
     int iplot1, iplot2, iplot3, iInd1, sInd;
     psVector vecInpSettings;
     vecInpSettings.setLength(nInputs);
     iplot1 = iplot2 = iplot3 = -1;
-    sprintf(pString, "Enter the input for x axis (1 - %d) : ", nInputs);
+    snprintf(pString,100,"Enter the input for x axis (1 - %d) : ", nInputs);
     iplot1 = getInt(1, nInputs, pString);
     iplot1--;
     iplot2 = iplot1;
     while (iplot1 == iplot2)
     {
-      sprintf(pString,"Enter the input for y axis (1 - %d), not %d : ",
+      snprintf(pString,100,"Enter the input for y axis (1 - %d), not %d : ",
               nInputs, iplot1+1);
       iplot2 = getInt(1, nInputs, pString);
       iplot2--;
@@ -8316,7 +8321,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     if (nInputs == 3) iplot3 = 3 - iplot1 - iplot2;
     while (iplot3 < 0 || iplot3 == iplot1 || iplot3 == iplot2)
     {
-      sprintf(pString,
+      snprintf(pString,100,
               "Enter the input for t axis (1 - %d), not %d nor %d: ",
               nInputs, iplot1+1, iplot2+1);
       iplot3 = getInt(1, nInputs, pString);
@@ -8324,7 +8329,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       if (iplot3 == iplot1 || iplot3 == iplot2)
         printf("ERROR: duplicate input number %d.\n",iplot3+1);
     }
-    sprintf(pString,"Set other inputs at their mid points ? (y or n) ");
+    snprintf(pString,100,"Set other inputs at their mid points ? (y or n) ");
     getString(pString, winput);
     if (winput[0] == 'y')
     {
@@ -8342,7 +8347,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         if (iInd1 != iplot1 && iInd1 != iplot2 && iInd1 != iplot3)
         {
           vecInpSettings[iInd1] = iLowerB[iInd1] - 1.0;
-          sprintf(pString,
+          snprintf(pString,100,
                   "Enter nominal value for input %d (%e - %e): ", 
                   iInd1+1, iLowerB[iInd1], iUpperB[iInd1]);
           while (vecInpSettings[iInd1] < iLowerB[iInd1] ||
@@ -8366,7 +8371,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
      
     //**/ ask users to specify the output set
     int rsiNOutputs = 2;
-    sprintf(pString,"How many outputs to use ? (2 - %d) ",nOutputs);
+    snprintf(pString,100,"How many outputs to use ? (2 - %d) ",nOutputs);
     rsiNOutputs = getInt(2, nOutputs, pString);
 
     //**/ get the collection of output set
@@ -8379,7 +8384,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     {
       for (ii = 0; ii < rsiNOutputs; ii++)
       {
-        sprintf(pString,"Enter the %d-th output index (1 - %d) : ",
+        snprintf(pString,100,"Enter the %d-th output index (1 - %d) : ",
                 ii+1, nOutputs);
         rsiSet[ii] = getInt(1, nOutputs, pString);
         rsiSet[ii]--;
@@ -8442,10 +8447,10 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       printf("\nOutput %d : Ymin and Ymax found = %e %e.\n", jplot+1,
              GYmin, GYmax);
       //**/threshL = GYmin - 0.2 * PABS(GYmin);
-      sprintf(pString,"Enter the lower threshold (min = %e) : ", GYmin);
+      snprintf(pString,100,"Enter the lower threshold (min = %e) : ", GYmin);
       threshL = getDouble(pString);
       //**/threshU = GYmax + 0.2 * PABS(GYmax);
-      sprintf(pString,"Enter the upper threshold (max = %e) : ", GYmax);
+      snprintf(pString,100,"Enter the upper threshold (max = %e) : ", GYmax);
       threshU = getDouble(pString);
 
       for (jj = 0; jj < nPtsPerDim; jj++)
@@ -8670,14 +8675,14 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     printf("7. MarsBagg\n");
     printf("8. Tree GP\n");
     printf("9. Kriging\n");
-    sprintf(pString, "Enter your choice: (1, 2, ..., 9) ");
+    snprintf(pString,100,"Enter your choice: (1, 2, ..., 9) ");
     int faType = getInt(1, 9, pString);
 #else
     printf("5. GP3 (Tong implementation)\n");
     printf("6. MarsBagg\n");
     printf("7. Tree GP\n");
     printf("8. Kriging\n");
-    sprintf(pString, "Enter your choice: (1, 2, ..., 8) ");
+    snprintf(pString,100,"Enter your choice: (1, 2, ..., 8) ");
     int faType = getInt(1, 8, pString);
 #endif
     if      (faType == 1) faType = PSUADE_RS_REGR1;
@@ -8699,7 +8704,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
 
     //**/ ask users to specify one output
     int jplot = 0;
-    sprintf(pString, "Enter the output number (1 - %d) : ",nOutputs);
+    snprintf(pString,100,"Enter the output number (1 - %d) : ",nOutputs);
     jplot = getInt(1, nOutputs, pString);
     jplot--;
 
@@ -8713,7 +8718,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     for (sInd = 0; sInd < nSamples; sInd++)
       vecFaYIn[sInd] = sampleOutputs[sInd*nOutputs+jplot];
     faPtr->setBounds(iLowerB, iUpperB);
-    faPtr->setOutputLevel(outputLevel);
+    faPtr->setOutputLevel(outputLevel_);
     faPtr->initialize(sampleInputs,vecFaYIn.getDVector());
 
     //**/ generate a quasi-Monte Carlo sample
@@ -8890,12 +8895,12 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     fgets(winput,5000,stdin);
     if (lineIn2[0] != 'y') return 0;
 
-    sprintf(pString, "Enter output number (1 - %d) : ", nOutputs);
+    snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs);
     outputID = getInt(1, nOutputs, pString);
     outputID--;
 
     faType = -1;
-    sprintf(pString, "Enter your response surface choice ? ");
+    snprintf(pString,100,"Enter your response surface choice ? ");
     while (faType < 0 || faType > PSUADE_NUM_RS)
     {
       writeFAInfo(outputLevel_);
@@ -8911,11 +8916,11 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     int nLHS=200000;
     if (psConfig_.RSExpertModeIsOn())
     {
-      sprintf(pString,
+      snprintf(pString,100,
         "Sample size for generating distribution? (10000 - 500000) ");
       nLHS = getInt(10000, 500000, pString);
     }
-    sprintf(pString, "How many bootstrapped samples to use (10 - 300) : ");
+    snprintf(pString,100,"How many bootstrapped samples to use (10 - 300) : ");
     int numBS = getInt(10, 300, pString);
 
     //**/ create replicated LH sample => nLHS, LHSInputs, LHSOutputs
@@ -9225,12 +9230,12 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     if (lineIn2[0] != 'y') return 0;
 
     //**/ query user for which output and which response surface type
-    sprintf(pString, "Enter output number (1 - %d) : ", nOutputs);
+    snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs);
     outputID = getInt(1, nOutputs, pString);
     outputID--;
 
     faType = -1;
-    sprintf(pString, "Enter your response surface choice ? ");
+    snprintf(pString,100,"Enter your response surface choice ? ");
     while (faType < 0 || faType > PSUADE_NUM_RS)
     {
       writeFAInfo(outputLevel_);
@@ -9245,7 +9250,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
 
     //**/ query user for sampling information
     int nOA, nOA1;
-    sprintf(pString, "How many bootstrapped samples to use (1 - 100) : ");
+    snprintf(pString,100,"How many bootstrapped samples to use (1 - 100) : ");
     int numBS = getInt(1, 100, pString);
 
     //**/ create replicated OA sample => nOA, OAInputs, OAOutputs
@@ -9264,7 +9269,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     vecOAOuts.setLength(nOA);
     vecOAStas.setLength(nOA);
     samPtr = (Sampling *) SamplingCreateFromID(PSUADE_SAMP_OA);
-    samPtr->setPrintLevel(outputLevel);
+    samPtr->setPrintLevel(outputLevel_);
     samPtr->setInputBounds(nInputs, iLowerB, iUpperB);
     samPtr->setInputParams(nInputs, NULL, NULL, NULL);
     samPtr->setOutputParams(iOne);
@@ -9598,6 +9603,426 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       else printf("rsieb plot file = matlabrsieb.m\n");
     }
     faPtr = NULL;
+  }
+
+  //**/ -------------------------------------------------------------
+  // +++ rsaeua or aeua   
+  //**/ UQ for aleatoric and epistemic UQ using inner-outer iteration
+  //**/ -------------------------------------------------------------
+  else if ((!strcmp(command, "rsaeua")) || (!strcmp(command, "aeua")))
+  {
+    sscanf(lineIn,"%s %s",command,winput);
+    if (!strcmp(winput, "-h"))
+    {
+      printf("rsaeua: UQ for aleatoric-epistemic uncertainty analysis\n");
+      printf("Syntax: rsaeua (no argument needed).\n");
+      return 0;
+    }
+    printAsterisks(PL_INFO, 0);
+    printf("This command performs uncertainty analysis ");
+    printf("on the response surface\n");
+    printf("constructed from the loaded sample whereby ");
+    printf("some of the sample inputs\n");
+    printf("are aleatory (with prescribed distributions) ");
+    printf("and some are epistemic\n");
+    printf("(with prescribed ranges). These distributions ");
+    printf("and ranges are taken\n");
+    printf("from the loaded sample file. The result is a ");
+    printf("bundle of CDFs each\n");
+    printf("representing the output distribution based ");
+    printf("on the aleatory inputs\n");
+    printf("at some given epistemic input values. This bundle ");
+    printf("of CDFs can be\n");
+    printf("enveloped and the envelop is called a p-box.\n");
+    printDashes(PL_INFO, 0);
+    printf("Proceed ? (y or n to abort) ");
+    scanf("%s", lineIn2);
+    fgets(winput,5000,stdin);
+    if (lineIn2[0] != 'y') return 0;
+
+    if (nInputs_ <= 0 || psuadeIO_ == NULL || nSamples_ <= 0)
+    {
+      printf("ERROR: sample data not loaded yet.\n");
+      return 1;
+    }
+    if (nInputs_ == 1)
+    {
+      printf("ERROR: nInputs must be 2 or more.\n");
+      return 1;
+    }
+
+    //**/ select output
+    snprintf(pString,100,"Enter output number (1 - %d) : ",nOutputs_);
+    outputID = getInt(1, nOutputs_, pString);
+    outputID--;
+
+    //**/ select epistemic uncertain parameters
+    printf("Step 1: select aleatoric and epistemic parameters\n");
+    int nEpistemic=0;
+    psIVector vecUTypes;
+    vecUTypes.setLength(nInputs_);
+    //**/ set all parameters to be aleatoric
+    for (ii = 0; ii < nInputs_; ii++) vecUTypes[ii] = 0;
+    kk = 1;
+    while (kk > 0)
+    {
+      snprintf(pString,100,
+              "Select epistemic parameters (1 - %d, 0 if done) : ",
+              nInputs_); 
+      kk = getInt(0, nInputs_, pString);
+      if (kk > 0)
+      {
+        vecUTypes[kk-1] = 1;
+        nEpistemic++;
+      }
+    } 
+    if (nEpistemic == 0 || nEpistemic == nInputs_)
+    {
+      printf("At least 1 and at most %d epistemic parameters are\n",
+             nInputs_-1);
+      printf("required for this command.\n");
+      return 0;
+    }
+    printf("You have specified %d epistemic parameters.\n",nEpistemic);
+
+    //**/ set up the function approximator
+    printf("Step 2: construct response surface\n");
+    psuadeIO_->getParameter("ana_outputid", pPtr);
+    int iSave = pPtr.intData_;
+    psuadeIO_->updateAnalysisSection(-1,-1,-1,-1,outputID,-1);
+    faType = -1;
+    FuncApprox *faPtr = genFA(faType,nInputs_,outputLevel_,nSamples_);
+    if (faPtr == NULL) 
+    {
+      printf("ERROR : cannot construct response surface.\n"); 
+      return 0;
+    }
+    int nPtsPerDim = 64;
+    psVector vecYT;
+    faPtr->setNPtsPerDim(nPtsPerDim);
+    faPtr->setBounds(VecILowerBs_.getDVector(),VecIUpperBs_.getDVector());
+    faPtr->setOutputLevel(outputLevel_);
+    vecYT.setLength(nSamples_);
+    for (ii = 0; ii < nSamples_; ii++) 
+      vecYT[ii] = VecSamOutputs_[ii*nOutputs_+outputID];
+    status = faPtr->initialize(VecSamInputs_.getDVector(),vecYT.getDVector());
+
+    //**/ generate a sample for outer iteration (uniform)
+    printf("Step 3: construct CDFs via outer-inner iterations\n");
+    printf("   Outer iteration: iterate on the epistemic samples\n");
+    printf("   Inner iteration: iterate on the aleatoric samples\n");
+    printf("   Objective: iterate 1000 times in the outer loop and ");
+    printf("look for the\n");
+    printf("              lower and upper edges of the p-box.\n");
+    int nSams=20000;
+    psIVector vecPDFs1;
+    psVector  vecStds1, vecMeans1, vecSamInps, veclbs, vecubs;
+    psVector  vecLBs, vecUBs;
+    psMatrix  corMat1;
+
+    vecPDFs1.setLength(nEpistemic);
+    vecMeans1.setLength(nEpistemic);
+    vecStds1.setLength(nEpistemic);
+    veclbs.setLength(nEpistemic);
+    vecubs.setLength(nEpistemic);
+    ddata = 1.0;
+    kk = 0;
+    corMat1.setDim(nEpistemic,nEpistemic);
+    for (ii = 0; ii < nInputs_; ii++)
+    {
+      if (vecUTypes[ii] == 1)
+      {
+        corMat1.setEntry(kk,kk,ddata);
+        vecPDFs1[kk] = VecInpPDFs_[ii]; 
+        vecMeans1[kk] = VecInpMeans_[ii]; 
+        vecStds1[kk] = VecInpStds_[ii]; 
+        veclbs[kk] = VecILowerBs_[ii];
+        vecubs[kk] = VecIUpperBs_[ii];
+        kk++;
+      }
+    }
+    PDFManager *pdfman = new PDFManager();
+    pdfman->initialize(nEpistemic,vecPDFs1.getIVector(),
+            vecMeans1.getDVector(),vecStds1.getDVector(),corMat1,
+            SamPDFFiles_,VecSamPDFIndices_.getIVector());
+    vecLBs.load(nEpistemic, veclbs.getDVector());
+    vecUBs.load(nEpistemic, vecubs.getDVector());
+    vecSamInps.setLength(nSams*nEpistemic);
+    pdfman->genSample(nSams, vecSamInps, vecLBs, vecUBs);
+    delete pdfman;
+
+    //**/ generate a sample for the inner iterations
+    int nAleatoric = nInputs_ - nEpistemic, nSams2=2000;
+    psIVector vecPDFs2;
+    psVector  vecStds2, vecMeans2, vecInps;
+    psMatrix  corMat2;
+
+    vecPDFs2.setLength(nAleatoric);
+    vecMeans2.setLength(nAleatoric);
+    vecStds2.setLength(nAleatoric);
+    veclbs.setLength(nAleatoric);
+    vecubs.setLength(nAleatoric);
+    ddata = 1.0;
+    kk = 0;
+    corMat2.setDim(nAleatoric,nAleatoric);
+    for (ii = 0; ii < nInputs_; ii++)
+    {
+      if (vecUTypes[ii] != 1)
+      {
+        corMat2.setEntry(kk,kk,ddata);
+        vecPDFs2[kk] = VecInpPDFs_[ii]; 
+        vecMeans2[kk] = VecInpMeans_[ii]; 
+        vecStds2[kk] = VecInpStds_[ii]; 
+        veclbs[kk] = VecILowerBs_[ii];
+        vecubs[kk] = VecIUpperBs_[ii];
+        kk++;
+      }
+    }
+    pdfman = new PDFManager();
+    pdfman->initialize(nAleatoric,vecPDFs2.getIVector(),
+            vecMeans2.getDVector(),vecStds2.getDVector(),corMat2,
+            SamPDFFiles_,VecSamPDFIndices_.getIVector());
+    vecLBs.load(nAleatoric, veclbs.getDVector());
+    vecUBs.load(nAleatoric, vecubs.getDVector());
+    vecInps.setLength(nSams2*nAleatoric);
+    pdfman->genSample(nSams2, vecInps, vecLBs, vecUBs);
+    delete pdfman;
+
+    if (plotScilab()) fp = fopen("scilabrsaeua.sci", "w");
+    else              fp = fopen("matlabrsaeua.m", "w");
+    if (fp == NULL)
+    {
+      printf("rsaeua ERROR: cannot open plot file.\n");
+      return 1;
+    }
+    fwritePlotCLF(fp);
+
+    //**/ outer iteration
+    psVector vecYmaxs, vecYmins, vec1Sample;
+    vec1Sample.setLength(nInputs_);
+    vecYmaxs.setLength(nSams2);
+    vecYmins.setLength(nSams2);
+    for (ss = 0; ss < nSams2; ss++)
+    {
+      vecYmaxs[ss] = -PSUADE_UNDEFINED;
+      vecYmins[ss] =  PSUADE_UNDEFINED;
+    }
+    int count, converged = 0;
+    int upperCnt, lowerCnt, convergedCnt=0;
+    double upperAcc, lowerAcc, dtemp;
+    ss = 0;
+    while (ss < nSams && (converged == 0 || ss < 1000))
+    {
+      if (outputLevel_ > 2) printf("Epistemic sample %d\n",ss+1);
+      if (ss < 50) fprintf(fp, "Y%d = [\n",ss+1);
+      if (ss > 0 && (ss % 100 == 0))
+      {
+        printf("%5.1f%% ", 0.1*ss);
+        fflush(stdout);
+      }
+      int count2 = 0;
+      for (ii = 0; ii < nInputs_; ii++)
+      {
+        if (vecUTypes[ii] == 1)
+        {
+          vec1Sample[ii] = vecSamInps[ss*nEpistemic+count2];
+          count2++;
+        }
+      }
+      count = lowerCnt = upperCnt = 0;
+      upperAcc = lowerAcc = 0;
+      for (kk = 0; kk < nSams2; kk++)
+      {
+        int flag = 0;
+        for (ii = 0; ii < nAleatoric; ii++)
+        {
+          if (vecInps[kk*nAleatoric+ii] < veclbs[ii] ||
+            vecInps[kk*nAleatoric+ii] > vecubs[ii]) flag++;
+        }
+        if (flag == 0)
+        {
+          count2 = 0;
+          for (ii = 0; ii < nInputs_; ii++)
+          {
+            if (vecUTypes[ii] == 0)
+            {
+              vec1Sample[ii] = vecInps[kk*nAleatoric+count2];
+              count2++;
+            }
+          }
+          dtemp = faPtr->evaluatePoint(vec1Sample.getDVector());
+          if (ss < 50) fprintf(fp, "%e\n", dtemp);
+          if (dtemp > vecYmaxs[kk]) 
+          {
+            if (vecYmaxs[kk] != 0) 
+              upperAcc += PABS((vecYmaxs[kk]-dtemp)/vecYmaxs[kk]);
+            vecYmaxs[kk] = dtemp;
+            upperCnt++;
+          }
+          if (dtemp < vecYmins[kk])
+          {
+            if (vecYmins[kk] != 0) 
+              lowerAcc += PABS((vecYmins[kk]-dtemp)/vecYmins[kk]);
+            vecYmins[kk] = dtemp;
+            lowerCnt++;
+          }
+          count++;
+        }
+      }
+      ddata = 100.0 * upperAcc / nSams;
+      if (outputLevel_ > 2 && ddata > 0.0 && ss > 0) 
+        printf("  Upper lifted  %7.3f %% on average from last time\n",
+               ddata);
+      ddata = 100.0 * lowerAcc / nSams;
+      if (outputLevel_ > 2 && ddata > 0.0 && ss > 0) 
+        printf("  Lower dropped %7.3f %% on average from last time\n",
+               ddata);
+      if (upperCnt+lowerCnt == 0) convergedCnt++;
+      else                        convergedCnt = converged = 0;
+      if (outputLevel_ > 3) 
+        printf("  Convergence indicator = %5d (20 times => converged)\n",
+               upperCnt+lowerCnt);
+      if (convergedCnt >= 20) converged = 1;
+      if (count < 0.5 * nSams2)
+      {
+        printf("WARNING: < half of the points are within bounds.\n");
+        printf("         Input ranges may need to be widened.\n");
+      }
+      if (count == 0)
+      {
+        printf("ERROR: none of the sample points are within bounds.\n");
+        return 1;
+      }
+      if (ss < 50) fprintf(fp, "];\n");
+      if (ss < 50) 
+      {
+        if (plotScilab()) 
+             fprintf(fp,"Y%d = gsort(Y%d,'g','i');\n",ss+1,ss+1);
+        else fprintf(fp,"Y%d = sort(Y%d);\n",ss+1,ss+1);
+        fprintf(fp, "X = 1:%d;\n",count);
+        fprintf(fp, "X = X' / %d;\n", count);
+        fprintf(fp, "plot(Y%d,X)\n",ss+1);
+        fprintf(fp, "drawnow\n");
+        if (ss == 0)
+        {
+          snprintf(winput,100,"Cumulative Distributions");
+          fwritePlotTitle(fp, winput);
+          fwritePlotAxes(fp);
+          if (StrOutNames_[outputID] != NULL) 
+               snprintf(winput,100,"%s",StrOutNames_[outputID]);
+          else snprintf(winput,100,"Output Values");
+          fwritePlotXLabel(fp, winput);
+          snprintf(winput,100,"Probabilities");
+          fwritePlotYLabel(fp, winput);
+          if (plotScilab())
+               fprintf(fp, "set(gca(),\"auto_clear\",\"off\")\n");
+          else fprintf(fp, "hold on\n");
+        }
+      }
+      ss++;
+    }
+    printf("\n");
+    count = 0;
+    fprintf(fp, "YU = [\n");
+    for (ss = 0; ss < nSams2; ss++)
+    {
+      if (vecYmaxs[ss] > -PSUADE_UNDEFINED) 
+      {
+        fprintf(fp, "%e\n", vecYmaxs[ss]);
+        count++;
+      }
+    }
+    fprintf(fp, "];\n");
+    if (plotScilab()) 
+         fprintf(fp,"YU = gsort(YU,'g','i');\n");
+    else fprintf(fp,"YU = sort(YU);\n");
+    fprintf(fp, "X = 1:%d;\n",count);
+    fprintf(fp, "X = X' / %d;\n", count);
+    fprintf(fp, "plot(YU,X,'r-','lineWidth',3)\n");
+
+    count = 0;
+    fprintf(fp, "YL = [\n");
+    for (ss = 0; ss < nSams2; ss++)
+    {
+      if (vecYmins[ss] < PSUADE_UNDEFINED) 
+      {
+        fprintf(fp, "%e\n", vecYmins[ss]);
+        count++;
+      }
+    }
+    fprintf(fp, "];\n");
+    if (plotScilab()) 
+         fprintf(fp,"YL = gsort(YL,'g','i');\n");
+    else fprintf(fp,"YL = sort(YL);\n");
+    fprintf(fp, "X = 1:%d;\n",count);
+    fprintf(fp, "X = X' / %d;\n", count);
+    fprintf(fp, "plot(YL,X,'r-','lineWidth',3)\n");
+    fclose(fp);
+    printf("Plot file for aleatoric-epistemic analysis is now ");
+    if (plotScilab()) printf("in scilabrsaeua.sci.\n");
+    else              printf("in matlabrsaeua.m.\n");
+    psuadeIO_->updateAnalysisSection(-1,-1,-1,-1,iSave,-1);
+    delete faPtr;
+    faPtr = NULL;
+  }
+
+  //**/ -------------------------------------------------------------
+  // +++ rsshapley 
+  //**/ -------------------------------------------------------------
+  else if (!strcmp(command, "rsshapley"))
+  {
+    sscanf(lineIn,"%s %s",command,winput);
+    if (!strcmp(winput, "-h"))
+    {
+      printf("rsshapley: Shapley value sensitivity analysis\n");
+      printf("Syntax: rsshapley (no argument needed).\n");
+      return 0;
+    }
+    printAsterisks(PL_INFO, 0);
+    printf("This command computes Shapley values as sensitivity ");
+    printf("measures for each\n");
+    printf("input using the response surface constructed from ");
+    printf("the loaded sample.\n");
+    printf("You can choose between 2 different cost functions, ");
+    printf("namely, variance or\n");
+    printf("entropy. The default is variance. To select entropy, ");
+    printf("turn on analysis\n");
+    printf("expert mode before running this command.\n");
+    printDashes(PL_INFO, 0);
+    printf("Proceed ? (y or n to abort) ");
+    scanf("%s", lineIn2);
+    fgets(winput,5000,stdin);
+    if (lineIn2[0] != 'y') return 0;
+
+    if (nInputs_ <= 0 || psuadeIO_ == NULL || nSamples_ <= 0)
+    {
+      printf("ERROR: sample data not loaded yet.\n");
+      return 1;
+    }
+    snprintf(pString,100,"Enter output number (1 - %d) : ",nOutputs_);
+    outputID = getInt(1, nOutputs_, pString);
+    outputID--;
+
+    psVector vecY;
+    vecY.setLength(nSamples_);
+    for (ss = 0; ss < nSamples_; ss++)
+      vecY[ss] = VecSamOutputs_[ss*nOutputs_+outputID];
+    aData adata;
+    adata.nInputs_  = nInputs_;
+    adata.nOutputs_ = 1;
+    adata.nSamples_ = nSamples_;
+    adata.iLowerB_  = VecILowerBs_.getDVector();
+    adata.iUpperB_  = VecIUpperBs_.getDVector();
+    adata.sampleInputs_  = VecSamInputs_.getDVector();
+    adata.sampleOutputs_ = vecY.getDVector();
+    adata.sampleStates_  = VecSamStates_.getIVector();
+    adata.outputID_   = 0;
+    adata.printLevel_ = outputLevel_;
+    adata.ioPtr_ = psuadeIO_;
+    ShapleyAnalyzer analyzer;
+    analyzer.analyze(adata);
+    //for (ii = 0; ii < nInputs_; ii++)
+    //  printf("Input %3d sensitivity = %e (M.I.)\n",ii+1,analyzer.get_mi1(ii));
   }
   return 0;
 }

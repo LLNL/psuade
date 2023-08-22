@@ -90,7 +90,7 @@ PDFUser::~PDFUser()
 int PDFUser::genSample(int length,double *outData, double *, double *)
 {
   int  ii, jj, cnt;
-  char sysCmd[1000];
+  char sysCmd[1001];
   FILE *fp;
 
   //**/ -------------------------------------------------------------
@@ -98,7 +98,7 @@ int PDFUser::genSample(int length,double *outData, double *, double *)
   //**/ -------------------------------------------------------------
   if (psConfig_.PDFDiagnosticsIsOn())
     printf("PDFUser: genSample begins (length = %d)\n",length);
-  sprintf(sysCmd, "%s %d %d psPDF",samGenerator_,length,nInputs_);
+  snprintf(sysCmd,1000,"%s %d %d psPDF",samGenerator_,length,nInputs_);
   system(sysCmd);
   fp = fopen("psPDF", "r");
   if (fp == NULL)

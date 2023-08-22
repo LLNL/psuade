@@ -126,11 +126,11 @@ double PCAnalyzer::analyze(aData &adata)
   //**/ ---------------------------------------------------------------
   if (psConfig_.AnaExpertModeIsOn() && plotMatlab())
   {
-    sprintf(pString,"Write PCA information to a file? (y or n) ");
+    snprintf(pString,100,"Write PCA information to a file? (y or n) ");
     getString(pString, winput1);
     if (winput1[0] == 'y')
     {
-      sprintf(pString,"Enter the matlab file name : ");
+      snprintf(pString,100,"Enter the matlab file name : ");
       getString(pString, pcaFile);
       pcaFile[strlen(pcaFile)-1] = '\0';
       fp = fopen(pcaFile, "w");
@@ -220,7 +220,7 @@ double PCAnalyzer::analyze(aData &adata)
   for (ii = 0; ii < N; ii++)
     printOutTS(PL_INFO, 
        "principal component %3d has variance = %16.8e\n",ii+1,vecSS[ii]);
-  sprintf(pString,"Enter how many principal components to keep : ");
+  snprintf(pString,100,"Enter how many principal components to keep : ");
   pcCnt = getInt(1, N, pString);
 
   //**/ ---------------------------------------------------------------

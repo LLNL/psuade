@@ -196,13 +196,14 @@ int SobolSampling::initialize(int initLevel)
   for (iD = 0; iD < nReps; iD++)
     for (iD2 = 0; iD2 < nInputs_; iD2++) 
       M1Mat[iD][iD2] = vecSamInps[iD*2*nInputs_+iD2];
-   for (iD = 0; iD < nReps; iD++)
-     for (iD2 = 0; iD2 < nInputs_; iD2++) 
-       M2Mat[iD][iD2] = vecSamInps[iD*2*nInputs_+nInputs_+iD2];
+  for (iD = 0; iD < nReps; iD++)
+    for (iD2 = 0; iD2 < nInputs_; iD2++) 
+      M2Mat[iD][iD2] = vecSamInps[iD*2*nInputs_+nInputs_+iD2];
   delete sampler;
 #endif
   for (iR = 0; iR < nReps; iR++)
   {
+    //**/ first point in the block: totally from M2
     for (iD2 = 0; iD2 < nInputs_; iD2++)
     {
       ddata = M2Mat[iR][iD2];
@@ -210,19 +211,24 @@ int SobolSampling::initialize(int initLevel)
       vecSamInps_[sampleCount*nInputs_+iD2] = ddata;
     }
     sampleCount++;
+    //**/ middle points in the block: from first point with a
+    //**/ single modification from M1
     for (iD = 0; iD < nInputs_; iD++)
     {
+      //**/ copy from previous point
       for (iD2 = 0; iD2 < nInputs_; iD2++)
       {
         ddata = M2Mat[iR][iD2];
         ddata = ddata * vecRanges[iD2] + vecLBs_[iD2];
         vecSamInps_[sampleCount*nInputs_+iD2] = ddata;
       }
+      //**/ modify the iD-th input from M1
       ddata = M1Mat[iR][iD];
       ddata = ddata * vecRanges[iD] + vecLBs_[iD];
       vecSamInps_[sampleCount*nInputs_+iD] = ddata;
       sampleCount++;
     }
+    //**/ last point in the block: totally from M1
     for (iD2 = 0; iD2 < nInputs_; iD2++)
     {
       ddata = M1Mat[iR][iD2];
@@ -407,6 +413,7 @@ int SobolSampling::refine(int refineRatio, int randomize, double thresh,
 #endif
   for (iR = 0; iR < nReps; iR++)
   {
+    //**/ first point in the block: totally from M2
     for (iD2 = 0; iD2 < nInputs_; iD2++)
     {
       ddata = M2Mat[iR][iD2];
@@ -414,6 +421,8 @@ int SobolSampling::refine(int refineRatio, int randomize, double thresh,
       vecNewSamInps[sampleCount*nInputs_+iD2] = ddata;
     }
     sampleCount++;
+    //**/ middle points in the block: from first point 
+    //**/ single modification from M1
     for (iD = 0; iD < nInputs_; iD++)
     {
       for (iD2 = 0; iD2 < nInputs_; iD2++)
@@ -427,6 +436,7 @@ int SobolSampling::refine(int refineRatio, int randomize, double thresh,
       vecNewSamInps[sampleCount*nInputs_+iD] = ddata;
       sampleCount++;
     }
+    //**/ last point in the block: totally from M2
     for (iD2 = 0; iD2 < nInputs_; iD2++)
     {
       ddata = M1Mat[iR][iD2];

@@ -1,8 +1,0 @@
-sys cc -o simulator simulator.c -lm
-run psuadeNoARSM.in
-rename psuadeData rssample2
-sys rm -f simulator psuadeApp*
-# You may use the psuade rs2 command with rssample2 
-# create a Matlab response surface plot.
-quit
-

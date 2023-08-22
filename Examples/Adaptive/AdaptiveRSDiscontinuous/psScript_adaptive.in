@@ -1,0 +1,9 @@
+sys cc -o simulator simulator.c -lm
+run psuadeARSM.in
+3
+n
+n
+1
+rename psuadeData sample_adaptive
+q
+

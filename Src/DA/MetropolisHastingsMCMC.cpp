@@ -20,7 +20,7 @@
 // along with this program; if not, write to the Free Software Foundation,
 // Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 // ************************************************************************
-// KPCA functions (supported by Xiao Chen's LDRD)
+// KPCA functions (for Xiao Chen's LDRD project)
 // DATE   : 2015
 // ************************************************************************
 #include <fstream>
@@ -251,7 +251,7 @@ double MetropolisHastingsMCMC::computeLikelihood(psVector &vecIn,
 
   //**/ create simulator input file
   likelihoodEvaluationCount_++;
-  sprintf(sysInput, "ps.inps.%d", likelihoodEvaluationCount_);
+  snprintf(sysInput,100,"ps.inps.%d", likelihoodEvaluationCount_);
   fp = fopen(sysInput, "w");
   if (fp == NULL) 
   {
@@ -264,8 +264,8 @@ double MetropolisHastingsMCMC::computeLikelihood(psVector &vecIn,
   fclose(fp);
 
   //**/ run likelihood function
-  sprintf(sysOutput, "ps.outputs.%d",likelihoodEvaluationCount_);
-  sprintf(sysCmd, "%s %s %s",likelihoodFunction_,sysInput,sysOutput);
+  snprintf(sysOutput,100,"ps.outputs.%d",likelihoodEvaluationCount_);
+  snprintf(sysCmd,100,"%s %s %s",likelihoodFunction_,sysInput,sysOutput);
   system(sysCmd);
  
   //**/ read likelihood value

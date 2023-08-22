@@ -62,7 +62,6 @@ public:
    EtaAnalyzer& operator=(const EtaAnalyzer &analyzer);
 
    /** Getters for analysis results */
-   int    get_mode();
    int    get_nInputs();
    double *get_dOrder();
    double *get_dRanks();

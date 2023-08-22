@@ -516,7 +516,7 @@ int HybridGP::train()
   //**/ ----------------------------------------------------------
   int    sampleIncrement, nSamplesUnique;
   double dtmp, daccu;
-  char   configCmd[1000], winput[1000], *cString, *tArgv[1];
+  char   configCmd[101], winput[1000], *cString, *tArgv[1];
   psVector VecXT,VecYT,VecLocalX,VecLocalY,VecRegCoefs,VecRegStds;
 
   if (psConfig_.InteractiveIsOn())
@@ -621,7 +621,7 @@ int HybridGP::train()
   int useConfig=0;
   for (ii = 0; ii < numTerms; ii++)
   {
-    sprintf(configCmd, "HYGP_LegendreCoeffs%d", ii+1);
+    snprintf(configCmd,100,"HYGP_LegendreCoeffs%d", ii+1);
     cString = psConfig_.getParameter(configCmd);
     if (cString == NULL) break;
     else
@@ -660,7 +660,7 @@ int HybridGP::train()
   //**/ read GP hyperparameters, if any
   //**/ ----------------------------------------------------------
   int nhypers = 5;
-  sprintf(configCmd, "HYGP_Hyperparam6");
+  snprintf(configCmd,100,"HYGP_Hyperparam6");
   cString = psConfig_.getParameter(configCmd);
   if (cString != NULL) 
   {
@@ -671,7 +671,7 @@ int HybridGP::train()
   VecHyperPs_.setLength(nhypers);
   for (ii = 0; ii < nhypers; ii++)
   {
-    sprintf(configCmd, "HYGP_Hyperparam%d", ii+1);
+    snprintf(configCmd,100,"HYGP_Hyperparam%d", ii+1);
     cString = psConfig_.getParameter(configCmd);
     if (cString == NULL) break;
     else
@@ -783,12 +783,12 @@ int HybridGP::train()
     }
     if (winput[0] == 'y')
     {
-      sprintf(configCmd, "HYGP_LegendreCoeffs");
+      snprintf(configCmd,100,"HYGP_LegendreCoeffs");
       psConfig_.removeParameter(configCmd);
       for (ii = 0; ii < numTerms; ii++)
       {
         VecLegendreStds_[ii] = 0.01 * PABS(VecLegendreCoefs_[ii]);
-        sprintf(configCmd, "HYGP_LegendreCoeffs%d %e %e",ii+1,
+        snprintf(configCmd,100,"HYGP_LegendreCoeffs%d %e %e",ii+1,
                 VecLegendreCoefs_[ii], VecLegendreStds_[ii]);
         psConfig_.putParameter(configCmd);
       }
@@ -1095,7 +1095,7 @@ int HybridGP::train()
     {
       for (ii = 0; ii < VecHyperPs_.length(); ii++)
       {
-        sprintf(configCmd, "HYGP_Hyperparam%d %e",ii+1,VecHyperPs_[ii]);
+        snprintf(configCmd,100,"HYGP_Hyperparam%d %e",ii+1,VecHyperPs_[ii]);
         psConfig_.putParameter(configCmd);
       }
     }

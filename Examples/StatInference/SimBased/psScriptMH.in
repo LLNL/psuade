@@ -1,9 +1,14 @@
+sys rm -f mcmc_sim.sav
 sys cc -o simulator simulator.c -lm
 load psuade.in
-printlevel 5
+ana_expert
 mcmc
 y
 mcmcFile
+100
+10000
+0.1
+n
 ################################################
 # Now MCMCPostSample is available. You may run
 # python view_mcmcposteriors.py < pyScript.in

@@ -373,7 +373,7 @@ int HMCMCAnalyzer::readUserSpec(int *nGroups_in, int *nSystems_in,
   printf("2 4 7 (group 2 has systems 2, 4, and 7)\n");
   printf("3 3   (group 3 has 3 systems)\n");
   printf("3 6 9 (group 3 has systems 3, 6, and 9)\n");
-  sprintf(pString,"Enter the file name for group information: ");
+  snprintf(pString,100,"Enter the file name for group information: ");
   getString(pString, sysFile);
   leng = strlen(sysFile);
   sysFile[leng-1] = '\0';
@@ -703,7 +703,7 @@ int HMCMCAnalyzer::genMatlabFile(int samSize, int nParams, double *sample,
     printOutTS(PL_ERROR, "ERROR: cannot open %s file.\n", cfname);
     return 0;
   }
-  sprintf(charString,"This file shows posteriors plots");
+  snprintf(charString,100,"This file shows posteriors plots");
   fwriteComment(fp, charString);
   fwritePlotCLF(fp);
   fprintf(fp, "L = [\n");

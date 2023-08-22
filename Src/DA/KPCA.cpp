@@ -20,7 +20,7 @@
 // along with this program; if not, write to the Free Software Foundation,
 // Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 // ************************************************************************
-// KPCA functions (supported by Xiao Chen's LDRD)
+// KPCA functions (for Xiao Chen's LDRD project)
 // DATE   : 2015
 // ************************************************************************
 #include <assert.h>
@@ -1346,7 +1346,7 @@ int KPCA::readSnapshotsFile(char *snapshotName, psMatrix &Ysnapshots)
 // ------------------------------------------------------------------------
 int KPCA::getKernel()
 {
-  char pString[10000];
+  char pString[1001];
   printf("Select KPCA kernel. Available types are:\n");
   printf("   0: DA_GAUSSIAN \n");
   printf("   1: DA_LINEAR \n");
@@ -1354,7 +1354,7 @@ int KPCA::getKernel()
   printf("   3: DA_CUBIC \n");
   printf("   4: DA_P4 \n");
   printf("   5: DA_P5 \n");
-  sprintf(pString,"Choose kernel (0 - 5) : ");
+  snprintf(pString,1000,"Choose kernel (0 - 5) : ");
   int kernel = getInt(0, 5, pString);
   return kernel;
 }

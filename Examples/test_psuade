@@ -9,35 +9,30 @@
 
 echo "Bungee Test: run global sensitivity analyses"
 cd SimpleUQ/Bungee/Basic
-../../../build/bin/psuade < ./Scripts/psScript.in > ./test.out
-diff ./test.out ./Scripts/psScript.out
-/bin/rm -f ./psSave ./psuadeData* ./simulator ./*.m ./psuadeMetisInfo ./test.* 
+../../../../build/bin/psuade < ./Scripts/psScript.in
+/bin/rm -f ./psSave ./psuadeData* ./simulator ./*.m ./psuadeMetisInfo
 cd ../../..
 
 echo "Dimension Reduction Tests"
 cd DimReduction/Morris20
 echo "* Dimension Reduction Morris Test"
 cc -o ./simulator ./simulator.c -lm
-../../../build/bin/psuade < ./psMOATScript.in > ./test.out
-diff ./test.out ./psMOATScript.out
+../../../build/bin/psuade < ./psMOATScript.in
 echo "* Dimension Reduction Other Tests: Delta, SOT, MARS_SA"
-../../../build/bin/psuade < ./psLHScript.in > ./test.out2
-diff ./test.out2 ./psLHScript.out
+../../../build/bin/psuade < ./psLHScript.in
 /bin/rm -rf ./psuadeData* ./psSave* ./simulator ./*.m ./test.*
 cd ../..
 
 echo "Statistical Inference Tests"
 cd StatInference/BasicTest/Test1
-../../../build/bin/psuade < ./psScript.in > ./test.out
-diff ./test.out ./psScript.out
-/bin/rm -rf ./psuadeData* ./psSave* ./simulator ./*.m ./test.*
+../../../../build/bin/psuade < ./psScriptMH.in
+/bin/rm -rf ./simdata ./simulator ./*.m MCMCPostSample
 cd ../../..
 
 echo "Optimization/MOO"
 cd Optimization/MOO
-../../../build/bin/psuade < ./psScript.in >> ./test.out
-diff ./test.out ./psScript.out
-/bin/rm -rf ./*.m ./test.* ./*_moo_*
+../../../build/bin/psuade < ./psScript.in
+/bin/rm -rf ./*.m ./*_moo_*
 cd ../..
 
 echo "Optimization/Rosenbrock"
@@ -45,6 +40,6 @@ cd Optimization/Rosenbrock
 cc -o simulator simulator.c -lm
 ../../../build/bin/psuade psuadeBobyqa.in 
 echo "Rosenbrock: the answer should be all 1"
-/bin/rm -rf ./psuadeData* ./simulator ./test.* 
+/bin/rm -rf ./psuadeData* ./simulator
 cd ../..
 

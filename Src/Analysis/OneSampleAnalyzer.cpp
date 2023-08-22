@@ -295,7 +295,7 @@ double OneSampleAnalyzer::analyze(aData &adata)
   //**/ check and read input data file
   //**/ ---------------------------------------------------------------
   printf("Enter your data file (format: N Y1 Y2 .. YN) : ");
-  scanf("%499s", filename);
+  scanf("%s", filename);
   fgets(lineIn,500,stdin);
   file = fopen(filename, "r");
   if (file == NULL)
@@ -385,9 +385,9 @@ double OneSampleAnalyzer::CSAnalyze(int length, double *Y, int pLevel)
     printOutTS(PL_INFO, "Size of dataset       = %d\n", length);
     printOutTS(PL_INFO, "Chi-squared statistic = %13.5e\n", tval);
     printOutTS(PL_INFO, 
-       "(statistic is (N-1) (ssd/tsd)^2 where ssd is the sample\n");
+     "(statistic is (N-1) (ssd/tsd)^2 where ssd is the sample standard\n");
     printOutTS(PL_INFO, 
-       " std. deviation and tsd is the target standard deviation.)\n");
+     " deviation and tsd is the target standard deviation.)\n");
     printEquals(PL_INFO, 0);
   }
   printOutTS(PL_INFO, "Significance level    = 0.1 \n");
@@ -500,7 +500,7 @@ double OneSampleAnalyzer::DFAnalyze(int length, double *Y, int pLevel)
   delMean = (meanU - meanL) / (double) meanNpts;
   delStd  = (stdevU - stdevL) / (double) stdevNpts;
   tsPtr = new TwoSampleAnalyzer();
-  sprintf(pString, "Distribution type = (1) Normal (2) Lognormal : ");
+  snprintf(pString,100,"Distribution type = (1) Normal (2) Lognormal : ");
   gtype = getInt(1, 2, pString);
   if      (gtype == 1) gtype = PSUADE_PDF_NORMAL;
   else if (gtype == 2) gtype = PSUADE_PDF_LOGNORMAL;

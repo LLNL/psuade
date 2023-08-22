@@ -344,10 +344,10 @@ double RSMSobolGAnalyzer::analyze(aData &adata)
     printOutTS(PL_INFO,"* Recommendation: M1 > M2.\n");
     printOutTS(PL_INFO,"* Note: large M1 and M2 can take a long time.\n");
     printEquals(PL_INFO, 0);
-    sprintf(pString,
+    snprintf(pString,100,
          "Enter M1 (suggestion: 10000 - 100000, default = 20000) : ");
     nSubSamplesG = getInt(10000, 200000, pString);
-    sprintf(pString, "Enter M2 (suggestion: 100 - 500, default = 100) : ");
+    snprintf(pString,100,"Enter M2 (suggestion: 100 - 500, default = 100) : ");
     nSubSamplesN = getInt(100, 1000, pString);
     printAsterisks(PL_INFO, 0);
   }

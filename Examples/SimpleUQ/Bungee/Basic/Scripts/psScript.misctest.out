@@ -620,29 +620,7 @@ Mars ranking is now in matlabmarsa.m.
 *  Rank   3 : Input =   2 (score = 15.0)
 **********************************************************************
 psuade> # perform parameter ranking using Kriging measure
-psuade> Enter output number (1 - 1) = Which Gaussian process ? 
-1. MacKay's Tpros
-2. Tong's GP
-3. Kriging
-Enter number (1, 2, or 3) = 
-**********************************************************************
-*           Gaussian Process Model
-* Default exponential degree = 2.000000e+00
-======================================================================
-GP3 ranking in file matlabgp3sa.m
-**********************************************************************
-* GP3 screening rankings
-**********************************************************************
-*  Rank   1 : Input =    1 (score = 100.0) (ref = 4.000000e+00)
-*  Rank   2 : Input =    2 (score = 100.0) (ref = 4.000000e+00)
-*  Rank   3 : Input =    3 (score =  27.1) (ref = 1.084312e+00)
-**********************************************************************
-psuade> # perform parameter ranking using GP measure
-psuade> Enter output number (1 - 1) = Which Gaussian process ? 
-1. MacKay's Tpros
-2. Tong's GP
-3. Kriging
-Enter number (1, 2, or 3) = 
+psuade> Enter output number (1 - 1) = 
 **********************************************************************
 *                Kriging Analysis
 ======================================================================

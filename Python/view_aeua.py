@@ -86,7 +86,7 @@ while lineNum < len(allLines):
 
 for axis in ['top', 'bottom', 'left', 'right']:
    ax.spines[axis].set_linewidth(6)
-plt.grid(b=True)
+#plt.grid(visible=True)
 xlabel = 'Output Values'
 plt.xlabel(xlabel, fontsize=14, fontweight='bold')
 ylabel = 'Cumulative Probability'

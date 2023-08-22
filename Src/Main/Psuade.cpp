@@ -507,7 +507,7 @@ int RunParallel(const char *inFileName)
                           "num_samples", "proc_step", "argument", 
                           "PSUADE_PARALLEL","num_parallel","sample_start"}; 
   char lineIn[501], inString[500], inString2[500], auxExecutable[500];
-  char workdir[500], executable[500], runLine[500], execArg[500];
+  char workdir[500], executable[500], runLine[501], execArg[500];
   FILE *inFile, *argFile, *fp;
                                                                                
   mypid  = psCommMgr_->getPID();
@@ -671,7 +671,7 @@ int RunParallel(const char *inFileName)
     nActive = 0;
     for (sampleID = start-1; sampleID < nSamples; sampleID++)
     {
-      sprintf(runLine, "%s.%d", workdir, sampleID+1);
+      snprintf(runLine,500,"%s.%d", workdir, sampleID+1);
       inFile = fopen(runLine, "r");
       if (inFile == NULL)
       {
@@ -679,7 +679,7 @@ int RunParallel(const char *inFileName)
         exit(1);
       }
       fclose(inFile);
-      sprintf(runLine, "%s.%d/completed", workdir, sampleID+1);
+      snprintf(runLine,500,"%s.%d/completed", workdir, sampleID+1);
       inFile = fopen(runLine, "r");
       if (inFile == NULL) statusArray[nActive++] = sampleID;
       else
@@ -737,10 +737,10 @@ int RunParallel(const char *inFileName)
       {
         printf("Processor %d running job %d\n", mypid, index+1);
         if (hasArg == 1)
-          sprintf(runLine, "(cd %s.%d; %s %s)", workdir, index+1, 
+          snprintf(runLine,500,"(cd %s.%d; %s %s)", workdir, index+1, 
                   executable, execArg);
         else
-          sprintf(runLine, "(cd %s.%d; %s %d)", workdir, index+1, 
+          snprintf(runLine,500,"(cd %s.%d; %s %d)", workdir, index+1, 
                   executable, index+1);
       }
       printf("%s\n", runLine);
@@ -748,8 +748,8 @@ int RunParallel(const char *inFileName)
       system(runLine);
       if (hasAux == 1)
       {
-        sprintf(runLine, "(cd %s.%d; %s)", workdir, index+1, 
-                auxExecutable);
+        snprintf(runLine,500,"(cd %s.%d; %s)", workdir, index+1, 
+                 auxExecutable);
         printf("%s\n", runLine);
         system(runLine);
       }
@@ -873,7 +873,7 @@ int RunParallelLocal(const char *inFileName)
     nActive = 0;
     for (sampleID = 0; sampleID < nSamples; sampleID++)
     {
-      sprintf(outString, "%s.%d", workdir, sampleID+1);
+      snprintf(outString,500,"%s.%d", workdir, sampleID+1);
       inFile = fopen(outString, "r");
       if (inFile == NULL)
       {
@@ -881,7 +881,7 @@ int RunParallelLocal(const char *inFileName)
         exit(1);
       }
       fclose(inFile);
-      sprintf(outString, "%s.%d/completed", workdir, sampleID+1);
+      snprintf(outString,500,"%s.%d/completed", workdir, sampleID+1);
       inFile = fopen(outString, "r");
       if (inFile == NULL) statusArray[nActive++] = sampleID;
       if (inFile != NULL) fclose(inFile);

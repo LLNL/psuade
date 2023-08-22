@@ -350,8 +350,8 @@ void OUUMinlpOptimizer::optimize(oData *odata)
       psOUUMinlpInputTypes_ = new int[nInps];
       for (ii = 0; ii < nInps; ii++)
       {
-         sprintf(pString, "Type for variable %d ? ", ii+1);
-         psOUUMinlpInputTypes_[ii] = getInt(1,4,pString); 
+        snprintf(pString,100,"Type for variable %d ? ", ii+1);
+        psOUUMinlpInputTypes_[ii] = getInt(1,4,pString); 
       }
    }
    //**/ if not reuse, print out variable types
@@ -472,11 +472,11 @@ void OUUMinlpOptimizer::optimize(oData *odata)
          printf("         Prob(G(Z1,...)>G(Z1,Z2,Z3*,Z4*)) = 1 - alpha\n");
          printf("     This is also called value-at-risk with confidence\n");
          printf("     level alpha.\n");
-         sprintf(pString,"Enter your choice of functional (1, 2 or 3) : ");
+         snprintf(pString,100,"Enter your choice of functional (1, 2 or 3) : ");
          psOUUMinlpMode_ = getInt(1, 3, pString);
          if (psOUUMinlpMode_ == 2)
          {
-            sprintf(pString,"Enter beta (>= 0) : ");
+            snprintf(pString,100,"Enter beta (>= 0) : ");
             psOUUMinlpStdevMultiplier_ = -1;
             while (psOUUMinlpStdevMultiplier_ < 0)
                psOUUMinlpStdevMultiplier_ = getDouble(pString);
@@ -484,7 +484,7 @@ void OUUMinlpOptimizer::optimize(oData *odata)
          if (psOUUMinlpMode_ == 3)
          {
             psOUUMinlpPercentile_ = 0.0;
-            sprintf(pString,"Enter the confidence interval : [0.5 - 1.0] ");
+            snprintf(pString,100,"Enter the confidence interval : [0.5 - 1.0] ");
             while ((psOUUMinlpPercentile_ < 0.5) || 
                    (psOUUMinlpPercentile_ > 1.0)) 
             { 
@@ -501,7 +501,7 @@ void OUUMinlpOptimizer::optimize(oData *odata)
             printf(" 3. the simulation with largest 1-norm violations\n");
             printf(" 4. the simulation with largest infinity-norm violation\n");
             printf("NOTE: constraints are such that they should be >= 0.\n");
-            sprintf(pString,"Enter your choice (1 - 4) : ");
+            snprintf(pString,100,"Enter your choice (1 - 4) : ");
             psOUUMinlpCMode_ = getInt(1, 4, pString);
          }
       }
@@ -624,18 +624,18 @@ void OUUMinlpOptimizer::optimize(oData *odata)
    nomadp.set_SPECULATIVE_SEARCH ( true );
    if (psConfig_.OptExpertModeIsOn())
    {
-      sprintf(pString,
-              "Enter value for mesh update basis (default = 8) : ");
-      ddata = getDouble(pString);
+     snprintf(pString,100,
+             "Enter value for mesh update basis (default = 8) : ");
+     ddata = getDouble(pString);
    }
    else ddata = 8.0;
    nomadp.set_MESH_UPDATE_BASIS ( ddata );
 
    if (psConfig_.OptExpertModeIsOn())
    {
-      sprintf(pString,
-              "Enter value for mesh coarsening exponent (default = 1) : ");
-      idata = getInt(0, 10, pString);
+     snprintf(pString,100,
+             "Enter value for mesh coarsening exponent (default = 1) : ");
+     idata = getInt(0, 10, pString);
    }
    else idata = 1;
    nomadp.set_MESH_COARSENING_EXPONENT ( idata );
@@ -920,13 +920,13 @@ void OUUMinlpOptimizer::genZ4Sample()
          printf("   (1) MC, \n");
          printf("   (2) LHS, \n");
          printf("   (3) quasi-MC (recommended for M4 < 51).\n");
-         sprintf(pString,"Select sampling method (1, 2 or 3) : ");
+         snprintf(pString,100,"Select sampling method (1, 2 or 3) : ");
          methodZ4 = getInt(1, 3, pString);
       }
       else methodZ4 = 1;
 
       //**/ select sample size for continuous uncertain parameters
-      sprintf(pString, "Enter sample size (>= %d, <= 300) : ", kk);
+      snprintf(pString,100,"Enter sample size (>= %d, <= 300) : ", kk);
       psOUUMinlpZ4nSamples_ = getInt(2, 1000, pString);
       printf("Z4 sample has sample size = %d\n",psOUUMinlpZ4nSamples_);  
 
@@ -1234,7 +1234,7 @@ void OUUMinlpOptimizer::genResponseSurface()
          printf("2. Kriging (fast)\n");
          printf("3. Kriging (slow)\n");
          printf("4. Radial basis function\n");
-         sprintf(pString, "Which response surface? ");
+         snprintf(pString,100,"Which response surface? ");
          rstype = getInt(1,4,pString); 
          if (rstype == 1) rstype = PSUADE_RS_MARS;
          if (rstype == 2)

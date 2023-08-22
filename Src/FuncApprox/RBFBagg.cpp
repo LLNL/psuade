@@ -42,7 +42,7 @@
 RBFBagg::RBFBagg(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
 {
   int  ii;
-  char pString[500];
+  char pString[101];
 
   //**/ ==========================================================
   //**/ set internal parameters
@@ -70,8 +70,8 @@ RBFBagg::RBFBagg(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
   }
   if (psConfig_.RSExpertModeIsOn() && psConfig_.InteractiveIsOn())
   {
-    sprintf(pString, 
-            "How many instantiation of RBF (10-5000, default=100) ? ");
+    snprintf(pString,100, 
+             "How many instantiation of RBF (10-5000, default=100) ? ");
     numRBFs_ = getInt(10, 5000, pString);
   }
 

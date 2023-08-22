@@ -422,8 +422,10 @@ int ProbMatrix::compress()
 
 // ************************************************************************
 // construct histogram matrix (another version)
+// (count number of points in each of the nLevels^nInps bins and rewrite
+// the matrix)
 // ------------------------------------------------------------------------
-int ProbMatrix::convert2Hist(int nlevels, psVector veclbs, psVector vecubs)
+int ProbMatrix::convert2Hist(int nLevels, psVector veclbs, psVector vecubs)
 {
   int    ii, jj, kk, totCnt;
   double dub, dlb, dstep;
@@ -442,9 +444,9 @@ int ProbMatrix::convert2Hist(int nlevels, psVector veclbs, psVector vecubs)
   }
   for (jj = 0; jj < nCols_; jj++) 
   {
-    if (veclbs[jj] == vecubs[jj])
+    if (veclbs[jj] >= vecubs[jj])
     {
-      printf("ProbMatrix convert2Hist ERROR: LBound[%d] == UBound[%d]\n",
+      printf("ProbMatrix convert2Hist ERROR: LBound[%d] >= UBound[%d]\n",
              jj+1,jj+1);
       return 1;
     }
@@ -452,7 +454,7 @@ int ProbMatrix::convert2Hist(int nlevels, psVector veclbs, psVector vecubs)
     
   //**/ allocate temporary storage and counters
   totCnt = 1;
-  for (jj = 0; jj < nCols_; jj++) totCnt *= nlevels;
+  for (jj = 0; jj < nCols_; jj++) totCnt *= nLevels;
   matPT.setDim(totCnt, nCols_);
   int    *ptCnts = matPT.getCounts();
   double **ptMat = matPT.getMatrix2D();
@@ -460,17 +462,25 @@ int ProbMatrix::convert2Hist(int nlevels, psVector veclbs, psVector vecubs)
 
   //**/ binning
   totCnt = 0;
-  while (vecCnts[nCols_-1] < nlevels)
+  while (vecCnts[nCols_-1] < nLevels)
   {
     //**/ scan the whole matrix and accumulate bins (plus use bin center)
     for (ii = 0; ii < nRows_; ii++)
     {
       for (jj = 0; jj < nCols_; jj++)
       {
-        dstep = (vecubs[jj] - veclbs[jj]) / nlevels;
+        dstep = (vecubs[jj] - veclbs[jj]) / nLevels;
         dlb = dstep * vecCnts[jj] + veclbs[jj];
         dub = dstep * (vecCnts[jj] + 1) + veclbs[jj];
         if (ii == 0) ptMat[totCnt][jj] = 0.5 * (dlb + dub);
+        if (Mat2D_[ii][jj] < veclbs[jj] || Mat2D_[ii][jj] > vecubs[jj]) 
+        {
+          printf("ProbMatrix WARNING: matrix element not within range.\n");
+          printf("                    matrix element %d %d = %e\n",ii+1,
+                 jj+1,Mat2D_[ii][jj]);
+          printf("                    bounds = [%e %e]\n",veclbs[jj],
+                 vecubs[jj]);
+        }
         if (Mat2D_[ii][jj] < dlb || Mat2D_[ii][jj] > dub) break;
       }
       if (jj == nCols_) ptCnts[totCnt]++;
@@ -480,7 +490,7 @@ int ProbMatrix::convert2Hist(int nlevels, psVector veclbs, psVector vecubs)
     //**/ check termination 
     vecCnts[0]++;
     ii = 0;
-    while (vecCnts[ii] >= nlevels && ii < nCols_-1)
+    while (vecCnts[ii] >= nLevels && ii < nCols_-1)
     {
       vecCnts[ii] = 0;
       ii++;
@@ -488,6 +498,10 @@ int ProbMatrix::convert2Hist(int nlevels, psVector veclbs, psVector vecubs)
     }
   }
   //printf("ProbMatrix convert2Hist total number of bins = %d\n",totCnt);
+  //printf("ProbMatrix convert2Hist total count before   = %d\n",nRows_);
+  //jj = 0;
+  //for (ii = 0; ii < totCnt; ii++) jj += ptCnts[ii];
+  //printf("ProbMatrix convert2Hist total count after    = %d\n",jj);
 
   //**/ check histogram
   int actualCnt = 0;
@@ -503,7 +517,8 @@ int ProbMatrix::convert2Hist(int nlevels, psVector veclbs, psVector vecubs)
 
   //**/ allocate storage for histogram
   clean();
-  nRows_  = actualCnt;
+  //nRows_  = actualCnt;
+  nRows_  = nLevels;
   nCols_  = matPT.ncols();
   Mat2D_  = new double*[nRows_];
   counts_ = new int[nRows_];
@@ -515,16 +530,97 @@ int ProbMatrix::convert2Hist(int nlevels, psVector veclbs, psVector vecubs)
   }
 
   //**/ compress ==> Mat2D_
+  //**/ 2023 : no compression (keep the zeros)
   kk = 0;
   for (ii = 0; ii < totCnt; ii++)
   {
-    if (ptCnts[ii] > 0)
-    {
+    //if (ptCnts[ii] > 0)
+    //{
       for(jj = 0; jj < nCols_; jj++) Mat2D_[kk][jj] = ptMat[ii][jj];
       counts_[kk] = ptCnts[ii];
       kk++;
-    }
+    //}
   }
+  return 0;
+} 
+
+// ************************************************************************
+// construct bins using vector values (adaptive version)
+// Divide the vector into nLevels bins each with approximately the same
+// number of elements
+// ------------------------------------------------------------------------
+int ProbMatrix::binAdaptive(int nLevels, psVector veclbs, psVector vecubs)
+{
+  //**/ error checking
+  if (veclbs.length() != 1 || vecubs.length() != 1)
+  {
+    printf("ProbMatrix binAdaptive ERROR: Invalid bound lengths.\n");
+    printf("   INFO: incoming lower bound array length = %d\n",
+           veclbs.length());
+    printf("   INFO: incoming upper bound array length = %d\n",
+           vecubs.length());
+    return 1;
+  }
+  if (veclbs[0] >= vecubs[0])
+  {
+    printf("ProbMatrix binAdaptive ERROR: LBound (%e) >= UBound (%e)\n",
+           veclbs[0],vecubs[0]);
+    return 1;
+  }
+    
+  //**/ first need to sort the incoming array
+  int    ii;
+  double *vec = new double[nRows_];
+  for (ii = 0; ii < nRows_; ii++) vec[ii] = Mat2D_[ii][0];
+  sortDbleList(nRows_, vec);
+
+  //**/ prepare for binning
+  psVector vecLs, vecUs;
+  vecLs.setLength(nLevels);
+  vecUs.setLength(nLevels);
+  int aveLeng = nRows_ / nLevels;
+  if ((nRows_ - aveLeng * nLevels) > 0.5 * nLevels) aveLeng++;
+  if (counts_ != NULL) delete [] counts_;
+  counts_ = new int[nLevels];
+
+  //**/ scan the whole vector and count the number of elements
+  //**/ and also find the lower and upper bounds of each bin
+  //**/ which is the mid point between 2 extreme points in the
+  //**/ adjacent partition
+  int hInd=0, isum=0;
+  vecLs[0] = veclbs[0];
+  vecUs[nLevels-1] = vecubs[0];
+  for (ii = aveLeng; ii < nRows_; ii+=aveLeng)
+  {
+    if (hInd < nLevels)
+      vecUs[hInd] = 0.5 * (vec[ii-1] + vec[ii]);
+    if (hInd < nLevels-1) vecLs[hInd+1] = vecUs[hInd];
+    counts_[hInd] = aveLeng;
+    isum += aveLeng;
+    hInd++;
+  }
+  counts_[nLevels-1] = nRows_ - isum;
+
+  //**/ allocate storage for histogram
+  delete [] vec;
+  if (Mat2D_ != NULL)
+  {
+    for (int ii = 0; ii < nRows_; ii++)
+      if (Mat2D_[ii] != NULL) delete [] Mat2D_[ii];
+    delete [] Mat2D_;
+  }
+  nRows_  = nLevels;
+  Mat2D_  = new double*[nRows_];
+  assert(Mat2D_ != NULL);
+  for (ii = 0; ii < nRows_; ii++)
+  {
+    Mat2D_[ii] = new double[nCols_];
+    assert(Mat2D_[ii] != NULL);
+  }
+
+  //**/ store the bin boundaries in the matrix
+  for (ii = 0; ii < nLevels; ii++)
+    Mat2D_[ii][0] = vecUs[ii] - vecLs[ii];
   return 0;
 } 
 

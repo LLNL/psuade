@@ -183,8 +183,8 @@ int GPBasedSampling::initialize(int initLevel)
     VecGPParams_.setLength(nInputs_+4);
     for (ii = 0; ii < nInputs_; ii++)
     {
-      sprintf(pString,"Enter hyperparameter for input %d (e.g. 0.1): ",
-              ii+1);
+      snprintf(pString,100,"Enter hyperparameter for input %d (e.g. 0.1): ",
+               ii+1);
       VecGPParams_[ii] = 0.0;
       while (VecGPParams_[ii] <= 0.0)
       {
@@ -202,7 +202,7 @@ int GPBasedSampling::initialize(int initLevel)
     //**/ fudge added to diagonal
     VecGPParams_[nInputs_+3] = 1e-12;
     //**/ hardwired
-    //sprintf(pString,
+    //snprintf(pString,100,
     //        "Enter nugget (added to Cdiag) value (> 0, e.g. 1e-6) : ");
     //while (VecGPParams_[nInputs_+3] < 0)
     //{
@@ -236,7 +236,7 @@ int GPBasedSampling::initialize(int initLevel)
     printf("Please select whether \n");
     printf("1. PSUADE is to create a candidate design set, or\n");
     printf("2. You will provide a candidate design set\n");
-    sprintf(pString, "Enter you choice : (1 or 2) ");
+    snprintf(pString,100,"Enter you choice : (1 or 2) ");
     kk = getInt(1,2,pString);
     if (kk == 1)
     {
@@ -244,7 +244,7 @@ int GPBasedSampling::initialize(int initLevel)
       printf("Select candidate design method:\n");
       printf("1. Full Factorial\n");
       printf("2. LPtau (LHS if nInputs > 51)\n");
-      sprintf(pString, "Enter candidate design method (1 or 2) : ");
+      snprintf(pString,100,"Enter candidate design method (1 or 2) : ");
       kk = getInt(1,2,pString);
       if (kk == 1) sampler = SamplingCreateFromID(PSUADE_SAMP_FACT);
       else
@@ -253,7 +253,7 @@ int GPBasedSampling::initialize(int initLevel)
              sampler = SamplingCreateFromID(PSUADE_SAMP_LHS);
         else sampler = SamplingCreateFromID(PSUADE_SAMP_LPTAU);
       }
-      sprintf(pString, 
+      snprintf(pString,100, 
               "Enter candidate design sample size (>= 25): ");
       nCand = getInt(25,1000000,pString);
       sampler->setInputBounds(nInputs_, vecLBs_.getDVector(), 
@@ -282,7 +282,7 @@ int GPBasedSampling::initialize(int initLevel)
       printf("1 input values \n");
       printf("2 input values \n");
       printf(".... \n");
-      sprintf(pString,
+      snprintf(pString,100,
               "Enter the file name of your candidate design set: ");
       getString(pString, fname);
       kk = strlen(fname);
@@ -305,7 +305,7 @@ int GPBasedSampling::initialize(int initLevel)
   else
   {
     nDesigns = nCand - 1;
-    sprintf(pString,
+    snprintf(pString,100,
       "How many design points to be selected from the candidate set? (1-%d) ", 
       nDesigns);
     nDesigns = getInt(1, nDesigns, pString);
@@ -337,7 +337,7 @@ int GPBasedSampling::initialize(int initLevel)
     printf("   points from the candidate set\n");
     printf("5. Use brute-force exhaustive search (may be time-consuming)\n");
     printf("   (Step II is not needed for option 5).\n");
-    sprintf(pString, "Please make your selection (1, 2, 3, 4, or 5) : ");
+    snprintf(pString,100,"Please make your selection (1, 2, 3, 4, or 5) : ");
     option1 = getInt(1, 5, pString);
   }
   else 
@@ -356,7 +356,7 @@ int GPBasedSampling::initialize(int initLevel)
     printf("For Step (II), you can choose between 2 options:\n");
     printf("1. Use add-delete algorithm\n");
     printf("2. Use swap algorithm (more expensive, better performance)\n");
-    sprintf(pString, "Please make your selection (1 or 2) : ");
+    snprintf(pString,100,"Please make your selection (1 or 2) : ");
     option2 = getInt(1, 2, pString);
   }
   else option2 = 2;

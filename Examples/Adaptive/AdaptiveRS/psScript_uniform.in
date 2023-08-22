@@ -1,0 +1,8 @@
+sys cc -o simulator simulator.c -lm
+run psuadeNoARSM.in
+rename psuadeData sample_uniform
+sys rm -f simulator psuadeApp*
+# You may use the psuade rs2 command with sample_uniform 
+# create a Matlab response surface plot.
+quit
+

@@ -81,6 +81,8 @@ I. Preparing experimental data file (expdata)
        design parameter and the design parameter is parameter 1
        in the simulation model.
 
+       Also, delete the second line (that begins with #).
+
        Also, add 0.1 at the end of each line to specify the std dev
        of the observations.
 

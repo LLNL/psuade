@@ -1,22 +1,96 @@
 A test for response methods for discontinuous functions.
 (described in simulator.c)
 
-===============================================
-To run:
-                                                                                
-make to create psuade executable
-cd to this directory
-cc -o simulator simulator.c -lm
-psuade psuadeARSM.in
- - choose adaptive option 3
- - no test data
- - no auxiliary data
- - no validation data
- - choose MARS with bootstrapping
- - wait for completion
+========================================================
+Adaptive Sampling
+--------------------------------------------------------
+To run: assume psuade executable has been created
 
-launch psuade in command line mode
- - load psuadeData
- - use rs2 to create response surface
- - use matlab to visualize
+1. cc -o simulator simulator.c -lm
+2. psuade psuadeARSM.in
+   - choose adaptive option 3
+   - no test data
+   - no auxiliary data
+   - no validation data
+   - choose MARS with bootstrapping
+   - wait for completion
+
+Step 1 and 2 have been captured in psScript_adaptive.in
+so do: psuade < psScript_adaptive.in and at the end a
+file called sample_adaptive will have been created.
+
+-------------------------------------------------------
+To visualize the response surface in Matlab 
+Run psuade:
+ > load sample_adaptive
+ > rs2 
+   <select MARS>
+
+Afterward, use matlab to visualize (or use the Python
+script view_rs2.py in the Python directory).
+
+========================================================
+Uniform Sampling (This is included for comparison)
+--------------------------------------------------------
+To run: assume psuade executable has been created
+
+1. cc -o simulator simulator.c -lm
+2. psuade psuadeUniform.in
+
+Step 1 and 2 have been captured in psScript_uniform.in
+so do: psuade < psScript_uniform.in and at the end a
+file called sample_uniform will have been created.
+
+-------------------------------------------------------
+To visualize the response surface in Matlab 
+Run psuade:
+ > load sample_adaptive
+ > rs2 
+   <select response surface type, e.g. MARS, Kriging>
+
+Afterward, use matlab to visualize (or use the Python
+script view_rs2.py in the Python directory).
+
+========================================================
+To compare adaptive sampling against uniform sampling
+QUANTITATIVELY, you will have to test your response 
+surfaces (from sample_adaptive and sample_uniform) 
+against a test set (different from the set used to 
+build the response surface), do:
+
+A. Keep the sample_adaptive from your previous run with 
+   the script psScript_adaptive.in running adaptive 
+   sampling.
+B. Keep the sample_uniform from your previous run with 
+   the script psScript_uniform.in running uniform 
+   sampling.
+C. Create a test sample
+     * cc -o simulator simulator.c -lm
+     * psuade psuadeValidate.in
+     * rename psuadeData (to, e.g. vsample)
+D. launch psuade,
+     * load sample_adaptive
+     * call rstest_hs and enter vsample as test set
+     * RSTest_hs.m will be created
+     * run Matlab with RSTest_hs.m (and keep the plot)
+     * load sample_uniform
+     * call rstest_hs and enter vsample as test set
+     * RSTest_hs.m will be created
+     * run Matlab with RSTest_hs.m (another plot window)
+     * Compare the error means and standard deviations
+       between the 2 (the interpolation error standard
+       deviation for uniform sampling should be larger
+       than that of adaptive sampling).
+
+Note: Steps C,D have been captured in psScript_compare.in
+      so just need to run: psuade < psScript_compae.in and 
+      afterward you will see error measures on the screen, 
+      and also 2 files - RSTest_hs_adaptive.m and 
+      RSTest_hs_uniform.m - which you can visualize the 
+      error comparison using Matlab.
+
+========================================================
+To clean up the directory, do:
+
+make -f MakeClean
 

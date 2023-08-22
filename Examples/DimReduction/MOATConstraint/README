@@ -75,7 +75,7 @@ The steps are:
 
    Open up gmoatSample.repaired.done.
    Change the line moat_constraint to:
-     analyzer moat_constraint = constr_file indexFile 0 1
+     analyzer moat_constraint = constrData indexFile 0 1
 
    Now start psuade in command line mode:
 
@@ -83,5 +83,9 @@ The steps are:
    > load gmoatSample.repaired.done
    > moat
 
+   * Compare the result with the scenario when the 'analyzer
+     moat_constraint' is not used (especially the first 2
+     inputs)
 
+NOTE: Step 1-5 have been captured by psScript.in
    

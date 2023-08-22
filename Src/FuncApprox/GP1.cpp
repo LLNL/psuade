@@ -71,7 +71,7 @@ int GP1::initialize(double *XIn, double *YIn)
 {
 #ifdef HAVE_TPROS
   int    ss, ii;
-  char   pString[500], response[500], *cString;
+  char   pString[101], response[500], *cString;
   psVector VecStds, VecX, VecY;
 
   //**/ ----------------------------------------------------------------
@@ -85,7 +85,7 @@ int GP1::initialize(double *XIn, double *YIn)
   }
   if (psConfig_.RSExpertModeIsOn())
   {
-    sprintf(pString, "GP1: normalize output? (y or n) ");
+    snprintf(pString,100,"GP1: normalize output? (y or n) ");
     getString(pString, response);
   }
    
@@ -593,7 +593,7 @@ double GP1::setParams(int targc, char **targv)
 {
   int    ii, ind;
   double mmax, ddata=0.0, range;
-  char   pString[500];
+  char   pString[101];
   FILE   *fp;
   psVector  VecLScales;
   psIVector VecIT;
@@ -642,11 +642,11 @@ double GP1::setParams(int targc, char **targv)
       fwritePlotCLF(fp);
       fprintf(fp, "bar(Y,0.8);\n");
       fwritePlotAxes(fp);
-      sprintf(pString, "GP Ranking");
+      snprintf(pString,100,"GP Ranking");
       fwritePlotTitle(fp, pString);
-      sprintf(pString, "Input Numbers");
+      snprintf(pString,100,"Input Numbers");
       fwritePlotXLabel(fp, pString);
-      sprintf(pString, "GP Measure");
+      snprintf(pString,100,"GP Measure");
       fwritePlotYLabel(fp, pString);
       if (plotScilab())
       {

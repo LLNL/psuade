@@ -43,7 +43,7 @@ LegendreRegression::LegendreRegression(int nInputs,int nSamples):
                                        FuncApprox(nInputs,nSamples)
 {
   int  ii;
-  char line[1001], *cString, winput1[500], winput2[500], pString[500];
+  char line[1001], *cString, winput1[500], winput2[500], pString[101];
 
   //**/ =================================================================
   //**/ default parameters
@@ -97,16 +97,16 @@ LegendreRegression::LegendreRegression(int nInputs,int nSamples):
     if (numPerms_ > nSamples_) pOrder_--;
 
     printf("* Legendre polynomial maximum order = %d\n", pOrder_);
-    sprintf(pString, "Desired order (>=1 and <= %d) ? ", pOrder_);
+    snprintf(pString,100,"Desired order (>=1 and <= %d) ? ", pOrder_);
     pOrder_ = getInt(1, pOrder_, pString);
     printf("Normalize the input parameters to [-1, 1]? (y - yes) ");
     fgets(line, 100, stdin);
     if (line[0] == 'y') normalizeFlag_ = 1;
-    sprintf(pString, "Legendre_order = %d", pOrder_);
+    snprintf(pString,100,"Legendre_order = %d", pOrder_);
     psConfig_.putParameter(pString);
     if (normalizeFlag_ == 1)
     {
-      sprintf(pString, "normalize_inputs");
+      snprintf(pString,100,"normalize_inputs");
       psConfig_.getParameter(pString);
     }
   }
@@ -610,7 +610,7 @@ int LegendreRegression::analyze(psVector VecX, psVector VecY)
   int    N, M, ii, mm, nn, info, NRevised;
   double *X, *Y, SSresid, SStotal, R2, var;
   double esum, ymax, *arrayA, *arrayXX, *SS, *UU, *VV;
-  char   pString[100], response[1000];
+  char   pString[101], response[1000];
   FILE   *fp;
   psMatrix eigMatT, MatXX;
   psVector eigVals;
@@ -657,7 +657,7 @@ int LegendreRegression::analyze(psVector VecX, psVector VecY)
   {
     printf("You have the option to store the regression matrix (that\n");
     printf("is, the matrix A in Ax=b) in a matlab file for inspection.\n");
-    sprintf(pString, "Store regression matrix? (y or n) ");
+    snprintf(pString,100,"Store regression matrix? (y or n) ");
     getString(pString, response);
     if (response[0] == 'y')
     {
@@ -741,7 +741,7 @@ int LegendreRegression::analyze(psVector VecX, psVector VecY)
     printf("* So, select them judiciously.\n");
     for (nn = 0; nn < N; nn++)
       printf("* Singular value %5d = %e\n", nn+1, SS[nn]);
-    sprintf(pString, "How many to keep (1 - %d, 0 - all) ? ", N);
+    snprintf(pString,100,"How many to keep (1 - %d, 0 - all) ? ", N);
     NRevised = getInt(0,N,pString);
     if (NRevised == 0) NRevised = N;
     for (nn = NRevised; nn < N; nn++) SS[nn] = 0.0;

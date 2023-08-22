@@ -20,6 +20,7 @@ int main(int argc, char **argv)
    X[1] = 1/3.0; Y[1] = 1/6.0;
    X[2] = 2/3.0; Y[2] = 1/2.0;
    X[3] = 1/1.0; Y[3] = 1.0;
+   //sleep(5);
                                                                                 
    fOut = fopen(argv[2], "w");
    for (i = 0; i < 4; i++)

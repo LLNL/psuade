@@ -906,7 +906,8 @@ double PMCMCAnalyzer::analyze(aData &adata)
          "keep the inference cost reasonable.\n");
     printf("Sample size to construct proposal distributions.\n");
     printf("Default is %d.\n",maxPts);
-    sprintf(charString,"Enter new sample size (%d - %d): ",nbins*3,nbins*10);
+    snprintf(charString,100,"Enter new sample size (%d - %d): ",
+             nbins*3,nbins*10);
     maxPts = getInt(nbins*3, nbins*10, charString);
     maxPts = maxPts / nbins * nbins;
     printOutTS(PL_INFO,"Proposal distribution sample size = %d.\n",maxPts);
@@ -944,7 +945,7 @@ double PMCMCAnalyzer::analyze(aData &adata)
       while (dfaType < 0 || dfaType >= PSUADE_NUM_RS)
       {
         writeFAInfo(0);
-        sprintf(charString, "===> Enter your choice : ");
+        snprintf(charString,100,"===> Enter your choice : ");
         dfaType = getInt(0, PSUADE_NUM_RS-1, charString);
       }
     }
@@ -1017,7 +1018,7 @@ double PMCMCAnalyzer::analyze(aData &adata)
             tLowers[cnt] = lower[ii2];
             tUppers[cnt] = upper[ii2];
             if (qData.strArray_ == NULL)
-                 sprintf(winput, "X%d", ii2+1);
+                 snprintf(winput,100,"X%d", ii2+1);
             else strcpy(winput, qData.strArray_[ii2]);
             XNames.loadOneString(cnt, winput);
             cnt++;
@@ -1030,7 +1031,7 @@ double PMCMCAnalyzer::analyze(aData &adata)
       else
       {
         XNames.setNumStrings(1);
-        sprintf(winput, "X0");
+        snprintf(winput,100,"X0");
         XNames.loadOneString(0, winput);
         //**/ set input = 0.5 (and later output = constant)
         for (ii2 = 0; ii2 < ExpNSamples; ii2++) tSamInputs[ii2] = 0.5;
@@ -1044,13 +1045,13 @@ double PMCMCAnalyzer::analyze(aData &adata)
       states = new int[ExpNSamples];
       for (kk = 0; kk < ExpNSamples; kk++) states[kk] = 1;
       XNames.setNumStrings(1);
-      sprintf(winput, "Y%d", ii+1);
+      snprintf(winput,100,"Y%d", ii+1);
       XNames.loadOneString(0, winput);
       dataPtr->updateOutputSection(ExpNSamples,iOne,
               &discOutputs[ii*dnSamples],states,XNames.getStrings());
       delete [] states;
       dataPtr->updateMethodSection(PSUADE_SAMP_MC, ExpNSamples, 1, -1, -1);
-      sprintf(charString, "psDiscrepancyModel%d", ii+1);
+      snprintf(charString,100,"psDiscrepancyModel%d", ii+1);
       if (mypid_ == 0) dataPtr->writePsuadeFile(charString, 0);
       delete dataPtr;
 
@@ -1121,9 +1122,9 @@ double PMCMCAnalyzer::analyze(aData &adata)
   printEquals(PL_INFO, 0);
   if (psConfig_.AnaExpertModeIsOn() && mypid_ == 0)
   {
-    sprintf(charString, "How many MCMC chains? (2-20, default=3) : ");
+    snprintf(charString,100,"How many MCMC chains? (2-20, default=3) : ");
     numChains = getInt(2,20,charString);
-    sprintf(charString, "PSRF threshold? (1.0 - 1.2, default = 1.05) : ");
+    snprintf(charString,100,"PSRF threshold? (1.0 - 1.2, default = 1.05) : ");
     psrfThreshold = getDouble(charString);
     if (psrfThreshold < 1.0 || psrfThreshold > 1.2)
     {
@@ -2117,7 +2118,7 @@ double PMCMCAnalyzer::analyze(aData &adata)
     PsuadeData *filePtr1, *filePtr2;
     if (modelFormFlag == 1)
     {
-      sprintf(charString, "psDiscrepancyModel1");
+      snprintf(charString,100,"psDiscrepancyModel1");
       filePtr1 = new PsuadeData();
       status = filePtr1->readPsuadeFile(charString);
       if (status != 0)
@@ -2143,13 +2144,13 @@ double PMCMCAnalyzer::analyze(aData &adata)
       pOutputs.clean();
 
       YNames.setNumStrings(nOutputs);
-      sprintf(winput, "Y1");
+      snprintf(winput,100,"Y1");
       YNames.loadOneString(0, winput);
 
       for (ii = 1; ii < nOutputs; ii++)
       {
         filePtr2 = new PsuadeData();
-        sprintf(charString, "psDiscrepancyModel%d", ii+1);
+        snprintf(charString,100,"psDiscrepancyModel%d", ii+1);
         status = filePtr2->readPsuadeFile(charString);
         if (status != 0) break;
         filePtr2->getParameter("input_ninputs", pPtr);
@@ -2164,12 +2165,12 @@ double PMCMCAnalyzer::analyze(aData &adata)
         for (jj = 0; jj < nSams; jj++) 
           allOuts[jj*nOutputs+ii] = pOutputs.dbleArray_[jj];
         pOutputs.clean();
-        sprintf(winput, "Y%d", ii+1);
+        snprintf(winput,100,"Y%d", ii+1);
         YNames.loadOneString(ii, winput);
       }
       if (nOutputs == 1)
       { 
-        sprintf(charString, "psDiscrepancyModel");
+        snprintf(charString,100,"psDiscrepancyModel");
         filePtr1->writePsuadeFile(charString, 0);
       }
       else if (ii == nOutputs)
@@ -2178,7 +2179,7 @@ double PMCMCAnalyzer::analyze(aData &adata)
         for (jj = 0; jj < nSams; jj++) states[jj] = 1;
         filePtr1->updateOutputSection(nSams,nOutputs,allOuts,states,
                                       YNames.getStrings());
-        sprintf(charString, "psDiscrepancyModel");
+        snprintf(charString,100,"psDiscrepancyModel");
         filePtr1->writePsuadeFile(charString, 0);
         printOutTS(PL_INFO,
           "MCMC INFO: a sample (inputs/outputs) the discrepancy model\n");
@@ -2274,11 +2275,11 @@ double PMCMCAnalyzer::genMatlabFile(int nInputs,double *lower,double *upper,
     printOutTS(PL_ERROR, "ERROR: cannot open %s file.\n", cfname);
     return 0;
   }
-  sprintf(charString,"This file shows posteriors plots");
+  snprintf(charString,100,"This file shows posteriors plots");
   fwriteComment(fp, charString);
-  sprintf(charString,"ns  - set to 1 for 1-step smoothing of 2D contours");
+  snprintf(charString,100,"ns  - set to 1 for 1-step smoothing of 2D contours");
   fwriteComment(fp, charString);
-  sprintf(charString,"ns1 - set to 1 for 1-step smoothing of 1D histgrams");
+  snprintf(charString,100,"ns1 - set to 1 for 1-step smoothing of 1D histgrams");
   fwriteComment(fp, charString);
   fprintf(fp, "ns  = 0;\n");
   fprintf(fp, "ns1 = 0;\n");

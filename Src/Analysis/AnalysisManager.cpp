@@ -743,7 +743,7 @@ int AnalysisManager::analyze(PsuadeData *psuadeIO, int nLevels,
       Ynames.setNumStrings(nOutputs);
       for (ii = 0; ii < aPtr.nOutputs_; ii++)
       {
-        sprintf(lineIn, "PC%d", ii+1);
+        snprintf(lineIn,100,"PC%d", ii+1);
         Ynames.loadOneString(ii, lineIn);
       }
       names = Ynames.getStrings();

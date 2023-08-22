@@ -297,7 +297,7 @@ void SCEOptimizer::optimize(oData *odata)
     for (ii = 0; ii < nInputs; ii++) VecPsSCEInpTypes_[ii] = 1;
     for (ii = 0; ii < nInputs; ii++)
     {
-      sprintf(pString,"iDiscrete%d", ii+1);
+      snprintf(pString,100,"iDiscrete%d", ii+1);
       cString = psConfig_.getParameter(pString);
       if (cString != NULL) 
       {
@@ -320,7 +320,7 @@ void SCEOptimizer::optimize(oData *odata)
     printf("SCE can solve either \n");
     printf("1. continuous \n");
     printf("2. mixed-integer optimization.\n");
-    sprintf(pString, "Please select (1) or (2) : ");
+    snprintf(pString,100,"Please select (1) or (2) : ");
     jj = getInt(1, 2, pString);
     if (jj == 2)
     {
@@ -330,11 +330,11 @@ void SCEOptimizer::optimize(oData *odata)
       printf("2. Int  (or I) - integer\n");
       for (ii = 0; ii < nInputs; ii++)
       {
-        sprintf(pString, "Please enter type for input %d : ",ii+1);
+        snprintf(pString,100,"Please enter type for input %d : ",ii+1);
         VecPsSCEInpTypes_[ii] = getInt(1, 2, pString);
       }
     }
-    sprintf(pString,"Select number of complexes (2-10, default=4): ");
+    snprintf(pString,100,"Select number of complexes (2-10, default=4): ");
     nComplex_ = getInt(1, 10, pString);
   }
 
@@ -372,7 +372,7 @@ void SCEOptimizer::optimize(oData *odata)
   if (isum == nInputs && psSCEnInputs_ == 0 && 
       psConfig_.OptExpertModeIsOn())
   {
-    sprintf(pString,"Select number of complexes (2-10, default=4): ");
+    snprintf(pString,100,"Select number of complexes (2-10, default=4): ");
     nComplex_ = getInt(1, 10, pString);
   }
 

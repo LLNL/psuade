@@ -138,13 +138,13 @@ int MetisSampling::initialize(int initLevel)
   //**/ ===========================================================
   if( nSamples_ <= 0)
   {
-    printf("nSamples_ in file %s line %d is <= 0\n",__FILE__,
-           __LINE__);
+    printf("METISSam ERROR: nSamples_ in file %s line %d is <= 0\n",
+           __FILE__, __LINE__);
     exit(1);
   }
   if (nInputs_ == 0)
   {
-    printf("METISSampling::initialize ERROR - input not set up.\n");
+    printf("METISSam INIT ERROR : input not set up (nInputs=0).\n");
     printf("INFO: error occurs in file %s line %d\n",__FILE__, 
            __LINE__);
     exit(1);
@@ -155,7 +155,7 @@ int MetisSampling::initialize(int initLevel)
   //**/ ===========================================================
   if (nInputs_ > 23)
   {
-    printf("METISSampling ERROR: nInputs > 23 not supported.\n");
+    printf("METISSam ERROR: nInputs > 23 not supported.\n");
     printf("INFO: error occurs in file %s line %d\n",__FILE__, 
            __LINE__);
     exit(1);
@@ -194,9 +194,9 @@ int MetisSampling::initialize(int initLevel)
   }
   if (nSamples_ > 2*graphN_)
   {
-    printf("METISSampling ERROR : nSamples = %d too large.\n",
+    printf("METISSam ERROR : nSamples = %d too large.\n",
            nSamples_);
-    printf("INFO: error occurs in file %s line %d\n",__FILE__, 
+    printf("METISSam INFO: error occurs in file %s line %d\n",__FILE__, 
            __LINE__);
     exit(1);
   }
@@ -249,7 +249,7 @@ int MetisSampling::initialize(int initLevel)
         printf("          nSamples : %d != %d.\n",nSamples_,itmp);
       if (jtmp != nInputs_)
         printf("          nInputs  : %d != %d.\n", nInputs_, jtmp);
-      sprintf(pString,"Overwrite %s? (y or n) ", fname);
+      snprintf(pString,100,"Overwrite %s? (y or n) ", fname);
       getString(pString, response);
       if (response[0] != 'y')
       {
@@ -489,7 +489,7 @@ int MetisSampling::initialize(int initLevel)
     printf("expansion ratio of 0.0 means no expansion. ");
     printf("Normally, the expansion\n");
     printf("ratio should be no more than 0.1-0.2.\n");
-    sprintf(pString, "Enter an expansion ratio (default=0): ");
+    snprintf(pString,100,"Enter an expansion ratio (default=0): ");
     expand = -0.1;
     while (expand < 0.0) expand = getDouble(pString);
   }
@@ -564,7 +564,7 @@ int MetisSampling::initialize(int initLevel)
          printf("METISSam INIT: randomize on\n");
     else printf("METISSam INIT: randomize off\n");
     for (inputID = 0; inputID < nInputs_; inputID++)
-       printf("    METISSampling input %3d = [%e %e]\n", inputID+1,
+       printf("    METISSam input %3d = [%e %e]\n", inputID+1,
               vecLBs_[inputID], vecUBs_[inputID]);
   }
   return 0;
@@ -603,23 +603,23 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
   //**/ ===========================================================
   if (nSamples != 0 && nSamples != nAggrs_)
   {
-    printf("METISSampling refine ERROR - nSamples != nAggregates\n");
-    printf("     This may be due to the use of wrong psuadeMetisInfo\n");
-    printf("     file. Delete this file and re-do.\n");
+    printf("METISSam refine ERROR: nSamples != nAggregates\n");
+    printf("     This may be due to wrong psuadeMetisInfo file.\n");
+    printf("     Delete this file and re-do.\n");
     exit(1);
   }
   if (vecCellsOccupied_.length() == 0 || vecAggrLabels_ == NULL)
   {
-    printf("METISSampling refine ERROR - call initialize first\n");
-    printf("               Consult PSUADE developer.\n");
-    printf("INFO: error occurs in file %s line %d\n",__FILE__, 
+    printf("METISSam refine ERROR: call initialize first\n");
+    printf("                Consult PSUADE developer.\n");
+    printf("INFO: Error occurs in file %s line %d\n",__FILE__, 
            __LINE__);
     exit(1);
   }
   if (printLevel_ > 0)
   {
     printDashes(PL_INFO, 0);
-    printf("METISSampling refine: Sample information before refinement \n");
+    printf("METISSam refine INFO: Sample information before refinement \n");
     printf("     nSamples = %d\n", nSamples_);
     printf("     nInputs  = %d\n", nInputs_);
     printf("     nOutputs = %d\n", nOutputs_);
@@ -643,9 +643,9 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
     vecRanges[inputID] = vecUBs[inputID] - vecLBs[inputID];
     if (vecRanges[inputID] <= 0.0)
     {
-      printf("METISSampling refine ERROR - lbound/ubound mismatch.\n");
-      printf("               Consult PSUADE developer.\n");
-      printf("INFO: error occurs in file %s line %d\n",__FILE__, 
+      printf("METISSam refine ERROR: lbound/ubound mismatch.\n");
+      printf("                Consult PSUADE developer.\n");
+      printf("INFO: Error occurs in file %s line %d\n",__FILE__, 
              __LINE__);
       exit(1);
     }
@@ -663,7 +663,7 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
     if (vecCellsOccupied_[ii] < 0) 
     {
       if (printLevel_ > 3)
-        printf("METISSampling INFO: There is a sample in aggr %d\n",
+        printf("METISSam INFO: There is a sample in point aggr %d\n",
                -(vecCellsOccupied_[ii]+1)+1);
       numCellOccupied++;
     }
@@ -685,9 +685,9 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
       }
       if (itmp < 0 || itmp >= graphN_)
       {
-        printf("METISSampling refine INTERNAL ERROR (1).\n");
-        printf("               Consult PSUADE developer.\n");
-        printf("INFO: error occurs in file %s line %d\n",__FILE__, 
+        printf("METISSam refine INTERNAL ERROR (1).\n");
+        printf("         Consult PSUADE developer.\n");
+        printf("INFO: Error occurs in file %s line %d\n",__FILE__, 
                __LINE__);
         exit(1);
       }
@@ -699,11 +699,12 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
   {
     //**/ information stored in vecCellOccupied_ does not match
     //**/ with incoming sample information (vecSamInps_)
-    printf("METISSampling refine ERROR - Sample size mismatch\n");
+    printf("METISSam refine ERROR: Sample size mismatch\n");
     printf("     between psuadeMetisInfo and current data set.\n");
     printf("     Delete psuadeMetisInfo and re-do.\n");
-    printf("     nSamples, actual = %d %d\n",nSamples_,numCellOccupied);
-    printf("INFO: error occurs in file %s line %d\n",__FILE__, 
+    printf("     nSamples expected = %d\n",nSamples_);
+    printf("     nSamples detected = %d\n",numCellOccupied);
+    printf("INFO: Error occurs in file %s line %d\n",__FILE__, 
            __LINE__);
     exit(1);
   }
@@ -724,11 +725,11 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
   itmp = vecChecks.sum();
   if (itmp != nSamples_)
   {
-    printf("METISSampling refine ERROR - the sample ");
-    printf("used for refinement does not\n");
-    printf("               match information in psuadeMetisInfo.\n");
-    printf("               nSamples expected = %d\n", nSamples_);
-    printf("               nSamples detected = %d\n", itmp);
+    printf("METISSam refine ERROR: The sample for refinement ");
+    printf("does not match the");
+    printf("                information given in psuadeMetisInfo.\n");
+    printf("                nSamples expected = %d\n", nSamples_);
+    printf("                nSamples detected = %d\n", itmp);
     printf("NOTE: Maybe psuadeMetisInfo has been modified?\n");
     printf("INFO: error occurs in file %s line %d\n",__FILE__, 
            __LINE__);
@@ -777,12 +778,12 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
       rowInd = vecSubLabels[jj];
       if (rowInd < 0 || rowInd >= graphN_)
       {
-        printf("METISSampling refine ERROR (index out of bound.)\n");
-        printf("     index = %d (should be in [0,%d])\n",
+        printf("METISSam refine ERROR: index out of bound.\n");
+        printf("         index = %d (should be in [0,%d])\n",
                rowInd, graphN_-1);
-        printf("     Aggregate = %d and local cell %d\n", ii, jj);
-        printf("     Please consult PSUADE developers.\n");
-        printf("INFO: error occurs in file %s line %d\n",__FILE__, 
+        printf("         Aggregate = %d and local cell %d\n",ii,jj);
+        printf("         Please consult PSUADE developers.\n");
+        printf("INFO: Error occurs in file %s line %d\n",__FILE__, 
                __LINE__);
         exit(1);
       }
@@ -797,10 +798,11 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
   {
     if (vecNode2Aggr[ii] == -1)
     {
-      printf("METISSampling refine ERROR - node2Aggr not correct.\n");
-      printf("     Cell %d has no corresponding aggregate.\n",ii+1);
-      printf("     Please consult PSUADE developers.\n");
-      printf("INFO: error occurs in file %s line %d\n",__FILE__, 
+      printf("METISSam refine ERROR: node2Aggr not correct.\n");
+      printf("         Cell %d has no corresponding aggregate.\n",
+             ii+1);
+      printf("         Please consult PSUADE developers.\n");
+      printf("INFO: Error occurs in file %s line %d\n",__FILE__, 
              __LINE__);
       exit(1);
     }
@@ -832,16 +834,14 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
   //**/ given, it can be estimated from the response surface)
   if (refineType_ == 1 && sampleErrors == NULL)
   {
-    printf("METISSampling refine INFO - adaptive refinement ");
-    printf("requested but sample\n");
-    printf("                            errors have not been given.\n");
+    printf("METISSam refine INFO: adaptive refinement ");
+    printf("requested but sample errors\n");
+    printf("                      have not been given.\n");
     if (RSPtr_ == NULL)
     {
-      printf("METISSampling refine ERROR - no sample errors ");
-      printf("and no RS given.\n");
-      printf("               ==> cannot proceed. Consult ");
-      printf("PSUADE developer.\n");
-      printf("INFO: error occurs in file %s line %d\n",__FILE__, 
+      printf("METISSam refine ERROR: No sample errors or RS given.\n");
+      printf("         ==> cannot proceed. Consult PSUADE developers.\n");
+      printf("INFO: Error occurs in file %s line %d\n",__FILE__, 
              __LINE__);
       exit(1);
     }
@@ -852,7 +852,7 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
       localSampErrors = vecSamErrs.getDVector();
       if (printLevel_ > 0)
       {
-        printf("METISSampling refine INFO - use RS evaluator ");
+        printf("METISSam refine INFO: Use RS evaluator ");
         printf("to compute errors.\n");
       }
     }
@@ -871,14 +871,15 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
   psVector  vecXT, vecYT, vecVT;
   psIVector vecSelectedNodes, vecRefineFlags;
   //**/ Note: don't allocate vecRefineFlags yet 
+
   if (refineType_ == 1 && useRS == 1)
   {
     if (printLevel_ > 0)
     {
-      printf("METISSampling refine: use response surface analysis.\n");
-      printf("              Maximum number of new points = %d.\n",
+      printf("METISSam refine INFO: Use response surface analysis.\n");
+      printf("                Maximum number of new points = %d.\n",
              refineSize_);
-      printf("NOTE: computed error to be scaled by the cell size.\n");
+      printf("NOTE: Computed error to be scaled by the cell size.\n");
     }
     //**/ ========================================================
     //**/ uniform refinement and generate errors 
@@ -898,18 +899,18 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
       localN = vecAggrCnts_[ss];
       if (localN > maxN) 
       {
-        printf("METISSampling refine ERROR (2): \n");
+        printf("METISSam refine ERROR (2): ");
         printf("              Consult PSUADE developers\n");
-        printf("INFO: error occurs in file %s line %d\n",__FILE__, 
+        printf("INFO: Error occurs in file %s line %d\n",__FILE__, 
                __LINE__);
         exit(1);
       }
       if (localN == 1)
       {
-        printf("METISSampling refine ERROR - cannot split ");
+        printf("METISSam refine ERROR: Cannot split ");
         printf("(aggregate has only 1 cell)\n");
-        printf("               Consult PSUADE developers.\n");
-        printf("INFO: error occurs in file %s line %d\n",__FILE__, 
+        printf("                Please consult PSUADE developers.\n");
+        printf("INFO: Error occurs in file %s line %d\n",__FILE__, 
                __LINE__);
         exit(1);
       }
@@ -917,8 +918,8 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
       {
         if (printLevel_ > 4)
         {
-          printf("METISSampling refine - split aggregate %d\n",ss+1);
-          printf("     Aggregate %d has %d cells before splitting.\n",
+          printf("METISSam refine INFO: split aggregate %d\n",ss+1);
+          printf("         Aggregate %d has %d cells before splitting.\n",
                  ss+1,localN);
         }
         //**/ put aggregate matrix into vecLocalIA and vecLocalJA
@@ -937,9 +938,8 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
           }
           if (ii >= maxN)
           {
-            printf("METISSampling refine ERROR (3): \n");
-            printf("              Consult PSUADE developers\n");
-            printf("INFO: error occurs in file %s line %d\n",__FILE__, 
+            printf("METISSam refine ERROR: Consult PSUADE developers\n");
+            printf("INFO: Error occurs in file %s line %d\n",__FILE__, 
                    __LINE__);
             exit(1);
           }
@@ -947,9 +947,8 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
         }
         if (localNNZ > maxNNZ) 
         {
-          printf("METISSampling refine ERROR (4): \n");
-          printf("              Consult PSUADE developers\n");
-          printf("INFO: error occurs in file %s line %d\n",__FILE__, 
+          printf("METISSam refine ERROR: Consult PSUADE developers\n");
+          printf("INFO: Error occurs in file %s line %d\n",__FILE__, 
                  __LINE__);
           exit(1);
         }
@@ -977,8 +976,8 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
            options,&edgeCut,vecLabels.getIVector());
 #endif
 #else
-        printf("METISSampling refine ERROR : METIS not installed.\n");
-        printf("INFO: error occurs in file %s line %d\n",__FILE__, 
+        printf("METISSam refine ERROR: METIS not installed.\n");
+        printf("INFO: Error occurs in file %s line %d\n",__FILE__, 
                __LINE__);
         exit(1);
 #endif
@@ -997,10 +996,10 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
         }
         if (ii >= localN)
         {
-          printf("METISSampling refine ERROR (4a): \n");
-          printf("     Aggregate has no sample point.\n");
-          printf("     Consult PSUADE developers\n");
-          printf("INFO: error occurs in file %s line %d\n",__FILE__, 
+          printf("METISSam refine ERROR: ");
+          printf("Aggregate has no sample point.\n");
+          printf("         Please consult PSUADE developers\n");
+          printf("INFO: Error occurs in file %s line %d\n",__FILE__, 
                  __LINE__);
           exit(1);
         }
@@ -1031,17 +1030,17 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
         }
         if (newCell == 0 && count != count0)
         {
-          printf("METISSampling refine ERROR (5): \n");
-          printf("     Consult PSUADE developers\n");
-          printf("INFO: error occurs in file %s line %d\n",__FILE__, 
+          printf("METISSam refine ERROR: ");
+          printf("Consult PSUADE developers\n");
+          printf("INFO: Error occurs in file %s line %d\n",__FILE__, 
                  __LINE__);
           exit(1);
         }
         else if (newCell == 1 && count != count1)
         {
-          printf("METISSampling refine ERROR (6): \n");
-          printf("     Consult PSUADE developers\n");
-          printf("INFO: error occurs in file %s line %d\n",__FILE__, 
+          printf("METISSam refine ERROR: ");
+          printf("Consult PSUADE developers\n");
+          printf("INFO: Error occurs in file %s line %d\n",__FILE__, 
                  __LINE__);
           exit(1);
         }
@@ -1079,8 +1078,8 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
               jtmp++;
             }
           }
-          printf("METIS refine: aggr %4d cell %7d identified for ", ss+1, 
-                 vecAggrLabels_[ss][ii]+1);
+          printf("METIS refine INFO: aggr %4d cell %7d identified for ", 
+                 ss+1, vecAggrLabels_[ss][ii]+1);
           printf("possible refinement\n");
           vecSelectedNodes[ss] = vecAggrLabels_[ss][ii];
           vecRefineFlags[ss] = 1;
@@ -1161,12 +1160,12 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
         if (vecRefineFlags[ss] == 1 && 
             vecCellsOccupied_[vecSelectedNodes[ss]] < 0)
         {
-          printf("METISSampling refine ERROR : cell %d ",
+          printf("METISSam refine ERROR: cell %d ",
                  vecSelectedNodes[ss]+1);
           printf("has been occupied by\n");
           printf("aggregate %d (1-based).\n", 
                  -(vecCellsOccupied_[vecSelectedNodes[ss]]+1)+1);
-          printf("INFO: error occurs in file %s line %d\n",__FILE__, 
+          printf("INFO: Error occurs in file %s line %d\n",__FILE__, 
                  __LINE__);
           exit(1);
         }
@@ -1187,8 +1186,9 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
   psVector vecSortList1, vecSortList2;
   if (refineType_ == 1 && localSampErrors != NULL)
   {
-    printf("METISSampling refine: use sample errors as guide.\n");
-    printf("              Maximum number of new points = %d.\n",
+    printf("METISSam refine INFO: Use sample errors to ");
+    printf("guide refinement.\n");
+    printf("                Maximum number of new points = %d.\n",
            refineSize_);
     printf("NOTE: Errors are to be scaled by the cell size.\n");
 
@@ -1220,9 +1220,9 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
       {
         if (printLevel_ > 2)
         { 
-          printf("METISSampling refine: aggregate #%d ", index+1);
+          printf("METISSam refine INFO: aggregate #%d ", index+1);
           printf("selected for refinement\n");
-          printf("              error = %13.5e (nCells = %d)\n",
+          printf("                error = %13.5e (nCells = %d)\n",
                  localSampErrors[index], localN);
         }
         if (vecRefineFlags[index] == 0)
@@ -1245,8 +1245,8 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
   {
     if (printLevel_ > 0)
     {
-      printf("METISSampling refine: based on gradient with neighbors.\n");
-      printf("     Maximum allowable number of new points = %d.\n",
+      printf("METISSam refine INFO: Based on gradient with neighbors.\n");
+      printf("         Maximum allowable number of new points = %d.\n",
              refineSize_);
     }
     vecTags.setLength(nAggrs_);
@@ -1470,7 +1470,7 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
             }
           }
           if (printLevel_ > 2)
-            printf("METISSampling refine aggr %d (%d): sample size = %d\n",
+            printf("METISSam INFO: refine aggr %d (%d): sample size = %d\n",
                    ss+1,nAggrs_,marsCnt);
           if (mode == 3)
                faPtr = genFA(0, nInputs_, iOne, marsCnt);
@@ -1500,7 +1500,7 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
       thresh = 0.0;
       if (psConfig_.SamExpertModeIsOn() && pruneSet_ == 0)
       {
-        printf("METISSampling refine: \n");
+        printf("METISSam refine INFO: \n");
         printf("  Maximum discrepancy between aggregates = %e\n",ddmax);
         printf("  Minimum discrepancy between aggregates = %e\n",ddmin);
         fp = fopen("arsmPDF.m","w");
@@ -1516,7 +1516,7 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
         }
         printf("A PDF for error has been given to you in arsmPDF.m.\n");
         printf("Default threshold for pruning = 0.\n");
-        sprintf(pString,"Enter thresh to prune refinement candidates : ");
+        snprintf(pString,100,"Enter thresh to prune refinement candidates : ");
         thresh = getDouble(pString);
         if (thresh < 0.0)
         {
@@ -1549,20 +1549,20 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
         }
         if (cellCnt >= refineSize_) break;
       }
-      //printf("METISSampling:: maximum neighbor discrepancy = %e\n",ddmax);
+      //printf("METISSam:: maximum neighbor discrepancy = %e\n",ddmax);
     }
-    printf("METISSampling refine - number of new sample points = %d.\n",
+    printf("METISSam refine INFO: Number of new sample points = %d.\n",
            cellCnt);
     if (printLevel_ > 4)
     {
       if (maxCellSize != 0)
-        printf("METISSampling refine: maximum resolution = %d \n",
+        printf("METISSam refine INFO: maximum resolution = %d \n",
                maxCellSize);
       if (minCellSize != 1000000000)
-        printf("METISSampling refine: minimum resolution = %d \n",
+        printf("METISSam refine INFO: minimum resolution = %d \n",
                minCellSize);
       if (cellCnt != 0)
-        printf("METISSampling refine: average resolution = %e (%d)\n", 
+        printf("METISSam refine INFO: average resolution = %e (%d)\n", 
                1.0*avgCellSize/cellCnt, cellCnt);
     }
   }
@@ -1598,22 +1598,22 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
     localN = vecAggrCnts_[ss];
     if (localN > maxN) 
     {
-      printf("METISSampling refine ERROR (7):\n");
-      printf("              Consult PSUADE developers\n");
-      printf("INFO: error occurs in file %s line %d\n",__FILE__, 
+      printf("METISSam refine ERROR: ");
+      printf("Please consult PSUADE developers\n");
+      printf("INFO: Error occurs in file %s line %d\n",__FILE__, 
              __LINE__);
       exit(1);
     }
     if (localN == 1)
     {
-      printf("METISSampling refine ERROR: cell too small to split.\n");
+      printf("METISSam refine ERROR: cell too small to split.\n");
     }
     else if (vecRefineFlags.length() == 0 ||
              (vecRefineFlags.length() > 0 && vecRefineFlags[ss] == 1)) 
     {
       splitCount++;
       if (printLevel_ > 2)
-        printf("METISSampling refine - split sample %d\n",ss+1);
+        printf("METISSam refine INFO: Splitting sample %d\n",ss+1);
       splitSuccess++;
       localNNZ = 0;
       vecSubLabels = vecAggrLabels_[ss];
@@ -1629,9 +1629,9 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
         }
         if (ii >= maxN)
         {
-          printf("METISSampling refine ERROR (8):\n");
-          printf("              Consult PSUADE developers\n");
-          printf("INFO: error occurs in file %s line %d\n",__FILE__, 
+          printf("METISSam refine ERROR: ");
+          printf("Please consult PSUADE developers\n");
+          printf("INFO: Error occurs in file %s line %d\n",__FILE__, 
                  __LINE__);
           exit(1);
         }
@@ -1639,9 +1639,9 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
       }
       if (localNNZ > maxNNZ) 
       {
-        printf("METISSampling refine ERROR (9):\n");
-        printf("              Consult PSUADE developers\n");
-        printf("INFO: error occurs in file %s line %d\n",__FILE__, 
+        printf("METISSam refine ERROR: ");
+        printf("Please consult PSUADE developers\n");
+        printf("INFO: Error occurs in file %s line %d\n",__FILE__, 
                __LINE__);
         exit(1);
       }
@@ -1665,8 +1665,8 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
            options,&edgeCut,vecLabels.getIVector());
 #endif
 #else
-      printf("METISSampling refine ERROR : METIS not installed.\n");
-      printf("INFO: error occurs in file %s line %d\n",__FILE__, 
+      printf("METISSam refine ERROR: METIS not installed.\n");
+      printf("INFO: Error occurs in file %s line %d\n",__FILE__, 
              __LINE__);
       exit(1);
 #endif
@@ -1699,8 +1699,8 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
         }
         if (count != count0)
         {
-          printf("METISSampling refine ERROR (4): consult developers\n");
-          printf("INFO: error occurs in file %s line %d\n",__FILE__, 
+          printf("METISSam refine ERROR: Please consult developers\n");
+          printf("INFO: Error occurs in file %s line %d\n",__FILE__, 
                  __LINE__);
           exit(1);
         }
@@ -1711,8 +1711,8 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
             vecAggrLabels_[ss][count++] = vecAggrLabels_[ss][ii];
         if (count != count1)
         {
-          printf("METISSampling refine ERROR (5): consult developers\n");
-          printf("INFO: error occurs in file %s line %d\n",__FILE__, 
+          printf("METISSam refine ERROR: Please consult developers\n");
+          printf("INFO: Error occurs in file %s line %d\n",__FILE__, 
                  __LINE__);
           exit(1);
         }
@@ -1733,9 +1733,9 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
         }
         if (count != count1)
         {
-          printf("METISSampling refine ERROR (10):\n");
-          printf("              Consult PSUADE developers\n");
-          printf("INFO: error occurs in file %s line %d\n",__FILE__, 
+          printf("METISSam refine ERROR: Please consult ");
+          printf("PSUADE developers\n");
+          printf("INFO: Error occurs in file %s line %d\n",__FILE__, 
                  __LINE__);
           exit(1);
         }
@@ -1746,9 +1746,9 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
             vecAggrLabels_[ss][count++] = vecAggrLabels_[ss][ii];
         if (count != count0)
         {
-          printf("METISSampling refine ERROR (11):\n");
-          printf("              Consult PSUADE developers\n");
-          printf("INFO: error occurs in file %s line %d\n",__FILE__, 
+          printf("METISSam refine ERROR: ");
+          printf("Consult PSUADE developers\n");
+          printf("INFO: Error occurs in file %s line %d\n",__FILE__, 
                  __LINE__);
           exit(1);
         }
@@ -1757,7 +1757,7 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
     }
   }
   if (printLevel_ > 1 && splitSuccess != splitCount)
-    printf("METISSampling refine: no. of successful splits = %d (of %d)\n",
+    printf("METISSam refine INFO: no. of successful splits = %d (of %d)\n",
            splitSuccess, splitCount);
 
   //**/ ===========================================================
@@ -1798,8 +1798,8 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
     }
     if (printLevel_ > 2)
     {
-      printf("METIS refine: creating new sample %d\n",ss+1);
-      printf("              cell selected = %d\n",index+1);
+      printf("METISSam refine: Creating new sample %d\n",ss+1);
+      printf("                 cell selected = %d\n",index+1);
     }
     vecCellsOccupied_[index] = -(vecCellsOccupied_[index] + 1);
     itmp = index;
@@ -1833,14 +1833,14 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
   itmp = vecChecks.sum();
   if (itmp != nAggrs_)
   {
-    printf("METISSampling refine ERROR: fail final aggregate checking\n");
-    printf("      nAggrs expected = %d\n",nAggrs_);
-    printf("      nAggrs detected = %d\n",itmp);
-    printf("INFO: error occurs in file %s line %d\n",__FILE__, 
+    printf("METISSam refine ERROR: Fail final aggregate checking\n");
+    printf("         nAggrs expected = %d\n",nAggrs_);
+    printf("         nAggrs detected = %d\n",itmp);
+    printf("INFO: Error occurs in file %s line %d\n",__FILE__, 
            __LINE__);
     exit(1);
   }
-  else printf("METISSampling refine INFO: pass final check sum\n");
+  else printf("METISSam refine INFO: Passed final checksum.\n");
 
   //**/ ===========================================================
   //**/ save Metis information
@@ -1872,13 +1872,13 @@ int MetisSampling::refine(int nLevels, int randFlag, double threshold,
   if (printLevel_ > 0)
   {
     printDashes(PL_INFO, 0);
-    printf("METISSampling refine: Sample information after refinement \n");
+    printf("METISSam refine INFO: Sample information after refinement \n");
     printf("     nSamples = %d\n", nSamples_);
     printf("     nInputs  = %d\n", nInputs_);
     printf("     nOutputs = %d\n", nOutputs_);
     //if (randomize_ != 0)
-    //     printf("METISSampling refine: randomize on\n");
-    //else printf("METISSampling refine: randomize off\n");
+    //     printf("METISSam refine: randomize on\n");
+    //else printf("METISSam refine: randomize off\n");
     printDashes(PL_INFO, 0);
   }
   return 0;
@@ -1976,7 +1976,7 @@ int MetisSampling::setParam(char * sparam)
       fprintf(fp, "imagesc(x1,x2,meshA)\n");
       fprintf(fp, "set(gca,'YDir','normal');\n");
       fclose(fp);
-      printf("INFO: metis partitioning plot is in metisMeshPlot.m.\n");
+      printf("METISSam INFO: Partitioning plot is in metisMeshPlot.m.\n");
     }
     return 0;
   }

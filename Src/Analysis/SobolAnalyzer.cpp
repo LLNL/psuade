@@ -77,21 +77,6 @@ double SobolAnalyzer::analyze(aData &adata)
   double *yIn    = adata.sampleOutputs_;
   int    *sIn    = adata.sampleStates_;
   int    outputID = adata.outputID_;
-  if (adata.inputPDFs_ != NULL)
-  {
-    count = 0;
-    for (ii = 0; ii < nInputs; ii++) count += adata.inputPDFs_[ii];
-    if (count > 0)
-    {
-      printOutTS(PL_INFO, 
-          "SobolAnalyzer INFO: some inputs have non-uniform PDFs.\n");
-      printOutTS(PL_INFO, 
-          "     However, they are not relevant in this analysis\n");
-      printOutTS(PL_INFO, 
-          "     (since the sample should have been generated with\n");
-      printOutTS(PL_INFO, "     the desired distributions.)\n");
-    }
-  }
 
   //**/ ---------------------------------------------------------------
   //**/ error checking
@@ -128,10 +113,10 @@ double SobolAnalyzer::analyze(aData &adata)
       if (yIn[ss*nOutputs+ii] > 0.99*PSUADE_UNDEFINED) errFlag = 1;
     if (errFlag == 0) count++;
   }
-  printOutTS(PL_INFO,"SobolAnalyzer INFO: there are %d sample points.\n",
+  printOutTS(PL_INFO,"SobolAnalyzer INFO: There are %d sample points.\n",
          nSamples);
-  printOutTS(PL_INFO,"SobolAnalyzer INFO: there are %d valid sample points.\n",
-             count);
+  printOutTS(PL_INFO,
+       "SobolAnalyzer INFO: There are %d valid sample points.\n",count);
 
   //**/ ---------------------------------------------------------------
   //**/ check if the Sobol sampling plan has been used
@@ -139,17 +124,25 @@ double SobolAnalyzer::analyze(aData &adata)
   nReps = nSamples / (nInputs + 2);
   if ((nReps * (nInputs+2)) == nSamples)
   {
+    //**/ there should be nReps blocks of nInputs+2 samples each
     for (ss = 0; ss < nSamples; ss+=(nInputs+2))
     {
       errCount = 0;
+      //**/ starting from the second sample in the block
       for (iD = 1; iD <= nInputs; iD++)
       {
         for (ii = 0; ii < nInputs; ii++)
         {
+          //**/ xtemp1 = either the ii-th input of the first sample
+          //**/          or the ii-th input of the last sample 
           if (ii == (iD-1))
                xtemp1 = xIn[(ss+nInputs+1)*nInputs+ii]; 
           else xtemp1 = xIn[ss*nInputs+ii]; 
+          //**/ xtemp2 = the i-th input in the current sample
           xtemp2 = xIn[(ss+iD)*nInputs+ii]; 
+          //**/ the ii-th input of the current sample must be the same
+          //**/ as the ii-th input of the first or the last sample in
+          //**/ the block
           if (xtemp1 != xtemp2) errCount++;
         }
       }
@@ -171,6 +164,8 @@ double SobolAnalyzer::analyze(aData &adata)
    
   //**/ ---------------------------------------------------------------
   //**/ set up for and call MOAT analysis
+  //**/ (Since Sobol sample satisfies MOAT property, it makes sense to
+  //**/ run it through MOAT analysis)
   //**/ ---------------------------------------------------------------
   VecY.setLength(nSamples);
   for (ss = 0; ss < nSamples; ss++) VecY[ss] = yIn[nOutputs*ss+outputID];
@@ -212,7 +207,8 @@ double SobolAnalyzer::analyze(aData &adata)
   }
   if (count <= 1)
   {
-    printOutTS(PL_ERROR,"SobolAnalyzer ERROR: too few valid sample points\n");
+    printOutTS(PL_ERROR,
+               "SobolAnalyzer ERROR: Too few valid sample points.\n");
     exit(1);
   }
   sMean /= ((double) (count));
@@ -236,10 +232,11 @@ double SobolAnalyzer::analyze(aData &adata)
   {
     //**/------------------------------------------------------------
     //**/ compute total sensitivity index
-    //**/ TSI(I) = F^2(X) from M1 - E^2 
     //**/------------------------------------------------------------
     tau = 0.0;
     count = 0;
+    //**/ for each block of nInputs+2 points
+    //**/ tau = sum (F(x1,.. xi, ..xn) - mu) (F(x1, ...xi*, ..xn)-mu) 
     for (repID = 0;  repID < nReps; repID++)
     {
        if ((VecY[repID*(nInputs+2)+ii+1] < 0.9*PSUADE_UNDEFINED) &&
@@ -256,32 +253,34 @@ double SobolAnalyzer::analyze(aData &adata)
           "SobolAnalyzer ERROR: too few valid sample points for TSI.\n");
        exit(1);
     }
+    //**/ compute total index
     tau /= ((double) count);
     vecST[ii] = 1.0 - tau / sVar; 
     if (vecST[ii] < 0) vecST[ii] = 0;
 
     //**/------------------------------------------------------------
-    //**/ compute sensitivity index
-    //**/ V(Y) = F^2(X) from M2 - E^2 
+    //**/ compute sensitivity index V(Y)
     //**/------------------------------------------------------------
     tau = 0.0;
     count = 0;
     for (repID = 0;  repID < nReps; repID++)
     {
-       if ((VecY[repID*(nInputs+2)+ii+1] < 0.9*PSUADE_UNDEFINED) &&
-           (VecY[repID*(nInputs+2)+nInputs+1] < 0.9*PSUADE_UNDEFINED))
-       {
-          tau += ((VecY[repID*(nInputs+2)+nInputs+1] - sMean) *
-                  (VecY[repID*(nInputs+2)+ii+1] - sMean)); 
-          count++;
-       }
+      //**/ tau = sum (F(x1,.. xi, ..xn) - mu) (F(x1*, ...xi, ..xn*)-mu) 
+      if ((VecY[repID*(nInputs+2)+ii+1] < 0.9*PSUADE_UNDEFINED) &&
+          (VecY[repID*(nInputs+2)+nInputs+1] < 0.9*PSUADE_UNDEFINED))
+      {
+        tau += ((VecY[repID*(nInputs+2)+nInputs+1] - sMean) *
+                (VecY[repID*(nInputs+2)+ii+1] - sMean)); 
+        count++;
+      }
     }
     if (count <= 0)
     {
-       printOutTS(PL_ERROR,
-          "SobolAnalyzer ERROR: too few valid sample points for VCE.\n");
-       exit(1);
+      printOutTS(PL_ERROR,
+         "SobolAnalyzer ERROR: too few valid sample points for VCE.\n");
+      exit(1);
     }
+    //**/ compute main effect index
     tau /= ((double) count);
     vecS[ii] = tau / sVar; 
     if (vecS[ii] < 0) vecS[ii] = 0;
@@ -293,25 +292,25 @@ double SobolAnalyzer::analyze(aData &adata)
     count  = 0;
     for (repID = 0;  repID < nReps; repID++)
     {
-       if ((VecY[repID*(nInputs+2)+ii+1] < 0.9*PSUADE_UNDEFINED) &&
-           (VecY[repID*(nInputs+2)+nInputs+1] < 0.9*PSUADE_UNDEFINED))
-       {
-          sMean2 += (VecY[repID*(nInputs+2)+nInputs+1]*
-                     VecY[repID*(nInputs+2)+ii+1]);
-          count++;
-       }
+      if ((VecY[repID*(nInputs+2)+ii+1] < 0.9*PSUADE_UNDEFINED) &&
+          (VecY[repID*(nInputs+2)+nInputs+1] < 0.9*PSUADE_UNDEFINED))
+      {
+        sMean2 += (VecY[repID*(nInputs+2)+nInputs+1]*
+                   VecY[repID*(nInputs+2)+ii+1]);
+        count++;
+      }
     }
     sMean2 = sMean2 / (double) count;
     sVar2 = 0.0;
     for (repID = 0;  repID < nReps; repID++)
     {
-       if ((VecY[repID*(nInputs+2)+ii+1] < 0.9*PSUADE_UNDEFINED) &&
-           (VecY[repID*(nInputs+2)+nInputs+1] < 0.9*PSUADE_UNDEFINED))
-       {
-          dtemp = VecY[repID*(nInputs+2)+ii+1] * 
-                  VecY[repID*(nInputs+2)+nInputs+1];
-          sVar2 += pow(dtemp - sMean2, 2.0);
-       }
+      if ((VecY[repID*(nInputs+2)+ii+1] < 0.9*PSUADE_UNDEFINED) &&
+          (VecY[repID*(nInputs+2)+nInputs+1] < 0.9*PSUADE_UNDEFINED))
+      {
+        dtemp = VecY[repID*(nInputs+2)+ii+1] * 
+                VecY[repID*(nInputs+2)+nInputs+1];
+        sVar2 += pow(dtemp - sMean2, 2.0);
+      }
     }
     sVar2 = sVar2 / count;
     vecPE[ii] = 0.6745 * sqrt(sVar2) / sqrt(1.0 * count);
@@ -341,8 +340,8 @@ double SobolAnalyzer::analyze(aData &adata)
 // perform analysis similar to MOAT analysis
 // ------------------------------------------------------------------------
 int SobolAnalyzer::MOATAnalyze(int nInputs, int nSamples, double *xIn,
-                         double *yIn, double *xLower, double *xUpper,
-                         double *means, double *modifiedMeans, double *stds)
+                       double *yIn, double *xLower, double *xUpper,
+                       double *means, double *modifiedMeans, double *stds)
 {
   int    ss, ii;
   double xtemp1, xtemp2, ytemp1, ytemp2, scale;
@@ -412,7 +411,7 @@ int SobolAnalyzer::MOATAnalyze(int nInputs, int nSamples, double *xIn,
   for (ii = 0; ii < nInputs; ii++) stds[ii] = sqrt(stds[ii]);
 
   //**/ ---------------------------------------------------------------
-  //**/ next compute the basic statistics
+  //**/ write results to file for visualization
   //**/ ---------------------------------------------------------------
   printDashes(PL_INFO, 0);
   if (plotScilab()) fp = fopen("scilabsobol.sci", "w");

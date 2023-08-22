@@ -716,7 +716,7 @@ int PDFManager::getPDF(int nSamples, psVector &vecIn, psVector &vecOut,
         if (vecUsrPDFFlags_[ii] == vecUsrPDFFlags_[ss]) jj++;
       for (ss = 0; ss < nSamples; ss++)
         vecData1[ss] = vecIn[ss*nInputs+ii];
-      sprintf(cString, "setInput %d", jj);
+      snprintf(cString,100,"setInput %d", jj);
       PDFptrs_[ii]->setParam(cString);
       PDFptrs_[ii]->getPDF(nSamples,vecData1.getDVector(),
                            vecData2.getDVector());
@@ -741,7 +741,7 @@ int PDFManager::getPDF(int nSamples, psVector &vecIn, psVector &vecOut,
         if (vecUsrPDFFlags_[ii] == vecUsrPDFFlags_[ss]) jj++;
       for (ss = 0; ss < nSamples; ss++)
         vecData1[ss] = vecIn[ss*nInputs+ii];
-      sprintf(cString, "setInput %d", jj);
+      snprintf(cString,100,"setInput %d", jj);
       PDFptrs_[ii]->setParam(cString);
       PDFptrs_[ii]->getPDF(nSamples,vecData1.getDVector(),
                            vecData2.getDVector());
@@ -1192,7 +1192,7 @@ int PDFManager::invCDF(int nSamples, psVector &vecIn, psVector &vecOut,
       jj = 0;
       for (ss = 0; ss < ii; ss++)
         if (vecUsrPDFFlags_[ii] == vecUsrPDFFlags_[ss]) jj++;
-      sprintf(cString, "setInput %d", jj);
+      snprintf(cString,100,"setInput %d", jj);
       PDFptrs_[ii]->setParam(cString);
       PDFptrs_[ii]->invCDF(nSamples,vecData1.getDVector(),
                            vecData2.getDVector());
@@ -1217,7 +1217,7 @@ int PDFManager::invCDF(int nSamples, psVector &vecIn, psVector &vecOut,
       jj = 0;
       for (ss = 0; ss < ii; ss++)
         if (vecUsrPDFFlags_[ii] == vecUsrPDFFlags_[ss]) jj++;
-      sprintf(cString, "setInput %d", jj);
+      snprintf(cString,100,"setInput %d", jj);
       PDFptrs_[ii]->setParam(cString);
       PDFptrs_[ii]->invCDF(nSamples,vecData1.getDVector(),
                            vecData2.getDVector());
@@ -1354,7 +1354,7 @@ int PDFManager::getCDF(int nSamples, psVector &vecIn, psVector &vecOut,
         if (vecUsrPDFFlags_[ii] == vecUsrPDFFlags_[ss]) jj++;
       for (ss = 0; ss < nSamples; ss++)
         vecData1[ss] = vecIn[ss*nInputs_+ii];
-      sprintf(cString, "setInput %d", jj);
+      snprintf(cString,100,"setInput %d", jj);
       PDFptrs_[ii]->setParam(cString);
       PDFptrs_[ii]->getCDF(nSamples,vecData1.getDVector(),
                            vecData2.getDVector());
@@ -1368,7 +1368,7 @@ int PDFManager::getCDF(int nSamples, psVector &vecIn, psVector &vecOut,
         if (vecUsrPDFFlags_[ii] == vecUsrPDFFlags_[ss]) jj++;
       for (ss = 0; ss < nSamples; ss++)
         vecData1[ss] = vecIn[ss*nInputs_+ii];
-      sprintf(cString, "setInput %d", jj);
+      snprintf(cString,100,"setInput %d", jj);
       PDFptrs_[ii]->setParam(cString);
       PDFptrs_[ii]->getCDF(nSamples,vecData1.getDVector(),
                            vecData2.getDVector());

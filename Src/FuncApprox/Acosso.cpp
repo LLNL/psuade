@@ -786,7 +786,7 @@ int Acosso::runAcosso(int nPoints, double *XN, double *YN, int nInps,
       exit(1);
     }
   }
-  sprintf(pString, "%s CMD BATCH psuade_acosso.R", Rpath_);
+  snprintf(pString,1000,"%s CMD BATCH psuade_acosso.R", Rpath_);
   system(pString);
   //**/ read output
   fp = fopen("psuade_acosso_data", "r");
@@ -2555,7 +2555,7 @@ int Acosso::genAcosso()
 double Acosso::setParams(int targc, char **targv)
 {
   int  errFlag;
-  char pString[1000], lineIn[10001], winput[1000];
+  char pString[1001], lineIn[10001], winput[1000];
   FILE *fp;
   if (targc > 1 && !strcmp(targv[0], "setRpath") && targv[1] != NULL)
   {
@@ -2569,7 +2569,7 @@ double Acosso::setParams(int targc, char **targv)
     fprintf(fp,"library(\"quadprog\")\n");
     fprintf(fp,"quit()\n");
     fclose(fp);
-    sprintf(pString, "%s CMD BATCH RTest", Rpath_);
+    snprintf(pString,1000,"%s CMD BATCH RTest", Rpath_);
     system(pString);
     fp = fopen("RTest.Rout","r");
     if (fp == NULL)

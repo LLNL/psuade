@@ -43,7 +43,7 @@ int main(int argc, char **argv)
    double *inputs, *outputs, value;
    char   appDriver[200], appOutputFile[200], appInputFile[200];
    char   appInputTemplate[200], **inputNames, **outputNames;
-   char   lineIn[100], command[200], filename[200];
+   char   lineIn[100], command[501], filename[200];
    char   outfile[200], outfileTmp[200], appsPsuadeFile[200];
    FILE   *fIn, *fOut;
 
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
       printf("appspackMain ERROR : argc < 2.\n");
       exit(1);
    }
-   sprintf(appsPsuadeFile, "appspackMain.in");
+   snprintf(appsPsuadeFile,100,"appspackMain.in");
    if ((fIn = fopen(appsPsuadeFile,"r")) == NULL) 
    {
       printf("appspackMain ERROR : cannot read input file %s\n",
@@ -111,7 +111,7 @@ int main(int argc, char **argv)
    if (createInputFiles(sampleID,nInputs,inputs,inputNames,
                         appInputTemplate) != 0)
    {
-      sprintf(filename, "%s", appInputFile);
+      snprintf(filename,100,"%s", appInputFile);
       fOut = fopen(filename, "w");
       if ( fOut == NULL )
       {
@@ -123,14 +123,14 @@ int main(int argc, char **argv)
       for (i = 0; i < nInputs; i++)
          fprintf(fOut, "%s = %20.12e\n", inputNames[i], inputs[i]);
       fclose(fOut);
-      sprintf(outfile, "%s", appInputFile);
+      snprintf(outfile,100,"%s", appInputFile);
    }
    else
    {
       removePattern(appInputTemplate, outfileTmp, ".Tmplt");
       length = strlen(outfileTmp);
       for (i = length-1; i >= 0; i--) if (outfileTmp[i] == '/') break; 
-      sprintf(outfile, "%s", &outfileTmp[i+1]);
+      snprintf(outfile,100,"%s", &outfileTmp[i+1]);
    }
 
    //----------------------------------------------------------------- 
@@ -144,7 +144,7 @@ int main(int argc, char **argv)
       exit(1);
    }
    fclose(fIn);
-   sprintf(command, "%s %s %s",appDriver,outfile,appOutputFile);
+   snprintf(command,500,"%s %s %s",appDriver,outfile,appOutputFile);
    if (strstr((const char*) appDriver, "rm ") != NULL &&
        strstr((const char*) appDriver, "mv ") != NULL ||
        strstr((const char*) appDriver, " -f ") != NULL ||
@@ -156,7 +156,7 @@ int main(int argc, char **argv)
    }
    system(command);   
    outputCount = 0;
-   sprintf(filename, "%s", appOutputFile);
+   snprintf(filename,100,"%s", appOutputFile);
    if ((fIn=fopen(filename, "r")) == NULL) 
    {
       printf("appspackMain::evaluate ERROR : \n");
@@ -269,7 +269,7 @@ int createInputFiles(int sampleID, int nInputs, double *inputs,
 
    length = strlen(outfileTmp);
    for (i = length-1; i >= 0; i--) if (outfileTmp[i] == '/') break;
-   sprintf(outfile, "%s", &(outfileTmp[i+1]));
+   snprintf(outfile,100,"%s", &(outfileTmp[i+1]));
    if ((fOut=fopen(outfile, "w")) == NULL)
    {
       printf("appspackMain::createInputFile ERROR : \n");
@@ -301,11 +301,10 @@ int createInputFiles(int sampleID, int nInputs, double *inputs,
 // Given an input string inputString and a pattern, replace the
 // pattern with the given value.
 // ------------------------------------------------------------------------
-
 int substitutePattern(char *inputString, char *outputString, 
                       char *pattern, double value)
 {
-   char *stringPtr, valueStr[80];
+   char *stringPtr, valueStr[101];
    int  i, pLength, cLength;
 
    for ( i = 0; i < 80; i++ ) outputString[i] = '\0';
@@ -315,7 +314,7 @@ int substitutePattern(char *inputString, char *outputString,
    cLength = strlen((const char*) inputString) -
              strlen((const char*) stringPtr);
    strncpy(outputString, (const char*) inputString, cLength);
-   sprintf(valueStr, "%24.16e ", value);
+   snprintf(valueStr,100,"%24.16e ", value);
    strcat(outputString, valueStr);
    pLength = strlen((const char *) pattern);
    strcat(outputString, (const char*) &stringPtr[pLength]);

@@ -16,6 +16,7 @@ int main(int argc, char **argv)
    }
    fscanf(fIn, "%d", &nInputs);
    for (i = 0; i < nInputs; i++) fscanf(fIn, "%lg", &AB[i]);
+   fclose(fIn);
    X[0] = 0/1.0; Y[0] = 0.0;
    X[1] = 1/3.0; Y[1] = 1/6.0;
    X[2] = 2/3.0; Y[2] = 1/2.0;

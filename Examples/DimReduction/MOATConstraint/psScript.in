@@ -1,0 +1,30 @@
+# 1. generate a sample expressing the constraints (X1+X2)
+sys cc -o genConstraint genConstraint.c -lm
+run psuadeGenConstraint.in
+rename psuadeData constrData
+constrData
+# 2. create a Morris sample for X1/X2 with the constraint
+moatgen
+1
+0
+1
+8
+200
+# At this point a file MOAT_repair_file has been generated.
+# 3. generate a Morris sample for 20 inputs but do not run
+run psuadeGMOAT.in
+rename psuadeData gmoatSample
+# 4. repair the Morris sample (repair the first 2 inputs only)
+load gmoatSample
+gmoat_adjust MOAT_repair_file
+write gmoatSample.repaired
+# 5. Now gmoatSample.repaired is ready to be run.
+sys cc -o simulator simulator.c -lm
+load gmoatSample.repaired
+setdriver
+1
+./simulator
+write gmoatSample.repaired
+run gmoatSample.repaired
+rename psuadeData gmoatSample.repaired.done
+q

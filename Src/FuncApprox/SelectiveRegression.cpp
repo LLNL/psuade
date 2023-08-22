@@ -628,7 +628,7 @@ int SelectiveRegression::analyze(psVector VecX, psVector VecY)
 {
   int    N, M, mm, nn, wlen, info, NRevised;
   double *arrayXX, SSresid, SStotal, R2, var, esum, ymax, *UU, *VV;
-  char   pString[100];
+  char   pString[101];
   FILE   *fp;
   psMatrix eigMatT, MatA, MatXX;
   psVector eigVals;
@@ -721,7 +721,7 @@ int SelectiveRegression::analyze(psVector VecX, psVector VecY)
     printf("So, select them judiciously.\n");
     for (nn = 0; nn < N; nn++)
       printf("Singular value %5d = %e\n", nn+1, VecS[nn]);
-    sprintf(pString, "How many to keep (1 - %d, 0 - all) ? ", N);
+    snprintf(pString,100,"How many to keep (1 - %d, 0 - all) ? ", N);
     NRevised = getInt(0,N,pString);
     if (NRevised == 0) NRevised = N;
     for (nn = NRevised; nn < N; nn++) VecS[nn] = 0.0;

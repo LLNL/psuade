@@ -591,8 +591,8 @@ double PKriging::train(double *X, double *Y)
   {
     printf("PKriging: current optimization lower bound for input %d = %e",
             ii+1,vecTLowers[ii]);
-    sprintf(pString,
-            "PKriging: Enter optimization lower bound for input %d : ",ii+1);
+    snprintf(pString,100,
+             "PKriging: Enter optimization lower bound for input %d : ",ii+1);
     vecTLowers[ii] = getDouble(pString);
     if (vecTLowers[ii] <= 0.0)
     {
@@ -601,8 +601,8 @@ double PKriging::train(double *X, double *Y)
     }
     printf("PKriging: current optimization upper bound for input %d = %e",
            ii+1,vecTUppers[ii]);
-    sprintf(pString,
-           "PKriging: Enter optimization upper bound for input %d : ",ii+1);
+    snprintf(pString,100,
+            "PKriging: Enter optimization upper bound for input %d : ",ii+1);
     vecTUppers[ii] = getDouble(pString);
     if (vecTLowers[ii] > vecTUppers[ii])
     {
@@ -650,7 +650,7 @@ double PKriging::train(double *X, double *Y)
     printf("optimization is to be employed. Please enter the number\n");
     printf("of multi-starts (more the better, but also more expensive.\n");
     printf("Default is max(num. of processors, 10). \n");
-    sprintf(pString,"Enter number of multi-starts (up to 100): ");
+    snprintf(pString,100,"Enter number of multi-starts (up to 100): ");
     nSamOpt = getInt(nSamOpt, 100, pString);
   }
   if (nInputs_ > 50)

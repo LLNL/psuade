@@ -29,7 +29,7 @@ END
 METHOD
 #  use_input_pdfs
    sampling = LH
-   num_samples = 5000
+   num_samples = 20000
    randomize
    random_seed = 434743817
 END
@@ -40,6 +40,6 @@ ANALYSIS
    analyzer output_id  = 1
    analyzer rstype  = MARS
    analyzer threshold  = 0.00001
-   printlevel 3
+   printlevel 1
 END
 END

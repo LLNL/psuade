@@ -586,7 +586,7 @@ int QGP::train()
 {
   int    ii, kk, nhypers=5, optimizeFlag = 1;
   double dtmp;
-  char   configCmd[1000], *cString, pString[1000], winput[1000];
+  char   configCmd[101], *cString, pString[101], winput[1000];
 
   //**/ ----------------------------------------------------------
   //**/ obtain hyperparameters (thetas) from user, if any
@@ -597,7 +597,7 @@ int QGP::train()
   VecHypers_.setLength(nhypers);
   if (psConfig_.RSExpertModeIsOn() && psConfig_.InteractiveIsOn())
   {
-    sprintf(pString,"Use user-provided hyperparameters? (y or n) ");
+    snprintf(pString,100,"Use user-provided hyperparameters? (y or n) ");
     getString(pString, winput);
     if (winput[0] == 'y')
     {
@@ -610,7 +610,7 @@ int QGP::train()
       printf("Hyperparameter 6: input scale\n");
       for (ii = 0; ii < VecHypers_.length(); ii++)
       {
-        sprintf(pString,"Enter hyperparameter %d : ",ii+1);
+        snprintf(pString,100,"Enter hyperparameter %d : ",ii+1);
         VecHypers_[ii] = getDouble(pString);
       }
       optimizeFlag = 0;
@@ -625,7 +625,7 @@ int QGP::train()
   {
     for (ii = 0; ii < nhypers; ii++)
     {
-      sprintf(configCmd, "QGP%d", ii+1);
+      snprintf(configCmd,100,"QGP%d", ii+1);
       cString = psConfig_.getParameter(configCmd);
       if (cString == NULL) break;
       else
@@ -937,7 +937,7 @@ int QGP::train()
     }
     for (ii = 0; ii < VecHypers_.length(); ii++)
     {
-      sprintf(configCmd, "QGP%d %e",ii+1,VecHypers_[ii]);
+      snprintf(configCmd,100,"QGP%d %e",ii+1,VecHypers_[ii]);
       //psConfig_.putParameter(configCmd);
     }
   }

@@ -73,7 +73,7 @@ MMars::MMars(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
   {
     printf("You can improve smoothness across partitions by allowing\n");
     printf("overlaps. The recommended overlap is 0.1 (or 10%%).\n");
-    sprintf(pString, "Enter the degree of overlap (0 - 0.4) : ");
+    snprintf(pString,100,"Enter the degree of overlap (0 - 0.4) : ");
     ddata = getDouble(pString);
     if (ddata < 0 || ddata > 0.4)
     {
@@ -85,11 +85,11 @@ MMars::MMars(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
     printf("You can decide the sample size of each partition.\n");
     printf("Larger sample size per partition will take more setup time.\n");
     printf("The default is 1000 (will have more if there is overlap).\n");
-    sprintf(pString, "Enter the partition sample size (1000 - 10000) : ");
+    snprintf(pString,100,"Enter the partition sample size (1000 - 10000) : ");
     partSize_ = getInt(200, 20000, pString);
-    sprintf(pString, "MMARS_max_samples_per_group = %d", partSize_);
+    snprintf(pString,100,"MMARS_max_samples_per_group = %d", partSize_);
     psConfig_.putParameter(pString);
-    sprintf(pString, "MMARS_overlap = %e", ddata);
+    snprintf(pString,100,"MMARS_overlap = %e", ddata);
     psConfig_.putParameter(pString);
   }
 
@@ -209,27 +209,27 @@ int MMars::initialize(double *X, double *Y)
     nBasis = nSamples_;
     if (nSamples_ > 10)
     {
-      sprintf(pString,"Enter the number of basis functions (>=10, <= %d): ",
-              nSamples_);
+      snprintf(pString,100,"Enter the number of basis functions (>=10, <= %d): ",
+               nSamples_);
       nBasis = getInt(10, nSamples_, pString);
     }
     maxVarPerBasis = 8;
     if (nInputs_ < maxVarPerBasis) maxVarPerBasis = nInputs_;
     printOutTS(PL_INFO,
          "MMars: Current degree of interactions    = %d\n",maxVarPerBasis);
-    sprintf(pString, "Enter the degree of interactions (<=%d) : ",nInputs_);
+    snprintf(pString,100,"Enter the degree of interactions (<=%d) : ",nInputs_);
     maxVarPerBasis = getInt(1, nInputs_, pString);
-    sprintf(pString, "Mars: normalize output? (y or n) ");
+    snprintf(pString,100,"Mars: normalize output? (y or n) ");
     getString(pString, winput);
     normalizeY = 0;
     if (winput[0] == 'y') normalizeY = 1;
-    sprintf(pString, "MARS_num_basis = %d", nBasis);
+    snprintf(pString,100,"MARS_num_basis = %d", nBasis);
     psConfig_.putParameter(pString);
-    sprintf(pString, "MARS_interaction = %d", maxVarPerBasis);
+    snprintf(pString,100,"MARS_interaction = %d", maxVarPerBasis);
     psConfig_.putParameter(pString);
     if (normalizeY == 1)
     {
-      sprintf(pString, "normalize_outputs");
+      snprintf(pString,100,"normalize_outputs");
       psConfig_.putParameter(pString);
     }
     localRSExpert = 1;

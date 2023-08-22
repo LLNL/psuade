@@ -1,0 +1,42 @@
+PSUADE
+INPUT
+   dimension = 20
+   variable 1 X1  =  -0.0 0.5
+   variable 2 X2  =  -0.0 0.5
+   variable 3 X3  =  -0.0 0.5
+   variable 4 X4  =  -0.0 0.5
+   variable 5 X5  =  -0.0 0.5
+   variable 6 X6  =  -0.0 0.5
+   variable 7 X7  =  -0.0 0.5
+   variable 8 X8  =  -0.0 0.5
+   variable 9 X9  =  -0.0 0.5
+   variable 10 XA =  -0.0 0.5
+   variable 11 XB =  -0.0 0.5
+   variable 12 XC =  -0.0 0.5
+   variable 13 XD =  -0.0 0.5
+   variable 14 XE =  -0.0 0.5
+   variable 15 XF =  -0.0 0.5
+   variable 16 XG =  -0.0 0.5
+   variable 17 XH =  -0.0 0.5
+   variable 18 XI =  -0.0 0.5
+   variable 19 XJ =  -0.0 0.5
+   variable 20 XK =  -0.0 0.5
+END
+OUTPUT
+   dimension = 1
+   variable 1 Y
+END
+METHOD
+   sampling = MOAT
+   num_samples = 126
+   random_seed = 47587387
+END
+APPLICATION
+   driver = ./simulator
+END
+ANALYSIS
+   analyzer method = MOAT
+   analyzer output_id  = 1
+   printlevel 1
+END
+END

@@ -412,8 +412,8 @@ int PsuadeBase::interpretInteractiveParallel()
       {
         printf("rssobol1b INFO: MAKE SURE YOU SET YOUR DESIRED\n");
         printf("          RESPONSE SURFACE TYPE IN YOUR DATA FILE.\n");
-        sprintf(pString, "Enter output number (1 - %d) : ", 
-                currSession->nOutputs_);
+        snprintf(pString,100,"Enter output number (1 - %d) : ", 
+                 currSession->nOutputs_);
         outputID = getInt(1, currSession->nOutputs_, pString);
         outputID--;
       }
@@ -468,7 +468,7 @@ int PsuadeBase::interpretInteractiveParallel()
       //**/ set up for iterations
       if (mypid == 0)
       {
-        sprintf(pString,
+        snprintf(pString,100,
                 "How many bootstrapped samples to use (10 - 300) : ");
         nbs = getInt(10, 300, pString);
         if (nbs < nprocs)
@@ -759,8 +759,8 @@ int PsuadeBase::interpretInteractiveParallel()
       {
         printf("rssobol2b INFO: MAKE SURE YOU SET YOUR DESIRED\n");
         printf("          RESPONSE SURFACE TYPE IN YOUR DATA FILE.\n");
-        sprintf(pString, "Enter output number (1 - %d) : ", 
-                currSession->nOutputs_);
+        snprintf(pString,100,"Enter output number (1 - %d) : ", 
+                 currSession->nOutputs_);
         outputID = getInt(1, currSession->nOutputs_, pString);
         outputID--;
       }
@@ -815,7 +815,7 @@ int PsuadeBase::interpretInteractiveParallel()
       //**/ set up for iterations
       if (mypid == 0)
       {
-        sprintf(pString,
+        snprintf(pString,100,
                 "How many bootstrapped samples to use (10 - 300) : ");
         nbs = getInt(10, 300, pString);
         if (nbs < nprocs)
@@ -978,11 +978,11 @@ int PsuadeBase::interpretInteractiveParallel()
         if (fp == NULL) printf("ERROR: cannot open file scilabrssobol2b\n");
         else
         {
-          sprintf(pString,"this file contains Sobol' 2nd order\n");
+          snprintf(pString,100,"this file contains Sobol' 2nd order\n");
           fwriteComment(fp,pString);
-          sprintf(pString,"indices. Set sortFlag = 1 and set nn to\n");
+          snprintf(pString,100,"indices. Set sortFlag = 1 and set nn to\n");
           fwriteComment(fp,pString);
-          sprintf(pString,"be the number of inputs to display.\n");
+          snprintf(pString,100,"be the number of inputs to display.\n");
           fwriteComment(fp,pString);
         }
         if (fp != NULL)
@@ -1162,8 +1162,8 @@ int PsuadeBase::interpretInteractiveParallel()
       {
         printf("rssoboltsib INFO: MAKE SURE YOU SET YOUR DESIRED\n");
         printf("          RESPONSE SURFACE TYPE IN YOUR DATA FILE.\n");
-        sprintf(pString, "Enter output number (1 - %d) : ", 
-                currSession->nOutputs_);
+        snprintf(pString,100,"Enter output number (1 - %d) : ", 
+                 currSession->nOutputs_);
         outputID = getInt(1, currSession->nOutputs_, pString);
         outputID--;
       }
@@ -1218,7 +1218,7 @@ int PsuadeBase::interpretInteractiveParallel()
       //**/ set up for iterations
       if (mypid == 0)
       {
-        sprintf(pString,
+        snprintf(pString,100,
                 "How many bootstrapped samples to use (10 - 300) : ");
         nbs = getInt(10, 300, pString);
         if (nbs < nprocs)
@@ -1530,14 +1530,14 @@ int PsuadeBase::interpretInteractiveParallel()
       if (mypid == 0)
       {
         faType = -1;
-        sprintf(pString, "Enter your choice ? ");
+        snprintf(pString,100,"Enter your choice ? ");
         while (faType < 0 || faType > PSUADE_NUM_RS)
         {
           writeFAInfo(outputLevel_);
           faType = getFAType(pString);
         }
-        sprintf(pString,"Enter output number (1 - %d) = ",
-                currSession->nOutputs_);
+        snprintf(pString,100,"Enter output number (1 - %d) = ",
+                 currSession->nOutputs_);
         outputID = getInt(1, currSession->nOutputs_, pString);
         outputID--;
       }

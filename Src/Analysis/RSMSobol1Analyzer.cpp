@@ -23,7 +23,7 @@
 // Functions for the class RSMSobol1Analyzer  
 // AUTHOR : CHARLES TONG
 // DATE   : 2006
-//**/ ------------------------------------------------------------------------
+//**/ ---------------------------------------------------------------------
 //**/ constrained Sobol main effect analysis (recommended for response 
 //**/ surface models only since it takes many function evaluations)
 // ************************************************************************
@@ -329,9 +329,9 @@ double RSMSobol1Analyzer::analyze(aData &adata)
     printOutTS(PL_INFO,
          "* NOTE: large M and K may take very long time.\n");
     printEquals(PL_INFO, 0);
-    sprintf(pString,"Enter M (suggestion: 100 - 10000) : ");
+    snprintf(pString,100,"Enter M (suggestion: 100 - 10000) : ");
     nSubSamples = getInt(100, 50000, pString);
-    sprintf(pString,"Enter K (suggestion: 1000 - 10000) : ");
+    snprintf(pString,100,"Enter K (suggestion: 1000 - 10000) : ");
     nLevels = getInt(1000, 50000, pString);
 
     //**/ ntimes should be 1 from now on
@@ -344,7 +344,7 @@ double RSMSobol1Analyzer::analyze(aData &adata)
     //printOutTS(PL_INFO,"* bootstrapped samples below.\n");
     //printOutTS(PL_INFO,
     //   "* If you do not need error bars, set it to 1.\n");
-    //sprintf(pString,
+    //snprintf(pString,100,
     //   "Enter the number of bootstrapped samples (1 - 500) : ");
     //ntimes = getInt(1, 500, pString);
     ntimes = 1;
@@ -418,23 +418,22 @@ double RSMSobol1Analyzer::analyze(aData &adata)
   //**/ use response surface to compute mean and variance
   //**/ do it 1000 times using fuzzy evaluations
   //**/ ===============================================================
-  nSamp = nLevels * nSubSamples;
+  int nSamp2 = 1000000;
   if (psConfig_.InteractiveIsOn())
   {
     printOutTS(PL_INFO,
       "RSMSobol1 INFO: Creating a sample for basic statistics.\n");
-    printOutTS(PL_INFO,"                Sample size = %d\n", nSamp);
+    printOutTS(PL_INFO,"                Sample size = %d\n", nSamp2);
   }
 
   //**/ ---------------------------------------------------------
   //**/ generate a large sample for computing basic statistics
-  //**/ ==> vecXX and vecYY (with sample size nSamp) 
+  //**/ ==> vecXX and vecYY (with sample size nSamp2) 
   //**/ noPDF!=0 means some inputs have non-uniform PDFS, but
   //**/ there is no S-type or any correlation allowed here
   //**/ ---------------------------------------------------------
   psIVector vecSS;
   psVector  vecXX, vecYY;
-  int nSamp2 = 1000000;
   vecXX.setLength(nSamp2*nInputs);
   vecYY.setLength(nSamp2);
   if (noPDF == 0)
@@ -626,16 +625,13 @@ double RSMSobol1Analyzer::analyze(aData &adata)
   //**/ ---------------------------------------------------------
   //**/ allocate space
   //**/ ---------------------------------------------------------
-  int       nSteps=1;
   psVector  vecLower2, vecUpper2, vecZZ, samplePtsND;
   psVector  vecInpMeans2, vecInpStdvs2, vecSamPts1D;
   psIVector vecInpFlags2; 
   PDFManager *pdfman1, *pdfman2;
 
-  if (nSamp > 2000) nSteps = nSamp / 1000;
   vecLower2.setLength(nInputs);
   vecUpper2.setLength(nInputs);
-  nSamp  = nSubSamples;
   vecSamPts1D.setLength(nLevels*nInputs);
   samplePtsND.setLength(nSubSamples*nInputs*nInputs);
   vecInpFlags2.setLength(nInputs-1);
@@ -1120,13 +1116,13 @@ double RSMSobol1Analyzer::analyze2(aData &adata)
     printf("* As a user, please decide on M and K.\n\n");
     printEquals(PL_INFO, 0);
 
-    sprintf(pString,"Enter M (suggestion: 100-10000) : ");
+    snprintf(pString,100,"Enter M (suggestion: 100-10000) : ");
     nSubSamples = getInt(100, 100000, pString);
     if (nSubSamples > 100000)
       printOutTS(PL_INFO, "An M of %d may take very long time.\n", 
                  nSubSamples);
 
-    sprintf(pString,"Enter K (suggestion: 1000 - 10000) : ");
+    snprintf(pString,100,"Enter K (suggestion: 1000 - 10000) : ");
     nLevels = getInt(1000, 10000, pString);
     if (nLevels > 5000)
       printOutTS(PL_INFO, "* A K of %d may take very long time.\n", 
@@ -1153,11 +1149,11 @@ double RSMSobol1Analyzer::analyze2(aData &adata)
     printOutTS(PL_INFO,
       "* RSMSobol1 will create a sample for basic statistics.\n");
     printOutTS(PL_INFO,"* You have the option to plot the PDF.\n");
-    sprintf(pString,"Create a pdf (probability) bar graph? (y or n) ");
+    snprintf(pString,100,"Create a pdf (probability) bar graph? (y or n) ");
     getString(pString, winput1);
     if (winput1[0] == 'y')
     {
-      sprintf(pString,"Enter the file name for the bar graph : ");
+      snprintf(pString,100,"Enter the file name for the bar graph : ");
       getString(pString, pdfFile);
       pdfFile[strlen(pdfFile)-1] = '\0';
       fp = fopen(pdfFile, "w");
@@ -1187,11 +1183,11 @@ double RSMSobol1Analyzer::analyze2(aData &adata)
         "RSMSobol1 creates many samples for Sobol1 analysis.\n");
     printOutTS(PL_INFO,
         "You have the option to plot the sample data.\n");
-    sprintf(pString, "Create a scatter plot for RSMSobol1? (y or n) ");
+    snprintf(pString,100,"Create a scatter plot for RSMSobol1? (y or n) ");
     getString(pString, winput1);
     if (winput1[0] == 'y')
     {
-      sprintf(pString,"Enter the file name for the scatter plot : ");
+      snprintf(pString,100,"Enter the file name for the scatter plot : ");
       getString(pString, scatterFile);
       scatterFile[strlen(scatterFile)-1] = '\0';
       fp = fopen(scatterFile, "w");

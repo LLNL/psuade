@@ -9,9 +9,6 @@ estimation, decision analysis, and many others.
 UQ techniques can be classified as intrusive 
 or non-intrusive.  In this work, we focus on 
 non-intrusive techniques which allow one to treat 
-the analysis code as a black box.  We will give a 
-brief introduction to UQ, some R&D issues in 
-developing UQ tools.  We will also describe our 
-most recent work on developing UQ tools. 
+the analysis code as a black box.  
 
 

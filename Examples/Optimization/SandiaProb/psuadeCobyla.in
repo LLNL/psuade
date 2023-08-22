@@ -1,0 +1,30 @@
+PSUADE
+INPUT
+   dimension = 2
+   variable 1 X1 =  0.0 0.7
+   variable 2 X2 =  0.0 0.7
+END
+OUTPUT
+   dimension = 1
+   variable 1 Y1
+END
+METHOD
+   sampling = MC
+   num_samples = 1
+#  randomize
+END
+APPLICATION
+   driver = ./simulator
+   opt_driver = ./simulator
+END
+ANALYSIS
+   optimization method = cobyla
+   optimization num_local_minima = 3
+   optimization max_feval = 10000
+#  optimization fmin = 1.000000e-02
+   optimization tolerance = 1.000000e-06
+#  optimization num_fmin = 2
+#  optimization print_level = 3
+   printlevel 3
+END
+END

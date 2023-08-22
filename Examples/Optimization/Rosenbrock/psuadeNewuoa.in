@@ -1,0 +1,31 @@
+PSUADE
+INPUT
+   dimension = 6
+   variable 1 X1 =  -2.0000000000000000e+00   2.0000000000000000e+00
+   variable 2 X2 =  -2.0000000000000000e+00   2.0000000000000000e+00
+   variable 3 X3 =  -2.0000000000000000e+00   2.0000000000000000e+00
+   variable 4 X4 =  -2.0000000000000000e+00   2.0000000000000000e+00
+   variable 5 X5 =  -2.0000000000000000e+00   2.0000000000000000e+00
+   variable 6 X6 =  -2.0000000000000000e+00   2.0000000000000000e+00
+END
+OUTPUT
+   dimension = 1
+   variable 1 Y
+END
+METHOD
+   sampling = LPTAU
+   num_samples = 9
+END
+APPLICATION
+   driver = ./simulator
+   opt_driver = ./simulator
+END
+ANALYSIS
+   optimization method = newuoa
+   optimization num_starts = 3
+   optimization max_feval = 10000
+   optimization tolerance = 1.000000e-04
+   optimization print_level = 1
+   printlevel 1
+END
+END

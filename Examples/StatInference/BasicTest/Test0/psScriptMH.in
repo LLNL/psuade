@@ -8,15 +8,17 @@ y
 2
 mcmcFile
 1
+n
 1000000
 20
+0.0
 -1
 n
 ################################################
 # Now MCMCPostSample is available. You may run
-# python view_mcmcposteriors.py < pyScript.in
-# to view the posteriors (which will also be
-# stored in the psu_mcmcpost.png file).
+# python view_mcmcposteriors.py to view the
+# posteriors (which will also be stored in the
+# psu_mcmcpost.png file).
 ################################################
 q
 

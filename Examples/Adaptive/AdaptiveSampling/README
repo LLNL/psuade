@@ -7,19 +7,30 @@ refinement. There are two possible cases:
 (1) if the initial sample is not a METIS sample, 
     then one can use the arefine command.
 
-Running with psScript1.in, the result (by adding 
-10 new points) will create a new sample file
+Running PSUADE with psScript1.in, the result (by adding 
+10 new points) will be a new sample file sample110.psu
 that has 110 points (100 initial + 10 new).
 
-The psScript2.in will take this file, run simulation
-on the unevaluated points, and perform another step
-of adaptive refinement and give the sam120.psu file.
+The psScript2.in will take the 110 sample file, run 
+simulation on the 10 unevaluated points, and perform 
+another step of adaptive refinement and give the 
+sam120.psu file (this file has 110 evaluated points
+and 10 unevaluated points).
 
 You may use iplot2 on sam120.psu to view the distribution 
-of adaptively generated sample points using Matlab.
+of the adaptively generated sample points using Matlab.
+
+You can continue to run psScript3.in, which will create
+sam130.psu and so on for psScript4.in, psScript5.in and on.
+(NOTE: You need to run these files in order from psScript1.in
+       to psScript7.in to get a final sample with size 170)
 
 IMPORTANT: while you are performing these operations,
    do not delete or change the psuadeMetisInfo file,
    which contains pertinent information for refinement
    to succeed.
+
+=========================================================
+To clean up, do:
+    make -f Makefile
 

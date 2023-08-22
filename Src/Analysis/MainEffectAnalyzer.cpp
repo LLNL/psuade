@@ -297,14 +297,14 @@ double MainEffectAnalyzer::analyze(aData &adata)
   fp = NULL;
   if (psConfig_.AnaExpertModeIsOn())
   {
-    sprintf(pString,"Create main effect scatter plot ? (y or n) ");
+    snprintf(pString,100,"Create main effect scatter plot ? (y or n) ");
     getString(pString, winput1);
     if (winput1[0] == 'y')
     {
       if (plotScilab())
-        sprintf(pString,"Enter scatter plot file name (ends with .sci): ");
+        snprintf(pString,100,"Enter scatter plot file name (ends with .sci): ");
       else
-        sprintf(pString,"Enter scatter plot file name (ends with .m): ");
+        snprintf(pString,100,"Enter scatter plot file name (ends with .m): ");
       getString(pString, meFileName);
       meFileName[strlen(meFileName)-1] = '\0';
       fp = fopen(meFileName, "w");
@@ -610,12 +610,12 @@ double MainEffectAnalyzer::analyze(aData &adata)
        "you will need to enter 'no index reuse' below at the first\n");
     printOutTS(PL_INFO, 
        "iteration and 'yes' afterward until the final refinement.\n");
-    sprintf(pString,"Perform bootstrap main effect analysis? (y or n) ");
+    snprintf(pString,100,"Perform bootstrap main effect analysis? (y or n) ");
     getString(pString, winput1);
     ncount = 0;
     if (winput1[0] == 'y')
     {
-      sprintf(pString,"Number of bootstrap samples to use (>=100): ");
+      snprintf(pString,100,"Number of bootstrap samples to use (>=100): ");
       ncount = getInt(100, 2000, pString);
       psMatrix MatBS;
       MatBS.setFormat(PS_MAT2D);
@@ -629,7 +629,7 @@ double MainEffectAnalyzer::analyze(aData &adata)
       if (fp1 != NULL)
       {
         printOutTS(PL_INFO, ".ME_bootstrap_indset file found.\n");
-        sprintf(pString,"Re-use file? (y or n) ");
+        snprintf(pString,100,"Re-use file? (y or n) ");
         getString(pString, winput1);
         if (winput1[0] == 'y')
         {
@@ -1069,7 +1069,7 @@ int MainEffectAnalyzer::computeVCECrude(int nInputs, int nSamples,
   }
   if (psConfig_.AnaExpertModeIsOn() && psConfig_.InteractiveIsOn())
   {
-    sprintf(pString,"number of levels (>5, default = %d): ", nIntervals);
+    snprintf(pString,100,"number of levels (>5, default = %d): ", nIntervals);
     nIntervals = getInt(5, nSamples/2, pString);
     nSize = nSamples / nIntervals;
   }
@@ -1139,8 +1139,9 @@ int MainEffectAnalyzer::computeVCECrude(int nInputs, int nSamples,
         nFilled++;
       }
     }
-    printf("(INFO) Input %4d: %d out of %d bins populated.\n",ii+1,
-           nFilled,nIntervals);
+    if (psConfig_.InteractiveIsOn())
+      printf("(ME INFO) Input %4d: %d out of %d bins populated.\n",
+             ii+1, nFilled,nIntervals);
     vce[ii] = 0.0;
     aMean = 0.0;
     for (ss = 0; ss < nIntervals; ss++)
@@ -1158,7 +1159,7 @@ int MainEffectAnalyzer::computeVCECrude(int nInputs, int nSamples,
     }
     VecInputVCE_[ii] = vce[ii];
   }
-  printEquals(PL_INFO,0);
+  if (psConfig_.InteractiveIsOn()) printEquals(PL_INFO,0);
 
   //**/ ---------------------------------------------------------------
   //**/ display VCE for each input

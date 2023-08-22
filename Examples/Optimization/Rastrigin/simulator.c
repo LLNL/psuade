@@ -12,7 +12,7 @@ main(int argc, char **argv)
    FILE  *fOut;
    if (fIn == NULL)
    {
-      printf("Griewank ERROR - cannot open in/out files.\n");
+      printf("Rastrigin ERROR - cannot open in/out files.\n");
       exit(1);
    }
    fscanf(fIn, "%d",  &n);

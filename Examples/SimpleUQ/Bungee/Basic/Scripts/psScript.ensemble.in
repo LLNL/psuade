@@ -1,14 +1,16 @@
-# setting things up
+# This example shows how to perform uncertainty analysis
+# using sampling and running simulations in ensemble mode.  
+# First, set things up
 sys cc -o ensemble_simulator ensemble_simulator.c -lm
 setranseed 121297753
 run psuadeEnsemble.in
-# perform uncertainty analysis
+# then, perform uncertainty analysis
 setranseed 31971311
 load psuadeData
 ua
 y
 1
-# clean up
+# Finally, clean up
 sys rm -f *.m .psuade_mars ensemble_simulator psuadeData
 quit
 

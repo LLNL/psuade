@@ -21,6 +21,10 @@
 // Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 // ************************************************************************
 // Functions for the class GowerAnalyzer (Gower's distance analysis) 
+// Gower distance analysis forms distribution plots of the distances of
+// a second set of sample points with respect to the first set. The plots
+// give an idea of how far new points from the sample points that are used
+// to build response surface for prediction (in other word, extrapolation).  
 // ************************************************************************
 // AUTHOR : CHARLES TONG
 // DATE   : 2009
@@ -85,7 +89,8 @@ double GowerAnalyzer::analyze(aData &adata)
     vecY2[ii] = YIn[ii*nOutputs+outputID];
 
   //**/ ---------------------------------------------------------------
-  //**/ generate sample and evaluate with response surface 
+  //**/ generate sample (200) and evaluate with response surface 
+  //**/ for the purpose of main effect analysis
   //**/ ---------------------------------------------------------------
   //FuncApprox *faPtr = genFA(PSUADE_RS_MARS, nInputs, iOne, nSamples);
   FuncApprox *faPtr = genFA(-1, nInputs, iOne, nSamples);
@@ -105,7 +110,7 @@ double GowerAnalyzer::analyze(aData &adata)
                        vecY2.getDVector());
 
   //**/ ---------------------------------------------------------------
-  //**/ create ME and study main effect
+  //**/ create ME and study main effect, which will be used for scaling
   //**/ ---------------------------------------------------------------
   MainEffectAnalyzer *mePtr = new MainEffectAnalyzer();
   
@@ -122,26 +127,34 @@ double GowerAnalyzer::analyze(aData &adata)
   for (ii = 0; ii < nInputs; ii++) vsum += vecVCE[ii];
   if (vsum <= 0.0)
   {
-    printOutTS(PL_INFO,"GowerAnalyzer INFO: vce sum <= 0.0.\n");
-    printOutTS(PL_INFO,"                    vce not used for scaling.");
+    printOutTS(PL_INFO,"GowerAnalyzer INFO: VCE sum <= 0.0.\n");
+    printOutTS(PL_INFO,"                    VCE not used for scaling.");
     for (ii = 0; ii < nInputs; ii++) vecVCE[ii] = 1.0;
   }
   else
   {
-    printOutTS(PL_INFO,"GowerAnalyzer INFO: vce used for scaling.\n");
+    //printOutTS(PL_INFO,"GowerAnalyzer INFO: VCE used for scaling.\n");
     for (ii = 0; ii < nInputs; ii++) vecVCE[ii] /= vsum;
-    for (ii = 0; ii < nInputs; ii++)
-      printOutTS(PL_INFO,  "VCE %4d = %12.4e\n", ii+1, vecVCE[ii]);
+    //for (ii = 0; ii < nInputs; ii++)
+    //  printOutTS(PL_INFO,  "VCE %4d = %12.4e\n", ii+1, vecVCE[ii]);
   } 
   delete faPtr;
   delete sampPtr;
   delete mePtr;
 
   //**/ ---------------------------------------------------------------
-  //**/ get data to be predicted
+  //**/ get prediction sample 
   //**/ ---------------------------------------------------------------
-  printf("Next enter a sample for prediction (in PSUADE format).\n");
-  printf("Enter file name for unobserved data (outside convex hull): ");
+  printf("To perform Gower analysis, please provide another ");
+  printf("(prediction) sample.\n");
+  printf("A Gower distance plot will be created for all points ");
+  printf("in this sample\n");
+  printf("with respect to the 'training' sample. Gower analysis ");
+  printf("is useful for\n");
+  printf("extrapolation analysis when you would like to find out ");
+  printf("how far the\n");
+  printf("prediction points are from the training set.\n");
+  printf("Enter the name of the prediction sample (in PSUADE format): ");
   scanf("%s", dataFile);
   fp = fopen(dataFile,"r");
   if (fp == NULL)
@@ -176,6 +189,9 @@ double GowerAnalyzer::analyze(aData &adata)
     return PSUADE_UNDEFINED;
   }
 
+  //**/ ---------------------------------------------------------------
+  //**/ compute and check input ranges of the training set
+  //**/ ---------------------------------------------------------------
   psVector vecRanges;
   vecRanges.setLength(nInputs);
   for (ii = 0; ii < nInputs; ii++)
@@ -218,6 +234,10 @@ double GowerAnalyzer::analyze(aData &adata)
     return 1.0;
   }
 
+  //**/ compute Gower distance for all pairs of sample pointd
+  //**/ the result is a matrix G where G(:,ii) is the Gower
+  //**/ distances of prediction sample ii to all current sample
+  //**/ point
   fprintf(fp, "G = [\n");
   for (ss = 0; ss < nSamples; ss++)
   {
@@ -249,8 +269,9 @@ double GowerAnalyzer::analyze(aData &adata)
   }
   fprintf(fp,"end;\n");
   fwritePlotAxes(fp);
-  fwritePlotXLabel(fp, "Gower distance");
-  fwritePlotYLabel(fp, "Probabilities");
+  fwritePlotXLabel(fp,"Gower distance");
+  fwritePlotYLabel(fp,"Probabilities (CDF)");
+  fwritePlotTitle(fp,"Gower Plots (1 line for each prediction point)");
 
   //**/ ---------------------------------------------------------------
   //**/ scaled Gower distance 
@@ -297,8 +318,9 @@ double GowerAnalyzer::analyze(aData &adata)
   }
   fprintf(fp,"end;\n");
   fwritePlotAxes(fp);
-  fwritePlotXLabel(fp, "Scaled Gower distance");
-  fwritePlotYLabel(fp, "Probabilities");
+  fwritePlotXLabel(fp,"Scaled (wrt input range) Gower distance");
+  fwritePlotYLabel(fp,"Probabilities (CDF)");
+  fwritePlotTitle(fp,"Gower Plots (1 line for each prediction point)");
 
   //**/ ---------------------------------------------------------------
   //**/ Mahalanobis distance processing 
@@ -355,8 +377,9 @@ double GowerAnalyzer::analyze(aData &adata)
   fprintf(fp,"X = [1:%d]';\n", ss2);
   fprintf(fp,"plot(X,M,'b*')\n");
   fwritePlotAxes(fp);
-  fwritePlotXLabel(fp, "Sample Number");
-  fwritePlotYLabel(fp, "Mahalanobis distance");
+  fwritePlotXLabel(fp,"Sample Number");
+  fwritePlotYLabel(fp,"Mahalanobis distance");
+  fwritePlotTitle(fp,"Distances from Center of Sample Cluster");
   fclose(fp);
   if (plotScilab())
      printOutTS(PL_INFO,
@@ -364,6 +387,15 @@ double GowerAnalyzer::analyze(aData &adata)
   else
      printOutTS(PL_INFO,
            "GowerAnalyzer: psuade_gower_data.m file created.\n");
+  printOutTS(PL_INFO,"Additional information - 3 plots are given :\n");
+  printOutTS(PL_INFO,
+       "(1) Gower distance plots for the unevaluated points.\n");
+  printOutTS(PL_INFO,
+       "(2) Scaled Gower distance plots for the unevaluated points.\n");
+  printOutTS(PL_INFO,
+       "(3) Mahalanobis distance plots for the unevaluated points.\n");
+  printOutTS(PL_INFO,
+       "    (with respect to the center of the training sample).\n");
 
   //**/ ---------------------------------------------------------------
   //**/ clean up

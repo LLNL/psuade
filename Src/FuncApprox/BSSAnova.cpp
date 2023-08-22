@@ -437,7 +437,7 @@ int BSSAnova::runBSSAnova(int nPoints, double *XN, double *YN, int nInps,
                           int *indices)
 {
   int  ii, ss, count;
-  char pString[5000];
+  char pString[1001];
   FILE *fp;
 
   //**/ open a file to be run with R
@@ -795,7 +795,7 @@ int BSSAnova::runBSSAnova(int nPoints, double *XN, double *YN, int nInps,
       exit(1);
     }
   }
-  sprintf(pString, "%s CMD BATCH psuade_bssanova.R", Rpath_);
+  snprintf(pString,1000,"%s CMD BATCH psuade_bssanova.R", Rpath_);
   system(pString);
   //**/ read output
   fp = fopen("psuade_bssanova_data", "r");
@@ -820,7 +820,6 @@ int BSSAnova::runBSSAnova(int nPoints, double *XN, double *YN, int nInps,
 int BSSAnova::genBSSAnova()
 {
   int  ii, ss, count;
-  char pString[5000];
   FILE *fp;
 
   fp = fopen("bssanova.R", "w");
@@ -1475,7 +1474,7 @@ int BSSAnova::genBSSAnova()
 // ------------------------------------------------------------------------
 double BSSAnova::setParams(int targc, char **targv)
 {
-  char pString[1000];
+  char pString[1001];
   FILE *fp;
   if (targc > 1 && !strcmp(targv[0], "setRpath") && targv[1] != NULL)
   {
@@ -1488,7 +1487,7 @@ double BSSAnova::setParams(int targc, char **targv)
     }
     fprintf(fp,"quit()\n");
     fclose(fp);
-    sprintf(pString, "%s CMD BATCH RTest", Rpath_);
+    snprintf(pString,1000,"%s CMD BATCH RTest", Rpath_);
     system(pString);
     fp = fopen("RTest.Rout","r");
     if (fp == NULL)

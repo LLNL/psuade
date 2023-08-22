@@ -91,7 +91,7 @@ public:
                         const char *psuadeio_filename=NULL);
 
   // run the computer experiments
-  int  run() throw(Psuade_Stop_Exception);
+  int  run();
 
   // run in interactive mode
   int  sessionInteractive();

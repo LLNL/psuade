@@ -213,7 +213,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
       printf("1. Do not proceed\n");
       printf("2. Proceed without changing the input ranges\n");
       printf("3. Re-scale the inputs and then proceed\n");
-      sprintf(pString, "Your choice (1, 2, or 3): ");
+      snprintf(pString,100,"Your choice (1, 2, or 3): ");
       kk = getInt(1,3,pString);
       if (kk == 1) return 1;
       if (kk == 3)
@@ -228,7 +228,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
         printf("      relative to input 1.\n");
         for (ii = 0; ii < nInputs_; ii++)
         {
-          sprintf(pString,"Enter scaling factor for input %d: ", ii+1);
+          snprintf(pString,100,"Enter scaling factor for input %d: ", ii+1);
           vecIUBs[ii] = getDouble(pString);
         }
 
@@ -264,13 +264,13 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     printf("      has its own weight). Generally, this weight corresponds ");
     printf("to the\n");
     printf("      prediction uncertainty of the candidate point.\n");
-    sprintf(pString, "Enter your choice (1 or 2): ");
+    snprintf(pString,100,"Enter your choice (1 or 2): ");
     hasWeights = getInt(1,2,pString);
     if (hasWeights == 2)
     {
       printf("Select which output for the weights.\n");
       printf("NOTE: the selected output should have values in [0,1].\n");
-      sprintf(pString, 
+      snprintf(pString,100, 
               "Which output to use as weight (1 - %d): ",nOutputs_);
       outputID = getInt(1, nOutputs_, pString);
       outputID--;
@@ -291,11 +291,11 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     printf("    (Use global search to get a suboptimal solution ");
     printf("which is then used\n");
     printf("     to improve brute force search efficiency)\n");
-    sprintf(pString, "Enter your choice (1, 2, or 3): ");
+    snprintf(pString,100,"Enter your choice (1, 2, or 3): ");
     int mmdOption = getInt(1,3,pString);
 
     printEquals(PL_INFO, 0);
-    sprintf(pString,"How many to select from the candidate set? ");
+    snprintf(pString,100,"How many to select from the candidate set? ");
     int nFinalDesigns = getInt(1, nSamples_-2, pString);
 
     printEquals(PL_INFO, 0);
@@ -315,7 +315,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     printf("so that the\n");
     printf("candidate file now has 105 points.)\n\n");
     printf("The loaded candidate set has %d points.\n",nSamples_);
-    sprintf(pString,
+    snprintf(pString,100,
        "How many of them have been selected previously? (0 if none) ");
     int nPreSelected = getInt(0, nSamples_-nFinalDesigns-1, pString);
 
@@ -376,7 +376,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
         {
           for (ii = 0; ii < nFinalDesigns; ii++)
           {
-            sprintf(pString,
+            snprintf(pString,100,
               "Enter initial guess for input %d (1 - %d) : ",
               ii+1, nSamples_);
             ddata = getDouble(pString);
@@ -419,7 +419,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
       tmpStrs.setNumStrings(nFinalDesigns);
       for (ii = 0; ii < nFinalDesigns; ii++) 
       {
-        sprintf(pString, "X%d", ii+1);
+        snprintf(pString,100,"X%d", ii+1);
         tmpStrs.loadOneString(ii, pString);
       }
       psIO = new PsuadeData();
@@ -457,7 +457,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
       //**/ -------------------------------------------------------
       for (ii = 0; ii < nFinalDesigns; ii++)
       {
-        sprintf(winput, "iDiscrete%d", ii+1);
+        snprintf(winput,100,"iDiscrete%d", ii+1);
         psConfig_.putParameter(winput);
       }
     }
@@ -565,7 +565,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
       //**/ -----------------------------------------------------
       for (ii = 0; ii < nFinalDesigns; ii++)
       {
-        sprintf(winput, "iDiscrete%d", ii+1);
+        snprintf(winput,100,"iDiscrete%d", ii+1);
         psConfig_.removeParameter(winput);
       }
       psConfig_.MatCommonUse_.clean();
@@ -629,7 +629,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
       {
         for (ii = 1; ii <= nFinalDesigns; ii++)
         {
-          sprintf(pString,
+          snprintf(pString,100,
            "Enter the design (ascending sample index) %d: ",ii);
           kk = getInt(1, nSamples_-nPreSelected, pString);
           while (ii > 1 && (kk <= vecBinaries[ii-1]))
@@ -891,7 +891,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     //**/ -----------------------------------------------------
     printEquals(PL_INFO, 0);
     int nCandidates = nSamples_;
-    sprintf(pString,"How many to select from the candidate set? ");
+    snprintf(pString,100,"How many to select from the candidate set? ");
     int nToBeSelected = getInt(1, nCandidates-2, pString);
 
     //**/ -----------------------------------------------------
@@ -904,7 +904,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     printf("Recommendation: If candidate set is large or number ");
     printf("to be selected\n");
     printf("                is large, use global search.\n");
-    sprintf(pString, "Enter your choice (1 or 2): ");
+    snprintf(pString,100,"Enter your choice (1 or 2): ");
     int mmvOption = getInt(1,3,pString);
 
     //**/ -----------------------------------------------------
@@ -953,12 +953,12 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
       printf("Process either from a\n");
       printf("training sample or from a vector of user-provided ");
       printf("hyperparameters.\n");
-      sprintf(pString, "Use a training set ? (y or n) ");
+      snprintf(pString,100,"Use a training set ? (y or n) ");
       getString(pString, lineIn);
       if (lineIn[0] == 'y')
       {
         printf("This training sample must be in PSUADE format.\n");
-        sprintf(pString, "Name of the training sample ? ");
+        snprintf(pString,100,"Name of the training sample ? ");
         char fname[1000];
         getString(pString, fname);
         fname[strlen(fname)-1] = '\0';
@@ -1049,7 +1049,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
         {
           for (ii = 0; ii < nToBeSelected; ii++)
           {
-            sprintf(pString,
+            snprintf(pString,100,
               "Enter initial guess for input %d (1 - %d) : ",
               ii+1, nCandidates);
             ddata = getDouble(pString);
@@ -1091,7 +1091,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
       tmpStrs.setNumStrings(nToBeSelected);
       for (ii = 0; ii < nToBeSelected; ii++)
       {
-        sprintf(pString, "X%d", ii+1);
+        snprintf(pString,100,"X%d", ii+1);
         tmpStrs.loadOneString(ii, pString);
       }
       psIO = new PsuadeData();
@@ -1130,7 +1130,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
       //**/ -------------------------------------------------------
       for (ii = 0; ii < nToBeSelected; ii++)
       {
-        sprintf(winput, "iDiscrete%d", ii+1);
+        snprintf(winput,100,"iDiscrete%d", ii+1);
         psConfig_.putParameter(winput);
       }
 
@@ -1242,7 +1242,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
       //**/ -----------------------------------------------------
       for (ii = 0; ii < nToBeSelected; ii++)
       {
-        sprintf(winput, "iDiscrete%d", ii+1);
+        snprintf(winput,100,"iDiscrete%d", ii+1);
         psConfig_.removeParameter(winput);
       }
       psConfig_.MatCommonUse_.clean();
@@ -1428,7 +1428,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     printf("First, select which inputs are uncertain inputs.\n");
     psIVector vecUInputs;
     vecUInputs.setLength(nInputs_);
-    sprintf(pString,
+    snprintf(pString,100,
        "Enter uncertain input number (1 - %d, 0 to end) : ",nInputs_);
     ii = 0;
     while (1)
@@ -1512,7 +1512,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     printf("First select which inputs are uncertain inputs.\n");
     psIVector vecUInputs;
     vecUInputs.setLength(nInputs_);
-    sprintf(pString,
+    snprintf(pString,100,
        "Enter uncertain input number (1 - %d, 0 to end) : ",nInputs_);
     ii = 0;
     while (1)
@@ -1597,7 +1597,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     printf("First select which inputs are uncertain inputs.\n");
     psIVector vecUInputs;
     vecUInputs.setLength(nInputs_);
-    sprintf(pString,
+    snprintf(pString,100,
        "Enter uncertain input number (1 - %d, 0 to end) : ",nInputs_);
     ii = 0;
     while (1)
@@ -1679,7 +1679,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     psIVector vecUInputs;
     vecUInputs.setLength(nInputs_);
     printf("First select which inputs are uncertain inputs.\n");
-    sprintf(pString,
+    snprintf(pString,100,
        "Enter uncertain input number (1 - %d, 0 to end) : ",nInputs_);
     ii = 0;
     while (1)
@@ -1700,6 +1700,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     //**/ compute metric
     //**/ -----------------------------------------------------
     //**/ extract sample values for the uncertain inputs only
+    //**/ ==> vecReduced
     psVector vecReduced;
     vecReduced.setLength(vecUInputs.length()*nSamples_);
     for (ii = 0; ii < nSamples_; ii++)
@@ -1858,7 +1859,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     printf("        2 input values \n");
     printf("        .... \n");
 
-    sprintf(pString, "Enter the file name of your candidate set : ");
+    snprintf(pString,100,"Enter the file name of your candidate set : ");
     getString(pString, fname);
 
     psVector  vecSX, vecSY, vecSD;
@@ -2197,7 +2198,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     printf("parameters X and some are\n");
     printf("uncertain parameters U. It evaluates all members ");
     printf("of the candidate set\n");
-    printf("individually.\n");
+    printf("individually (W-metric = prediction uncertainty).\n");
     if (!strcmp(winput, "-h")) return 0;
 
     printDashes(PL_INFO, 0);
@@ -2210,7 +2211,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     //**/ nInps = number of inputs in training sample
     //**/ nOuts = number of outputs in training sample
     char pString[1000], fname[1000];
-    sprintf(pString,
+    snprintf(pString,100,
        "Enter name of the training sample (for creating RS): ");
     getString(pString, fname);
     fname[strlen(fname)-1] = '\0';
@@ -2231,7 +2232,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     //**/ set uncertain inputs (vecUInputs will have it after done)
     psIVector vecUInputs;
     vecUInputs.setLength(nInps);
-    sprintf(pString,
+    snprintf(pString,100,
       "Enter uncertain input number (1 - %d, 0 to end) : ",nInps);
     int ii = 0, kk;
     while (1)
@@ -2258,7 +2259,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     psMatrix matPriorSample;
     printf("Uncertain parameters need a prior sample for inference.\n");
     printf("The prior sample format should be the `iread' format.\n");
-    sprintf(pString, "Enter the file name of your prior sample : ");
+    snprintf(pString,100,"Enter the file name of your prior sample : ");
     getString(pString, fname);
     fname[strlen(fname)-1] = '\0';
     status = readIReadDataFile(fname, matPriorSample);
@@ -2285,7 +2286,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     printf("Line 2: 1 <design inputs> \n");
     printf("Line 3: 2 <design inputs> \n");
     printf("...\n");
-    sprintf(pString,"Enter the file name of your candidate set : ");
+    snprintf(pString,100,"Enter the file name of your candidate set : ");
     getString(pString, fname);
     fname[strlen(fname)-1] = '\0';
     status = readIReadDataFile(fname, matCandidates);
@@ -2502,7 +2503,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
       printf("4.  A-optimal (Bayesian)\n");
       printf("5.  E-optimal (Bayesian)\n");
       nChoices = 5;
-      sprintf(pString, "Make you choice : (1 - 5) ");
+      snprintf(pString,100,"Make you choice : (1 - 5) ");
     }
     else
     {
@@ -2512,7 +2513,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
       printf("4.  A-optimal (Fisher approximation)\n");
       printf("5.  E-optimal (Fisher approximation)\n");
       nChoices = 5;
-      sprintf(pString, "Make you choice : (1 - 5) ");
+      snprintf(pString,100,"Make you choice : (1 - 5) ");
     }
     int optOption = 0;
     optOption = getInt(1,nChoices,pString);
@@ -2546,7 +2547,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     if (pString[0] == 'y')
     {
       fgets(winput, 500, stdin);
-      sprintf(pString, "How many starts (2 - 100) ? ");
+      snprintf(pString,100,"How many starts (2 - 100) ? ");
       numStarts = getInt(1, 100, pString);
     }  
     else
@@ -2558,7 +2559,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
       {
         for (ii = 0; ii < numSelect; ii++)
         {
-          sprintf(pString,
+          snprintf(pString,100,
              "Enter initial guess for input %d (1 - %d) : ",ii+1, 
              nCand);
           ddata = getDouble(pString);
@@ -2588,7 +2589,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     for (ii = 0; ii < numSelect+5; ii++) 
     {
       strArray[ii] = new char[1000];
-      sprintf(strArray[ii], "X%d", ii+1);
+      snprintf(strArray[ii],100,"X%d", ii+1);
     }
     PsuadeData *psIO = new PsuadeData();
     psIO->updateInputSection(0, numSelect, NULL, vLBs.getDVector(),
@@ -2630,7 +2631,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     int nInitX = 1;
     for (ii = 0; ii < numSelect; ii++)
     {
-      sprintf(winput, "iDiscrete%d", ii+1);
+      snprintf(winput,100,"iDiscrete%d", ii+1);
       psConfig_.putParameter(winput);
     }
     psConfig_.InteractiveSaveAndReset();
@@ -2669,7 +2670,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     printEquals(PL_INFO, 0);
     for (ii = 0; ii < numSelect; ii++)
     {
-      sprintf(winput, "iDiscrete%d", ii+1);
+      snprintf(winput,100,"iDiscrete%d", ii+1);
       psConfig_.removeParameter(winput);
     }
 
@@ -2825,7 +2826,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     if (pString[0] == 'y')
     {
       fgets(winput, 500, stdin);
-      sprintf(pString, "How many starts (2 - 100) ? ");
+      snprintf(pString,100,"How many starts (2 - 100) ? ");
       numStarts = getInt(1, 100, pString);
     }  
     else
@@ -2837,8 +2838,8 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
       {
         for (ii = 0; ii < numSelect; ii++)
         {
-          sprintf(pString,"Enter initial guess for input %d (1 - %d) : ",
-                  ii+1, nCand);
+          snprintf(pString,100,"Enter initial guess for input %d (1 - %d) : ",
+                   ii+1, nCand);
           ddata = getDouble(pString);
           if (ddata < 0 || ddata > nCand)
           {
@@ -2866,7 +2867,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     for (ii = 0; ii < numSelect+5; ii++) 
     {
       strArray[ii] = new char[1000];
-      sprintf(strArray[ii], "X%d", ii+1);
+      snprintf(strArray[ii],100,"X%d", ii+1);
     }
     PsuadeData *psIO = new PsuadeData();
     psIO->updateInputSection(0, numSelect, NULL, vLBs.getDVector(),
@@ -2904,7 +2905,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     int nInitX = 1;
     for (ii = 0; ii < numSelect; ii++)
     {
-      sprintf(winput, "iDiscrete%d", ii+1);
+      snprintf(winput,100,"iDiscrete%d", ii+1);
       psConfig_.putParameter(winput);
     }
     psConfig_.InteractiveSaveAndReset();
@@ -2938,7 +2939,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     printEquals(PL_INFO, 0);
     for (ii = 0; ii < numSelect; ii++)
     {
-      sprintf(winput, "iDiscrete%d", ii+1);
+      snprintf(winput,100,"iDiscrete%d", ii+1);
       psConfig_.removeParameter(winput);
     }
 
@@ -3176,7 +3177,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     printf("Step 1: Indicate which inputs are uncertain inputs.\n");
     psIVector vecUInputs;
     vecUInputs.setLength(nInputs_);
-    sprintf(pString,
+    snprintf(pString,100,
        "Enter uncertain input number (1 - %d, 0 to end) : ",nInputs_);
     ii = 0;
     while (1)
@@ -3213,7 +3214,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     printf("        1 input values \n");
     printf("        2 input values \n");
     printf("        .... \n");
-    sprintf(pString,"Enter the file name of your prior sample : ");
+    snprintf(pString,100,"Enter the file name of your prior sample : ");
     getString(pString, fname);
     kk = strlen(fname);
     fname[kk-1] = '\0';
@@ -3247,7 +3248,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     printf("        1 <input values> <estimated mean> <estimated std>\n");
     printf("        2 <input values> <estimated mean> <estimated std>\n");
     printf("        .... \n");
-    sprintf(pString, "Enter the file name of your selected set : ");
+    snprintf(pString,100,"Enter the file name of your selected set : ");
     getString(pString, fname);
     kk = strlen(fname);
     fname[kk-1] = '\0';
@@ -3464,7 +3465,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     printf("Step 1: Indicate which inputs are uncertain inputs.\n");
     psIVector vecUInputs;
     vecUInputs.setLength(nInputs_);
-    sprintf(pString,
+    snprintf(pString,100,
        "Enter uncertain input number (1 - %d, 0 to end) : ",nInputs_);
     ii = 0;
     while (1)
@@ -3506,7 +3507,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     printf("1 input values \n");
     printf("2 input values \n");
     printf(".... \n");
-    sprintf(pString, "Enter the file name of your uncertain sample : ");
+    snprintf(pString,100,"Enter the file name of your uncertain sample : ");
     getString(pString, fname);
     kk = strlen(fname);
     fname[kk-1] = '\0';
@@ -3529,7 +3530,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     //**/ get selected design matrix ==> matExpInps, Means, Stds
     //**/ -----------------------------------------------------
     psMatrix matEvalSet;
-    sprintf(pString,"Enter the file name of your evaluation set : ");
+    snprintf(pString,100,"Enter the file name of your evaluation set : ");
     getString(pString, fname);
 
     kk = strlen(fname);

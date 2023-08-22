@@ -59,6 +59,8 @@ class MGP3 : public FuncApprox
   int      nPartitions_;
   int      partSize_;
   int      useHGP_;
+  int      nStarts_;
+  double   expPower_;
 
 public:
 

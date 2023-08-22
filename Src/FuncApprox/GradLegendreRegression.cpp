@@ -92,7 +92,7 @@ int GradLegendreRegression::initialize(double *X, double *Y)
            nInputs_);
     printf(" ==>  The sample size of this file should be %d\n",
            nSamples_);
-    sprintf(pString,"Enter name of derivative file (PSUADE format): ");
+    snprintf(pString,100,"Enter name of derivative file (PSUADE format): ");
     getString(pString, gradFile_);
     ii = strlen(gradFile_);
     gradFile_[ii-1] = '\0';
@@ -543,7 +543,7 @@ int GradLegendreRegression::analyze(psVector VecX, psVector VecY)
 {
   int    N, M, ii, mm, nn, wlen, info, NRevised, status, nInps;
   double SSreg, SStotal, R2, var, esum, ymax;
-  char   pString[100];
+  char   pString[101];
   FILE   *fp;
   pData    pPtr;
   psMatrix eigMatT, MatXX, MatA, MatU, MatV;
@@ -722,7 +722,7 @@ int GradLegendreRegression::analyze(psVector VecX, psVector VecY)
     printf("So, select them judiciously.\n");
     for (nn = 0; nn < N; nn++)
       printf("Singular value %5d = %e\n", nn+1, VecS[nn]);
-    sprintf(pString, "How many to keep (1 - %d) ? ", N);
+    snprintf(pString,100,"How many to keep (1 - %d) ? ", N);
     NRevised = getInt(1,N,pString);
     for (nn = NRevised; nn < N; nn++) VecS[nn] = 0.0;
   }
@@ -1391,7 +1391,7 @@ int GradLegendreRegression::printRC(psVector VecB, psVector VecBstd,
 int GradLegendreRegression::GenPermutations()
 {
   int  ii, kk, orderTmp, rvTmp, M;
-  char pString[500];
+  char pString[101];
 
   //**/ search for maximum order
   M = nSamples_ * (nInputs_ + 1);
@@ -1416,7 +1416,7 @@ int GradLegendreRegression::GenPermutations()
     }
     if (numPerms_ > M) pOrder_--;
     printf("* Legendre polynomial maximum order = %d\n", pOrder_);
-    sprintf(pString, "Desired order (>=1 and <= %d) ? ", pOrder_);
+    snprintf(pString,100,"Desired order (>=1 and <= %d) ? ", pOrder_);
     pOrder_ = getInt(1, pOrder_, pString);
   }
   numPerms_ = 1;

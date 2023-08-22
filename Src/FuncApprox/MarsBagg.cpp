@@ -139,17 +139,17 @@ MarsBagg::MarsBagg(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
   }
   if (psConfig_.RSExpertModeIsOn() && psConfig_.InteractiveIsOn())
   {
-    sprintf(pString,"MARS with bagging: mean (0) or median (1) mode ? ");
+    snprintf(pString,100,"MARS with bagging: mean (0) or median (1) mode ? ");
     mode_ = getInt(0, 1, pString);
-    sprintf(pString,
-            "How many instantiation of MARS (10-5000, default=100) ? ");
+    snprintf(pString,100,
+             "How many instantiation of MARS (10-5000, default=100) ? ");
     numMars_ = getInt(10, 5000, pString);
-    sprintf(pString, 
-            "How many basis functions in MARS (< %d, default = %d) ? ",
-            nSamples, maxBasis_);
+    snprintf(pString,100,
+             "How many basis functions in MARS (< %d, default = %d) ? ",
+             nSamples, maxBasis_);
     maxBasis_ = getInt(1, nSamples, pString);
-    sprintf(pString, "How many variables per basis (<= %d, default = %d) ? ",
-            nInputs, varPerBasis_);
+    snprintf(pString,100,"How many variables per basis (<= %d, default = %d) ? ",
+             nInputs, varPerBasis_);
     varPerBasis_ = getInt(1, nInputs, pString);
     if (psConfig_.MasterModeIsOn())
     {
@@ -159,8 +159,8 @@ MarsBagg::MarsBagg(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
       printf("Set this number to a larger value to increase usage.\n");
       printf("If you do not know what this knob does, enter 3.\n");
       printf("To see the actual usage percentage, turn on printlevel 2.\n");
-      sprintf(pString,
-              "What value should be assigned to this knob? (2 - 8) ");
+      snprintf(pString,100,
+               "What value should be assigned to this knob? (2 - 8) ");
       usageIndex_ = getInt(2, 8, pString);
     }
   }

@@ -355,7 +355,7 @@ double TSIAnalyzer::analyze(aData &adata)
         nFilled++;
       }
     }
-    printf("(INFO) Input %4d : %d out of %d subdomains populated.\n",
+    printf("(TSI INFO) Input %4d : %d out of %d subdomains populated.\n",
            inputID+1, nFilled, nAggrs);
     dmean = 0.0;
     for (ii = 0; ii < nAggrs; ii++) 

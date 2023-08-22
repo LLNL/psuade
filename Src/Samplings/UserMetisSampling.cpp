@@ -142,22 +142,22 @@ int UserMetisSampling::initialize(int initLevel)
   {
     haveExec = 0;
     printf("UserMetisSampling missing UserMetisDriver: \n");
-    sprintf(pString,
-            "Is it a linear regression with simple bounds? (y or n) ");
+    snprintf(pString,100,
+             "Is it a linear regression with simple bounds? (y or n) ");
     getString(pString, command);
     if (command[0] == 'y')
     {
       vecCoeffs.setLength(nInputs_+1);
-      sprintf(pString,"Enter the constant coefficient : ");
+      snprintf(pString,100,"Enter the constant coefficient : ");
       vecCoeffs[0] = getDouble(pString);
       for (ii = 1; ii <= nInputs_; ii++)
       {
-        sprintf(pString,"Enter the coefficient for input %d : ",ii);
+        snprintf(pString,100,"Enter the coefficient for input %d : ",ii);
         vecCoeffs[ii] = getDouble(pString);
       }
-      sprintf(pString,"Enter the lower bound : ");
+      snprintf(pString,100,"Enter the lower bound : ");
       constraints[0] = getDouble(pString);
-      sprintf(pString,"Enter the upper bound : ");
+      snprintf(pString,100,"Enter the upper bound : ");
       constraints[1] = getDouble(pString);
     }
     else
@@ -246,13 +246,13 @@ int UserMetisSampling::initialize(int initLevel)
     for (ii = 0; ii < nInputs_; ii++)
     {
       inputNames[ii] = new char[200];
-      sprintf(inputNames[ii], "X%d", ii+1);
+      snprintf(inputNames[ii],100,"X%d", ii+1);
     }
     outputNames = new char*[nInputs_];
     for (ii = 0; ii < nOutputs_; ii++)
     {
       outputNames[ii] = new char[200];
-      sprintf(outputNames[ii], "Y%d", ii+1);
+      snprintf(outputNames[ii],100,"Y%d", ii+1);
     }
     driverNames = new char*[5];
     for (ii = 0; ii < 5; ii++)

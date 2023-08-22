@@ -558,7 +558,7 @@ int LPtauSampling::refine(int refineRatio, int randomize, double thresh,
   {
     for (inputID = 0; inputID < nInputs_; inputID++)
       vecNewSamInps[sampleID*nInputs_+inputID] = 
-              vecSamInps_[sampleID*nSamples_+inputID];
+              vecSamInps_[sampleID*nInputs_+inputID];
     for (outputID = 0; outputID < nOutputs_; outputID++)
       vecNewSamOuts[sampleID*nOutputs_+outputID] = 
                   vecSamOuts_[sampleID*nOutputs_+outputID];

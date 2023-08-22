@@ -341,7 +341,7 @@ Kriging::Kriging(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
 {
   int    ii, jj;
   double ddata;
-  char   pString[500], winput[500], winput2[500], fname[500], *strPtr;
+  char   pString[101], winput[500], winput2[500], fname[500], *strPtr;
   FILE   *fp;
 
   //**/ =======================================================
@@ -355,7 +355,7 @@ Kriging::Kriging(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
   fastMode_ = 3;
   VecThetas_.setLength(nInputs_+1);
   for (ii = 0; ii < nInputs_+1; ii++) VecThetas_[ii] = 0.01;
-  noReuse_ = 0;
+  noReuse_ = 0;  /* 1: no genRSCode even if interactive */
 
   //**/ =======================================================
   // display banner and additonal information
@@ -380,14 +380,18 @@ Kriging::Kriging(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
     printEquals(PL_INFO, 0);
   }
 
+  //**/ in RS expert mode, allow the re-use of optimal Kriging 
+  //**/ parameters from a file to skip the expensive optimization
+  //**/ step. Typically the file is called psuade_kriging_optdata,
+  //**/ but it may have been renamed
   if (psConfig_.RSExpertModeIsOn() && psConfig_.InteractiveIsOn())
   {
     fp = fopen("psuade_kriging_optdata","r");
     if (fp != NULL)
     {
       printf("Kriging: psuade_kriging_optdata file found.\n");
-      sprintf(pString,
-              "Use Kriging length scales from the file? (y or n) ");
+      snprintf(pString,100,
+               "Use Kriging parameters from the file? (y or n) ");
       getString(pString, winput);
       if (winput[0] == 'y')
       {
@@ -400,54 +404,86 @@ Kriging::Kriging(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
       }
       fclose(fp);
     }
+    else
+    {
+      printf("You may have pre-computed optimal Kriging parameter");
+      printf(" values previously\n");
+      printf("(in the psuade_kriging_optdata file that you might ");
+      printf("have renamed to\n");
+      printf(" something else)\n");
+      snprintf(pString,100, "Do you have such a file ? (y or n) ");
+      getString(pString, winput);
+      if (winput[0] == 'y')
+      {
+        snprintf(pString,100, "Name of the file ? ");
+        getString(pString, winput);
+        winput[strlen(winput)-1] = '\0';
+        fp = fopen(winput, "r");
+        if (fp != NULL)
+        {
+          printf("INFO: The optimal Kriging parameter values are ");
+          printf("(check correctness): \n");
+          for (ii = 0; ii < nInputs_; ii++)
+          {
+            fscanf(fp,"%lg",&ddata);
+            VecThetas_[ii] = ddata;
+            printf("Parameter %d = %e\n",ii+1,ddata);
+          }
+          fastMode_ = 1;
+        }
+        else
+        {
+          printf("ERROR: file %s not found.\n", winput);
+          printf("       Will continue with optimization.\n");
+        }
+      }
+    }
+
+    //**/ fastMode = 1 at this point means optimal Kriging parameters 
+    //**/      have loaded to VecThetas_ from a file. If this did not
+    //**/      happen, you have 3 choices:
+    //**/      1. enter your preferred values by hand and avoid having
+    //**/         to optimize
+    //**/      2. use optimization to find optimal parameters
+    //**/      3. use multi-start optimization to find optimal parameters
     if (fastMode_ != 1)
     {
       printf("There are three modes available: \n");
       printf("(1) fast mode with pre-specified thetas\n");
       printf("(2) slow mode with optimization on the thetas\n");
       printf("(3) very slow mode with multi-start optimization\n");
-      //printf("(4) another fast mode using another optimization\n");
-      sprintf(pString, "Please select mode (1 - 3) : ");
-      fastMode_ = getInt(1,3,pString);
-      if      (fastMode_ == 4) fastMode_ = 0;
-      else if (fastMode_ == 1)
+      printf("(4) another fast mode using another optimization\n");
+      snprintf(pString,100,"Please select mode (1 - 3) : ");
+      fastMode_ = getInt(1,4,pString);
+      if (fastMode_ == 1)
       {
-        printf("Kriging: Length scales are correlation lengths\n");
-        printf("         in the random parameter space.\n");
-        printf("Current initial length scales are:\n");
         for (ii = 0; ii < nInputs_; ii++)
-           printf("    Input %d: %e\n", ii+1, VecThetas_[ii]);
-        sprintf(pString, "Change length scales (thetas)? (y or n) ");
-        getString(pString, winput);
-        if (winput[0] == 'y')
         {
-          for (ii = 0; ii < nInputs_; ii++)
+          snprintf(pString,100,
+                   "Enter theta for Kriging parameter %d (>0): ", ii+1);
+          VecThetas_[ii] = getDouble(pString);
+          if (VecThetas_[ii] <= 0.0)
           {
-            sprintf(pString,"Enter theta for input %d (>0): ", ii+1);
-            VecThetas_[ii] = getDouble(pString);
-            if (VecThetas_[ii] <= 0.0)
+            printf("ERROR: theta <= 0 not valid.\n");
+            exit(1);
+          }
+          if (ii == 0)
+          {
+            snprintf(pString,100,"Use %e for all other thetas? (y or n) ",
+                    VecThetas_[0]);
+            getString(pString, winput);
+            if (winput[0] == 'y')
             {
-              printf("ERROR: theta <= 0 not valid.\n");
-              exit(1);
-            }
-            if (ii == 0)
-            {
-              sprintf(pString,"Use %e for all other thetas? (y or n) ",
-                      VecThetas_[0]);
-              getString(pString, winput);
-              if (winput[0] == 'y')
-              {
-                for (jj = 1; jj < nInputs_; jj++) 
-                  VecThetas_[jj] = VecThetas_[0];
-                break;
-              }
+              for (jj = 1; jj < nInputs_; jj++) 
+                VecThetas_[jj] = VecThetas_[0];
+              break;
             }
           }
         }
       }
       else
       {
-        sprintf(pString, "Enter optimization tolerance (default = 1e-4): ");
+        snprintf(pString,100,"Enter optimization tolerance (default = 1e-4): ");
         optTolerance_ = getDouble(pString);
         if (optTolerance_ <= 0 || optTolerance_ > 0.5)
         {
@@ -457,26 +493,25 @@ Kriging::Kriging(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
         }
         if (fastMode_ == 2)
         {
-          printf("Kriging: Current initial length scales (thetas) are:\n");
+          printf("Kriging: Current initial parameter values (thetas) are:\n");
           for (ii = 0; ii < nInputs_; ii++)
             printf("     Input %d: %e\n", ii+1, VecThetas_[ii]);
-          printf("If some knowledge is available about the relative\n");
-          printf("importance of some parameters, different initial\n");
-          printf("thetas can be entered to reflect this knowledge \n");
-          printf("(sensitive parameters have larger thetas.)\n");
-          sprintf(pString, "Change initial thetas? (y or n) ");
+          printf("If good thetas are available as initial guess for ");
+          printf("optimization, you\n");
+          printf("can enter them below.\n");
+          snprintf(pString,100,"Change initial thetas? (y or n) ");
           getString(pString, winput);
           if (winput[0] == 'y')
           {
             for (ii = 0; ii < nInputs_; ii++)
             {
-              sprintf(pString,"Enter theta for input %d : ", ii+1);
+              snprintf(pString,100,"Enter theta for input %d : ", ii+1);
               VecThetas_[ii] = getDouble(pString);
               if (VecThetas_[ii] <= 0.0)
                 printf("Warning: theta < 0 not recommended.\n");
               if (ii == 0)
               {
-                sprintf(pString,"Use %e for all other thetas? (y or n) ",
+                snprintf(pString,100,"Use %e for all other thetas? (y or n) ",
                         VecThetas_[0]);
                 getString(pString, winput);
                 if (winput[0] == 'y')
@@ -490,16 +525,19 @@ Kriging::Kriging(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
           }
         }
       }
+
+      //**/ nugget is a positive small value added to the diagonal of the
+      //**/ covariance matrix
       if (psConfig_.MasterModeIsOn())
       {
-        sprintf(pString, "Add nugget? (y or n) ");
+        snprintf(pString,100,"Add nugget? (y or n) ");
         getString(pString, winput);
         if (winput[0] == 'y') 
         {
           KRI_nugget = 1.0;
           while (KRI_nugget >= 1.0 || KRI_nugget < 0.0)
           {
-            sprintf(pString, "Enter nugget ([0,1)) : ");
+            snprintf(pString,100,"Enter nugget ([0,1)) : ");
             KRI_nugget = getDouble(pString);
           }
         }
@@ -509,13 +547,13 @@ Kriging::Kriging(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
   else
   {
     //**/ =======================================================
-    // read configure file, if any 
+    // read from configure file, if any 
     //**/ =======================================================
     strPtr = psConfig_.getParameter("KRI_mode");
     if (strPtr != NULL)
     {
       sscanf(strPtr, "%s %s %d", winput, winput2, &ii);
-      if (ii < 0 || ii > 3)
+      if (ii < 2 || ii > 3)
       {
         printf("Kriging INFO: mode from config not valid.\n");
         printf("              mode kept at %d.\n", fastMode_);
@@ -548,13 +586,13 @@ Kriging::Kriging(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
       sscanf(strPtr, "%s %d %s %lg", winput, &ii, winput2, &ddata);
       if (ii < 1 || ii > nInputs_)
       {
-        printf("Kriging INFO: invalid input number for length scale.\n");
+        printf("Kriging INFO: invalid input number for parameter.\n");
         printf("              Input number read = %d.\n", ii);
       }
       else
       {
         VecThetas_[ii-1] = ddata;
-        printf("Kriging INFO: length scale for input %d set to %e.\n",
+        printf("Kriging INFO: parameter value %d set to %e.\n",
                ii, ddata);
       }
     }
@@ -955,7 +993,7 @@ double Kriging::train(double *X, double *Y)
 {
   int    ii, jj, kk, nBasis, count, status, Cleng;
   double dist, ddata; 
-  char   pString[500];
+  char   pString[101];
   psVector VecXDists;
 
   //**/ ============================================================
@@ -969,63 +1007,53 @@ double Kriging::train(double *X, double *Y)
 
   //**/ ============================================================
   // compute distances between all pairs of inputs (nDists, XDists)
-  //**/ needed for creating the correlation matrix
+  //**/ needed for creating the correlation matrix (fastMode=2,3)
+  //**/ if there are repeated points, the covariance matrix will be
+  //**/ singular. 
   //**/ ============================================================
-  if (fastMode_ != 0) 
+  if (fastMode_ == 2 || fastMode_ == 3) 
   {
     status = computeDistances(VecXDists);
     if (status != 0)
     {
-      printf("Kriging INFO: since there are repeated sample points.\n");
-      printf("    Kriging will continue in fast mode taking all\n");
-      printf("    length scales to be 1.\n");
-      printf("    This may not give a good quality response surface.\n");
-      printf("    So if you want to prune the sample and do it again,\n");
-      printf("    terminate now. I am giving you 30 seconds to decide.\n");
-      fastMode_ = 0;
-      VecXDists.setLength(0);
-      for (ii = 0; ii < nInputs_; ii++) VecThetas_[ii] = 1.0;
-#ifdef WINDOWS
-      Sleep(20000);
-#else
-      sleep(20);
-#endif
-      printf("    10 more seconds.\n");
-#ifdef WINDOWS
-      Sleep(10000);
-#else
-      sleep(10);
-#endif
+      printf("Kriging ERROR: Since there are repeated sample ");
+      printf("points, Kriging will\n");
+      printf("        terminate because the covariance matrix ");
+      printf("will be singular. BYE\n");
+      exit(0);
     }
   }
   if (KRI_nugget != 0.0 && outputLevel_ > 0) 
     printf("Kriging INFO: nugget = %e\n",KRI_nugget);
 
   //**/ ============================================================
-  // fast mode = 0: nothing needs to be done
+  // fast mode = 4: use some other optimization method (which does 
+  // not work well so it is not used) 
   //**/ ============================================================
-  if (fastMode_ == 0)
+  if (fastMode_ == 4)
   {
+    if (outputLevel_ >= 1) 
+      printf("Kriging training (4) begins....\n");
     optimize();
     nBasis = 1;
     if (outputLevel_ >= 1) 
     {
-      printf("Optimal length scales are:\n");
+      printf("Kriging training (4) ends.\n");
+      printf("Kriging optimal parameter values are:\n");
       for (ii = 0; ii < nInputs_; ii++)
         printf("     Input %d : %e\n", ii+1, VecThetas_[ii]);
     }
     return 0.0;
   }
   //**/ ============================================================
-  // slower mode
+  // no optimization mode = 1
   //**/ ============================================================
   else if (fastMode_ == 1)
   {
     if (outputLevel_ > 0)
     {
       printEquals(PL_INFO,0);
-      printf("Kriging training (1) begins.... (order = %d)\n",pOrder_);
-      printf("Current length scales are:\n");
+      printf("INFO: No optimization - Kriging parameter values are:\n");
       for (ii = 0; ii < nInputs_; ii++)
         printf("     Input %d : %e\n", ii+1, VecThetas_[ii]);
     }
@@ -1035,11 +1063,7 @@ double Kriging::train(double *X, double *Y)
     if (nSamples_ <= nInputs_ + 1) pOrder_ = 0;
     if (pOrder_ == 1) nBasis = nInputs_ + 1;
     else              nBasis = 1;
-    if (outputLevel_ > 0) 
-    {
-      printf("Kriging training (1) ends.\n");
-      printEquals(PL_INFO,0);
-    }
+    if (outputLevel_ > 0) printEquals(PL_INFO,0);
   }
   else
   //**/ ============================================================
@@ -1099,7 +1123,7 @@ double Kriging::train(double *X, double *Y)
         printf("Kriging: for input %d :\n", ii+1);
         printf("Kriging: current optimization lower bound = %e\n",
                TLowers[ii]);
-        sprintf(pString,
+        snprintf(pString,100,
            "Kriging: Enter new optimization lower bound : ");
         TLowers[ii] = getDouble(pString);
         if (TLowers[ii] <= 0.0)
@@ -1109,7 +1133,7 @@ double Kriging::train(double *X, double *Y)
         }
         printf("Kriging: current optimization upper bound = %e\n",
                TUppers[ii]);
-        sprintf(pString,
+        snprintf(pString,100,
            "Kriging: Enter optimization upper bound : ");
         TUppers[ii] = getDouble(pString);
         if (TLowers[ii] > TUppers[ii])
@@ -1161,11 +1185,11 @@ double Kriging::train(double *X, double *Y)
       {
         printf("Kriging: slow mode with multi-start (10) optimization.\n");
         printf("Choose sampling method to generate multi-start.\n");
-        sprintf(pString, "Sampling method (1-QMC, 2-LHS, 3-FF) : ");
+        snprintf(pString,100,"Sampling method (1-QMC, 2-LHS, 3-FF) : ");
         mode = getInt(1,3,pString);
         if (mode != 3)
         {
-          sprintf(pString, "Enter sample size (1 - 100) : ");
+          snprintf(pString,100,"Enter sample size (1 - 100) : ");
           nSamOpt = getInt(1,100,pString);
         } 
       }
@@ -1243,13 +1267,13 @@ double Kriging::train(double *X, double *Y)
         }
         KRI_outputLevel = outputLevel_;
       }
-      if (outputLevel_ >= 1) 
+      if (outputLevel_ > 1) 
         printf("Kriging multi-start optimization: start = %d (%d)\n",
                kk+1, nSamOpt);
       KRI_iter = 0;
       for (ii = 0; ii < nInputs_; ii++) 
         TValues[ii] = VecSamIns[kk*nInputs_+ii];
-      if (outputLevel_ >= 1) 
+      if (outputLevel_ > 1) 
       {
         for (ii = 0; ii < nInputs_; ii++) 
           printf("Kriging: Input %4d initial length scale = %e\n",
@@ -1279,7 +1303,7 @@ double Kriging::train(double *X, double *Y)
         printf("ERROR: No optimizer unavailable.\n");
         exit(1);
       }
-      if (outputLevel_ >= 1) 
+      if (outputLevel_ > 1) 
       {
         printf("Kriging multi-start optimization: iteration = %d (%d)\n",
                kk+1, nSamOpt);
@@ -1337,21 +1361,21 @@ double Kriging::train(double *X, double *Y)
         }
         if (stopFlag == nInputs_) 
         {
-          if (outputLevel_ >= 1) 
+          if (outputLevel_ > 1) 
           {
             printf("Kriging INFO: same optimum after %d iterations.\n",
                    kk+1);
             printf("              Stop further processing.\n");
           }
           break;
-        }  
+        }
       }  
     }
     //**/ ----------------------------------------------------
     //**/ display results and clean up
     //**/ ----------------------------------------------------
     for (ii = 0; ii < nInputs_; ii++) VecThetas_[ii] = VecOptThetas[ii];
-    if (outputLevel_ >= 1) 
+    if (outputLevel_ > 1) 
     {
       for (ii = 0; ii < nInputs_; ii++) 
         printf("Kriging: Input %4d optimal length scale = %e\n",
@@ -1532,6 +1556,15 @@ double Kriging::train(double *X, double *Y)
   //**/ ============================================================
   //**  store results
   //**/ ============================================================
+  if (noReuse_ == 1 || psConfig_.RSExpertModeIsOn())
+  {
+    FILE *fp = fopen("psuade_kriging_optdata", "w");
+    for (ii = 0; ii < nInputs_; ii++)
+      fprintf(fp,"%e ", VecThetas_[ii]);
+    fprintf(fp, "\n");
+    fclose(fp);
+    printf("INFO: Kriging optimal parameters are in psuade_kriging_optdata.\n");
+  }
   if (noReuse_ == 1 || !psConfig_.RSCodeGenIsOn()) return 0;
   genRSCode();
   return 0.0;
@@ -1734,7 +1767,7 @@ double Kriging::setParams(int targc, char **targv)
 {
   int    ii;
   double mmax, range;
-  char   pString[500];
+  char   pString[101];
   FILE   *fp=NULL;
 
   if (targc > 0 && !strcmp(targv[0], "noReuse"))
@@ -1787,11 +1820,11 @@ double Kriging::setParams(int targc, char **targv)
       fwritePlotCLF(fp);
       fprintf(fp, "bar(Y,0.8);\n");
       fwritePlotAxes(fp);
-      sprintf(pString, "Kriging Ranking");
+      snprintf(pString,100,"Kriging Ranking");
       fwritePlotTitle(fp, pString);
-      sprintf(pString, "Input Numbers");
+      snprintf(pString,100,"Input Numbers");
       fwritePlotXLabel(fp, pString);
-      sprintf(pString, "Kriging Measure");
+      snprintf(pString,100,"Kriging Measure");
       fwritePlotYLabel(fp, pString);
       if (plotScilab())
       {
@@ -1825,13 +1858,14 @@ double Kriging::setParams(int targc, char **targv)
 }
 
 // ************************************************************************
-// perform optimization evaluation 
+// perform optimization evaluation (different optimization method, does not
+// work well
 // ------------------------------------------------------------------------
 void Kriging::optimize()
 {
   int    ii, jj, mm, nBasis, deg; 
   double objfcn, objtmp, ddata;
-  char   pString[1000];
+  char   pString[101];
   psVector VecTUs, VecTLs, VecThetas, VecThetas2, VecT1, VecS1, VecScales;
   psVector VecXDists;
 
@@ -1862,7 +1896,7 @@ void Kriging::optimize()
       printf("Kriging: for input %d :\n", ii+1);
       printf("Kriging: current optimization lower bound = %e\n",
              TLowers[ii]);
-      sprintf(pString,
+      snprintf(pString,100,
          "Kriging: Enter new optimization lower bound : ");
       TLowers[ii] = getDouble(pString);
       if (TLowers[ii] <= 0.0)
@@ -1872,7 +1906,7 @@ void Kriging::optimize()
       }
       printf("Kriging: current optimization upper bound = %e\n",
              TUppers[ii]);
-      sprintf(pString,
+      snprintf(pString,100,
          "Kriging: Enter new optimization upper bound : ");
       TUppers[ii] = getDouble(pString);
       if (TUppers[ii] <= 0.0)

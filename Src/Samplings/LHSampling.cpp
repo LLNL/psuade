@@ -244,7 +244,7 @@ int LHSampling::initialize(int initLevel)
       printf("  the sample with the largest minimum distance between\n");
       printf("  sample points.) Thus, the more LH samples to generate,\n");
       printf("  the better it is, but it is also more expensive.\n");
-      sprintf(pString,
+      snprintf(pString,100,
         "LHSampling: number of LHS samples to check (1-1000): \n");
       ntimes = getInt(1, 10000000, pString);
     }

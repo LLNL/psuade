@@ -119,7 +119,7 @@ title = '1D Scatter Plot'
 plt.title(title, fontsize=14, fontweight='bold')
 for axis in ['top', 'bottom', 'left', 'right']:
    ax.spines[axis].set_linewidth(4)
-plt.grid(b=True)
+#plt.grid(b=True)
 
 plt.savefig('psu_splot_std.png')
 print('One-input-one-output scatter plot file is in psu_splot_std.png')

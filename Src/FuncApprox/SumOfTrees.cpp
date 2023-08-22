@@ -42,7 +42,7 @@
 SumOfTrees::SumOfTrees(int nInputs,int nSamples) : 
                  FuncApprox(nInputs,nSamples)
 {
-  char pString[501];
+  char pString[101];
 
   //**/ set identifier
   faID_ = PSUADE_RS_SOTS;
@@ -62,9 +62,9 @@ SumOfTrees::SumOfTrees(int nInputs,int nSamples) :
   //**/ user adjustable parameters
   if (psConfig_.RSExpertModeIsOn())
   {
-    sprintf(pString,"Enter the desired number of trees (>10): ");
+    snprintf(pString,100,"Enter the desired number of trees (>10): ");
     numTrees_ = getInt(10, 10000, pString);
-    sprintf(pString,"Enter minimum points per node (>1, default=10): ");
+    snprintf(pString,100,"Enter minimum points per node (>1, default=10): ");
     minPtsPerNode_ = getInt(2, nSamples/5, pString);
   }
 
@@ -497,6 +497,7 @@ int SumOfTrees::buildTrees(double *X, double *Y)
   psVector vecXT, vecYT, vecYY;
 #pragma omp parallel shared(X) \
   private(mm,jj,ss,kk,vecXT,vecYT,vecYY,checksum,mult)
+{
 #pragma omp for
   for (mm = 0; mm < numTrees_; mm++)
   {
@@ -508,6 +509,7 @@ int SumOfTrees::buildTrees(double *X, double *Y)
     vecYY.setLength(nSamples_);
     for (jj = 0; jj < nSamples_; jj++) vecYY[jj] = Y[jj];
 
+#ifndef PSUADE_OMP
     if (psConfig_.InteractiveIsOn() && psConfig_.RSCodeGenIsOn())
     {
       fp = fopen("psuade_rs.info", "a");
@@ -523,6 +525,7 @@ int SumOfTrees::buildTrees(double *X, double *Y)
         fclose(fp);
       }
     }
+#endif
     //**/ bagging mode: create a boostrap aggregate
     if (mode_ == 0)
     {
@@ -563,6 +566,7 @@ int SumOfTrees::buildTrees(double *X, double *Y)
       mult = shrinkFactor_ * mult / (shrinkFactor_ - mult * mult);
       if (mm == numTrees_-1) mult = 1.0;
     }
+#ifndef PSUADE_OMP
     if (psConfig_.InteractiveIsOn() && psConfig_.RSCodeGenIsOn())
     {
       fp = fopen("psuade_rs.info", "a");
@@ -578,8 +582,13 @@ int SumOfTrees::buildTrees(double *X, double *Y)
         fclose(fp);
       }
     }
+#endif
   }
+} /* omp */
 
+#ifdef PSUADE_OMP
+  printf("SumOfTrees INFO: No RS code created in OMP mode.\n"); 
+#else
   fp = NULL;
   if (psConfig_.InteractiveIsOn() && psConfig_.RSCodeGenIsOn()) 
     fp = fopen("psuade_rs.info", "a");
@@ -856,6 +865,7 @@ int SumOfTrees::buildTrees(double *X, double *Y)
     fclose(fp);
     printf("FILE psuade_rs.py contains the sum-of-trees interpolator.\n");
   }
+#endif
   return 0;
 }
 

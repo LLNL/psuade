@@ -819,7 +819,7 @@ void OUU3Optimizer::optimize(oData *odata)
    psOUU3InputTypes_ = new int[nInputs];
    for (ii = 0; ii < nInputs; ii++)
    {
-      sprintf(pString, "Type for variable %d ? ", ii+1);
+      snprintf(pString,100,"Type for variable %d ? ", ii+1);
       psOUU3InputTypes_[ii] = getInt(1,4,pString); 
       psOUU3InputTypes_[ii]--;
    }
@@ -921,21 +921,21 @@ void OUU3Optimizer::optimize(oData *odata)
       printf("  3. G(X1,X2,X3*,X4*) such that \n");
       printf("           Prob(G(X1,X2,X3,X4)>G(X1,X2,X3*,X4*)) = epsilon\n");
       printf("  4. min_{X3,X4} G(X1,X2,X3,X4) given X1 and X2\n");
-      sprintf(pString,"Enter your preferred functional (1, 2, 3 or 4) : ");
+      snprintf(pString,100,"Enter your preferred functional (1, 2, 3 or 4) : ");
       psOUU3Mode_ = getInt(1, 4, pString);
       if (psOUU3Mode_ == 2)
       {
-         sprintf(pString,"Enter your desired alpha : ");
-         psOUU3StdevMultiplier_ = getDouble(pString);
+        snprintf(pString,100,"Enter your desired alpha : ");
+        psOUU3StdevMultiplier_ = getDouble(pString);
       } 
       if (psOUU3Mode_ == 3)
       {
-         psOUU3Percentile_ = 0.0;
-         while (psOUU3Percentile_ <= 0.01 || psOUU3Percentile_ > 0.5) 
-         { 
-            sprintf(pString,"Enter your desired percentile : (0.01 - 0.5)");
-            psOUU3Percentile_ = getDouble(pString);
-         } 
+        psOUU3Percentile_ = 0.0;
+        while (psOUU3Percentile_ <= 0.01 || psOUU3Percentile_ > 0.5) 
+        { 
+          snprintf(pString,100,"Enter your desired percentile : (0.01 - 0.5)");
+          psOUU3Percentile_ = getDouble(pString);
+        } 
       }
    }
 
@@ -1007,23 +1007,23 @@ void OUU3Optimizer::optimize(oData *odata)
       printf("Default sampling method = Latin hypercube\n");
       printf("Default sample size     = %d\n",psOUU3X4nSamples_);
       printf("Available sampling method: (1) LHS or (2) factorial.\n");
-      sprintf(pString,"Select sampling method (1 or 2) : ");
+      snprintf(pString,100,"Select sampling method (1 or 2) : ");
       methodX4 = getInt(1, 2, pString);
       if (methodX4 == 1)
       {
-         sprintf(pString,
-                 "Enter your preferred sample size (>=10, <=1000) : ");
-         psOUU3X4nSamples_ = getInt(10, 10000, pString);
-         printf("Latin hypercube  has sample size = %d\n", psOUU3X4nSamples_);  
+        snprintf(pString,100,
+                "Enter your preferred sample size (>=10, <=1000) : ");
+        psOUU3X4nSamples_ = getInt(10, 10000, pString);
+        printf("Latin hypercube  has sample size = %d\n", psOUU3X4nSamples_);  
       }
       else if (methodX4 == 2)
       {
-         sprintf(pString,
-                 "Enter number of levels per variable (>=3, <=100) : ");
-         psOUU3X4nSamples_ = getInt(3, 100, pString);
-         kk = psOUU3X4nSamples_;
-         for (ii = 1; ii < M4; ii++) psOUU3X4nSamples_ *= kk;
-         printf("Factorial design has sample size = %d\n", psOUU3X4nSamples_);  
+        snprintf(pString,100,
+                "Enter number of levels per variable (>=3, <=100) : ");
+        psOUU3X4nSamples_ = getInt(3, 100, pString);
+        kk = psOUU3X4nSamples_;
+        for (ii = 1; ii < M4; ii++) psOUU3X4nSamples_ *= kk;
+        printf("Factorial design has sample size = %d\n", psOUU3X4nSamples_);  
       }
       if (methodX4 == 1)
            sampler = (Sampling *) SamplingCreateFromID(PSUADE_SAMP_LHS);

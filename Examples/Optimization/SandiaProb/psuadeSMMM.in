@@ -1,0 +1,32 @@
+PSUADE
+INPUT
+   dimension = 2
+   variable 1 X1 =  0.0e+00   7.0e-1
+   variable 2 X2 =  0.0e+00   7.0e-1
+END
+OUTPUT
+   dimension = 1
+   variable 1 Y1
+END
+METHOD
+   sampling         = MC
+   num_samples      = 1
+END
+APPLICATION
+#  driver         = ./simulator
+   opt_driver     = ./simulator
+   aux_opt_driver = ./RSData
+END
+ANALYSIS
+#  optimization method = mm
+#  analyzer rstype = quartic
+   optimization target_file = ./targetFile
+   optimization method = mm_adaptive
+   optimization num_local_minima = 1
+   optimization fmin = 0.000000e+00
+   optimization tolerance = 1.000000e-10
+   optimization num_fmin = 1
+   optimization print_level = 4
+   printlevel 4
+END
+END

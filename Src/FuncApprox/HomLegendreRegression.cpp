@@ -440,9 +440,11 @@ double HomLegendreRegression::evaluatePoint(int npts, double *X, double *Y)
 {
   int kk;
 #pragma omp parallel shared(X) private(kk)
+{
 #pragma omp for
   for (kk = 0; kk < npts; kk++)
     Y[kk] = evaluatePoint(&X[kk*nInputs_]);
+}
   return 0.0;
 }
 
@@ -454,9 +456,11 @@ double HomLegendreRegression::evaluatePoint(int npts, double *X, double *Y,
 {
   int kk;
 #pragma omp parallel shared(X) private(kk)
+{
 #pragma omp for
   for (kk = 0; kk < npts; kk++)
     Y[kk] = evaluatePoint(&X[kk*nInputs_], coefs);
+}
   return 0.0;
 }
 
@@ -558,9 +562,11 @@ double HomLegendreRegression::evaluatePointFuzzy(int npts,double *X,
 {
   int kk;
 #pragma omp parallel private(kk)
+{
 #pragma omp for
   for (kk = 0; kk < npts; kk++)
     Y[kk] = evaluatePointFuzzy(&X[kk*nInputs_], Ystd[kk]);
+}
   return 0.0;
 }
 
@@ -582,7 +588,7 @@ int HomLegendreRegression::analyze(psVector VecX, psVector VecY)
 {
   int    N, M, ii, mm, nn, info;
   double SSresid, SStotal, R2, var, esum, ymax;
-  char   pString[100], response[1000], winput1[1000], winput2[1000];
+  char   pString[101], response[1000], winput1[1000], winput2[1000];
   char   *cString;
   FILE   *fp;
   psMatrix eigMatT, MatXX;
@@ -595,9 +601,9 @@ int HomLegendreRegression::analyze(psVector VecX, psVector VecY)
   {
     if (psConfig_.InteractiveIsOn())
     {
-      sprintf(pString,"HomLegendre: desired polynomial order (1 - 5): ");
+      snprintf(pString,100,"HomLegendre: desired polynomial order (1 - 5): ");
       pOrder_ = getInt(1, 5, pString);
-      sprintf(pString, "HomLegendre_order = %d", pOrder_);
+      snprintf(pString,100,"HomLegendre_order = %d", pOrder_);
       psConfig_.putParameter(pString);
     }
     else if (!psConfig_.RSExpertModeIsOn())
@@ -800,7 +806,7 @@ int HomLegendreRegression::analyze(psVector VecX, psVector VecY)
   {
     printf("You have the option to store the regression matrix (that\n");
     printf("is, the matrix A in Ax=b) in a matlab file for inspection.\n");
-    sprintf(pString, "Store regression matrix? (y or n) ");
+    snprintf(pString,100,"Store regression matrix? (y or n) ");
     getString(pString, response);
     if (response[0] == 'y')
     {
@@ -1052,14 +1058,14 @@ int HomLegendreRegression::printRC(psVector VecB, psVector VecBstd,
 int HomLegendreRegression::GenPermutations()
 {
   int  ii;
-  char pString[500];
+  char pString[101];
 
   //**/ =================================================================
   //**/ ask for polynomial order and then number of terms
   //**/ =================================================================
   if (pOrder_ < 0)
   {
-    sprintf(pString, "Desired order (>=1 and <= 5) ? ");
+    snprintf(pString,100,"Desired order (>=1 and <= 5) ? ");
     pOrder_ = getInt(1, 5, pString);
   }
   numPerms_ = 1;

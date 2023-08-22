@@ -94,6 +94,11 @@ public:
    //**/ @param mdata - all data needed for analysis
    double analyzeDirect(McmcData &mdata);
 
+   //**/ Compute negative log likelihood from a given calibration
+   //**/ setting
+   //**/ @param adata - all data needed for analysis
+   double computeLikelihood(aData &adata);
+
    //**/ assign operator
    //**/ @param analyzer
    MCMCAnalyzer& operator=(const MCMCAnalyzer &analyzer);
@@ -167,11 +172,13 @@ public:
    int setParams(int nParams, char **params);
 
    //**/ check convergence
-   //**/ @param num   - number of elements
-   //**/ @param means - mean vector
-   //**/ @param stds  - sd vector
-   //**/ @param leng  - length of chain
-   int checkConvergence(int num, double *means, double *stds, int leng);
+   //**/ @param num    - number of elements
+   //**/ @param means  - mean vector
+   //**/ @param stds   - sd vector
+   //**/ @param leng   - length of chain
+   //**/ @param thresh - threshold 
+   double checkConvergence(int num, double *means, double *stds, 
+                           int leng, double thresh);
 
    //**/ display banner information
    void displayBanner(int printLevel);

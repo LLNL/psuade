@@ -22,7 +22,7 @@ C License along with this program; if not, write to the Free Software
 C Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 
 C USA
 C ***********************************************************************
-C KPCA functions (supported by Xiao Chen's LDRD)
+C KPCA functions (for Xiao Chen's LDRD project) 
 C DATE : Jan 2016
 C ***********************************************************************
 C     generate a snapshot given an independent random variable

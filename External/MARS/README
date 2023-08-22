@@ -5,5 +5,4 @@ web.ntpu.edu.tw/~tsair/1Teaching/2semester/NonpaEstimation2004/SplusCode/mars36_
 
 Sept 2020
 - remove codes that cause compiler errors
-  (compare mars36_fort.f with mars36_fort.f.compileErr)
   

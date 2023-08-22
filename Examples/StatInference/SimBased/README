@@ -39,5 +39,6 @@ psScriptMH.in
 
 just run: psuade < psScriptMH...in
 
-The best solutiosn is (0.25, 0.75)
+* The MLE results should be X1=0.25 and X2=0.75
+* You may vary proposal distribution scale to improve acceptance rate
 

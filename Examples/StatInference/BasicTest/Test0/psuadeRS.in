@@ -1,15 +1,15 @@
 PSUADE
 INPUT
    dimension = 1
-   variable   1 X   = 0.0  1.0
+   variable   1 X1  = 0.0  1.0
 END
 OUTPUT
    dimension = 1
    variable 1 Y
 END
 METHOD
-   sampling = FACT
-   num_samples = 11
+   sampling = LPTAU
+   num_samples = 100
 END
 APPLICATION
    driver = ./simulator

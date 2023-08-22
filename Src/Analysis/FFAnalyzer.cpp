@@ -193,7 +193,7 @@ double FFAnalyzer::analyze(aData &adata)
       printOutTS(PL_INFO, 
            "If you are using replicated Fractional Factorial\n");
       printOutTS(PL_INFO, "enter the number of replications.\n");
-      sprintf(pString, "Number of replications = (2 - %d) ",nSamples/2);
+      snprintf(pString,100,"Number of replications = (2 - %d) ",nSamples/2);
       nReps = getInt(2, nSamples/2, pString);
       break;
     }

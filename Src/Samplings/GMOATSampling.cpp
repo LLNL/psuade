@@ -210,19 +210,19 @@ int GMOATSampling::initialize(int initLevel)
   if (psConfig_.SamExpertModeIsOn())
   {
     printf("GMOATSampling: default number of levels = %d.\n", P_);
-    sprintf(pString,
-            "Change number of levels for individual inputs ? (y or n) ");
+    snprintf(pString,100,
+             "Change number of levels for individual inputs ? (y or n) ");
     getString(pString, winput1);
     if (winput1[0] == 'y')
     {
       ii = nInputs_+1;
-      sprintf(pString,
+      snprintf(pString,100,
               "Which input to change ? (1 - %d, 0 to end) ",nInputs_);
       while (ii > 0)
       {
         ii = getInt(0, nInputs_, pString);
         if (ii == 0) break;
-        sprintf(pString2,
+        snprintf(pString2,100,
                 "Enter number of levels for input %d (2 - 1000) : ",ii);
         vecInpLevels_[ii-1] = getInt(2, 1000, pString2);
       }
@@ -246,7 +246,7 @@ int GMOATSampling::initialize(int initLevel)
     printf("the selected subset will be varied first.\n");
     printf("This option is generally not needed, but maybe useful\n");
     printf("for parallel computing.\n");
-    sprintf(pString,"Do you have a MOAT input partition file ? (y or n) ");
+    snprintf(pString,100,"Do you have a MOAT input partition file ? (y or n) ");
     getString(pString, winput1);
     if (winput1[0] == 'y')
       printf("GMOAT INFO: this option is available only in configFile.\n");
@@ -837,7 +837,7 @@ int GMOATSampling::merge()
   //**/ -------------------------------------------------------------------
   //**/ read first data file
   //**/ -------------------------------------------------------------------
-  sprintf(pString,"Please enter the name of the first MOAT datafile: ");
+  snprintf(pString,100,"Please enter the name of the first MOAT datafile: ");
   getString(pString, file1);
   file1[strlen(file1)-1] = '\0';
   if ((fp1=fopen(file1,"r")) == NULL)
@@ -884,7 +884,7 @@ int GMOATSampling::merge()
   //**/ -------------------------------------------------------------------
   //**/ read second data file
   //**/ -------------------------------------------------------------------
-  sprintf(pString,"Please enter the name of the second MOAT datafile: ");
+  snprintf(pString,100,"Please enter the name of the second MOAT datafile: ");
   getString(pString, file2);
   file2[strlen(file2)-1] = '\0';
   if ((fp2=fopen(file2,"r")) == NULL)

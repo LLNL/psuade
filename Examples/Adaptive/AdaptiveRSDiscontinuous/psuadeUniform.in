@@ -1,0 +1,26 @@
+PSUADE
+INPUT
+   dimension = 2
+   variable 1 X1  =  0.0   1.0
+   variable 2 X2  =  0.0   1.0
+END
+OUTPUT
+   dimension = 1
+   variable 1 Y1
+END
+METHOD
+   sampling = METIS
+   num_samples = 400
+   random_seed = 541541191
+END
+APPLICATION
+   driver = ./simulator
+END
+ANALYSIS
+#  analyzer method = ARSM
+   analyzer output_id  = 1
+   analyzer threshold  = 1.0e-6
+   analyzer rstype  = MARS
+   printlevel 2
+END
+END

@@ -92,13 +92,13 @@ NomadOptimizer::~NomadOptimizer()
 // ------------------------------------------------------------------------
 void NomadOptimizer::setDiscreteVariable(int index)
 {
-  char winput[1000];
+  char winput[101];
   if (index <= 0)
   {
     printf("NOMAD setDiscreteVariable ERROR: variable number <= 0.\n");
     exit(1);
   }
-  sprintf(winput,"iDiscrete%d", index);
+  snprintf(winput,100,"iDiscrete%d", index);
   psConfig_.putParameter(winput);
 }
 
@@ -153,7 +153,7 @@ void NomadOptimizer::optimize(oData *odata)
 #ifdef HAVE_NOMAD
   int    ii, kk, nInps, nOuts, printLevel, maxfun, idata, option;
   double ddata, tol;
-  char   pString[1000], *cString;
+  char   pString[101], *cString;
   FILE   *fp;
   psVector vecXT;
 
@@ -214,7 +214,7 @@ void NomadOptimizer::optimize(oData *odata)
   kk = 0;
   for (ii = 0; ii < nInps; ii++)
   {
-    sprintf(pString,"iDiscrete%d", ii+1);
+    snprintf(pString,100,"iDiscrete%d", ii+1);
     cString = psConfig_.getParameter(pString);
     if (cString != NULL) kk++;
   }
@@ -224,7 +224,7 @@ void NomadOptimizer::optimize(oData *odata)
     inputTypes_ = new int[nInps];
     for (ii = 0; ii < nInps; ii++) 
     {
-      sprintf(pString,"iDiscrete%d", ii+1);
+      snprintf(pString,100,"iDiscrete%d", ii+1);
       cString = psConfig_.getParameter(pString);
       if (cString != NULL)
       {
@@ -253,7 +253,7 @@ void NomadOptimizer::optimize(oData *odata)
     printf("NOMAD can solve either \n");
     printf("1. continuous (which is slow compared to bobyqa) or \n");
     printf("2. mixed-integer optimization.\n");
-    sprintf(pString, "Please select (1) or (2) : ");
+    snprintf(pString,100,"Please select (1) or (2) : ");
     option = getInt(1, 2, pString);
 
     //**/ if mixed integer optimization is desired, ask more questions
@@ -267,7 +267,7 @@ void NomadOptimizer::optimize(oData *odata)
       //printf("4. Cat  (or C) - categorical\n");
       for (ii = 0; ii < nInps; ii++)
       {
-        sprintf(pString, "Please enter type for input %d : ",ii+1);
+        snprintf(pString,100,"Please enter type for input %d : ",ii+1);
         inputTypes_[ii] = getInt(1, 3, pString);
         idata = (int) lbounds[ii];
         if (inputTypes_[ii] == 3)
@@ -355,7 +355,7 @@ void NomadOptimizer::optimize(oData *odata)
   nomadp.set_SPECULATIVE_SEARCH ( true );
   if (psConfig_.InteractiveIsOn() && psConfig_.OptExpertModeIsOn())
   {
-    sprintf(pString, 
+    snprintf(pString,100, 
             "Enter value for mesh update basis (default = 8) : ");
     ddata = getDouble(pString);
   } 
@@ -364,7 +364,7 @@ void NomadOptimizer::optimize(oData *odata)
 
   if (psConfig_.InteractiveIsOn() && psConfig_.OptExpertModeIsOn())
   {
-    sprintf(pString, 
+    snprintf(pString,100, 
             "Enter value for mesh coarsening exponent (default = 1) : ");
     idata = getInt(0, 10, pString);
   } 

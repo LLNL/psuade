@@ -1785,7 +1785,7 @@ void OUUOptimizer::optimize(oData *odata)
   kk = 0;
   for (ii = 0; ii < nInputs; ii++)
   {
-    sprintf(pString,"iDiscrete%d", ii+1);
+    snprintf(pString,100,"iDiscrete%d", ii+1);
     cString = psConfig_.getParameter(pString);
     if (cString != NULL) kk++;
   }
@@ -1794,7 +1794,7 @@ void OUUOptimizer::optimize(oData *odata)
     VecPsOUUDesTypes_.setLength(nInputs);
     for (ii = 0; ii < nInputs; ii++)
     {
-      sprintf(pString,"iDiscrete%d", ii+1);
+      snprintf(pString,100,"iDiscrete%d", ii+1);
       cString = psConfig_.getParameter(pString);
       if (cString != NULL)
       {
@@ -1806,7 +1806,7 @@ void OUUOptimizer::optimize(oData *odata)
     }
     optCode_ = 5;
   }
-  sprintf(pString,"ouu_sample_has_nums");
+  snprintf(pString,100,"ouu_sample_has_nums");
   cString = psConfig_.getParameter(pString);
   if (cString != NULL) hasColNums = 1;
 
@@ -1953,7 +1953,7 @@ void OUUOptimizer::optimize(oData *odata)
       VecPsOUUInpTypes_.setLength(nInputs);
       for (ii = 0; ii < nInputs; ii++)
       {
-        sprintf(pString, "Type for variable %d ? ", ii+1);
+        snprintf(pString,100,"Type for variable %d ? ", ii+1);
         VecPsOUUInpTypes_[ii] = getInt(1,4,pString); 
       }
     }
@@ -2127,11 +2127,11 @@ void OUUOptimizer::optimize(oData *odata)
       printf("         Prob(G(Z1,...)>G(Z1,Z2,Z3*,Z4*)) = 1 - alpha\n");
       printf("     This is also called value-at-risk with confidence\n");
       printf("     level alpha.\n");
-      sprintf(pString,"Enter your choice of functional (1, 2 or 3) : ");
+      snprintf(pString,100,"Enter your choice of functional (1, 2 or 3) : ");
       psOUUMode_ = getInt(1, 3, pString);
       if (psOUUMode_ == 2)
       {
-        sprintf(pString,"Enter beta (>= 0) : ");
+        snprintf(pString,100,"Enter beta (>= 0) : ");
         psOUUStdevMultiplier_ = -1;
         while (psOUUStdevMultiplier_ < 0)
           psOUUStdevMultiplier_ = getDouble(pString);
@@ -2139,7 +2139,7 @@ void OUUOptimizer::optimize(oData *odata)
       if (psOUUMode_ == 3)
       {
         psOUUPercentile_ = 0.0;
-        sprintf(pString,"Enter the confidence interval : [0.5 - 1.0] ");
+        snprintf(pString,100,"Enter the confidence interval : [0.5 - 1.0] ");
         while ((psOUUPercentile_ < 0.5) || (psOUUPercentile_ > 1.0)) 
         { 
           psOUUPercentile_ = getDouble(pString);
@@ -2155,7 +2155,7 @@ void OUUOptimizer::optimize(oData *odata)
         printf(" 3. the simulation with largest 1-norm violations\n");
         printf(" 4. the simulation with largest infinity-norm violation\n");
         printf("NOTE: constraints are such that they should be >= 0.\n");
-        sprintf(pString,"Enter your choice (1 - 4) : ");
+        snprintf(pString,100,"Enter your choice (1 - 4) : ");
         psOUUCMode_ = getInt(1, 4, pString);
       }
     }
@@ -2168,11 +2168,11 @@ void OUUOptimizer::optimize(oData *odata)
       printf("Select which functional Phi_{Z3,Z4} to use: \n");
       printf("  1. mean of G(Z1,...) with respect to Z3,Z4 (default)\n"); 
       printf("  2. mean of G(Z1,...) + beta * std dev of G(Z1,...)\n"); 
-      sprintf(pString,"Enter your choice of functional (1 or 2) : ");
+      snprintf(pString,100,"Enter your choice of functional (1 or 2) : ");
       psOUUMode_ = getInt(1, 2, pString);
       if (psOUUMode_ == 2)
       {
-        sprintf(pString,"Enter beta (>= 0) : ");
+        snprintf(pString,100,"Enter beta (>= 0) : ");
         psOUUStdevMultiplier_ = -1;
         while (psOUUStdevMultiplier_ < 0)
           psOUUStdevMultiplier_ = getDouble(pString);
@@ -2316,7 +2316,7 @@ void OUUOptimizer::optimize(oData *odata)
     printf("OUUOptimizer: generating a sample for Z4. Two options:\n");
     printf("(1) Users uploads a sample to PSUADE\n");
     printf("(2) PSUADE can internally create a sample\n");
-    sprintf(pString, "Select option 1 or 2 : ");
+    snprintf(pString,100,"Select option 1 or 2 : ");
     kk = getInt(1,2,pString);
     //**/ if option (1), read the sample file, and if RS is requested 
     //**/ generate a RS or upload a RS sample and then generate a large 
@@ -2442,7 +2442,7 @@ void OUUOptimizer::optimize(oData *odata)
         //**/ request or generate another Z4 sample
         printf("Your Z4 sample size is %d.\n", psOUUZ4nSamples_);
         printf("This sample size may be too large for building a RS.\n");
-        sprintf(pString,
+        snprintf(pString,100,
                 "Number of points to use for building RS? (%d - %d) ",
                 M4+1, psOUUZ4nSamples_);
         psOUUZ4nSamples_ = getInt(M4+1, psOUUZ4nSamples_, pString);
@@ -2451,7 +2451,7 @@ void OUUOptimizer::optimize(oData *odata)
                psOUUZ4nSamples_);
         printf("(2) PSUADE randomly draws %d points from your sample\n",
                psOUUZ4nSamples_);
-        sprintf(pString,"Select option 1 or 2 : ");
+        snprintf(pString,100,"Select option 1 or 2 : ");
         kk = getInt(1, 2, pString);
         if (kk == 2)
         {
@@ -2568,21 +2568,21 @@ void OUUOptimizer::optimize(oData *odata)
         printf("   (1) LHS, \n");
         printf("   (2) factorial, or\n");
         printf("   (3) quasi-MC.\n");
-        sprintf(pString,"Select sampling method (1, 2 or 3) : ");
+        snprintf(pString,100,"Select sampling method (1, 2 or 3) : ");
         methodZ4 = getInt(1, 3, pString);
         //**/ select sample size for continuous uncertain parameters
         if (methodZ4 == 1 || methodZ4 == 3)
         {
           kk = 2;
           if (psOUUUseRS_ == 1) kk = M4 + 1;
-          sprintf(pString, "Enter sample size (>= %d, <= 1000) : ", kk);
+          snprintf(pString,100,"Enter sample size (>= %d, <= 1000) : ", kk);
           psOUUZ4nSamples_ = getInt(2, 10000, pString);
           printf("Latin hypercube/QMC has sample size = %d\n",
                  psOUUZ4nSamples_);  
         }
         else if (methodZ4 == 2)
         {
-          sprintf(pString,
+          snprintf(pString,100,
                   "Enter number of levels per variable (>=2, <=100) : ");
           psOUUZ4nSamples_ = getInt(2, 100, pString);
           kk = psOUUZ4nSamples_;
@@ -2633,7 +2633,7 @@ void OUUOptimizer::optimize(oData *odata)
         printEquals(PL_INFO, 0);
         printf("OUUOptimizer uses a Z4 sample to estimate the objective\n");
         printf("Default sample size     = %d\n",psOUUZ4nSamples_);
-        sprintf(pString,"Enter your desired sample size (>=10, <=1000) : ");
+        snprintf(pString,100,"Enter your desired sample size (>=10, <=1000) : ");
         psOUUZ4nSamples_ = getInt(10, 10000, pString);
         //**/ fetch input means and std dev
         odata->psIO_->getParameter("input_means", pdata);
@@ -2979,7 +2979,7 @@ void OUUOptimizer::optimize(oData *odata)
       printf("2. Kriging (fast)\n");
       printf("3. Kriging (slow)\n");
       printf("4. Radial basis function\n");
-      sprintf(pString, "Which response surface? ");
+      snprintf(pString,100,"Which response surface? ");
       rstype = getInt(1,4,pString); 
       if (rstype == 1) rstype = PSUADE_RS_MARS;
       if (rstype == 2)
@@ -3801,7 +3801,7 @@ int OUUOptimizer::setDiscreteInputs(int nInputs, int num, int *list)
   kk = 0;
   for (ii = 0; ii < nInputs; ii++)
   {
-    sprintf(pString,"iDiscrete%d", ii+1);
+    snprintf(pString,100,"iDiscrete%d", ii+1);
     cString = psConfig_.getParameter(pString);
     if (cString != NULL) kk++;
   }
@@ -3853,7 +3853,7 @@ int OUUOptimizer::setVariableType(int num, int vtype)
   }
   if (vtype == OUUDesignDisc)
   {
-    sprintf(pString,"iDiscrete%d", num);
+    snprintf(pString,100,"iDiscrete%d", num);
     psConfig_.putParameter(pString);
   }
   if (VecPsOUUInpTypes_.length() == 0) 
@@ -3966,13 +3966,13 @@ void OUUOptimizer::setConstraintFile(char *fname)
 // ------------------------------------------------------------------------
 void OUUOptimizer::setDiscreteVariable(int index)
 {
-  char winput[1000];
+  char winput[101];
   if (index <= 0)
   {
     printf("OUU setDiscreteVariable ERROR: variable number <= 0.\n");
     exit(1);
   }
-  sprintf(winput,"iDiscrete%d", index);
+  snprintf(winput,100,"iDiscrete%d", index);
   psConfig_.putParameter(winput);
 }
 

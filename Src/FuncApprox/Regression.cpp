@@ -611,7 +611,7 @@ int Regression::analyze(psVector VecXin, psVector VecY)
   int    M, N, ii, mm, nn, nn2, nn3, nn4, info, ind, last, NRevised;
   double SSresid, SStotal, R2, var, *arrayX;
   double esum, ymax, *tmpArray, *UU, *VV, *arrayXX;
-  char   pString[1000], response[1000];
+  char   pString[101], response[1000];
   FILE   *fp;
   psMatrix eigMatT, MatXX, MatA;
   psVector eigVals, tmpVec;
@@ -732,7 +732,7 @@ int Regression::analyze(psVector VecXin, psVector VecY)
   {
     printf("You have the option to store the regression matrix (that\n");
     printf("is, the matrix A in Ax=b) in a matlab file for inspection.\n"); 
-    sprintf(pString, "Store regression matrix? (y or n) ");
+    snprintf(pString,100,"Store regression matrix? (y or n) ");
     getString(pString, response);
     if (response[0] == 'y')
     {
@@ -820,7 +820,7 @@ int Regression::analyze(psVector VecXin, psVector VecY)
     printf("them judiously.\n");
     for (nn = 0; nn < N; nn++) 
       printf("Singular value %5d = %e\n", nn+1, VecS[nn]);
-    sprintf(pString, "How many to keep (1 - %d, 0 - all) ? ", N); 
+    snprintf(pString,100,"How many to keep (1 - %d, 0 - all) ? ", N); 
     NRevised = getInt(0,N,pString);
     if (NRevised == 0) NRevised = N;
     for (nn = NRevised; nn < N; nn++) VecS[nn] = 0.0;

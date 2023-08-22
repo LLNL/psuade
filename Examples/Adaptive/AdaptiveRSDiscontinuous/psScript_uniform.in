@@ -1,0 +1,5 @@
+sys cc -o simulator simulator.c -lm
+run psuadeUniform.in
+rename psuadeData sample_uniform
+q
+

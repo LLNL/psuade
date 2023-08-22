@@ -110,12 +110,11 @@ double MomentAnalyzer::analyze(aData &adata)
     for (ii = 0; ii < nInputs; ii++) cnt += adata.inputPDFs_[ii];
     if (psConfig_.InteractiveIsOn() && cnt > 0)
     {
-      printOutTS(PL_INFO, 
-         "MomentAnalyzer INFO: non-uniform probability distributions\n");
-      printOutTS(PL_INFO,
-         "               have been defined in the data file, but\n");
-      printOutTS(PL_INFO, 
-         "               they will not be used in this analysis.\n");
+      printOutTS(PL_INFO,"MomentAnalyzer INFO: non-uniform probability ");
+      printOutTS(PL_INFO,"distributions have been\n");
+      printOutTS(PL_INFO,"               defined in the data file, but ");
+      printOutTS(PL_INFO,"they will not be used in\n");
+      printOutTS(PL_INFO,"               this analysis.\n");
     }
   }
   if (ioPtr != NULL) ioPtr->getParameter("output_names", pPtr);
@@ -231,7 +230,7 @@ double MomentAnalyzer::analyze(aData &adata)
     {
       printOutTS(PL_INFO,
            "MomentAnalyzer: Generate output distribution plot\n");
-      sprintf(pString, "Enter output number (1 - %d) : ", nOutputs);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs);
       outID = getInt(1, nOutputs, pString);
       outID--;
     }
@@ -493,7 +492,7 @@ double MomentAnalyzer::analyze(aData &adata)
     if (psConfig_.InteractiveIsOn())
     {
       printf("MomentAnalyzer: Generating output distribution plot\n");
-      sprintf(pString, "Enter output number (1 - %d) : ", nOutputs);
+      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs);
       outID = getInt(1, nOutputs, pString);
       outID--;
     }

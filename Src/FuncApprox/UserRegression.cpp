@@ -50,7 +50,7 @@ UserRegression::UserRegression(int nInputs,int nSamples):
                                FuncApprox(nInputs,nSamples)
 {
   int  ii;
-  char response[501], inLine[501], pString[501];
+  char response[501], inLine[501], pString[101];
   FILE *fp;
 
   //**/ ==============================================================
@@ -100,9 +100,9 @@ UserRegression::UserRegression(int nInputs,int nSamples):
     printf("       line 2: 2 <M basis functions evaluated for sample 2> \n");
     printf("       .....\n");
     printEquals(PL_INFO, 0);
-    sprintf(pString, "Enter number of basis function : ");
+    snprintf(pString,100,"Enter number of basis function : ");
     numTerms_ = getInt(1,10000,pString);
-    sprintf(pString, "Enter name of user-generated executable file : ");
+    snprintf(pString,100,"Enter name of user-generated executable file : ");
     getString(pString, regFile_);
     ii = strlen(regFile_);
     regFile_[ii-1] = '\0';
@@ -189,8 +189,8 @@ UserRegression::UserRegression(int nInputs,int nSamples):
       printf("2. shift and scale (X' = (X - lower bound) * scale)\n");
       for (ii = 0; ii < nInputs_; ii++)
       {
-        sprintf(pString,"Choose scaling type (0, 1 or 2) for input %d : ",
-                ii+1);
+        snprintf(pString,100,"Choose scaling type (0, 1 or 2) for input %d : ",
+                 ii+1);
         vecXScales_[ii] = getInt(0,2,pString);
       }
     }
@@ -645,7 +645,7 @@ double UserRegression::evaluatePoint(int npts, double *X, double *Y)
 {
   int    ii, ind, kk;
   double Yt, ddata;
-  char   sysCmd[500], lineIn[5001];
+  char   sysCmd[501], lineIn[501];
   FILE   *fp;
 
   //**/ ==============================================================
@@ -686,12 +686,12 @@ double UserRegression::evaluatePoint(int npts, double *X, double *Y)
   {
     if (psPythonInterpreter_ != NULL)
     {
-      sprintf(sysCmd,"%s %s ps_input ps_output",psPythonInterpreter_,
-              regFile_);
+      snprintf(sysCmd,500,"%s %s ps_input ps_output",psPythonInterpreter_,
+               regFile_);
     }
-    else sprintf(sysCmd,"python %s ps_input ps_output", regFile_);
+    else snprintf(sysCmd,500,"python %s ps_input ps_output", regFile_);
   }
-  else sprintf(sysCmd,"%s ps_input ps_output", regFile_);
+  else snprintf(sysCmd,500,"%s ps_input ps_output", regFile_);
   if (outputLevel_ > 1) printf("UserRegression run : %s\n",sysCmd);
   system(sysCmd);
   if (outputLevel_ > 2) 
@@ -821,12 +821,12 @@ double UserRegression::evaluatePointFuzzy(int npts, double *X, double *Y,
     {
       if (psPythonInterpreter_ != NULL)
       {
-        sprintf(sysCmd,"%s %s ps_input ps_output",psPythonInterpreter_,
-                regFile_);
+        snprintf(sysCmd,500,"%s %s ps_input ps_output",psPythonInterpreter_,
+                 regFile_);
       }
-      else sprintf(sysCmd,"python %s ps_input ps_output",regFile_);
+      else snprintf(sysCmd,500,"python %s ps_input ps_output",regFile_);
     }
-    else sprintf(sysCmd,"%s ps_input ps_output", regFile_);
+    else snprintf(sysCmd,500,"%s ps_input ps_output", regFile_);
     if (outputLevel_ > 1) printf("UserRegression run : %s\n",sysCmd);
     system(sysCmd);
  
@@ -916,7 +916,7 @@ int UserRegression::analyze(psVector VecX, psVector VecY)
 {
   int    N, M, mm, nn, wlen, info, NRevised;
   double SSresid, SStotal, R2, var, esum, ymax, *arrayXX, *UU, *VV;
-  char   pString[100];
+  char   pString[101];
   FILE   *fp;
   psMatrix eigMatT, MatXX, MatA;
   psVector eigVals;
@@ -1026,7 +1026,7 @@ int UserRegression::analyze(psVector VecX, psVector VecY)
     printf("So, select them judiciously.\n");
     for (nn = 0; nn < N; nn++)
       printf("Singular value %5d = %e\n", nn+1, VecS[nn]);
-    sprintf(pString, "How many to keep (1 - %d, 0 - all) ? ", N);
+    snprintf(pString,100,"How many to keep (1 - %d, 0 - all) ? ", N);
     NRevised = getInt(0,N,pString);
     if (NRevised == 0) NRevised = N;
     for (nn = NRevised; nn < N; nn++) VecS[nn] = 0.0;
@@ -1392,7 +1392,7 @@ int UserRegression::loadXMatrix(psVector VecX, psMatrix &MatXX)
 {
   int    M, N, mm, kk;
   double *arrayXX;
-  char   sysCmd[500], lineIn[5001];
+  char   sysCmd[501], lineIn[5001];
   FILE   *fp;
 
   M = nSamples_;
@@ -1403,17 +1403,17 @@ int UserRegression::loadXMatrix(psVector VecX, psMatrix &MatXX)
   {
     if (psPythonInterpreter_ != NULL)
     {
-      sprintf(sysCmd,"%s %s ps_input ps_output",
-              psPythonInterpreter_,regFile_);
+      snprintf(sysCmd,500,"%s %s ps_input ps_output",
+               psPythonInterpreter_,regFile_);
     }
     else
     {
-      sprintf(sysCmd,"python %s ps_input ps_output",regFile_);
+      snprintf(sysCmd,500,"python %s ps_input ps_output",regFile_);
     }
   }
   else
   {
-    sprintf(sysCmd,"%s ps_input ps_output",regFile_);
+    snprintf(sysCmd,500,"%s ps_input ps_output",regFile_);
   }
   fp = fopen("ps_input", "w");
   if(fp == NULL)

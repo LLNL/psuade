@@ -125,7 +125,7 @@ title = 'Histogram'
 plt.title(title, fontsize=14, fontweight='bold')
 for axis in ['top', 'bottom', 'left', 'right']:
    ax.spines[axis].set_linewidth(4)
-plt.grid(b=True)
+#plt.grid(visible=True)
 plt.savefig('psu_hist.png')
 print('Histogram has been stored in psu_hist.png')
 

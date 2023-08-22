@@ -20,7 +20,7 @@
 // along with this program; if not, write to the Free Software Foundation,
 // Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 // ************************************************************************
-// KPCA Interface functions (supported by Xiao Chen's LDRD)
+// KPCA Interface functions 
 // DATE   : 2019
 // ************************************************************************
 #include <assert.h>
@@ -40,7 +40,7 @@ int KPCAForward(char *inModelFile, char *inDataFile, char *outDataFile)
 {
   int    ii;
   double ddata;
-  char   pString[1000], dataFile[1000], outFile[1000], modelFileName[1000];
+  char   pString[1001], dataFile[1000], outFile[1000], modelFileName[1000];
   FILE   *fp=NULL;
   psVector vecXT, vecWT;
 
@@ -64,7 +64,7 @@ int KPCAForward(char *inModelFile, char *inDataFile, char *outDataFile)
   if (inDataFile != NULL) strcpy(dataFile,inDataFile);
   else
   {
-    sprintf(pString,
+    snprintf(pString,100,
       "Enter the name of the snapshot file (length=%d): ",fieldDim);
     getString(pString, dataFile);
     dataFile[strlen(dataFile)-1] = '\0';
@@ -89,7 +89,7 @@ int KPCAForward(char *inModelFile, char *inDataFile, char *outDataFile)
   if (outDataFile != NULL) strcpy(outFile,outDataFile);
   else
   {
-    sprintf(pString,
+    snprintf(pString,100,
        "Enter the file name for storing the feature vector: ");
     getString(pString, outFile);
     outFile[strlen(outFile)-1] = '\0';
@@ -161,7 +161,7 @@ int KPCAInverse(char *inModelFile, char *inDataFile, char *outDataFile,
   if (inDataFile != NULL) strcpy(dataFile, inDataFile);
   else
   {
-    sprintf(pString,
+    snprintf(pString,100,
         "Enter the name of the feature file (length=%d): ", rdim);
     getString(pString, dataFile);
     dataFile[strlen(dataFile)-1] = '\0';
@@ -189,7 +189,7 @@ int KPCAInverse(char *inModelFile, char *inDataFile, char *outDataFile,
   if (outDataFile != NULL) strcpy(outFile, outDataFile);
   else
   {
-    sprintf(pString,
+    snprintf(pString,100,
        "Enter the file name for storing the reconstructed vector: ");
     getString(pString, outFile);
     outFile[strlen(outFile)-1] = '\0';
@@ -234,7 +234,7 @@ int MCMCWithKPCA()
   printf("the likelihood should be computed by: \n");
   printf("    C * exp(-0.5*cost)\n");
   printf("where C is some constant.\n");
-  sprintf(pString,"Name of the likelihood function: ");
+  snprintf(pString,100,"Name of the likelihood function: ");
   getString(pString, likelihoodFunc);
   likelihoodFunc[strlen(likelihoodFunc)-1] = '\0';
   fp = fopen(likelihoodFunc, "r");
@@ -252,11 +252,11 @@ int MCMCWithKPCA()
   printf("should have m floats where m is the dimension of the\n");
   printf("feature vector. If you enter 'none', a random initial\n");
   printf("guess will be generated for you.\n");
-  sprintf(pString,
+  snprintf(pString,100,
           "Name of the initial guess file for X (or none): ");
   getString(pString, igfile);
   igfile[strlen(igfile)-1] = '\0';
-  sprintf(pString, "Enter the dimension of X? ");
+  snprintf(pString,100,"Enter the dimension of X? ");
   int rdim = getInt(1,10000,pString);
   psVector vecIG;
   vecIG.setLength(rdim);
@@ -283,17 +283,17 @@ int MCMCWithKPCA()
   }
 
   //**/ get MCMC sample size
-  sprintf(pString,"Enter MCMC sample size : ");
+  snprintf(pString,100,"Enter MCMC sample size : ");
   int mcmcMaxIts = getInt(1,10000, pString);
 
   //**/ get posterior file 
   char postfile[1000];
-  sprintf(pString,"Enter the name of the posterior file: ");
+  snprintf(pString,100,"Enter the name of the posterior file: ");
   getString(pString, postfile);
   postfile[strlen(postfile)-1] = '\0';
 
   //**/ get posterior file 
-  sprintf(pString,"Want to turn on break point for debug? (y or n) ");
+  snprintf(pString,100,"Want to turn on break point for debug? (y or n) ");
   getString(pString, winput);
 
   //**/ run MCMC

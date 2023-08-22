@@ -15,4 +15,5 @@ Example4:
    Use Fisher-based approach
 Example5:
    A real-life example with more than 1 uncertain parameter
-
+Example6:
+   A matlab code to test optimality for linear problems

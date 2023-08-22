@@ -1,0 +1,25 @@
+PSUADE
+INPUT
+   dimension = 2
+   variable 1 X1  =  0.0   1.0
+   variable 2 X2  =  0.0   1.0
+END
+OUTPUT
+   dimension = 1
+   variable 1 Y1
+END
+METHOD
+   sampling = LPTAU
+   num_samples = 1000
+   random_seed = 541541191
+END
+APPLICATION
+   driver = ./simulator
+END
+ANALYSIS
+   analyzer output_id  = 1
+   analyzer rstype  = linear
+   analyzer threshold  = 1.0e-3
+   printlevel 1
+END
+END

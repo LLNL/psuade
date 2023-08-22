@@ -1,6 +1,7 @@
 sys cc -o simulator simulator.c -lm
 run psuadeRS.in
 rename psuadeData simdata
+printlevel 4
 load simdata
 arefine_metis
 y

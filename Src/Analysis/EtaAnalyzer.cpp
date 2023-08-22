@@ -43,8 +43,7 @@
 // ------------------------------------------------------------------------
 EtaAnalyzer::EtaAnalyzer() : Analyzer(), nInputs_(0), totalViolation_(0)
 {
-  setName("DELTATEST");
-  mode_ = 0;
+  setName("ETATEST");
 }
 
 // ************************************************************************
@@ -62,7 +61,7 @@ EtaAnalyzer::~EtaAnalyzer()
 // ------------------------------------------------------------------------
 double EtaAnalyzer::analyze(aData &adata)
 {
-  int    ss, ss2, ii2, ii, jj, kk, ii3, info, ind, nNeighs=5, imax, count;
+  int    ss, ss2, ii2, ii, jj, kk, ii3, status, ind, nNeighs=5, imax, count;
   double dist, dmax, ddata, ***minDistMap, mean, stdev, dtemp, *minNeighs;
   char   pString[500];
   FILE   *fp;
@@ -80,26 +79,14 @@ double EtaAnalyzer::analyze(aData &adata)
   double *YIn    = adata.sampleOutputs_;
   double *iLowerB = adata.iLowerB_;
   double *iUpperB = adata.iUpperB_;
-  if (adata.inputPDFs_ != NULL)
-  {
-    count = 0;
-    for (ii = 0; ii < nInputs; ii++) count += adata.inputPDFs_[ii];
-    if (count > 0)
-    {
-      printOutTS(PL_WARN, 
-           "EtaTest INFO: some inputs have non-uniform PDFs, but\n");
-      printOutTS(PL_WARN, 
-           "              they are not relevant in this analysis.\n");
-    }
-  }
 
   //**/ ---------------------------------------------------------------
   //**/ error checking
   //**/ ---------------------------------------------------------------
-  if (nSamples <= 1)
+  if (nSamples < 100)
   {
-    printOutTS(PL_ERROR, "EtaTest INFO: not meaningful to do this");
-    printOutTS(PL_ERROR, "                    test when nSamples < 2.\n");
+    printOutTS(PL_ERROR,"EtaTest INFO: not meaningful to do this test");
+    printOutTS(PL_ERROR,"when nSamples<100.\n");
     return PSUADE_UNDEFINED;
   }
   if (XIn == NULL || YIn == NULL)
@@ -107,16 +94,19 @@ double EtaAnalyzer::analyze(aData &adata)
     printOutTS(PL_ERROR, "EtaTest ERROR: no data.\n");
     return PSUADE_UNDEFINED;
   }
-  info = 0;
+  status = 0;
   for (ii = 0; ii < nSamples; ii++)
-    if (YIn[nOutputs*ii+outputID] == PSUADE_UNDEFINED) info = 1;
-  if (info == 1)
+    if (YIn[nOutputs*ii+outputID] == PSUADE_UNDEFINED) status = 1;
+  if (status == 1)
   {
     printOutTS(PL_ERROR, "EtaTest: Some outputs are undefined.\n");
     printOutTS(PL_ERROR, "         Prune the undefined's first.\n");
     return PSUADE_UNDEFINED;
   }
   
+  //**/ ---------------------------------------------------------------
+  //**/ compute input ranges for later scaling
+  //**/ ---------------------------------------------------------------
   psVector vecRangesInv2;
   vecRangesInv2.setLength(nInputs);
 
@@ -147,11 +137,12 @@ double EtaAnalyzer::analyze(aData &adata)
   printDashes(PL_INFO, 0);
   if (psConfig_.AnaExpertModeIsOn())
   {
-    printOutTS(PL_INFO, "EtaTest Option: to use k > 1 neighbors.\n");
+    printOutTS(PL_INFO,"EtaTest default number of neighbors k = 5.\n");
     printOutTS(PL_INFO, 
-         "The larger k is, the larger the distinguishing power is.\n");
-    printOutTS(PL_INFO, "Default k = 5.\n");
-    sprintf(pString, "k neighbors analysis. What is k (>= 1, <= 20)? ");
+       " * The larger k is, the larger the distinguishing power is\n");
+    printOutTS(PL_INFO, 
+       " * The larger k is, the more expensive it is computationally\n");
+    snprintf(pString,100,"What is your choice of k (>= 1, <= 20)? ");
     nNeighs = getInt(1, 20, pString);
   }
   if (nNeighs > nSamples/2)
@@ -161,6 +152,9 @@ double EtaAnalyzer::analyze(aData &adata)
          "EtaTest INFO: number of neighbors reset to be %d.\n",nNeighs);
   }  
   printOutTS(PL_INFO,"EtaTest INFO: number of neighbors = %d.\n",nNeighs);
+  printOutTS(PL_INFO,
+             "        To change, set analysis expert mode and re-do.\n");
+ 
   printEquals(PL_INFO, 0);
 
   //**/ ---------------------------------------------------------------
@@ -222,7 +216,7 @@ double EtaAnalyzer::analyze(aData &adata)
          "EtaTest: processing sample %5d (of %d)\n",ss+1,nSamples);
     for (ii = 0; ii < nInputs; ii++)
     {
-      //**/ reset the current input
+      //**/ deactivate the current input
       vecInpBins[ii] = 0;
       //**/ initialize tracker
       for (jj = 0; jj < nNeighs; jj++)
@@ -231,6 +225,9 @@ double EtaAnalyzer::analyze(aData &adata)
         vecInds[jj] = -1;
       }
       //**/ examine with all other sample points
+      //**/ and find a few nearest neighbors in all but i-th 
+      //**/ dimension (that is, remove i-th input and find
+      //**/ nearest neighbors
       for (ss2 = 0; ss2 < nSamples; ss2++)
       {
         if (ss != ss2)
@@ -245,13 +242,13 @@ double EtaAnalyzer::analyze(aData &adata)
               dist += dtemp * dtemp * vecRangesInv2[jj];
             }
           }
-          //**/ keep the sample ss2 with the largest distances
+          //**/ keep the sample ss2 with the smallest distances
           if (dist > 0.0)
           {
             //**/ if current distance is smaller than some in store
             if (dist < vecMinNeighs[0])
             {
-              //**/ replace the largest with it
+              //**/ replace the largest (first one) with it
               vecMinNeighs[0] = dist; 
               vecInds[0] = ss2; 
               for (jj = 1; jj < nNeighs; jj++)
@@ -273,11 +270,14 @@ double EtaAnalyzer::analyze(aData &adata)
       for (jj = 0; jj < nNeighs; jj++) if (vecInds[jj] == -1) break;
       if (jj != nNeighs)
       {
-        printOutTS(PL_ERROR, "EtaTest ERROR: cannot find neighbor.\n");
+        printOutTS(PL_ERROR, 
+           "EtaTest ERROR: cannot find enough (%d) neighbors.\n",nNeighs);
         printOutTS(PL_ERROR, 
              "    Sample %d: nNeigh = %d (%d)\n",ss+1,jj,nNeighs);
         exit(1);
       }
+      //**/ for sample ss and input ii, compute Ydiff from each
+      //**/ nearest neighbor
       for (jj = 0; jj < nNeighs; jj++)
       {
         ind = vecInds[jj];
@@ -286,6 +286,7 @@ double EtaAnalyzer::analyze(aData &adata)
         ddata = PABS((XIn[ind*nInputs]-XIn[ss*nInputs]))/
                      (iUpperB[0]-iLowerB[0]);
         if (ii == 0) ddata = 0.0;
+        //**/ find for neighbor jj which input has largest distance
         ii3 = 0;
         for (kk = 1; kk < nInputs; kk++)
         {
@@ -300,6 +301,8 @@ double EtaAnalyzer::analyze(aData &adata)
         dtemp = PABS((XIn[ind*nInputs+ii]-XIn[ss*nInputs+ii]))/
                      (iUpperB[ii]-iLowerB[ii]);
         ddata /= dtemp;
+        //**/ if all other dimensions are further away than i-th
+        //**/ dimension, flag error for the min dimension
         if (ddata < 1) inputViolations[ii3]++;
         if (printLevel > 3)
         {
@@ -320,6 +323,8 @@ double EtaAnalyzer::analyze(aData &adata)
   {
     for (ii = 0; ii < nInputs; ii++)
     {
+      //**/ compute the mean of gradients with my neighbors in all
+      //**/ dimensions
       mean = stdev = 0.0;
       for (ss = 0; ss < nSamples; ss++) mean += minDistMap[ss][ii][jj];
       mean /= (double) (nSamples);
@@ -330,6 +335,7 @@ double EtaAnalyzer::analyze(aData &adata)
     }
     for (ii = 0; ii < nInputs; ii++) dOrder[ii] = 1.0 * ii;
     sortDbleList2(nInputs, vecMeans.getDVector(), dOrder);
+    //**/ accumulate the ranks of each input
     for (ii = 0; ii < nInputs; ii++)
     {
       kk = (int) dOrder[ii];
@@ -375,12 +381,13 @@ double EtaAnalyzer::analyze(aData &adata)
   //**/ ---------------------------------------------------------------
   //**/ search for min distance: two parameter effect
   //**/ ---------------------------------------------------------------
-  if (psConfig_.AnaExpertModeIsOn())
-  {
-    printf("Perform second order analysis ? (y or n) ");
-    scanf("%s", pString);
-  }
-  else pString[0] = 'n';
+  //**/ if (psConfig_.AnaExpertModeIsOn())
+  //**/ {
+  //**/   printf("Perform second order analysis ? (y or n) ");
+  //**/   scanf("%s", pString);
+  //**/ }
+  //**/ else pString[0] = 'n';
+  pString[0] = 'n';
 
   if (pString[0] == 'y')
   {
@@ -706,11 +713,6 @@ EtaAnalyzer& EtaAnalyzer::operator=(const EtaAnalyzer &)
 // ************************************************************************
 // functions for getting results
 // ------------------------------------------------------------------------
-int EtaAnalyzer::get_mode()
-{
-  return mode_;
-}
-
 int EtaAnalyzer::get_nInputs()
 {
   return nInputs_;

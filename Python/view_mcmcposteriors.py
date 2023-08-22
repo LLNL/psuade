@@ -51,6 +51,8 @@ numYTicks = 2
 print('************************************************************')
 print('This script takes a MCMC posterior (MCMCPostSample) file and')
 print('plots the parameter posteriors.')
+print('Note: If you want to change how the plot looks, you can edit')
+print('      this Python script accordingly (e.g. xticks)')
 print('------------------------------------------------------------')
 
 if sys.version_info[0] < 3:
@@ -74,7 +76,7 @@ if len(mcmcdata) < 2:
    print('       Number of lines in file = ' + str(len(mcmcdata)))
    sys.exit(0)
 
-# find read in the posterior sample
+# check the posterior sample
 # line 1 should have 'PSUADE_BEGIN'
 lineIn = mcmcdata[0]
 cols = lineIn.split()
@@ -117,6 +119,9 @@ if len(vnames) != nInps+1:
 
 # line 4 on should have the posterior sample
 postSample = np.zeros([nInps, nSamp])
+likelihood = []
+bestIndex  = -1
+bestLikely = 1e35
 for ii in range(nSamp):
    lineIn = mcmcdata[ii+3]
    cols = lineIn.split()
@@ -142,6 +147,13 @@ for ii in range(nSamp):
          print('ERROR: Invalid posterior sample file format')
          print('       Offending line ' + str(ii+4) + ' = ' + lineIn) 
          sys.exit(0)
+
+   if len(cols) > nInps+1:
+      ddata = float(cols[nInps+1])
+      likelihood.append(ddata)
+      if ddata < bestLikely:
+         bestLikely = ddata
+         bestIndex  = ii
 
 # get upper and lower bounds
 lbs = []
@@ -172,6 +184,17 @@ for ii in range(nInps):
       print('ERROR: input lower bound >= upper bound.')
       sys.exit(1)
 
+# if likelihoods are available, find the best point 
+if bestIndex >= 0:
+   print('INFO: Best posterior sample is ' + str(bestIndex+1) + ', \
+         likelihood = ' + str(bestLikely))
+   bestXvalue = []
+   lineIn = mcmcdata[bestIndex+3]
+   cols = lineIn.split()
+   for ii in range(nInps):
+      ddata = float(cols[ii+1])
+      bestXvalue.append(ddata)
+
 # now plot the histogram 
 fig, ax = plt.subplots()
 for ii in range(nInps):
@@ -179,63 +202,72 @@ for ii in range(nInps):
    counts, bins = np.histogram(postSample[ii],nhist)
    probs = 1.0 * counts / len(postSample[ii])
    plt.hist(bins[:-1], bins, weights=probs)
-   mu  = np.mean(postSample[ii])
-   sig = np.std(postSample[ii])
-   print('Input = ' + vnames[ii+1] + ' : mean, stdev = ' + str(mu) + \
-         ', ' + str(sig))
 
-   # to be replaced by scipy's norm.pdf function
+   # the following is to be revisited
+   # mu  = np.mean(postSample[ii])
+   # sig = np.std(postSample[ii])
+   # print('Input = ' + vnames[ii+1] + ' : mean, stdev = ' + str(mu) + \
+   #       ', ' + str(sig))
    #normalFit = mlab.normpdf(bins, mu, sig)
    #plt.plot(bins, normalFit, 'r--')
+
    plt.xlabel(vnames[ii+1], fontsize=8,fontweight='bold')
    swidth = '%7.2e' % (bins[1]-bins[0])
    #pstr = 'Probability/(width=' + swidth + ')'
    pstr = 'Probability'
    plt.ylabel(pstr, fontsize=8,fontweight='bold')
-   # should use true prior ranges, not these
-   #xmax = np.max(postSample[ii])
-   #xmin = np.min(postSample[ii])
+
    xmax = ubs[ii]
    xmin = lbs[ii]
    xstep = (xmax-xmin)/numXTicks
-   plt.xticks(np.arange(xmin,xmax+0.01*xstep,xstep))
-   #plt.xticks([],[])
+   #plt.xticks(np.arange(xmin,xmax+0.01*xstep,xstep))
+   plt.xticks([],[])
+
    ymax = np.max(probs)
    ymin = 0
    ystep = (ymax-ymin)/numYTicks
-   plt.yticks(np.arange(ymin,ymax+0.01*ystep,ystep))
-   #plt.yticks([],[])
+   #plt.yticks(np.arange(ymin,ymax+0.01*ystep,ystep))
+   plt.yticks([],[])
+
+   if bestIndex >= 0:
+      xx = [bestXvalue[ii], bestXvalue[ii]]
+      yy = [0, ymax]
+      plt.plot(xx, yy, 'r-')
+
    plt.xlim([xmin,xmax])
    plt.ylim([0,ymax])
-   plt.grid(b=True)
+   #plt.grid(b=True)
    for axis in ['top', 'bottom', 'left', 'right']:
       ax.spines[axis].set_linewidth(4)
 
 # now plot 2D histogram 
 for ii in range(nInps):
    for jj in range(nInps):
+      if jj == ii:
+         X = postSample[ii]
+         xmean = np.mean(X)
+         xstds = np.std(X)
+         print('Input ' + str(ii+1) + ': mean/std = ' + str(xmean) + ', ' + str(xstds)) 
       if jj > ii:
          X = postSample[ii]
          Y = postSample[jj]
          plt.subplot(nInps,nInps,ii*nInps+jj+1)
          plt.hist2d(Y,X,bins=50)
-         #xmax = np.max(postSample[jj])
-         #xmin = np.min(postSample[jj])
          xmax = ubs[jj]
          xmin = lbs[jj]
          xstep = (xmax-xmin)/numXTicks
-         plt.xticks(np.arange(xmin,xmax+0.01*xstep,xstep))
-         #plt.xticks([],[])
-         #ymax = np.max(postSample[ii])
-         #ymin = np.min(postSample[ii])
+         #plt.xticks(np.arange(xmin,xmax+0.01*xstep,xstep))
+         plt.xticks([],[])
+
          ymax = ubs[ii]
          ymin = lbs[ii]
          ystep = (ymax-ymin)/numXTicks
-         plt.yticks(np.arange(ymin,ymax+0.01*ystep,ystep))
-         #plt.yticks([],[])
+         #plt.yticks(np.arange(ymin,ymax+0.01*ystep,ystep))
+         plt.yticks([],[])
+
          plt.xlim([xmin, xmax])
          plt.ylim([ymin, ymax])
-         plt.grid(b=True)
+         #plt.grid(b=True)
          for axis in ['top', 'bottom', 'left', 'right']:
             ax.spines[axis].set_linewidth(4)
          #plt.colorbar()
@@ -273,6 +305,7 @@ if mleMarker != -1:
       askStr = input('Generate parity plot for experiments ? (y or n) ')
 
 # Search for individual terms in the posteriors
+nExp = 0
 if askStr == 'y':
 
 # 2. find the number of outputs
@@ -302,6 +335,9 @@ if askStr == 'y':
    nExp = int(nExp / nOuts)
 
 # 4. now read individual likelihood
+if nExp <= 1:
+   print('INFO: only 1 experiment ==> no parity plot')
+else:
    likelihoods = np.zeros([nOuts, nExp])
    expData = np.zeros([nOuts, nExp])
    predData = np.zeros([nOuts, nExp])
@@ -318,17 +354,22 @@ if askStr == 'y':
    nplt1D = np.sqrt(nOuts)
    pltNR = int(nplt1D) 
    pltNC = int(nplt1D)
+   sumErrSq = 0
    if pltNR*pltNC < nOuts:
       pltNC = pltNC + 1
    if pltNR*pltNC < nOuts:
       pltNR = pltNR + 1
    fig, ax = plt.subplots()
+   errors = np.zeros(nOuts)
    for ii in range(pltNR):
       for jj in range(pltNC):
          ind = ii * pltNC + jj
          if ind < nOuts:
             plt.subplot(pltNR,pltNC,ind+1)
             plt.scatter(expData[ind],predData[ind],s=20,marker='*')
+            for kk in range(len(expData[ind])):
+               errors[ind] = errors[ind] + \
+                np.power(expData[ind][kk]-predData[ind][kk],2.0)
             xmax = np.max(expData[ind])
             if np.max(predData[ind]) > xmax:
                xmax = np.max(predData[ind])
@@ -343,7 +384,7 @@ if askStr == 'y':
             plt.plot([xmin,xmax],[xmin,xmax],'r-',linewidth=2)
             plt.xlabel('Experiment',fontsize=13,fontweight='bold')
             plt.ylabel('Prediction',fontsize=13,fontweight='bold')
-            plt.grid(b=True)
+            #plt.grid(b=True)
             # thicken the border lines
             for axis in ['top', 'bottom', 'left', 'right']:
                ax.spines[axis].set_linewidth(6)
@@ -351,36 +392,9 @@ if askStr == 'y':
             plt.title(tStr,fontsize=14,fontweight='bold')
    savefile = 'psu_mcmcparity.png'
    plt.savefig(savefile, bbox_inches='tight')
+   for ii in range(nOuts):
+      errors[ii] = np.sqrt(errors[ii] / len(expData[0]))
+   print('RMS error for all outputs = ')
+   print(errors)
 plt.show()
-sys.exit(0)
-
-# finally plot the data 
-#plt.figure(2)
-fig, ax = plt.subplots()
-nhist = 20
-for ii in range(nOuts):
-   plt.subplot(1,nOuts,ii+1)
-   counts, bins = np.histogram(likelihoods[ii],nhist)
-   probs = 1.0 * counts / len(likelihoods[ii])
-   plt.hist(bins[:-1], bins, weights=probs)
-   xStr = 'Output ' + str(ii+1)
-   plt.xlabel(xStr, fontsize=12,fontweight='bold')
-   yStr = 'Probability'
-   plt.ylabel(yStr,fontsize=12,fontweight='bold')
-   xmax = np.max(likelihoods[ii])
-   xmin = np.min(likelihoods[ii])
-   xstep = (xmax-xmin)/2
-   plt.xticks(np.arange(xmin,xmax+0.01*xstep,xstep))
-   ymax = np.max(probs)
-   ymin = 0
-   ystep = (ymax-ymin)/2
-   plt.yticks(np.arange(ymin,ymax+0.01*ystep,ystep))
-   plt.xlim([xmin,xmax])
-   plt.ylim([0,ymax])
-   plt.grid(b=True)
-   for axis in ['top', 'bottom', 'left', 'right']:
-      ax.spines[axis].set_linewidth(4)
-tStr = 'Distribution of Likelihood for Each Output'
-plt.suptitle(tStr, fontsize=15,fontweight='bold')
-
 

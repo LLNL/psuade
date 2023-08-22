@@ -112,37 +112,37 @@ Mars::Mars(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
          "Mars: Current number of basis functions = %d\n", nBasisFcns_);
     if (nSamples > 10)
     {
-      sprintf(pString,"Enter the number of basis functions (>=10, <= %d): ",
-              nSamples);
+      snprintf(pString,100,"Enter the number of basis functions (>=10, <= %d): ",
+               nSamples);
       nBasisFcns_ = getInt(10, nSamples, pString);
     }
     else
     {
-      sprintf(pString,"Enter the number of basis functions (>=%d, <= %d): ",
-              nSamples, nSamples);
+      snprintf(pString,100,"Enter the number of basis functions (>=%d, <= %d): ",
+               nSamples, nSamples);
       nBasisFcns_ = getInt(nSamples, nSamples, pString);
     }
     printOutTS(PL_INFO,
          "Mars: Current degree of interactions    = %d\n",maxVarPerBasis_);
-    sprintf(pString, "Enter the degree of interactions (<=%d) : ", nInputs);
+    snprintf(pString,100,"Enter the degree of interactions (<=%d) : ", nInputs);
     maxVarPerBasis_ = getInt(1, nInputs, pString);
-    sprintf(pString, "Mars: normalize output? (y or n) ");
+    snprintf(pString,100,"Mars: normalize output? (y or n) ");
     getString(pString, winput2);
     if (winput2[0] == 'y') normalizeY_ = 1;
     //**/================================================================
     //**/ July 2013 : almost never get used ==> disabled
     //**/printf("Mars: current weight of each sample point is set to 1.\n");
     //**/printf("      Other option (1) is to set weight = abs(output)\n");
-    //**/sprintf(pString, "Change to option (1) ? (1 - yes, 0 - no) ");
+    //**/snprintf(pString,100,"Change to option (1) ? (1 - yes, 0 - no) ");
     //**/chooseWght_ = getInt(0, 1, pString);
     //**/================================================================
-    sprintf(pString, "MARS_num_bases = %d", nBasisFcns_);
+    snprintf(pString,100,"MARS_num_bases = %d", nBasisFcns_);
     psConfig_.putParameter(pString);
-    sprintf(pString, "MARS_interaction = %d", maxVarPerBasis_);
+    snprintf(pString,100,"MARS_interaction = %d", maxVarPerBasis_);
     psConfig_.putParameter(pString);
     if (normalizeY_ == 1)
     {
-      sprintf(pString, "normalize_outputs");
+      snprintf(pString,100,"normalize_outputs");
       psConfig_.putParameter(pString);
     }
   }

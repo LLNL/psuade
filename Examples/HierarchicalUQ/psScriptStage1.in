@@ -7,12 +7,13 @@ ana_expert
 rsmcmc
 y
 2
-
 expdata2
-n
 10
+n
 100000
 20
+0
 -1
-n
+3
+1.05
 q

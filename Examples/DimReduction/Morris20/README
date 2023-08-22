@@ -40,7 +40,8 @@ To perform Morris analysis:
 psMOATScript.in has moat analysis
 do: psuade < psMOATScript.in > out
 
-the result should be similar to psMOATScript.out
+The result should be similar to psMOATScript.out (not 
+exactly because of random sampling)
 ===========================================================
 To perform Delta Test or Sum of tree test
 
@@ -53,7 +54,8 @@ To perform Delta Test or Sum of tree test
 psLHScript.in has delta_test and sum of tree test
 do: psuade < psLHScript.in > out
 
-the result should be similar to psLHScript.out
+The result should be similar to psLHScript.out (not
+exactly because of random sampling)
 
  
     

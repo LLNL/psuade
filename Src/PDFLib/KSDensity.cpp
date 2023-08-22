@@ -45,7 +45,7 @@ KSDensity::~KSDensity()
 }
 
 // ************************************************************************
-// get pdf
+// generate histogram (Xp, Pp) from a small sample vecData for 1D only
 // ------------------------------------------------------------------------
 void KSDensity::genDensity1D(psVector &vecData, psVector &vecXp, 
                              psVector &vecPp)

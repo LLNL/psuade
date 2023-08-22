@@ -89,7 +89,7 @@ title = 'Response Surface Fit Parity Plot'
 plt.title(title, fontsize=14, fontweight='bold')
 for axis in ['top', 'bottom', 'left', 'right']:
    ax.spines[axis].set_linewidth(6)
-plt.grid(b=True)
+#plt.grid(b=True)
 
 plt.savefig('psu_rsfa_cv.png')
 print('RS parity plot file is now in psu_rsfa_cv.png')

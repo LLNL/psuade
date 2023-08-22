@@ -99,7 +99,7 @@ ymax = np.max(probs)
 ymin = 0
 ystep = (ymax-ymin)/2
 plt.yticks(np.arange(ymin,ymax+0.01*ystep,ystep))
-plt.grid(b=True)
+#plt.grid(b=True)
 for axis in ['top', 'bottom', 'left', 'right']:
    ax.spines[axis].set_linewidth(4)
 

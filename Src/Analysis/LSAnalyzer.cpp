@@ -301,11 +301,11 @@ double LSAnalyzer::analyze(aData &adata)
       fprintf(fp,"set(th, 'fontsize', 12)\n");
       fprintf(fp,"set(th, 'fontweight', 'bold')\n");
     }
-    sprintf(pString, "Linear Sensitivity Measures");
+    snprintf(pString,100,"Linear Sensitivity Measures");
     fwritePlotTitle(fp, pString);
-    //**/sprintf(pString, "Input Numbers");
+    //**/snprintf(pString,100,"Input Numbers");
     //**/fwritePlotXLabel(fp, pString);
-    sprintf(pString, "Sensitivity Measure");
+    snprintf(pString,100,"Sensitivity Measure");
     fwritePlotYLabel(fp, pString);
     if (nSamples > nInputs+1)
     { 
@@ -317,11 +317,11 @@ double LSAnalyzer::analyze(aData &adata)
       if (plotMatlab()) fprintf(fp,"figure(2)\n");
       else              fprintf(fp,"scf(2)\n");
       fprintf(fp,"plot(G(:,1),G(:,2),'*','MarkerSize',12)\n");
-      sprintf(pString, "Input Numbers");
+      snprintf(pString,100,"Input Numbers");
       fwritePlotXLabel(fp, pString);
-      sprintf(pString, "Individual Gradients (normalized)");
+      snprintf(pString,100,"Individual Gradients (normalized)");
       fwritePlotYLabel(fp, pString);
-      sprintf(pString, "Gradients for individual Inputs");
+      snprintf(pString,100,"Gradients for individual Inputs");
       fwritePlotTitle(fp, pString);
       fwritePlotAxes(fp);
       fprintf(fp, "xmin = 0;\n");

@@ -62,7 +62,7 @@ PDFHistogram::PDFHistogram(char *fname, int nInps, int *indices, int *incrs)
     printf("line 6: 3 sample point 3 inputs \n");
     printf("...\n");
     printf("line n: (optional) PSUADE_END\n");
-    sprintf(pString,"Enter name of sample file : ");
+    snprintf(pString,100,"Enter name of sample file : ");
     getString(pString, filename);
     nn = strlen(filename);
     if (nn > 1000)

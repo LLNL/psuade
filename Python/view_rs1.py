@@ -103,7 +103,7 @@ fig, ax = plt.subplots()
 plt.plot(XArray, AArray, 'b-', linewidth=2)
 for axis in ['top', 'bottom', 'left', 'right']:
    ax.spines[axis].set_linewidth(4)
-plt.grid(b=True)
+#plt.grid(b=True)
 plt.xlabel(xlabel, fontsize=14, fontweight='bold')
 plt.ylabel(ylabel, fontsize=14, fontweight='bold')
 title = 'One-Input-One-Output Response Surface Plot'

@@ -356,9 +356,9 @@ double RSMSobolTSIAnalyzer::analyze(aData &adata)
     printOutTS(PL_INFO,"Please enter your desired M and K below.\n");
     printOutTS(PL_INFO,"NOTE: large M and K may take a long time\n");
     printEquals(PL_INFO, 0);
-    sprintf(pString,"Enter M (1000 - 50000) : ");
+    snprintf(pString,100,"Enter M (1000 - 50000) : ");
     nSubSamples = getInt(1000,50000,pString);
-    sprintf(pString,"Enter K (100 - 5000) : ");
+    snprintf(pString,100,"Enter K (100 - 5000) : ");
     nLevels = getInt(100,5000,pString);
     printAsterisks(PL_INFO, 0);
   }
@@ -1289,7 +1289,7 @@ double RSMSobolTSIAnalyzer::analyze2(aData &adata)
       }
     }
     if (psConfig_.InteractiveIsOn() && printLevel > 1)
-      printf("(INFO) Input %4d : %d out of %d subdomains populated.\n",
+      printf("(RSTSI INFO) Input %4d : %d out of %d subdomains populated.\n",
              inputID+1, nFilled, nSubdomains);
     dmean = 0.0;
     for (ii = 0; ii < nSubdomains; ii++) 

@@ -24,4 +24,4 @@ sig ~0.54
 Basic: basic analysis
 BungeeWithNoise: add noise to the Bungee function and analyze its effect 
 BungeeMP: learn how to run this problem in a multiprocessing environment
-
+Iterative: use uniform sampling refinemnt to compute moments

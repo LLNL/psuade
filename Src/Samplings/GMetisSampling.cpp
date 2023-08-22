@@ -309,8 +309,8 @@ int GMetisSampling::initialize(int initLevel)
     {
       if (psConfig_.SamExpertModeIsOn())
       {
-        sprintf(pString,"GMetis: Enter number of partitions (2 - %d): ",
-                nSamples_);
+        snprintf(pString,100,"GMetis: Enter number of partitions (2 - %d): ",
+                 nSamples_);
         nAggrs_ = getInt(2, nSamples_, pString);
       }
       else

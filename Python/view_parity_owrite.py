@@ -136,7 +136,7 @@ xStr = 'Output ' + str(XInd+1)
 plt.xlabel(xStr,fontsize=13,fontweight='bold')
 yStr = 'Output ' + str(YInd+1)
 plt.ylabel(yStr,fontsize=13,fontweight='bold')
-plt.grid(b=True)
+#plt.grid(b=True)
 # thicken the border lines
 for axis in ['top', 'bottom', 'left', 'right']:
    ax.spines[axis].set_linewidth(6)

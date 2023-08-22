@@ -1,4 +1,0 @@
-clean:
-	rm -f parameters.txt kpcaModel solution.vec log grad cost Measurement* *png ps.*
-
-

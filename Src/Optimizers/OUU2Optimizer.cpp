@@ -624,11 +624,11 @@ void OUU2Optimizer::optimize(oData *odata)
      printf("  2. mean of G(X1,X2,X3) + alpha * std dev of G(X1,X2,X3)\n"); 
      printf("  3. G(X1,X2,X3*) s.t. Prob(G(X1,X2,X3)>G(X1,X2,X3*)) = epsilon\n");
      printf("  4. min_X3 G(X1,X2,X3) given X1 and X2\n");
-     sprintf(pString,"Enter your preferred functional (1, 2, 3 or 4) : ");
+     snprintf(pString,100,"Enter your preferred functional (1, 2, 3 or 4) : ");
      psOUU2Mode_ = getInt(1, 4, pString);
      if (psOUU2Mode_ == 2)
      {
-        sprintf(pString,"Enter your desired alpha : ");
+        snprintf(pString,100,"Enter your desired alpha : ");
         psOUU2StdevMultiplier_ = getDouble(pString);
      } 
      if (psOUU2Mode_ == 3)
@@ -636,7 +636,7 @@ void OUU2Optimizer::optimize(oData *odata)
        psOUU2Percentile_ = 0.0;
        while (psOUU2Percentile_ <= 0.01 || psOUU2Percentile_ > 0.5) 
        { 
-         sprintf(pString,"Enter your desired percentile : (0.01 - 0.5)");
+         snprintf(pString,100,"Enter your desired percentile : (0.01 - 0.5)");
          psOUU2Percentile_ = getDouble(pString);
        } 
      }
@@ -647,7 +647,7 @@ void OUU2Optimizer::optimize(oData *odata)
        printf("Default sampling method = Latin hypercube\n");
        printf("Default sample size     = %d\n",psOUU2nSamples_);
        printf("Available sampling method: (1) LHS, (2) factorial, (3) your own.\n");
-       sprintf(pString,"Select sampling method (1, 2 or 3) : ");
+       snprintf(pString,100,"Select sampling method (1, 2 or 3) : ");
        method = getInt(1, 3, pString);
      }
      if (psOUU2Mode_ == 3 || psOUU2Mode_ == 4)
@@ -656,18 +656,18 @@ void OUU2Optimizer::optimize(oData *odata)
        printf("Default sampling method = Latin hypercube\n");
        printf("Default sample size     = %d\n",psOUU2nSamples_);
        printf("Available sampling method: (1) LHS or (2) factorial.\n");
-       sprintf(pString,"Select sampling method (1 or 2) : ");
+       snprintf(pString,100,"Select sampling method (1 or 2) : ");
        method = getInt(1, 2, pString);
      }
      if (method == 1)
      {
-       sprintf(pString,
+       snprintf(pString,100,
                "Enter your preferred sample size (>=10, <=1000) : ");
        psOUU2nSamples_ = getInt(10, 10000, pString);
      }
      else if (method == 2)
      {
-       sprintf(pString,
+       snprintf(pString,100,
                "Enter number of levels per variable (>=3, <=100) : ");
        psOUU2nSamples_ = getInt(3, 100, pString);
        kk = psOUU2nSamples_;

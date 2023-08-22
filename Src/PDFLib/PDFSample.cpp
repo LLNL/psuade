@@ -61,7 +61,7 @@ PDFSample::PDFSample(int scount, char *fname, int *indices)
     printf("...\n");
     printf("line n: (optional) PSUADE_END\n");
     printf("line  : (optional) #perturb (turn on perturbation)\n");
-    sprintf(pString,"Enter name of sample file : ");
+    snprintf(pString,100,"Enter name of sample file : ");
     getString(pString, filename);
     nn = strlen(filename);
     if (nn > 1000)

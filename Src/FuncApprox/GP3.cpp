@@ -99,6 +99,7 @@ GP3::GP3(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
   faID_ = PSUADE_RS_GP3;
   expPower_ = 2.0; // but some prefers 1.9 (more stable?)
   nStarts_ = 10;   // number of starts in optimization
+  strcpy(hyperParamFile_, ".psuade_gp3");
   if (psConfig_.InteractiveIsOn())
   {
     printAsterisks(PL_INFO, 0);
@@ -110,44 +111,44 @@ GP3::GP3(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
   }
   if (psConfig_.InteractiveIsOn() && psConfig_.RSExpertModeIsOn())
   {
-    char pString[1000];
+    char pString[101];
     printOutTS(PL_INFO,"* Default exponential degree = %e\n",expPower_);
-    sprintf(pString,"Set the exponential degree to? [1.5,2.0] ");
+    snprintf(pString,100,"Set the exponential degree to? [1.5,2.0] ");
     expPower_ = 1;
     while (expPower_ < 1.5 || expPower_ > 2) 
       expPower_ = getDouble(pString);
     printf("GP3: Exponential degree = %e\n", expPower_);
-    sprintf(pString, "GP3_power = %e", expPower_);
+    snprintf(pString,100,"GP_power = %e", expPower_);
     psConfig_.putParameter(pString);
     printOutTS(PL_INFO,
          "* Default optimization choice = %d starts\n",nStarts_);
-    sprintf(pString,"Set the number of optimization starts ? [1 - 20] ");
+    snprintf(pString,100,"Set the number of optimization starts ? [1 - 20] ");
     nStarts_ = getInt(1, 20, pString);
     printf("GP3: opt num_starts = %d\n", nStarts_);
-    sprintf(pString, "GP3_nstarts = %d", nStarts_);
+    snprintf(pString,100,"GP_nstarts = %d", nStarts_);
     psConfig_.putParameter(pString);
   }
   else
   {
     char winput1[1000], winput2[1000];
-    char *cString = psConfig_.getParameter("GP3_power");
+    char *cString = psConfig_.getParameter("GP_power");
     if (cString != NULL)
     {
       sscanf(cString, "%s %s %lg", winput1, winput2, &expPower_);
       if (expPower_ < 1.5 || expPower_ > 2) 
       {
-        printOutTS(PL_INFO,"GP3 exponential (%d) invalid - reset to 2\n",
+        printOutTS(PL_INFO,"GP3 exponential (%e) invalid - reset to 2\n",
                    expPower_);
         expPower_ = 2.0;
       }
-      else if (psConfig_.InteractiveIsOn())
+      if (psConfig_.InteractiveIsOn())
         printOutTS(PL_INFO,"GP3 exponential degree set to %e\n",expPower_);
     }
-    cString = psConfig_.getParameter("GP3_nstarts");
+    cString = psConfig_.getParameter("GP_nstarts");
     if (cString != NULL)
     {
       sscanf(cString, "%s %s %d", winput1, winput2, &nStarts_);
-      printOutTS(PL_INFO,"Number of optimization starts = %d\n",nStarts_);
+      printOutTS(PL_INFO,"GP3 Number of optimization starts = %d\n",nStarts_);
     } 
   }
 }
@@ -624,66 +625,86 @@ int GP3::train()
   //**/}
 
   //**/ ----------------------------------------------------------
-  //**/ get options from users
+  //**/ get options and hyperparameters from users
   //**/ ----------------------------------------------------------
   //**/ keep optimizeFlag = 1 especially if OpenMP is used
   int    optimizeFlag=1, errFlag;
   double ddata;
-  char   pString[1000], winput[1000], *inStr;
-  FILE   *fp=NULL;
+  char   pString[101], winput[1000], *inStr;
+  //**/ optimizeFlag = NEWUOA but since it is not as good, turn
+  //**/ off this option for now
   //inStr = psConfig_.getParameter("GP3_optimize2");
   //if (inStr != NULL) optimizeFlag = 2;
-  if (optimizeFlag != 2 && psConfig_.RSExpertModeIsOn() && 
-      psConfig_.InteractiveIsOn())
+
+  //**/ if parameter file exists, see if it is acceptable.
+  errFlag = 0;
+  FILE *fp = fopen(hyperParamFile_, "r");
+  if (fp != NULL)
   {
-    errFlag = 0;
-    fp = fopen(".psuade_gp3", "r");
-    if (fp != NULL)
+    printf("GP3 INFO: Found a hyperparameter file %s.\n",
+           hyperParamFile_);
+    fscanf(fp, "%d", &ii);
+    if (ii == 0) 
     {
-      sprintf(pString,"Use hyperparameters from .psuade_gp3? (y or n) ");
-      getString(pString, winput);
-      if (winput[0] == 'y')
+      printf("GP3 ERROR: When reading %s\n",hyperParamFile_);
+      printf("           The first line should be > 0.\n");
+      printf("           This first line is the hyperparameter size.\n");
+      errFlag = 1;
+    }
+    else
+    {
+      VecHypers_.setLength(ii);
+      for (ii = 0; ii < VecHypers_.length(); ii++)
       {
-        fscanf(fp, "%d", &ii);
-        if (ii == 0) 
-        {
-          printf("GP3 ERROR when reading .psuade_gp3\n");
-          errFlag = 1;
-        }
-        else
-        {
-          VecHypers_.setLength(ii);
-          for (ii = 0; ii < VecHypers_.length(); ii++)
-          {
-            fscanf(fp, "%lg", &ddata);
-            VecHypers_[ii] = ddata;
-          } 
-        } 
+        fscanf(fp, "%lg", &ddata);
+        VecHypers_[ii] = ddata;
+      } 
+      fscanf(fp, "%d %d", &jj, &kk);
+      //**/ make sure nSamples and nInputs match
+      if (jj != nSamples_ || kk != nInputs_) 
+      {
+        errFlag = 1;
+        printf("GP3 INFO: Unable to read hyperparameters from %s.\n",
+               hyperParamFile_);
+        printf("          Either nSamples or nInputs does not match.\n");
       }
-      fclose(fp);
+    }
+    fclose(fp);
+    //**/ if read successfully, set optimize flag = 0
+    if (errFlag == 0) 
+    {
+      printf("GP3 INFO: Hyperparameters has been read from %s.\n",
+             hyperParamFile_);
+      printf("GP3 INFO: If this is not what you have in mind,");
+      printf(" exit, delete the\n");
+      printf("          hyperparameter file, and restart.\n");
+      optimizeFlag = 0;
     }   
     if (errFlag == 1)
     {
-      sprintf(pString,"Use user-provided hyperparameters? (y or n) ");
-      getString(pString, winput);
-      if (winput[0] == 'y')
-      {
-        for (ii = 0; ii < VecHypers_.length(); ii++)
-        {
-          sprintf(pString,"Enter hyperparameter %d : ",ii+1);
-          VecHypers_[ii] = getDouble(pString);
-        }
-        optimizeFlag = 0;
-      }
+      printf("GP3 INFO: Hyperparameter file is found but it is not valid.\n");
+      printf("          Will perform optimization to obtain Hyperparameters.\n");
+      //snprintf(pString,100,"Enter hyperparameters manually ? (y or n) ");
+      //getString(pString, winput);
+      //if (winput[0] == 'y')
+      //{
+      //  for (ii = 0; ii < VecHypers_.length(); ii++)
+      //  {
+      //    snprintf(pString,100,"Enter hyperparameter %d : ",ii+1);
+      //    VecHypers_[ii] = getDouble(pString);
+      //  }
+      //  optimizeFlag = 0;
+      //}
     }
   }
+
 #ifndef HAVE_LBFGS
   //**/ if LBFGS not available, do not optimize
   if (optimizeFlag == 1)
   {
     optimizeFlag = 0;
-    for (ii = 0; ii < nInputs_; ii++) VecHypers_[ii] = 1.0;
-    for (ii = nInputs_; ii < VecHypers_.length(); ii++)
+    for (ii = 0; ii <= nInputs_; ii++) VecHypers_[ii] = 1.0;
+    for (ii = nInputs_+1; ii < VecHypers_.length(); ii++)
       VecHypers_[ii] = 0.0;
     printf("GP3 INFO: Since LBFGS is unavailable, no ");
     printf("optimization will be done.\n");
@@ -760,9 +781,22 @@ int GP3::train()
     //**/ the ranges
     for (ii = 0; ii < nInputs_; ii++) 
     {
-      VecLB[ii] = -4.0;
-      VecUB[ii] =  4.0;
+      if (VecXMeans_[ii] == 0 && VecXStds_[ii] == 1.0)
+      {
+        VecUB[ii] = 10.00 * (VecUBs_[ii]-VecLBs_[ii]);
+        VecLB[ii] =  0.01 * (VecUBs_[ii]-VecLBs_[ii]);
+      }
+      else
+      {
+        VecUB[ii] = 10.0;
+        VecLB[ii] = 0.01;
+      }
     }
+//  for (ii = 0; ii < nInputs_; ii++) 
+//  {
+//    VecLB[ii] = -4.0;
+//    VecUB[ii] =  4.0;
+//  }
     //**/ vertical magnitude
     VecLB[nInputs_] = -3.0;
     VecUB[nInputs_] = 10.0;
@@ -808,12 +842,13 @@ int GP3::train()
     sampler->getSamples(nSamp,nhypers,1,VecXS.getDVector(),
                         VecYS.getDVector(), VecIS.getIVector());
     delete sampler;
-    for (ii = 0; ii < nhypers; ii++) VecXS[ii] = VecHypers_[ii];
+    //for (ii = 0; ii < nhypers; ii++) VecXS[ii] = VecHypers_[ii];
  
 #ifdef HAVE_LBFGS
     //**/ set up for LBFGS
     integer nInps, iprint=0, itask, *task=&itask, lsave[4], isave[44];
-    integer *iwork, nCorr=5, *nbds, csave[60], nLBFGS=nSamp;
+    integer *iwork, nCorr=5, *nbds, csave[60];
+    int     nLBFGS=nSamp;
     double  factr, pgtol, dsave[29];
 
     nInps = nhypers;
@@ -828,12 +863,15 @@ int GP3::train()
     its   = 0;
     VecHist.setLength(maxHist);
 
+    if (psConfig_.InteractiveIsOn() && outputLevel_ > 1)
+      printf("GP3 INFO: Performing %d hyperparameter searches.\n",
+             nLBFGS);
     for (ii = 0; ii < nLBFGS; ii++)
     {
-      if (psConfig_.InteractiveIsOn() && outputLevel_ > 3)
-        printf("GP3 LBFGS #%d (%ld)\n",ii+1, nLBFGS);
+      if (psConfig_.InteractiveIsOn() && outputLevel_ > 1)
+        printf("GP3 LBFGS #%d (%d)\n",ii+1, nLBFGS);
       for (jj = 0; jj < nInps; jj++) VecPVals[jj] = VecXS[ii*nInps+jj];
-      if (psConfig_.InteractiveIsOn() && outputLevel_ > 3 && ii > 0) 
+      if (psConfig_.InteractiveIsOn() && outputLevel_ > 1) 
       {
         printf("   GP3 initial hyperparameter values:\n");
         for (jj = 0; jj < VecHypers_.length(); jj++) 
@@ -944,7 +982,7 @@ int GP3::train()
           break;
         }
       }
-      if (psConfig_.InteractiveIsOn() && outputLevel_ > 3) 
+      if (psConfig_.InteractiveIsOn() && outputLevel_ > 1) 
       {
         printf("   GP3 final hyperparameter values:\n");
         for (jj = 0; jj < VecHypers_.length(); jj++) 
@@ -1073,7 +1111,7 @@ int GP3::train()
 #else
       printf("ERROR: NEWUOA optimizer unavailable.\n");
       exit(1);
-#endif
+#endif 
       VecHypers_ = GP3_OptX;
       //THIS NEEDS DEBUGGED
       if (psConfig_.InteractiveIsOn() && outputLevel_ > 3) 
@@ -1096,14 +1134,20 @@ int GP3::train()
       printf("   Best objective function = %e\n",GP3_OptY);
     }
   }
-  FILE *fileOut = fopen(".psuade_gp3", "w");
-  if (fileOut != NULL)
+  if (psConfig_.RSExpertModeIsOn())
   {
-    fprintf(fileOut, "%d\n", VecHypers_.length());
-    for (ii = 0; ii < VecHypers_.length(); ii++) 
-      fprintf(fileOut, "%24.16e\n", VecHypers_[ii]);
-    fclose(fileOut);
-  } 
+    FILE *fileOut = fopen(hyperParamFile_, "w");
+    if (fileOut != NULL)
+    {
+      fprintf(fileOut, "%d\n", VecHypers_.length());
+      for (ii = 0; ii < VecHypers_.length(); ii++) 
+        fprintf(fileOut, "%24.16e\n", VecHypers_[ii]);
+      fprintf(fileOut, "%d %d\n", nSamples_, nInputs_);
+      fclose(fileOut);
+      printf("GP3 INFO: hyperparameters have been stored in %s.\n",
+             hyperParamFile_);
+    }
+  }
 
   //**/ =======================================================
   //**/ create and factorize the final K matrix
@@ -1952,7 +1996,7 @@ double GP3::setParams(int targc, char **targv)
 {
   int    ii;
   double mmax, range;
-  char   pString[500];
+  char   pString[101];
   FILE   *fp=NULL;
 
   if (targc > 0 && !strcmp(targv[0], "rank"))
@@ -1962,7 +2006,7 @@ double GP3::setParams(int targc, char **targv)
     mmax = 0.0;
     for (ii = 0; ii < nInputs_; ii++)
     {
-      VecLScales[ii] = VecHypers_[ii];
+      VecLScales[ii] = 1.0 / VecHypers_[ii];
       if (VecXMeans_[ii] == 0 && VecXStds_[ii] == 1)
       {
         range = VecUBs_[ii] - VecLBs_[ii];
@@ -1995,11 +2039,11 @@ double GP3::setParams(int targc, char **targv)
       fwritePlotCLF(fp);
       fprintf(fp, "bar(Y,0.8);\n");
       fwritePlotAxes(fp);
-      sprintf(pString, "GP3 Ranking");
+      snprintf(pString,100,"GP3 Ranking");
       fwritePlotTitle(fp, pString);
-      sprintf(pString, "Input Numbers");
+      snprintf(pString,100,"Input Numbers");
       fwritePlotXLabel(fp, pString);
-      sprintf(pString, "GP3 Measure");
+      snprintf(pString,100,"GP3 Measure");
       fwritePlotYLabel(fp, pString);
       if (plotScilab())
       {
@@ -2027,6 +2071,23 @@ double GP3::setParams(int targc, char **targv)
              nInputs_-ii, VecIA[ii]+1, VecLScales[ii], 
              0.01*VecLScales[ii]*mmax);
     printAsterisks(PL_INFO, 0);
+  }
+  else if (targc == 2 && !strcmp(targv[0], "hyperparam_file"))
+  {
+    strcpy(hyperParamFile_, targv[1]);  
+    if (psConfig_.InteractiveIsOn())
+      printf("GP3 INFO: Trained hyperparameters are to be stored in %s\n",
+             hyperParamFile_);
+  }
+  else if (targc == 2 && !strcmp(targv[0], "GP_power"))
+  {
+    expPower_ = *(double *) targv[1];
+    printf("GP3 INFO: exponential degree = %e\n",expPower_);
+  }
+  else if (targc == 2 && !strcmp(targv[0], "GP_nstarts"))
+  {
+    nStarts_ = *(int *) targv[1];
+    printf("GP3 INFO: number of optimization starts = %d\n",nStarts_);
   }
   return 0.0;
 }
