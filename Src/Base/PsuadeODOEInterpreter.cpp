@@ -1737,7 +1737,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     }
     else
     {
-      status = matProb.convert2Hist(nlevels,vecLT, vecUT);
+      status = matProb.binUniform(nlevels,vecLT, vecUT);
       if (status != 0)
       {
         printf("ERROR: problem computing entropy for all inputs.\n");
@@ -1768,7 +1768,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
       matProb.load(nSamples_,iOne,vecReduced.getDVector());
       vecLT[0] = VecILowerBs_[vecUInputs[jj]];
       vecUT[0] = VecIUpperBs_[vecUInputs[jj]];
-      status = matProb.convert2Hist(nlevels, vecLT, vecUT);
+      status = matProb.binUniform(nlevels, vecLT, vecUT);
       if (status != 0)
       {
         printf("ERROR: problem computing entropy for input %d\n",

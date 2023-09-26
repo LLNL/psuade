@@ -425,7 +425,7 @@ int ProbMatrix::compress()
 // (count number of points in each of the nLevels^nInps bins and rewrite
 // the matrix)
 // ------------------------------------------------------------------------
-int ProbMatrix::convert2Hist(int nLevels, psVector veclbs, psVector vecubs)
+int ProbMatrix::binUniform(int nLevels, psVector veclbs, psVector vecubs)
 {
   int    ii, jj, kk, totCnt;
   double dub, dlb, dstep;
@@ -435,7 +435,7 @@ int ProbMatrix::convert2Hist(int nLevels, psVector veclbs, psVector vecubs)
   //**/ error checking
   if (veclbs.length() < nCols_ || vecubs.length() < nCols_)
   {
-    printf("ProbMatrix convert2Hist ERROR: invalid incoming bounds\n");
+    printf("ProbMatrix binUniform ERROR: invalid incoming bounds\n");
     printf("   INFO: incoming lower bound array length = %d\n",
            veclbs.length());
     printf("   INFO: incoming upper bound array length = %d\n",
@@ -446,7 +446,7 @@ int ProbMatrix::convert2Hist(int nLevels, psVector veclbs, psVector vecubs)
   {
     if (veclbs[jj] >= vecubs[jj])
     {
-      printf("ProbMatrix convert2Hist ERROR: LBound[%d] >= UBound[%d]\n",
+      printf("ProbMatrix binUniform ERROR: LBound[%d] >= UBound[%d]\n",
              jj+1,jj+1);
       return 1;
     }
@@ -497,20 +497,20 @@ int ProbMatrix::convert2Hist(int nLevels, psVector veclbs, psVector vecubs)
       vecCnts[ii]++;
     }
   }
-  //printf("ProbMatrix convert2Hist total number of bins = %d\n",totCnt);
-  //printf("ProbMatrix convert2Hist total count before   = %d\n",nRows_);
+  //printf("ProbMatrix binUniform total number of bins = %d\n",totCnt);
+  //printf("ProbMatrix binUniform total count before   = %d\n",nRows_);
   //jj = 0;
   //for (ii = 0; ii < totCnt; ii++) jj += ptCnts[ii];
-  //printf("ProbMatrix convert2Hist total count after    = %d\n",jj);
+  //printf("ProbMatrix binUniform total count after    = %d\n",jj);
 
   //**/ check histogram
   int actualCnt = 0;
   for (ii = 0; ii < totCnt; ii++) if (ptCnts[ii] > 0) actualCnt++;
-  //printf("ProbMatrix convert2Hist number of occupied bins = %d\n",
+  //printf("ProbMatrix binUniform number of occupied bins = %d\n",
   //       actualCnt);
   if (actualCnt == 0)
   {
-    printf("ProbMatrix convert2Hist ERROR: no histogram\n");
+    printf("ProbMatrix binUniform ERROR: no histogram\n");
     printf("           Something is wrong. Consult PSUADE developers.\n");
     return 1;
   }

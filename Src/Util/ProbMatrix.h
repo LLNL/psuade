@@ -67,7 +67,7 @@ public:
   int    getCount(int);
   int    setCount(int, int);
   int    compress();
-  int    convert2Hist(int, psVector, psVector);
+  int    binUniform(int, psVector, psVector);
   int    binAdaptive(int, psVector, psVector);
   int    multiply(ProbMatrix &, ProbMatrix &);
   int    multiply3(ProbMatrix &, ProbMatrix &, ProbMatrix &);
