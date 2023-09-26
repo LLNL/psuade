@@ -1039,7 +1039,7 @@ int ShapleyAnalyzer::create2RandomSamples(aData &adata, psVector &vecXM1,
   PsuadeData *ioPtr = adata.ioPtr_;
   ioPtr->getParameter("input_cor_matrix", pCorMat);
   psMatrix *corMatp = (psMatrix *) pCorMat.psObject_;
-  int largeNumSams = 10000;
+  int largeNumSams = 200000;
   PDFManager *pdfman = new PDFManager();
   psVector vecLB, vecUB;
   vecLB.load(nInputs, xLower);
