@@ -4606,6 +4606,7 @@ int PsuadeBase::interpretInteractive()
       printf("This command computes correlation information ");
       printf("between inputs and a\n");
       printf("selected output of the loaded sample.\n");
+      printf("This command is currently intended for nInputs=1\n");
       printDashes(PL_INFO, 0);
       printf("Proceed ? (y or n to abort) ");
       scanf("%s", lineIn2);
