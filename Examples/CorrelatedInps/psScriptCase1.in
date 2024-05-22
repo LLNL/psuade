@@ -1,0 +1,8 @@
+# run psuadeRS.in to create a training sample
+# rename psuadeData as RSSample - training sample
+# run psuadeME.in - use RS to compute main effect
+sys cc -o simulator simulator.c -lm
+run psuadeRS.in
+sys mv psuadeData RSSample
+run psuadeME.in
+q

@@ -43,6 +43,7 @@ private:
    int    matlabPlotFlag_;
    int    nInputs_;
    int    outputID_;
+   int    printLevel_;
    psVector VecInputVCE_;
    double totalInputVCE_;
    double mainEffectMean_;

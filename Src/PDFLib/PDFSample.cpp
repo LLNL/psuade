@@ -50,8 +50,8 @@ PDFSample::PDFSample(int scount, char *fname, int *indices)
   //**/ -------------------------------------------------------------
   if (fname == NULL || !strcmp(fname, "NONE"))
   {
-    printf("PDFSample constructor: expecting a sample file.\n");
-    printf("                        having the following format: \n");
+    printf("PDFSample: Expecting a sample file having the ");
+    printf("following format: \n");
     printf("line 1: (optional) PSUADE_BEGIN\n");
     printf("line 2: <number of sample points> <number of inputs>\n");
     printf("line 3: (optional) : '#' followed by input names\n");

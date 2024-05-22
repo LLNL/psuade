@@ -1,0 +1,202 @@
+============================================================
+Uncertainty and sensitivity aalysis using Ishigami function
+============================================================
+
+Y = sin(X_1) + A sin^2(X_2) + B X_3^4 sin(X_1)
+
+X_i = U[-pi, pi]
+
+===========================================================
+analytic solution
+===========================================================
+mean = A / 2
+variance = B pi^4 / 5 + B^2 pi^8/18 + 1/2 + A^2/8 
+
+Main Effect formula:
+Input 1: 1/2 (1 + pi^4 * B/5)^2
+Input 2: A^2/8 
+Input 3: 0
+
+Total Effect formula:
+Input 1: ME(1) + (8 pi^8 B^2) / 225
+Input 2: A^2/8 
+Input 3: 8 pi^8 B^2 / 225
+
+Shapley values:
+Input 1: 1/2 (1 + pi^4 * B/5)^2 + 4 pi^8 * B^2/225
+Input 2: A^2 / 8
+Input 3: 4 pi^8 * B^2/225
+
+-----------------------------------------------------------
+Case when A=7, B=0.1, 
+
+mean = 3.5
+variance = B pi^4 / 5 + B^2 pi^8/18 + 1/2 + A^2/8 = 13.8445
+
+VCE(X_i)/V (V=13.8445)
+X1 = 0.3139
+X2 = 0.4424
+X3 = 0
+
+Shapley values are (based on VCE) 
+Input 1 = 6.03198749860316560900
+Input 2 = 6.125
+Input 3 = 1.68657225710116182059
+
+===========================================================
+Numerical study using PSUADE commands
+===========================================================
+
+============================================================
+* rsvce1_sobol
+-----------------------------------------------------------
+Sobol' 1st-order indices (normalized, 'sobol'):
+VCE for input   1 =  3.143e-01
+VCE for input   2 =  4.427e-01
+VCE for input   3 =  5.731e-05
+Total variance = 1.381496e+01
+
+============================================================
+* rsvce2_sobol
+------------------------------------------------------------
+Sobol' input-pair indices (normalized):sobol
+VCE (1st+2nd) for input   1,  2 =  7.571e-01
+VCE (1st+2nd) for input   1,  3 =  5.573e-01
+VCE (1st+2nd) for input   2,  3 =  4.428e-01
+Total variance = 1.382017e+01
+
+============================================================
+* rsentropy1
+------------------------------------------------------------
+  Input   1: 
+        H(E[Y|X])          =  1.644e+00 (VCE-like)
+        H(Y) - E[H(Y|X)]   =  3.901e-01 (TSI-like)
+        Input entropy H(X) =  1.838e+00
+Calculating H(Y) induced by input 2
+  Input   2: 
+        H(E[Y|X])          =  1.851e+00 (VCE-like)
+        H(Y) - E[H(Y|X)]   =  5.098e-01 (TSI-like)
+        Input entropy H(X) =  1.838e+00
+Calculating H(Y) induced by input 3
+  Input   3: 
+        H(E[Y|X])          = -3.060e+00 (VCE-like)
+        H(Y) - E[H(Y|X)]   =  2.609e-01 (TSI-like)
+        Input entropy H(X) =  1.838e+00
+------------------------------------------------------------
+Input   1 Sensitivity =  3.901e-01 (scaled= 1.439e-01)
+Input   2 Sensitivity =  5.098e-01 (scaled= 1.881e-01)
+Input   3 Sensitivity =  2.609e-01 (scaled= 9.624e-02)
+Sensitivity measure is H(Y) - H(E[Y|X])
+Scaled measure is 1 - H(E[Y|X])/H(Y) if H(Y) != 0
+Total output entropy  = 2.710447e+00
+
+Note: negative differential entropy is fine.
+Note: What is H(E[Y|X])?
+      - E[Y|X] is expectation wrt ~X when X is fixed
+      - there is one E[Y|X] for each of N values of X
+      - the N E[Y|X] are used to compute entropy
+      - so it is entropy H wrt X when ~X are varied
+      - so it is a legitimate sensitivity measure like VCE
+      - However, it may be negative (more negative = not sensitive)
+Note: variance decomposition Var[Y] = Var_X[E[Y|X]] + E_X[Var[Y|X]].
+      However, H(Y) != H_X[E[Y|X]] + E_X[H[Y|X]].
+
+============================================================
+* rsentropy2
+------------------------------------------------------------
+ H(Y|X) sample sizes (nSam1, nSam2) = 5000 3000
+Calculating H(Y|X) for X = inputs (1,2)
+  Inputs   1,  2: 
+         H(E[Y|X])        =  2.516e+00 (VCE-like)
+         H(Y) - E[H(Y|X)] =  2.202e+00 (TSI-like)
+Calculating H(Y|X) for X = inputs (1,3)
+  Inputs   1,  3: 
+         H(E[Y|X])        =  2.229e+00 (VCE-like)
+         H(Y) - E[H(Y|X)] =  8.751e-01 (TSI-like)
+Calculating H(Y|X) for X = inputs (2,3)
+  Inputs   2,  3: 
+         H(E[Y|X])        =  1.874e+00 (VCE-like)
+         H(Y) - E[H(Y|X)] =  1.442e+00 (TSI-like)
+----------------------------------------------------------------------
+Input (  1,  2) Sensitivity =  2.202e+00 (scaled= 8.048e-01)
+Input (  1,  3) Sensitivity =  8.751e-01 (scaled= 3.198e-01)
+Input (  2,  3) Sensitivity =  1.442e+00 (scaled= 5.269e-01)
+Sensitivity measure is H(Y) - H(E[Y|X])
+Scaled measure is 1 - H(E[Y|X])/H(Y) if H(Y) != 0
+Total output entropy = 2.736178e+00 
+
+============================================================
+* rsentropyg
+------------------------------------------------------------
+INFO: RSEntropy sample sizes (nSam1, nSam2) = 4000 4000
+Calculating H(Y|X) for input group 1 : group members = 1 2 
+  Group   1: 
+        H(E[Y|X])        =  2.514e+00 (VCE-like)
+        H(Y) - E[H(Y|X)] =  2.201e+00 (TSI-like)
+Calculating H(Y|X) for input group 2 : group members = 3 
+  Group   2: 
+        H(E[Y|X])        = -3.021e+00 (VCE-like)
+        H(Y) - E[H(Y|X)] =  2.609e-01 (TSI-like)
+----------------------------------------------------------------------
+Group   1 Sensitivity =  2.201e+00 (scaled= 8.044e-01)
+Group   2 Sensitivity =  2.609e-01 (scaled= 9.537e-02)
+
+Sensitivity measure is H(Y) - H(E[Y|X])
+Scaled measure is 1 - H(E[Y|X])/H(Y) if H(Y) != 0
+Total output entropy = 2.736516e+00 
+
+============================================================
+Shapley values (based on VCE)
+------------------------------------------------------------
+Input 1 = 6.045e+00 [6.033, 6.057], Normalized = 4.369e-01
+Input 2 = 6.087e+00 [6.081, 6.093], Normalized = 4.400e-01
+Input 3 = 1.714e+00 [1.709, 1.720], Normalized = 1.239e-01
+
+============================================================
+To run:
+------------------------------------------------------------
+cc -o ensemble_simulator ensemble_simulator.c -lm
+psuade psuadeRS.in
+mv psuadeData simdata
+
+============================================================
+To perform main effect analysis using response surface 
+------------------------------------------------------------
+psuade
+> load simdata
+> rsvce1_sobol
+Use response surface you found out to be good from response 
+surface analysis
+
+============================================================
+To perform pairwise interaction effect sensitivity analysis  
+(main effect + two-way effect)
+------------------------------------------------------------
+psuade
+> load simdata
+> rsvce2_sobol
+
+============================================================
+To perform total effect sensitivity analysis using response
+surfaces 
+------------------------------------------------------------
+psuade
+> load simdata
+> rstsi_sobol
+Try different response surfaces
+
+============================================================
+To perform group sensitivity analysis  
+Group 1: parameter 1 and 2
+Group 2: parameter 3
+These information have been defined in the 'group' file
+------------------------------------------------------------
+psuade
+> load simdata
+> rsvceg_sobol
+  group
+
+*** The above commands have been captured by the psScript.in
+    file.
+    Do: psuade < psScript.in to run all of them automatically.
+

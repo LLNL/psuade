@@ -13,6 +13,5 @@ Shaffer    - a function with many local minima
 Schwefel   - a function with many local minima
 Rastrigin  - a function with many local minima
 MixedInteger - various test for mixed integer optimization using Nomad/SCE
-
-
+RSBasedOpt - response surface-based optimization
 

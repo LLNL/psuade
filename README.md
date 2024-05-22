@@ -63,9 +63,9 @@ B. After all compilation is done successfully, the executable "psuade"
    the lib directory.
 
 C. You can run a simple test by going to the
-   <toplevel>/Examples/SimpleUQ/Bungee directory and issuing:
+   <toplevel>/Examples/SimpleUQ/Bungee/Basic directory and issuing:
        cc -o simulator simulator.c -lm
-       ../../build/bin/psuade psuade.in
+       ../../../../build/bin/psuade psuade.in
    Afterward, you should see a file called 'psuadeData'.
 
 D. You can also run the built in tests my running 'make test' from the
@@ -85,7 +85,7 @@ G. Now read the short manual in the Doc/Manual directory and follow the
 
 -----------------------------------------------------------------------------
 
-### Windows
+### Windows (Installation has not been tested for years)
 
    Requires Cmake and mingw (preferably including gfortran).  If you want to 
    build an installable package you will need NSIS.
@@ -151,16 +151,16 @@ B. Now let's run cmake.  Go to your psuade source.
 C. Now build: run 'make'  It should build for a while.
 
 D. You can run a simple test by going to the
-   Examples/Bungee directory and issuing:
+   Examples/SimpleUQ/Bungee/Basic directory and issuing:
        cc -o simulator simulator.c -lm
-       ../../build/bin/psuade psuade.in
+       ../../../../build/bin/psuade psuade.in
    Afterward, you should see a file called 'psuadeData'.
 
 E. You can install PSUADE by running 'make install'
 
 F. You can build a package for other people to install by running 'make package'
 
-G. Now read the short manual in the Doc/Manual directory and follow the
+g. Now read the short manual in the Doc/Manual directory and follow the
    instructions to get a simple application running within minutes.
 
 *****************************************************************************
@@ -170,4 +170,5 @@ G. Now read the short manual in the Doc/Manual directory and follow the
 Examples : test programs
 Src      : source code
 Doc      : documentations
+Python   : Python script to run visualization
 External : external packages

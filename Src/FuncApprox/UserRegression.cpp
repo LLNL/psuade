@@ -950,7 +950,7 @@ int UserRegression::analyze(psVector VecX, psVector VecY)
   //**/ ==============================================================
   //**/ diagnostics
   //**/ ==============================================================
-  if (psConfig_.MasterModeIsOn())
+  if (psConfig_.MasterModeIsOn() && psConfig_.InteractiveIsOn())
   {
     fp = fopen("user_regression_matrix.m", "w");
     if(fp == NULL)
@@ -1001,29 +1001,35 @@ int UserRegression::analyze(psVector VecX, psVector VecY)
   for (nn = 0; nn < N; nn++) if (VecS[nn] < 0) mm++;
   if (mm > 0)
   {
-    printf("* UserRegression WARNING: some of the singular values\n");
-    printf("*            are < 0. May spell trouble but will\n");
-    printf("*            proceed anyway (%d).\n",mm);
+    printf("UserRegression WARNING: Some singular values are < 0.\n");
+    printf("               May spell trouble but will proceed.\n");
+    for (nn = 0; nn < N; nn++) if (VecS[nn] < 0) VecS[nn] = 0;
   }
   if (VecS[0] == 0.0) NRevised = 0;
   else
   {
     NRevised = N;
     for (nn = 1; nn < N; nn++)
-      if (VecS[nn-1] > 0 && VecS[nn]/VecS[nn-1] < 1.0e-8) NRevised--;
+      if (VecS[nn-1] > 0 && VecS[nn]/VecS[nn-1] < 1.0e-8) break;
+    NRevised = nn;
   }
   if (NRevised < N)
   {
-    printf("* UserRegression ERROR: true rank of sample = %d (need %d)\n",
+    printf("UserRegression ERROR: True matrix rank = %d (N = %d)\n",
            NRevised, N);
-    return -1;
+    if (psConfig_.InteractiveIsOn() && outputLevel_ > 1)
+    {
+      printf("INFO: This can be due to the quality of the sample.\n");
+      for (nn = 0; nn < N; nn++)
+        printf("Singular value %5d = %e\n",nn+1,VecS[nn]);
+    }
   }
-  if (psConfig_.MasterModeIsOn())
+  if (psConfig_.InteractiveIsOn() && psConfig_.MasterModeIsOn())
   {
-    printf("UserRegression: matrix singular values \n");
-    printf("The VERY small ones may cause poor numerical accuracy,\n");
-    printf("but not keeping them may ruin the approximation power.\n");
-    printf("So, select them judiciously.\n");
+    printf("UserRegression: For the matrix singular values \n");
+    printf(" - The VERY small ones may cause poor numerical accuracy\n");
+    printf(" - But not keeping them may ruin the approximation power\n");
+    printf(" - So, select them judiciously\n");
     for (nn = 0; nn < N; nn++)
       printf("Singular value %5d = %e\n", nn+1, VecS[nn]);
     snprintf(pString,100,"How many to keep (1 - %d, 0 - all) ? ", N);
@@ -1033,15 +1039,10 @@ int UserRegression::analyze(psVector VecX, psVector VecY)
   }
   else
   {
-    NRevised = N;
-    for (nn = 1; nn < N; nn++)
-    {
-      if (VecS[nn-1] > 0.0 && VecS[nn]/VecS[nn-1] < 1.0e-8)
-      {
-        VecS[nn] = 0.0;
-        NRevised--;
-      }
-    }
+    for (nn = NRevised; nn < N; nn++) VecS[nn] = 0.0;
+    if (NRevised < N)
+      printf("UserRegression INFO: %d singular values has been removed.\n",
+             N-NRevised);
   }
 
   //**/ ==============================================================
@@ -1076,7 +1077,7 @@ int UserRegression::analyze(psVector VecX, psVector VecY)
   //**/ ==============================================================
   //**/ compute residual
   //**/ ==============================================================
-  if (psConfig_.MasterModeIsOn())
+  if (psConfig_.InteractiveIsOn() && psConfig_.MasterModeIsOn())
   {
     fp = fopen("user_regression_error.m", "w");
     if(fp == NULL)
@@ -1552,7 +1553,7 @@ int UserRegression::computeCoeffVariance(psMatrix &eigMatT,
   }
   //**/ compute (sigma^2 V * S^{-2}) * V^T
   tMat.matmult(eigMatT, invCovMat_);
-  if (psConfig_.MasterModeIsOn())
+  if (psConfig_.InteractiveIsOn() && psConfig_.MasterModeIsOn())
   {
     printf("invCovMat = \n");
     invCovMat_.print();

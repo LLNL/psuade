@@ -109,7 +109,8 @@ int PDFNormal::invCDF(int length, double *inData, double *outData)
     ddata = inData[ii];
     if (ddata <= 0.0 || ddata >= 1)
     {
-      printf("PDFNormal invCDF ERROR - CDF value not in (0,1).\n");
+      printf("PDFNormal invCDF ERROR - CDF value %e not in (0,1).\n",
+             ddata);
       exit(1);
     }
     xlo = -5.0 * stdev_;
@@ -150,19 +151,18 @@ int PDFNormal::genSample(int length, double *outData, double *lowers,
                          double *uppers)
 {
   int    ii, count, total;
-  double U1, U2, R, theta, Z1, Z2, pi=3.14159, range, low, iroot2;
-  double lower, upper, lower2, upper2;
+  double U1, U2, R, pi=3.141592653589793;
 
   //**/ -------------------------------------------------------------
-  //**/ upper and lower bounds has to be in (0,1), and upper > lower
+  //**/ upper and lower bounds are of dimension 1 and upper > lower
   //**/ -------------------------------------------------------------
   if (lowers == NULL || uppers == NULL)
   {
     printf("PDFNormal genSample ERROR - lower/upper bound unavailable.\n"); 
     exit(1);
   }
-  lower = lowers[0];
-  upper = uppers[0];
+  double lower = lowers[0];
+  double upper = uppers[0];
   if (length <= 0)
   {
     printf("PDFNormal genSample ERROR - length <= 0.\n");
@@ -189,11 +189,13 @@ int PDFNormal::genSample(int length, double *outData, double *lowers,
   //**/ -------------------------------------------------------------
   //**/ generate sample
   //**/ -------------------------------------------------------------
-  lower2 = mean_ - 5 * stdev_;
-  upper2 = mean_ + 5 * stdev_;
-  iroot2 = sqrt(0.5)/stdev_;
-  low   = 0.5 * (1.0 + erf((lower2-mean_)*iroot2));
-  range = 0.5 * (1.0 + erf((upper2-mean_)*iroot2)) - low;
+#if 1
+  double theta, Z1, Z2;
+  double lower2 = mean_ - 5 * stdev_;
+  double upper2 = mean_ + 5 * stdev_;
+  double iroot2 = sqrt(0.5)/stdev_;
+  double low   = 0.5 * (1.0 + erf((lower2-mean_)*iroot2));
+  double range = 0.5 * (1.0 + erf((upper2-mean_)*iroot2)) - low;
   count = total = 0;
   if (psConfig_.PDFDiagnosticsIsOn())
     printf("PDFNormal: genSample begins (length = %d)\n",length);
@@ -201,6 +203,8 @@ int PDFNormal::genSample(int length, double *outData, double *lowers,
   {
     U1 = PSUADE_drand() * range + low;
     U2 = PSUADE_drand() * range + low;
+U1 = PSUADE_drand();
+U2 = PSUADE_drand();
     R  = sqrt(-2.0 * log(U1));
     theta = 2 * pi * U2;
     Z1 = R * cos(theta);
@@ -211,7 +215,7 @@ int PDFNormal::genSample(int length, double *outData, double *lowers,
     outData[count] = mean_ + stdev_ * Z2;
     if (outData[count] >= lower && outData[count] <= upper) count++;
     total += 2;
-    if (total > length*100)
+    if (total > length*3)
     {
       printf("PDFNormal genSample ERROR - Cannot generate enough\n");
       printf("          sample points to be within range. Maybe\n");
@@ -223,6 +227,34 @@ int PDFNormal::genSample(int length, double *outData, double *lowers,
     }
   }
   if (psConfig_.PDFDiagnosticsIsOn()) printf("PDFNormal: genSample ends.\n");
+#else
+  if (psConfig_.PDFDiagnosticsIsOn())
+    printf("PDFNormal: genSample begins (length = %d)\n",length);
+  count = total = 0;
+  while (count < length)
+  {
+    U1 = 2 * PSUADE_drand() - 1;
+    U2 = 2 * PSUADE_drand() - 1;
+    R  = U1 * U1 + U2 * U2;
+    if (R > 0 && R < 1)
+    {
+      R = sqrt(-2 * log(R)/R);
+      outData[count] = R * U1 * stdev_ + mean_;
+      if (outData[count] >= lower && outData[count] <= upper) count++;
+      if (total > length*100)
+      {
+        printf("PDFNormal genSample ERROR - Cannot generate enough\n");
+        printf("          sample points to be within range. Maybe\n");
+        printf("          due to prescribed ranges too narrow.\n");
+        printf("     mean,  stdev = %e %e\n", mean_, stdev_);
+        printf("     lower, upper = %e %e\n", lower, upper);
+        printf("     ntrials, nsuccess = %d %d (%d)\n",total,count,length);
+        exit(1);
+      }
+    }
+    total++;
+  }
+#endif
   return 0;
 }
 

@@ -1903,7 +1903,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
   }
 
   //**/ -------------------------------------------------------------
-  // +++ odoeu_boptnbfs (G, I, A, E, and D metrics) 
+  // +++ odoeu_boptnbf (G, I, A, E, and D metrics) 
   //**/ optimal design of experiment for batch size of n
   //**/ -------------------------------------------------------------
   else if (!strcmp(command, "odoeu_boptnbf") ||
@@ -1936,6 +1936,9 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     printf("set S the\n");
     printf("G,I,D,A,E values for all n-TUPLES of designs where n is ");
     printf("user-defined.\n");
+    printf("It goes through all candidate combinations and records ");
+    printf("the optimal\n");
+    printf("subset for each metric (maybe time-consuming).\n");
     printf("G - maximmum prediction uncertainty among S designs if ");
     printf("X is selected\n");
     printf("I - average prediction uncertainty over S if this X ");
@@ -2028,7 +2031,8 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     psVector vecInps, vecOuts;
     vecInps.setLength(nToBeSelected);
     vecOuts.setLength(5);
-    fp = fopen("odoeu_optnbf.results","w");
+    if (fisherMethod == 0) fp = fopen("odoeu_boptnbf.results","w");
+    else                   fp = fopen("odoeu_foptnbf.results","w");
     for (ii = 0; ii < nCandidates-nToBeSelected+1; ii++)
     {
       //**/ set vecTracker for ii candidate: ii+1, ii+2, ...
@@ -2178,7 +2182,10 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
       printf("%5d ",vecEMinInds[ii]);
     printf(" (1-based)\n");
     printEquals(PL_INFO, 0);
-    printf("All results are in the file: odoeu_optnbf.results.\n");
+    if (fisherMethod == 1)
+      printf("All results are in the file: odoeu_foptnbf.results.\n");
+    else
+      printf("All results are in the file: odoeu_boptnbf.results.\n");
   }
 
   //**/ -------------------------------------------------------------
@@ -2198,7 +2205,10 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     printf("parameters X and some are\n");
     printf("uncertain parameters U. It evaluates all members ");
     printf("of the candidate set\n");
-    printf("individually (W-metric = prediction uncertainty).\n");
+    printf("individually (W-metric = prediction uncertainty ");
+    printf("induced by uncertain\n");
+    printf("inputs). Candidates with large W-metric are ");
+    printf("good experimental designs.\n");
     if (!strcmp(winput, "-h")) return 0;
 
     printDashes(PL_INFO, 0);
@@ -2228,6 +2238,13 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     int nInps = pdata.intData_;
     psuadeIO->getParameter("output_noutputs", pdata);
     int nOuts = pdata.intData_;
+    if (nOuts != 1)
+    {
+      printf("INFO: Your training sample has more than 1 ");
+      printf("outputs. Please use odelete\n");
+      printf("      to remove but one output and re-do.\n");
+      return 1;
+    }  
 
     //**/ set uncertain inputs (vecUInputs will have it after done)
     psIVector vecUInputs;
@@ -2244,7 +2261,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     }
     vecUInputs.subvector(0, ii-1);
 
-    //**/ set uncertain parameter input to 1 (e.g. vecIT[kk] = 1
+    //**/ set uncertain parameter input to 1 (e.g. vecIT[kk] = 1)
     //**  if kk is an uncertain parameter
     psIVector vecIT;
     vecIT.setLength(nInps);
@@ -2257,8 +2274,9 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
 
     //**/ read prior sample (in iread format)
     psMatrix matPriorSample;
-    printf("Uncertain parameters need a prior sample for inference.\n");
-    printf("The prior sample format should be the `iread' format.\n");
+    printf("Uncertain parameters need a prior sample for ");
+    printf("inference. The prior\n");
+    printf("sample format should be the `iread' format.\n");
     snprintf(pString,100,"Enter the file name of your prior sample : ");
     getString(pString, fname);
     fname[strlen(fname)-1] = '\0';
@@ -2271,7 +2289,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     }
     if (matPriorSample.ncols() != vecUInputs.length())
     {
-      printf("ERROR: prior sample nInputs is incorrect.\n");
+      printf("ERROR: Prior sample nInputs is incorrect.\n");
       printf("       Should be equal to %d (as indicated before).\n",
              vecUInputs.length());
       return 1;
@@ -2279,9 +2297,9 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
 
     //**/ read candidate set
     psMatrix matCandidates;
-    printf("Next, provide a candidate set from which the final ");
-    printf("design is to be\n");
-    printf("selected. The format of this file should be:\n");
+    printf("Next, please enter the name of file containing ");
+    printf("your candidate set. The\n");
+    printf("format of this file should be:\n");
     printf("Line 1: <number of candidates> <number of columns>\n");
     printf("Line 2: 1 <design inputs> \n");
     printf("Line 3: 2 <design inputs> \n");
@@ -2300,7 +2318,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     printf("Size of Candidate set = %d\n", nCandidates);
     if (matCandidates.ncols() != nInps-vecUInputs.length())
     {
-      printf("WARNING: candidate file should have %d columns.\n",
+      printf("WARNING: Candidate file should have %d columns.\n",
              nInps-vecUInputs.length());
       printf("INFO: only the first %d columns will be used.\n",
              nInps-vecUInputs.length());
@@ -2315,31 +2333,16 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     psuadeIO->getParameter("input_sample", pInps);
     psuadeIO->getParameter("output_sample", pOuts);
  
-    int jj, faFlag = 1, rsMethod;
+    faFlag = 1;
+    FuncApprox *rsPtr = genFAInteractive(psuadeIO, faFlag);
     psVector vecYT;
-    FuncApprox **rsPtrs = new FuncApprox*[nOuts];
     vecYT.setLength(nSamp);
-    printf("odoeu_wmetric: constructing response surfaces\n");
-    for (ii = 0; ii < nOuts; ii++)
-    {
-      if (ii == 0) 
-      {
-        rsPtrs[ii] = genFAInteractive(psuadeIO, faFlag);
-        rsMethod = rsPtrs[ii]->getID();
-      }
-      else 
-      {
-        psuadeIO->updateAnalysisSection(-1,-1,rsMethod,-1,-1,-1);
-        faFlag = 0;
-        rsPtrs[ii] = genFAInteractive(psuadeIO, faFlag);
-      }
-      rsPtrs[ii]->setBounds(pLBs.dbleArray_,pUBs.dbleArray_);
-      rsPtrs[ii]->setOutputLevel(0);
-      for (jj = 0; jj < nSamp; jj++)
-        vecYT[jj] = pOuts.dbleArray_[jj*nOuts+ii];
-      status = rsPtrs[ii]->initialize(pInps.dbleArray_,
-                                      vecYT.getDVector());
-    }
+    printf("odoeu_wmetric: Constructing response surface\n");
+    rsPtr->setBounds(pLBs.dbleArray_,pUBs.dbleArray_);
+    rsPtr->setOutputLevel(0);
+    for (jj = 0; jj < nSamp; jj++) vecYT[jj] = pOuts.dbleArray_[jj];
+    status = rsPtr->initialize(pInps.dbleArray_,vecYT.getDVector());
+
     //**/ evaluate the prior sample on the response surface
     int    ll, ind, lcnt, USamSize = matPriorSample.nrows();
     double dmean, dstd;
@@ -2366,25 +2369,21 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
         for (kk = 0; kk < USamSize; kk++)
           vecXT[kk*nInps+ind] = matPriorSample.getEntry(kk,ll);
       }
-      for (jj = 0; jj < nOuts; jj++)
-      {
-        rsPtrs[jj]->evaluatePoint(USamSize,vecXT.getDVector(),
-                                  vecYT.getDVector());
-        dmean = 0;
-        for (ll = 0; ll < USamSize; ll++) dmean += vecYT[ll];
+      rsPtr->evaluatePoint(USamSize,vecXT.getDVector(),
+                           vecYT.getDVector());
+      dmean = 0;
+      for (ll = 0; ll < USamSize; ll++) dmean += vecYT[ll];
         dmean /= (double) USamSize;
-        dstd = 0;
-        for (ll = 0; ll < USamSize; ll++) 
-          dstd += pow(vecYT[ll] - dmean, 2);
-        dstd = sqrt(dstd / (double) USamSize);
-        vecStds[ii] += dstd;
-      }
+      dstd = 0;
+      for (ll = 0; ll < USamSize; ll++) 
+        dstd += pow(vecYT[ll] - dmean, 2);
+      dstd = sqrt(dstd / (double) USamSize);
+      vecStds[ii] = dstd;
     }
-    for (ii = 0; ii < nOuts; ii++) delete rsPtrs[ii];
-    delete [] rsPtrs;
+    delete rsPtr;
     delete psuadeIO;
-    for (ii = 0; ii < nCandidates; ii++)
-      printf("W metric for candidate %d = %e\n",ii+1,vecStds[ii]);
+    //for (ii = 0; ii < nCandidates; ii++)
+    //  printf("W metric for candidate %d = %e\n",ii+1,vecStds[ii]);
     fp = fopen("odoeu_wmetric.std","w");
     if (fp != NULL)
     {
@@ -2397,7 +2396,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
       } 
       fclose(fp);
     }
-    printEquals(PL_INFO, 0);
+    //printEquals(PL_INFO, 0);
     printf("W-metric Ranking : \n");
     for (kk = 0; kk < nCandidates; kk++)
     {
@@ -2414,7 +2413,6 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
       printf("Candidate %5d : W-metric = %10.4e\n",ind+1,vecStds[ind]);
       vecStds[ind] = 0;
     }
-    printf("\n");
     printEquals(PL_INFO, 0);
     printf("odoeu_wmetric: results have been stored in odoeu_wmetric.out\n"); 
     printf("NOTE: You can use this set of W-metric as weights for ");
@@ -2496,7 +2494,8 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     int nChoices;
     if (bayesMode == 1)
     {
-      printf("Specify which metric to use for optimal design:\n");
+      printf("A. Specify which metric to use for ");
+      printf("MCMC-based optimal design:\n");
       printf("1.  G-optimal (Bayesian)\n");
       printf("2.  I-optimal (Bayesian)\n");
       printf("3.  D-optimal (Bayesian)\n");
@@ -2507,6 +2506,8 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     }
     else
     {
+      printf("A. Specify which metric to use for ");
+      printf("Fisher-based optimal design:\n");
       printf("1.  G-optimal (Fisher approximation)\n");
       printf("2.  I-optimal (Fisher approximation)\n");
       printf("3.  D-optimal (Fisher approximation)\n");
@@ -2518,11 +2519,13 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     int optOption = 0;
     optOption = getInt(1,nChoices,pString);
 
-    printf("Next, enter the number of points in the candidate set.\n");
-    printf("Please Make sure the candidate set size you enter here");
-    printf(" is consistent\n");
-    printf("with the candidate set file you enter later.\n");
-    strcpy(pString, "How many points are in the candidate set? ");
+    printf("B. Enter information about the candidate ");
+    printf("set and optimization\n");
+    printf("Enter the number of points in the candidate set.\n");
+    printf("(Make sure it is consistent with the size of ");
+    printf("candidate set you will\n");
+    printf("enter later)\n");
+    strcpy(pString,"How many points are in the candidate set? ");
     int nCand = getInt(1,1000000,pString);
     strcpy(pString, "How many to select? ");
     int numSelect = getInt(1,nCand-1,pString);
@@ -2659,6 +2662,12 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
         for (ii = 0; ii < numSelect; ii++)
           vecBestSet[ii] = (int) matOptData.getEntry(2,ii);
         bestVal = matOptData.getEntry(3,0);
+        printf("START %d (out of %d)\n", kk+1, numStarts);
+        if (bayesMode == 0) printf("odoeu_foptn current best = ");
+        else                printf("odoeu_boptn current best = ");
+        for (ii = 0; ii < numSelect; ii++) 
+          printf("%d ", vecBestSet[ii]);
+        printf(" (optimal value = %e)\n", bestVal);
       }
     }
     psConfig_.InteractiveRestore();
@@ -2750,14 +2759,13 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     sscanf(lineIn,"%s %s",command,winput);
     if (!strcmp(winput, "-h"))
     {
-      printf("odoeu_fdoptn: select optimal design of batch size n ");
-      printf("using a global\n");
-      printf("            optimization method based on one of ");
-      printf("the D, A or\n");
-      printf("            E metric. This is different from ");
-      printf("odoeu_foptn in that\n");
-      printf("it directly calls simulators that returns also ");
-      printf("derivatives.\n");
+      printf("odoeu_fdoptn: select optimal design of batch ");
+      printf("size n using a global\n");
+      printf("      optimization method based on one of ");
+      printf("the D, A or E metric. This\n");
+      printf("      command is different from odoeu_foptn ");
+      printf("in that it directly calls\n");
+      printf("      simulators that returns also derivatives.\n");
       printf("syntax: odoeu_fdoptn (no argument needed)\n");
     }
     printEquals(PL_INFO, 0);
@@ -2788,14 +2796,17 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     fgets(winput,5000,stdin);
     if (lineIn2[0] != 'y') return 0;
 
-    printf("Methods available are: (G- and I-optimal ");
-    printf("too expensive)\n");
-    printf("1.  Derivative-based Fisher D-optimal\n");
-    printf("2.  Derivative-based Fisher A-optimal\n");
-    printf("3.  Derivative-based Fisher E-optimal\n");
+    printf("Methods available are: \n");
+    printf("1.  Derivative-based Fisher G-optimal ");
+    printf("(may be time-consuming)\n");
+    printf("2.  Derivative-based Fisher I-optimal ");
+    printf("(may be time-consuming)\n");
+    printf("3.  Derivative-based Fisher D-optimal\n");
+    printf("4.  Derivative-based Fisher A-optimal\n");
+    printf("5.  Derivative-based Fisher E-optimal\n");
     int optOption = 0;
-    strcpy(pString, "Select metric? (1 - 3) ");
-    optOption = getInt(1,3,pString);
+    strcpy(pString, "Select metric? (1 - 5) ");
+    optOption = getInt(1,5,pString);
 
     printf("Next enter the number of points in the candidate set.\n");
     printf("Please Make sure the candidate set size you enter here");
@@ -2894,9 +2905,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     for (ii = 0; ii < numSelect+5; ii++) delete [] strArray[ii];
     delete [] strArray;
 
-    if (optOption == 1) funcIO->setLocalFunction(47);
-    if (optOption == 2) funcIO->setLocalFunction(48);
-    if (optOption == 3) funcIO->setLocalFunction(49);
+    funcIO->setLocalFunction(45+optOption-1);
     funcIO->setOutputLevel(outputLevel_);
 
     //**/ -----------------------------------------------------
@@ -2952,25 +2961,25 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
   }
 
   //**/ -------------------------------------------------------------
-  // +++ odoeu_beval (compute G, I, A, D, E metrics for all members
-  //**/ of a given candidate set individually using MCMC) 
+  // +++ odoeu_beval (compute G, I, A, D, E metrics for each member
+  //**/  of a given candidate set individually using MCMC) 
   //**/ -------------------------------------------------------------
   else if (!strcmp(command, "odoeu_beval"))
   {
     sscanf(lineIn,"%s %s",command,winput);
     if (!strcmp(winput, "-h"))
     {
-      printf("odoeu_evalnb: compute MCMC-based G,I,D,A,E-metrics ");
+      printf("odoeu_beval: compute MCMC-based G,I,D,A,E-metrics ");
       printf("of all individual\n");
       printf("              members of a given candidate set.\n");
-      printf("syntax: odoeu_<m>beval (no argument needed)\n");
+      printf("syntax: odoeu_beval (no argument needed)\n");
     }
     printEquals(PL_INFO, 0);
     printf("This command assumes some inputs are design ");
     printf("parameters X and some\n");
     printf("are uncertain parameters U. It computes for each ");
     printf("member of the given\n");
-    printf("candidate set S the G,I,D,A,E values.\n");
+    printf("candidate set S the G,I,D,A,E values (MCMC-based).\n");
     printf("G - maximum prediction uncertainty (S is used in MCMC)\n");
     printf("I - average prediction uncertainty (S is used in MCMC)\n");
     printf("D - product of covariance eigenvalues for ");
@@ -3004,8 +3013,8 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
   }
 
   //**/ -------------------------------------------------------------
-  // +++ odoeu_evalnb (compute G, I, A, D, E metrics for all members
-  //**/ of a given candidate set individually using Fisher method) 
+  // +++ odoeu_feval (compute A, D, E metrics for each member of a
+  //**/  given candidate set individually using Fisher method) 
   //**/ -------------------------------------------------------------
   else if (!strcmp(command, "odoeu_feval"))
   {
@@ -3014,15 +3023,16 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     {
       printf("odoeu_feval: compute Fisher-based D,A,E-metrics ");
       printf("of all individual\n");
-      printf("              members of a given candiadate set.\n");
+      printf("              members of a given candidate set.\n");
       printf("syntax: odoeu_feval (no argument needed)\n");
     }
     printEquals(PL_INFO, 0);
     printf("This command assumes some inputs are design ");
-    printf("parameters X and some\n");
-    printf("are uncertain parameters U. It computes for each ");
+    printf("parameters X and some are\n");
+    printf("uncertain parameters U. It computes for each ");
     printf("member of the given\n");
-    printf("candidate set S the D,A,E values.\n");
+    printf("candidate set S the D,A,E values based ");
+    printf("on Fisher information.\n");
     printf("D - product of eigenvalues of the Fisher matrix\n");
     printf("A - sum of eigenvalues of the Fisher matrix\n");
     printf("E - max of eigenvalues of the Fisher matrix\n");
@@ -3036,7 +3046,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
 
     //**/ instantiate function interface
     FunctionInterface *funcIO = new FunctionInterface();
-    funcIO->setOutputLevel(0);
+    funcIO->setOutputLevel(outputLevel_);
 
     //**/ initialiation
     funcIO->setLocalFunction(999);
@@ -3051,7 +3061,7 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
   }
 
   //**/ -------------------------------------------------------------
-  // +++ odoeu_evalset (G, I, A, D, E metrics) 
+  // +++ odoeu_bevaln (G, I, A, D, E metrics) 
   //**/ given a selected set, evaluate the metrics on the whole set
   //**/ together (use MCMC) 
   //**/ -------------------------------------------------------------
@@ -3066,10 +3076,10 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     }
     printEquals(PL_INFO, 0);
     printf("This command assumes some inputs are design ");
-    printf("parameters X and some\n");
-    printf("are uncertain parameters U. It computes for the ");
-    printf("SELECTED set S the\n");
-    printf("G,I,D,A,E values. This command involves MCMC iterations.\n");
+    printf("parameters X and some are\n");
+    printf("uncertain parameters U. It computes for ");
+    printf("the SELECTED set S the\n");
+    printf("G,I,D,A,E values (MCMC-based).\n");
     printf("G - maximum prediction uncertainty (S is used in MCMC)\n");
     printf("I - average prediction uncertainty (S is used in MCMC)\n");
     printf("D - product of covariance eigenvalues for ");
@@ -3112,6 +3122,65 @@ int PsuadeBase::ODOEAnalysis(char *lineIn)
     printf("D-metric = %e\n", vecMetrics[2]);
     printf("A-metric = %e\n", vecMetrics[3]);
     printf("E-metric = %e\n", vecMetrics[4]);
+    printAsterisks(PL_INFO, 0);
+  }
+
+  //**/ -------------------------------------------------------------
+  // +++ odoeu_fevaln (A, D, E metrics) 
+  //**/ given a selected set, evaluate the metrics on the whole set
+  //**/ together (use Fisher) 
+  //**/ -------------------------------------------------------------
+  else if (!strcmp(command, "odoeu_fevaln"))
+  {
+    sscanf(lineIn,"%s %s",command,winput);
+    if (!strcmp(winput, "-h"))
+    {
+      printf("odoeu_fevaln: compute Fisher-based D,A,E-metric ");
+      printf("for a SELECTED set of\n");
+      printf("              any size\n");
+      printf("syntax: odoeu_fevaln (no argument needed)\n");
+    }
+    printEquals(PL_INFO, 0);
+    printf("This command assumes some inputs are design ");
+    printf("parameters X and some are\n");
+    printf("uncertain parameters U. It computes for ");
+    printf("the SELECTED set S the D,A,E\n");
+    printf("values based on Fisher information.\n");
+    printf("D - product of eigenvalues of the Fisher matrix\n");
+    printf("A - sum of eigenvalues of the Fisher matrix\n");
+    printf("E - max of eigenvalues of the Fisher matrix\n");
+    if (!strcmp(winput, "-h")) return 0;
+
+    printDashes(PL_INFO, 0);
+    printf("Proceed ? (y or n to abort) ");
+    scanf("%s", lineIn2);
+    fgets(winput,5000,stdin);
+    if (lineIn2[0] != 'y') return 0;
+
+    //**/ instantiate function interface
+    FunctionInterface *funcIO = new FunctionInterface();
+    funcIO->setOutputLevel(outputLevel_);
+
+    //**/ initialiation
+    funcIO->setLocalFunction(999);
+
+    //**/ evaluate all metrics (use code=25 with nInputs=0,nOutputs=3)
+    psVector vecMetrics;
+    vecMetrics.setLength(3);
+    funcIO->setLocalFunction(25);
+    funcIO->psLocalFunction(0,NULL,3,vecMetrics.getDVector());
+
+    //**/ final clean up
+    funcIO->setLocalFunction(999);
+    delete funcIO;
+
+    //**/ display information
+    printAsterisks(PL_INFO, 0);
+    printf("Posterior metrics for the selected designs : \n");
+    printEquals(PL_INFO, 0);
+    printf("D-metric = %e\n", vecMetrics[0]);
+    printf("A-metric = %e\n", vecMetrics[1]);
+    printf("E-metric = %e\n", vecMetrics[2]);
     printAsterisks(PL_INFO, 0);
   }
 
@@ -3733,7 +3802,7 @@ void PsuadeBase::displayHelpMenuODOE(int option)
   printEquals(PL_INFO, 0);
   printf("COMMANDS for (2) are:\n");
   printf("   odoeu_wmetric (Compute W-metric for ");
-  printf("each candidate in a set)\n");
+  printf("each member of a candidate set)\n");
 
   printf("   odoeu_boptn   (Search GIDAE-optimal ");
   printf("design of size n: RS/MCMC)\n");

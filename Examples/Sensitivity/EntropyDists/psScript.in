@@ -1,0 +1,26 @@
+# create a sample using normal with mean=5, sig=2
+gendist
+1000000
+1
+5
+2
+# replace first line with the correct parameter values
+sys sed -i "1s/.*/1000000 1 1/" sample1D
+# load and run entropy
+read_std sample1D
+entropy
+y
+# create a sample using lognormal with mean=5, sig=2
+gendist
+1000000
+2
+5
+2
+# replace first line with the correct parameter values
+sys sed -i "1s/.*/1000000 1 1/" sample1D
+# load and run entropy
+read_std sample1D
+entropy
+y
+q
+

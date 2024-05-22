@@ -23,8 +23,8 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 
 # USA
 # *******************************************************************
-# This file contains Python codes that read matlabaeua.m created by
-# PSUADE and display the p-box using matplotlib
+# This file contains Python codes that read matlabrs_aeua.m created 
+# by PSUADE and display the p-box using matplotlib
 # *******************************************************************
 import os
 import sys
@@ -37,16 +37,16 @@ except ImportError:
    MATPLOTLIB = False
    sys.exit(0)
 
-# get matlabaeua.m-like file
+# get matlabrs_aeua.m-like file
 print('************************************************************')
-print('This function extracts information from the matlabaeua.m')
+print('This function extracts information from the matlabrs_aeua.m')
 print('file (or the equivalent) and plots a number of cumulative')
 print('distributions that form a p-box.')
 print('------------------------------------------------------------')
 if sys.version_info[0] < 3:
-   aefile = raw_input('Enter name of the matlabaeua.m-like file : ')
+   aefile = raw_input('Enter name of the matlabrs_aeua.m-like file : ')
 else:
-   aefile = input('Enter name of the matlabaeua.m-like file : ')
+   aefile = input('Enter name of the matlabrs_aeua.m-like file : ')
 if not os.path.isfile(aefile):
    print('ERROR: data file not found.')
    sys.exit(1)

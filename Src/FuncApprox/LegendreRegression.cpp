@@ -102,7 +102,7 @@ LegendreRegression::LegendreRegression(int nInputs,int nSamples):
     printf("Normalize the input parameters to [-1, 1]? (y - yes) ");
     fgets(line, 100, stdin);
     if (line[0] == 'y') normalizeFlag_ = 1;
-    snprintf(pString,100,"Legendre_order = %d", pOrder_);
+    snprintf(pString,100,"RS_Legendre_order = %d", pOrder_);
     psConfig_.putParameter(pString);
     if (normalizeFlag_ == 1)
     {
@@ -114,7 +114,7 @@ LegendreRegression::LegendreRegression(int nInputs,int nSamples):
   {
     cString = psConfig_.getParameter("normalize_inputs");
     if (cString != NULL) normalizeFlag_ = 1;
-    cString = psConfig_.getParameter("Legendre_order");
+    cString = psConfig_.getParameter("RS_Legendre_order");
     if (cString != NULL)
     {
       sscanf(cString, "%s %s %d", winput1, winput2, &ii);
@@ -130,9 +130,8 @@ LegendreRegression::LegendreRegression(int nInputs,int nSamples):
       else
       {
         pOrder_ = ii;
-        if (psConfig_.InteractiveIsOn())
-          printf("Legendre INFO: polynomial order set to %d (config)\n",
-                 pOrder_);
+        printf("Legendre INFO: polynomial order set to %d (config)\n",
+               pOrder_);
       }
     }
   }
@@ -653,7 +652,7 @@ int LegendreRegression::analyze(psVector VecX, psVector VecY)
   //**/ =================================================================
   //**/ this is for diagnostics
   //**/ =================================================================
-  if (psConfig_.MasterModeIsOn())
+  if (psConfig_.MasterModeIsOn() && psConfig_.InteractiveIsOn())
   {
     printf("You have the option to store the regression matrix (that\n");
     printf("is, the matrix A in Ax=b) in a matlab file for inspection.\n");
@@ -714,31 +713,32 @@ int LegendreRegression::analyze(psVector VecX, psVector VecY)
   for (nn = 0; nn < N; nn++) if (SS[nn] < 0) mm++;
   if (mm > 0 && psConfig_.InteractiveIsOn())
   {
-    printf("* LegendreRegression WARNING: some of the singular values\n"); 
-    printf("*            are < 0. May spell trouble but will\n");
-    printf("*            proceed anyway (%d).\n",mm);
+    printf("LegendreRegression WARNING: Some singular values are < 0.\n"); 
+    printf("                   May spell trouble but will proceed.\n");
+    for (nn = 0; nn < N; nn++) if (SS[nn] < 0) SS[nn] = 0;
   }
   if (SS[0] == 0.0) NRevised = 0;
   else
   {
     NRevised = N;
     for (nn = 1; nn < N; nn++)
-      if (SS[nn-1] > 0 && SS[nn]/SS[nn-1] < 1.0e-8) NRevised--;
+      if (SS[nn-1] > 0 && SS[nn]/SS[nn-1] < 1.0e-8) break;
+    NRevised = nn;
   }
-  if (NRevised < N && psConfig_.InteractiveIsOn())
-  {
-    printf("* LegendreRegression ERROR: \n");
-    printf("*         true rank of sample matrix = %d (need %d)\n",
-           NRevised, N);
-    printf("*         Try lower order polynomials.\n");
-    return -1;
+  if (NRevised < N && psConfig_.InteractiveIsOn() && outputLevel_ > 1)
+  { 
+    printf("LegendreRegression WARNING: True matrix rank = %d (N=%d)\n",
+           NRevised,N);
+    printf("INFO: This can be due to the quality of the sample.\n");
+    for (nn = 0; nn < N; nn++) 
+      printf("Singular value %5d = %e\n",nn+1,SS[nn]);
   }
-  if (psConfig_.MasterModeIsOn())
+  if (psConfig_.MasterModeIsOn() && psConfig_.InteractiveIsOn())
   {
-    printf("* LegendreRegression: matrix singular values \n");
-    printf("* The VERY small ones may cause poor numerical accuracy,\n");
-    printf("* but not keeping them may ruin the approximation power.\n");
-    printf("* So, select them judiciously.\n");
+    printf("LegendreRegression: For the matrix singular values,\n");
+    printf(" - The VERY small ones may cause poor numerical accuracy\n");
+    printf(" - but not keeping them may ruin the approximation power\n");
+    printf(" - So, select them judiciously.\n");
     for (nn = 0; nn < N; nn++)
       printf("* Singular value %5d = %e\n", nn+1, SS[nn]);
     snprintf(pString,100,"How many to keep (1 - %d, 0 - all) ? ", N);
@@ -748,17 +748,9 @@ int LegendreRegression::analyze(psVector VecX, psVector VecY)
   }
   else
   {
-    NRevised = N;
-    for (nn = 1; nn < N; nn++)
-    {
-      if (SS[nn-1] > 0 && SS[nn]/SS[nn-1] < 1.0e-8)
-      {
-        SS[nn] = 0.0;
-        NRevised--;
-      }
-    }
+    for (nn = NRevised; nn < N; nn++) SS[nn] = 0.0;
     if (NRevised < N && psConfig_.InteractiveIsOn())
-      printf("LegendreRegression: %d singular values taken out.\n",
+      printf("LegendreRegression INFO: %d singular values removed.\n",
              N-NRevised);
   }
 
@@ -794,7 +786,7 @@ int LegendreRegression::analyze(psVector VecX, psVector VecY)
   //**/ =================================================================
   //**/ compute residual
   //**/ =================================================================
-  if (psConfig_.MasterModeIsOn())
+  if (psConfig_.MasterModeIsOn() && psConfig_.InteractiveIsOn())
   {
     fp = fopen("legendre_regression_error.m", "w");
     if(fp == NULL)

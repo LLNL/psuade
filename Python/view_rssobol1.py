@@ -23,7 +23,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 
 # USA
 # *******************************************************************
-# This file contains Python codes that read matlabrssobol1.m created 
+# This file contains Python codes that read matlabrsvce1_ni.m created 
 # by PSUADE and display the sensitivity results
 # *******************************************************************
 import os
@@ -37,15 +37,15 @@ except ImportError:
    MATPLOTLIB = False
    sys.exit(0)
 
-# get matlabrssobol1.m-like file
+# get matlabrsvce1_ni.m-like file
 print('************************************************************')
-print('This function reads from a matlabrssobol1.m file and plots')
+print('This function reads from a matlabrsvce1_ni.m file and plots')
 print('the sensitivity results.') 
 print('------------------------------------------------------------')
 if sys.version_info[0] < 3:
-   datafile = raw_input('Enter matlabrssobol1.m-like file name : ')
+   datafile = raw_input('Enter matlabrsvce1_ni.m-like file name : ')
 else:
-   datafile = input('Enter matlabrssobol1.m-like file name : ')
+   datafile = input('Enter matlabrsvce1_ni.m-like file name : ')
 if not os.path.isfile(datafile):
    print('ERROR: data file not found.')
    sys.exit(1)
@@ -58,7 +58,7 @@ except:
    sys.exit(0)
 
 #------------------------------------------------------------------
-# read matlabrssobol1.m created by psuade
+# read matlabrsvce1_ni.m created by psuade
 #------------------------------------------------------------------
 with open(datafile, 'r') as infile:
    doneFlag = 0

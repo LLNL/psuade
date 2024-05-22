@@ -1,0 +1,20 @@
+# compile and create candidate set CandidateSet0
+sys cc -o candidate candidate.c -lm
+sys ./candidate
+# create and run a sample equipped with derivatives
+sys cc -o simulator simulator.c -lm
+run psuadeRS.in
+rename psuadeData simdata
+# Create a prior sample with uniform distribution
+run psuadeGenPrior.in
+load psuadeData
+iwrite PriorSample
+# create an evaluation set
+run psuadeGenEvalSet.in
+load psuadeData
+iwrite EvalSet
+# Prior Sample for parameter 3 has been created as PriorSample
+# Candidate set has been created in CandidateSet0
+# Evaluation set has been created in EvalSet
+q
+

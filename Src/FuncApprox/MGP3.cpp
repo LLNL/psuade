@@ -119,21 +119,25 @@ MGP3::MGP3(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
     printf("The default is 500 (will have more if there is overlap).\n");
     snprintf(pString,100,"Enter the partition sample size (500 - 10000) : ");
     partSize_ = getInt(200, 20000, pString);
+    snprintf(pString,100,"RS_MGP_max_sam_per_group = %d", partSize_);
+    psConfig_.putParameter(pString);
   }
-
-  //**/ =======================================================
-  // user-adjustable parameters
-  //**/ =======================================================
-  strPtr = psConfig_.getParameter("MGP_max_samples_per_group");
-  if (strPtr != NULL)
+  else
   {
-    sscanf(strPtr, "%s %s %d", winput, equal, &partSize_);
-    if (partSize_ < 200) 
+    //**/ =======================================================
+    // user-adjustable parameters
+    //**/ =======================================================
+    strPtr = psConfig_.getParameter("RS_MGP_max_sam_per_group");
+    if (strPtr != NULL)
     {
-      printf("MGP3 INFO: config parameter setting not done.\n");
-      printf("     max_samples_per_group %d too small.\n",partSize_);
-      printf("     max_samples_per_group should be >= 200.\n");
-      partSize_ = 200;
+      sscanf(strPtr, "%s %s %d", winput, equal, &partSize_);
+      if (partSize_ < 200) 
+      {
+        printf("MGP3 INFO: config parameter setting not done.\n");
+        printf("     max_samples_per_group %d too small.\n",partSize_);
+        printf("     max_samples_per_group should be >= 200.\n");
+        partSize_ = 200;
+      }
     }
   }
   nPartitions_ = (nSamples + partSize_/2) / partSize_;
@@ -155,7 +159,7 @@ MGP3::MGP3(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
     expPower_ = 1;
     while (expPower_ < 1.5 || expPower_ > 2)
       expPower_ = getDouble(pString);
-    snprintf(pString,100,"GP_power = %e", expPower_);
+    snprintf(pString,100,"RS_MGP3_power = %e", expPower_);
     psConfig_.putParameter(pString);
     if (useHGP_ == 0)
     {
@@ -164,14 +168,14 @@ MGP3::MGP3(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
       snprintf(pString,100,"Set the number of optimization starts to ? [1 - 20] ");
       nStarts_ = getInt(1, 20, pString);
       printf("MGP3: Optimization num_starts = %d\n", nStarts_);
-      snprintf(pString,100,"GP_nstarts = %d", nStarts_);
+      snprintf(pString,100,"RS_MGP3_nstarts = %d", nStarts_);
       psConfig_.putParameter(pString);
     }
   }
   else
   {
     char winput1[1000], winput2[1000];
-    char *cString = psConfig_.getParameter("GP_power");
+    char *cString = psConfig_.getParameter("RS_MGP3_power");
     if (cString != NULL)
     {
       sscanf(cString, "%s %s %lg", winput1, winput2, &expPower_);
@@ -184,7 +188,7 @@ MGP3::MGP3(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
       if (psConfig_.InteractiveIsOn())
         printOutTS(PL_INFO,"MGP3 exponential degree set to %e\n",expPower_);
     }
-    cString = psConfig_.getParameter("GP_nstarts");
+    cString = psConfig_.getParameter("RS_MGP3_nstarts");
     if (cString != NULL)
     {
       sscanf(cString, "%s %s %d", winput1, winput2, &nStarts_);
@@ -224,7 +228,7 @@ int MGP3::initialize(double *XIn, double *YIn)
   if (boxes_ != NULL)
   {
     for (ii = 0; ii < nPartitions_; ii++)
-      if (boxes_[ii]->rsPtr_   != NULL) delete boxes_[ii]->rsPtr_;
+      if (boxes_[ii]->rsPtr_ != NULL) delete boxes_[ii]->rsPtr_;
     delete [] boxes_;
   }
   boxes_ = NULL;

@@ -71,7 +71,7 @@ MarsBagg::MarsBagg(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
   //**/ check config file for other than defaults
   if (!psConfig_.RSExpertModeIsOn())
   {
-    cString = psConfig_.getParameter("MARS_num");
+    cString = psConfig_.getParameter("RS_MARS_num");
     if (cString != NULL)
     {
       sscanf(cString, "%s %s %d", winput1, winput2, &itmp);
@@ -87,7 +87,7 @@ MarsBagg::MarsBagg(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
                numMars_);
       }
     }
-    cString = psConfig_.getParameter("MARS_num_bases");
+    cString = psConfig_.getParameter("RS_MARS_num_bases");
     if (cString != NULL)
     {
       sscanf(cString, "%s %s %d", winput1, winput2, &itmp);
@@ -103,7 +103,7 @@ MarsBagg::MarsBagg(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
                maxBasis_);
       }
     }
-    cString = psConfig_.getParameter("MARS_interaction");
+    cString = psConfig_.getParameter("RS_MARS_interaction");
     if (cString != NULL)
     {
       sscanf(cString, "%s %s %d", winput1, winput2, &itmp);

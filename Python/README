@@ -1,0 +1,10 @@
+view_rsent2.py - when performing rsentropy2 with printlevel = 4,
+    a file called rsent2_data.m will be created, which shows,
+    for each input pair, the H(Y|X)'s (i.e. entropy for the input
+    pair given at each possible sample points for all other 
+    inputs) that are used to compute E[H(Y|X)].
+    This is useful to see the possible entropy reduction by 
+    varying all other inputs (there is possibility that at
+    certain settings of other inputs, the entropy reduction
+    is actually negative or higher than total entropy).
+

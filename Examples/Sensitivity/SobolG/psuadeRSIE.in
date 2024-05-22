@@ -1,0 +1,32 @@
+PSUADE
+INPUT
+   dimension = 8
+   variable  1 X1 =  0.0   1.0
+   variable  2 X2 =  0.0   1.0
+   variable  3 X3 =  0.0   1.0
+   variable  4 X4 =  0.0   1.0
+   variable  5 X5 =  0.0   1.0
+   variable  6 X6 =  0.0   1.0
+   variable  7 X7 =  0.0   1.0
+   variable  8 X8 =  0.0   1.0
+END
+OUTPUT
+   dimension = 1
+   variable 1 Y
+END
+METHOD
+   sampling = OA
+   num_replications = 1000
+   num_samples = 361000
+END
+APPLICATION
+   driver = ./simdata
+END
+ANALYSIS
+   analyzer method = TwoParamEffect
+   analyzer rstype = MARS
+   analyzer output_id  = 1
+   io_expert
+END
+END
+

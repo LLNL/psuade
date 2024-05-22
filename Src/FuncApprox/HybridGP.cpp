@@ -91,6 +91,10 @@ HybridGP::~HybridGP()
 // ------------------------------------------------------------------------
 int HybridGP::initialize(double *XIn, double *YIn)
 {
+#ifndef HAVE_LBFGS
+  printf("HybridGP ERROR: LBFGS is not installed.\n");
+  exit(1);
+#endif
   //**/ ----------------------------------------------------------------
   //**/ normalize sample values
   //**/ ----------------------------------------------------------------
@@ -621,7 +625,7 @@ int HybridGP::train()
   int useConfig=0;
   for (ii = 0; ii < numTerms; ii++)
   {
-    snprintf(configCmd,100,"HYGP_LegendreCoeffs%d", ii+1);
+    snprintf(configCmd,100,"RS_HYGP_LegendreCoeffs%d", ii+1);
     cString = psConfig_.getParameter(configCmd);
     if (cString == NULL) break;
     else
@@ -660,7 +664,7 @@ int HybridGP::train()
   //**/ read GP hyperparameters, if any
   //**/ ----------------------------------------------------------
   int nhypers = 5;
-  snprintf(configCmd,100,"HYGP_Hyperparam6");
+  snprintf(configCmd,100,"RS_HYGP_Hyperparam6");
   cString = psConfig_.getParameter(configCmd);
   if (cString != NULL) 
   {
@@ -671,7 +675,7 @@ int HybridGP::train()
   VecHyperPs_.setLength(nhypers);
   for (ii = 0; ii < nhypers; ii++)
   {
-    snprintf(configCmd,100,"HYGP_Hyperparam%d", ii+1);
+    snprintf(configCmd,100,"RS_HYGP_Hyperparam%d", ii+1);
     cString = psConfig_.getParameter(configCmd);
     if (cString == NULL) break;
     else
@@ -776,7 +780,7 @@ int HybridGP::train()
     VecLegendreStds_ = VecRegStds;
 
     winput[0] = 'n';
-    if (psConfig_.MasterModeIsOn())
+    if (psConfig_.MasterModeIsOn() && psConfig_.InteractiveIsOn())
     {
       printf("HybridGP: store Legendre coefficients to configure? (y or n) ");
       scanf("%s", winput);
@@ -788,7 +792,7 @@ int HybridGP::train()
       for (ii = 0; ii < numTerms; ii++)
       {
         VecLegendreStds_[ii] = 0.01 * PABS(VecLegendreCoefs_[ii]);
-        snprintf(configCmd,100,"HYGP_LegendreCoeffs%d %e %e",ii+1,
+        snprintf(configCmd,100,"RS_HYGP_LegendreCoeffs%d %e %e",ii+1,
                 VecLegendreCoefs_[ii], VecLegendreStds_[ii]);
         psConfig_.putParameter(configCmd);
       }
@@ -925,6 +929,7 @@ int HybridGP::train()
     for (ii = 0; ii < nhypers; ii++) VecXS[ii] = VecHyperPs_[ii];
 
     //**/ set up for LBFGS
+#ifdef HAVE_LBFGS
     integer nInps, iprint=0, itask, *task=&itask, lsave[4], isave[44];
     integer *iwork, nCorr=5, *nbds, csave[60];
     int     nHist, maxHist=10, fail;
@@ -1071,6 +1076,7 @@ int HybridGP::train()
     }
     delete [] iwork;
     delete [] nbds;
+#endif
 
     if (psConfig_.InteractiveIsOn() && outputLevel_ > 3) 
     {
@@ -1086,7 +1092,7 @@ int HybridGP::train()
                VecXLows_[ii], VecXHighs_[ii]);
     }
     winput[0] = 'n';
-    if (psConfig_.MasterModeIsOn())
+    if (psConfig_.MasterModeIsOn() && psConfig_.InteractiveIsOn())
     {
       printf("HybridGP: store hyperparameters to configure? (y or n) ");
       scanf("%s", winput);
@@ -1095,7 +1101,8 @@ int HybridGP::train()
     {
       for (ii = 0; ii < VecHyperPs_.length(); ii++)
       {
-        snprintf(configCmd,100,"HYGP_Hyperparam%d %e",ii+1,VecHyperPs_[ii]);
+        snprintf(configCmd,100,"RS_HYGP_Hyperparam%d %e",ii+1,
+                 VecHyperPs_[ii]);
         psConfig_.putParameter(configCmd);
       }
     }

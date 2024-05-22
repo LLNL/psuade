@@ -210,7 +210,6 @@ SCEOptimizer::SCEOptimizer()
   if (psConfig_.InteractiveIsOn())
   { 
     printAsterisks(PL_INFO, 0);
-    printAsterisks(PL_INFO, 0);
     printf("*   SCE Optimization (Pattern Search, Mixed Integer option)\n");
     printEquals(PL_INFO, 0);
     printf("* - To run this optimizer in batch mode, first make sure\n");
@@ -334,8 +333,6 @@ void SCEOptimizer::optimize(oData *odata)
         VecPsSCEInpTypes_[ii] = getInt(1, 2, pString);
       }
     }
-    snprintf(pString,100,"Select number of complexes (2-10, default=4): ");
-    nComplex_ = getInt(1, 10, pString);
   }
 
   //**/---------------------------------------------------------

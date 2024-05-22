@@ -65,9 +65,51 @@ SVM::SVM(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
   tolerance_ = 1.0e-6;
   //**/ radial basis = 2
   kernel_ = 2;
+  if (psConfig_.RSExpertModeIsOn() && psConfig_.InteractiveIsOn())
+  {
+    printf("SVM kernel options: \n");
+    printf("1. linear\n");
+    printf("2. third order polynomial\n");
+    printf("3. radial basis function\n");
+    printf("4. sigmoid function\n");
+    printf("SVM: enter kernel type (1 - 4) : ");
+    scanf("%d", &kernel_);
+    if (kernel_ < 1 || kernel_ > 4)
+    {
+      printf("SVM ERROR : invalid kernel type, set to 3.\n");
+      kernel_ = 3;
+    }
+    kernel_--;
+    sprintf(winput,100,"RS_SVM_kernel = %d", kernel_);
+    psConfig_.putParameter(winput);
+    
+    printf("SVM: enter tolerance (1.0e-6 to 1e6) : ");
+    scanf("%lg", &tolerance_);
+    if (tolerance_ < 1.0-6 || tolerance_ > 1e6)
+    {
+      printf("SVM ERROR : invalid tolerance, set to 1.0e-4\n");
+      tolerance_ = 1.0e-4;
+    }
+    sprintf(winput,100,"RS_SVM_tol = %e", tolerance_);
+    psConfig_.putParameter(winput);
+
+    if (kernel_ == 2)
+    {
+      printf("SVM: enter RBF_gamma (1.0e-6 to 1.0e6) : ");
+      scanf("%lg", &gamma_);
+      if (gamma_ < 1.0-6 || gamma_ > 1.0e6)
+      {
+        printf("SVM ERROR : invalid RBF_gamma, set to 1.0\n");
+        gamma_ = 1.0;
+      }
+      sprintf(winput,100,"RS_SVM_gamma = %e", gamma_);
+      psConfig_.putParameter(winput);
+    }
+    fgets(winput1, 500, stdin);
+  }
   if (!psConfig_.RSExpertModeIsOn())
   {
-    inStr = psConfig_.getParameter("SVM_tol");
+    inStr = psConfig_.getParameter("RS_SVM_tol");
     if (inStr != NULL)
     {
       sscanf(inStr, "%s %s %lg\n", winput1, winput2, &ddata);
@@ -84,7 +126,7 @@ SVM::SVM(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
         printf("SVM : tol   set to %e (config)\n", tolerance_);
       }
     }
-    inStr = psConfig_.getParameter("SVM_gamma");
+    inStr = psConfig_.getParameter("RS_SVM_gamma");
     if (inStr != NULL)
     {
       sscanf(inStr, "%s %s %lg\n", winput1, winput2, &ddata);
@@ -101,7 +143,7 @@ SVM::SVM(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
         printf("SVM : gamma set to %e (config)\n", gamma_);
       }
     }
-    inStr = psConfig_.getParameter("SVM_kernel");
+    inStr = psConfig_.getParameter("RS_SVM_kernel");
     if (inStr != NULL)
     {
       sscanf(inStr, "%s %s %d\n", winput1, winput2, &idata);
@@ -119,40 +161,6 @@ SVM::SVM(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
         printf("SVM : kernel set to %d (config)\n", kernel_);
       }
     }
-  }
-  if (psConfig_.RSExpertModeIsOn())
-  {
-    printf("SVM kernel options: \n");
-    printf("1. linear\n");
-    printf("2. third order polynomial\n");
-    printf("3. radial basis function\n");
-    printf("4. sigmoid function\n");
-    printf("SVM: enter kernel type (1 - 4) : ");
-    scanf("%d", &kernel_);
-    if (kernel_ < 1 || kernel_ > 4)
-    {
-      printf("SVM ERROR : invalid kernel type, set to 3.\n");
-      kernel_ = 3;
-    }
-    kernel_--;
-    printf("SVM: enter tolerance (1.0e-6 to 1e6) : ");
-    scanf("%lg", &tolerance_);
-    if (tolerance_ < 1.0-6 || tolerance_ > 1e6)
-    {
-      printf("SVM ERROR : invalid tolerance, set to 1.0e-4\n");
-      tolerance_ = 1.0e-4;
-    }
-    if (kernel_ == 2)
-    {
-      printf("SVM: enter RBF_gamma (1.0e-6 to 1.0e6) : ");
-      scanf("%lg", &gamma_);
-      if (gamma_ < 1.0-6 || gamma_ > 1.0e6)
-      {
-        printf("SVM ERROR : invalid RBF_gamma, set to 1.0\n");
-        gamma_ = 1.0;
-      }
-    }
-    fgets(winput1, 500, stdin);
   }
   if (kernel_ != -1) SVMSetKernel(kernel_);
   if (gamma_ != -1.0 || tolerance_ != -1.0) SVMSetGamma(gamma_, tolerance_);

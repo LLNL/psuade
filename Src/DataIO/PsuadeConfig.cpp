@@ -253,6 +253,8 @@ void PsuadeConfig::reset()
   RSMaxPts_ = 10000;
   //**/ control for how to handle multiple RS constraints (intersect or union)
   RSConstraintSetOp_ = 0;
+  //**/ overall diagnostics
+  Diagnostics_ = 0;
 }
 
 // ************************************************************************
@@ -320,7 +322,8 @@ int PsuadeConfig::removeParameter(const char *keyword)
   int  ii, jj, index;
   char firstWord[100];
 
-  for (ii = 0; ii < nLinesUsed_; ii++)
+  ii = 0;
+  while (ii < nLinesUsed_)
   {
     sscanf(StrFileData_.getOneString(ii), "%s", firstWord);
     if (strcmp(keyword,firstWord) == 0) 
@@ -329,6 +332,31 @@ int PsuadeConfig::removeParameter(const char *keyword)
         StrFileData_.loadOneString(jj-1,StrFileData_.getOneString(jj));
       nLinesUsed_--;
     }
+    else ii++;
+  }
+  return 0;
+}
+
+// ************************************************************************
+// remove data from this object based on substring match
+// ------------------------------------------------------------------------ 
+int PsuadeConfig::removeParameter2(const char *keyword)
+{ 
+  int  ii, jj, index, leng;
+  char firstWord[100];
+
+  leng = strlen(keyword);
+  ii = 0;
+  while (ii < nLinesUsed_)
+  {
+    sscanf(StrFileData_.getOneString(ii), "%s", firstWord);
+    if (strncmp(keyword,firstWord,leng) == 0) 
+    {
+      for (jj = ii+1; jj < nLinesUsed_; jj++)
+        StrFileData_.loadOneString(jj-1,StrFileData_.getOneString(jj));
+      nLinesUsed_--;
+    }
+    else ii++;
   }
   return 0;
 }
@@ -802,6 +830,31 @@ bool PsuadeConfig::GMModeIsOn()
 }
 
 // ************************************************************************
+// turn on diagnostics mode 
+// ------------------------------------------------------------------------ 
+void PsuadeConfig::DiagnosticsOn()
+{
+  Diagnostics_ = 1;
+}
+
+// ************************************************************************
+// turn off diagnostics mode 
+// ------------------------------------------------------------------------ 
+void PsuadeConfig::DiagnosticsOff()
+{
+  Diagnostics_ = 0;
+}
+
+// ************************************************************************
+// check to see if diagnostics mode is on
+// ------------------------------------------------------------------------ 
+bool PsuadeConfig::DiagnosticsIsOn()
+{
+  if (Diagnostics_ == 0) return false;
+  else                   return true;
+}
+
+// ************************************************************************
 // set random seed
 // ------------------------------------------------------------------------ 
 void PsuadeConfig::setRandomSeed(long rseed)
@@ -888,29 +941,29 @@ int genConfigFileTemplate(char *fname)
     fprintf(fp,"## Normalize outputs for some response surface methods\n");
     fprintf(fp,"#normalize_output (take out the # to turn on)\n");
     fprintf(fp,"## MARS parameters (take out the # to turn on)\n");
-    fprintf(fp,"#MARS_num_bases = 50\n");
-    fprintf(fp,"#MARS_interaction = 2\n");
+    fprintf(fp,"#RS_MARS_num_bases = 50\n");
+    fprintf(fp,"#RS_MARS_interaction = 2\n");
     fprintf(fp,"## SVM parameters (remove # to turn on)\n");
-    fprintf(fp,"#SVM_gamma = 1.0 (1e-6 - 1.0)\n");
-    fprintf(fp,"#SVM_tol = 1.0 (1e-6 - 1.0)\n");
-    fprintf(fp,"#SVM_kernel = 1 (1:linear, 2:cubic, 3:RBF, 4:sigmoid)\n");
+    fprintf(fp,"#RS_SVM_gamma = 1.0 (1e-6 - 1.0)\n");
+    fprintf(fp,"#RS_SVM_tol = 1.0 (1e-6 - 1.0)\n");
+    fprintf(fp,"#RS_SVM_kernel = 1 (1:linear, 2:cubic, 3:RBF, 4:sigmoid)\n");
     fprintf(fp,"## RBF parameters (remove # to turn on)\n");
-    fprintf(fp,"#RBF_kernel = 0 (0/1/2/3:multi-quad, invM-Q, Gauss, spline)\n");
-    fprintf(fp,"#RBF_scale = x (Gaussian scale)\n");
-    fprintf(fp,"#RBF_thresh = x (SVD threshold)\n");
+    fprintf(fp,"#RS_RBF_kernel = 0 (0/1/2/3:multi-quad, invM-Q, Gauss, spline)\n");
+    fprintf(fp,"#RS_RBF_scale = x (Gaussian scale)\n");
+    fprintf(fp,"#RS_RBF_thresh = x (SVD threshold)\n");
     fprintf(fp,"## Kriging parameters (remove # to turn on)\n");
-    fprintf(fp,"#KRI_mode = 2\n");
-    fprintf(fp,"#KRI_tol = 1.0e-6\n");
-    fprintf(fp,"#KRI_DATA_STDEV_FILE = <add a file here>\n");
-    fprintf(fp,"#KRI_LENG_SCALE 1 = 0.1\n");
-    fprintf(fp,"#KRI_LENG_SCALE 2 = 0.1\n");
+    fprintf(fp,"#RS_KRI_mode = 2\n");
+    fprintf(fp,"#RS_KRI_tol = 1.0e-6\n");
+    fprintf(fp,"#RS_KRI_DATA_STDEV_FILE = <add a file here>\n");
+    fprintf(fp,"#RS_KRI_LENG_SCALE 1 = 0.1\n");
+    fprintf(fp,"#RS_KRI_LENG_SCALE 2 = 0.1\n");
     fprintf(fp,"## Legendre parameters (remove # to turn on)\n");
-    fprintf(fp,"#Legendre_order = 1\n");
+    fprintf(fp,"#RS_Legendre_order = 1\n");
     fprintf(fp,"## RBF,GP override - no multi-domain for large sample\n");
     fprintf(fp,"RS_no_multi_domain\n");
     fprintf(fp,"## multi-domain response surface method parameters\n");
-    fprintf(fp,"MRBF_max_samples_per_group = 1000\n");
-    fprintf(fp,"MGP_max_samples_per_group = 1000\n");
+    fprintf(fp,"RS_MRBF_max_sam_per_group = 1000\n");
+    fprintf(fp,"RS_MGP_max_sam_per_group = 1000\n");
     fprintf(fp,"## MOAT parameter (number of levels)\n");
     fprintf(fp,"#MOAT_P = 4\n");
     fprintf(fp,"## GMOAT parameter (number of levels)\n");

@@ -5,16 +5,17 @@
 // All rights reserved.
 //
 // Please see the COPYRIGHT and LICENSE file for the copyright notice,
-// disclaimer, contact information and the GNU Lesser General Public License.
+// disclaimer, contact information and the GNU Lesser General Public 
+// License.
 //
-// PSUADE is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free 
-// Software Foundation) version 2.1 dated February 1999.
+// PSUADE is free software; you can redistribute it and/or modify it under 
+// the terms of the GNU Lesser General Public License (as published by the 
+// Free Software Foundation) version 2.1 dated February 1999.
 //
-// PSUADE is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the IMPLIED WARRANTY OF MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE.  See the terms and conditions of the GNU Lesser
-// General Public License for more details.
+// PSUADE is distributed in the hope that it will be useful, but WITHOUT 
+// ANY WARRANTY; without even the IMPLIED WARRANTY OF MERCHANTABILITY 
+// or FITNESS FOR A PARTICULAR PURPOSE.  See the terms and conditions of 
+// the GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program; if not, write to the Free Software Foundation,
@@ -23,6 +24,16 @@
 // functions for the class MainEffectAnalyzer  
 // AUTHOR : CHARLES TONG
 // DATE   : 2003
+// ------------------------------------------------------------------------
+// This method assumes that the incoming sample is either replicated Latin
+// hypercube or just some random sample. If it is replicated LH, it will
+// use the MacKay method to compute main effect. If not, it will use the
+// binning strategy. Also, filter is used to take out infeasible points,
+// if it is so prescribed.
+// Thus, this method is suitable for inputs with all distribution types.
+// That is, the incoming sample may have been created via some types of
+// probability distributions (or some posteriors from inference) and it
+// can still handle it.
 // ************************************************************************
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,6 +58,7 @@ MainEffectAnalyzer::MainEffectAnalyzer() : Analyzer(), nInputs_(0),
                         mainEffectMean_(0), mainEffectStd_(0)
 {
   setName("MainEffect");
+  printLevel_ = 0;
 }
 
 // ************************************************************************
@@ -69,7 +81,6 @@ double MainEffectAnalyzer::analyze(aData &adata)
   PsuadeData    *ioPtr;
   psVector      VecY, VecXT, VecYT, VecTX, VecTY, VecVCE, VecMeanVCEVar;
   psVector      VecVarVCEVar, VecVarVCEMean;
-  RSConstraints *constrPtr=NULL;
 
   //**/ ---------------------------------------------------------------
   //**/ extract data
@@ -85,7 +96,7 @@ double MainEffectAnalyzer::analyze(aData &adata)
   int nSubSamples = adata.nSubSamples_;
   double *iLowerB = adata.iLowerB_;
   double *iUpperB = adata.iUpperB_;
-  int printLevel  = adata.printLevel_;
+  printLevel_ = adata.printLevel_;
   int whichOutput = outputID;
   ioPtr = adata.ioPtr_;
 
@@ -116,7 +127,7 @@ double MainEffectAnalyzer::analyze(aData &adata)
   }
   if (ioPtr == NULL)
   {
-    printOutTS(PL_ERROR,"MainEffect ERROR: no data.\n");
+    printOutTS(PL_ERROR,"MainEffect ERROR: No PsuadeData object.\n");
     return PSUADE_UNDEFINED;
   }
   if (adata.inputPDFs_ != NULL)
@@ -126,12 +137,11 @@ double MainEffectAnalyzer::analyze(aData &adata)
     if (ncount > 0)
     {
       printOutTS(PL_INFO, 
-           "MainEffect INFO: Some inputs have non-uniform PDFs.\n");
+         "MainEffect INFO: Some inputs have non-uniform PDFs.\n");
+      printOutTS(PL_INFO,"           If these PDFs are relevant in ");
+      printOutTS(PL_INFO,"this analysis, they should\n");
       printOutTS(PL_INFO, 
-           "           However, they are relevant in this analysis\n");
-      printOutTS(PL_INFO, 
-           "           (the sample should have been generated\n");
-      printOutTS(PL_INFO,"            with the desired distributions.)\n");
+         "           have been incorporated in the incoming sample.\n");
     }
   }
   VecInputVCE_.clean();
@@ -139,14 +149,16 @@ double MainEffectAnalyzer::analyze(aData &adata)
   //**/ ---------------------------------------------------------------
   //**/ get response surface filter information, if any
   //**/ ---------------------------------------------------------------
+  RSConstraints *constrPtr=NULL;
   if (ioPtr != NULL)
   {
     constrPtr = new RSConstraints();
-    if(constrPtr != NULL) constrPtr->genConstraints(ioPtr);
+    if (constrPtr != NULL) constrPtr->genConstraints(ioPtr);
     else 
     {
-      printOutTS(PL_ERROR,"out of memory in file %s line %d, exiting.\n",
-                 __FILE__, __LINE__);
+      printOutTS(PL_ERROR,
+          "out of memory in file %s line %d, exiting.\n",
+          __FILE__, __LINE__);
       exit(1);
     }
   }
@@ -161,35 +173,39 @@ double MainEffectAnalyzer::analyze(aData &adata)
   for (ss = 0; ss < nSamples; ss++)
   {
     VecY[ss] = sampleOutputs[nOutputs*ss+whichOutput];
-    ddata = constrPtr->evaluate(&(X[ss*nInputs]), VecY[ss], status);
+    status = 1;
+    if (constrPtr != NULL)
+      ddata = constrPtr->evaluate(&(X[ss*nInputs]),VecY[ss],status);
     if (status == 0) VecY[ss] = PSUADE_UNDEFINED; 
     else             ncount++;
   }
   if (ncount == 0)
   {
-    printOutTS(PL_ERROR,"MainEffect ERROR: no valid sample point.\n");
-    printOutTS(PL_ERROR,"    nSamples before filtering = %d\n", nSamples);
-    printOutTS(PL_ERROR,"    nSamples after  filtering = %d\n", ncount);
+    printOutTS(PL_ERROR,"MainEffect ERROR: No valid sample point.\n");
+    printOutTS(PL_ERROR,
+       "    nSamples before filtering = %d\n",nSamples);
+    printOutTS(PL_ERROR,
+       "    nSamples after  filtering = %d\n",ncount);
     printOutTS(PL_ERROR, 
-         "    INFO: check your data file for undefined's (1e35)\n");
+       "    INFO: Check your data file for undefined's (1e35)\n");
     if (constrPtr != NULL) delete constrPtr;
     return 1.0;
   } 
   if (ncount != nSamples)
   {
     printOutTS(PL_INFO,
-         "MainEffectAnalyzer INFO: CONSTRAINTS HAVE BEEN APPLIED.\n");
+         "MainEffect INFO: CONSTRAINTS HAVE BEEN APPLIED.\n");
     printOutTS(PL_INFO, 
          "    nSamples before filtering = %d\n", nSamples);
     printOutTS(PL_INFO, 
-         "    nSamples after  filtering  = %d\n", ncount);
+         "    nSamples after  filtering = %d\n", ncount);
   }
   if (nSamples < 1000)
   {
     printOutTS(PL_INFO,
-       "MainEffectAnalyzer INFO: nSamples may be too small to give results\n");
+       "MainEffect INFO: nSamples may be too small to give results\n");
     printOutTS(PL_INFO, 
-       "                         with acceptable accuracy (nSamples = %d).\n",
+       "           with acceptable accuracy (nSamples = %d).\n",
        nSamples);
   }
 
@@ -199,7 +215,7 @@ double MainEffectAnalyzer::analyze(aData &adata)
   double aMean, aVariance;
   computeMeanVariance(nInputs,1,nSamples,VecY.getDVector(),&aMean,
                       &aVariance,0);
-  if (printLevel >= 0)
+  if (psConfig_.InteractiveIsOn() && printLevel_ > 0)
   {
     printAsterisks(PL_INFO, 0);
     printOutTS(PL_INFO,"*              Main Effect Analysis\n");
@@ -218,7 +234,54 @@ double MainEffectAnalyzer::analyze(aData &adata)
                  sqrt(aVariance));
   }
   mainEffectMean_ = aMean;
-  mainEffectStd_ = sqrt(aVariance);
+  mainEffectStd_  = sqrt(aVariance);
+
+  //**/ ---------------------------------------------------------------
+  //**/ If filtering has been applied and some points have been removed,
+  //**/ use the crude version
+  //**/ ---------------------------------------------------------------
+  if (ncount != nSamples)
+  {
+    printOutTS(PL_INFO,
+       "* MainEffect INFO: Some points have been filtered out.\n");
+    printOutTS(PL_INFO,
+       "                   (%d of %d left)\n",ncount,nSamples);
+    printOutTS(PL_INFO,"*       ==> Crude (1D-binning) analysis.\n");
+    VecVCE.setLength(nInputs);
+
+    //**/ ---------------------------------------------------------
+    //**/ compute main effects
+    //**/ ---------------------------------------------------------
+    computeVCECrude(nInputs, nSamples, X, VecY.getDVector(), 
+                iLowerB, iUpperB, aVariance, VecVCE.getDVector());
+
+    //**/ ---------------------------------------------------------
+    //**/ put the results in the PsuadData object
+    //**/ ---------------------------------------------------------
+    if (ioPtr != NULL)
+    {
+      pData *pPtr = ioPtr->getAuxData();
+      pPtr->nDbles_ = nInputs;
+      pPtr->dbleArray_ = new double[nInputs * nInputs];
+      for (ii = 0; ii < nInputs; ii++)
+        pPtr->dbleArray_[ii] = VecVCE[ii];
+
+      pPtr->dbleData_ = aVariance;
+    }
+
+    //**/ ---------------------------------------------------------
+    //**/ generate matlab (printLevel < 0 when rsmeb is called)
+    //**/ ---------------------------------------------------------
+    if (psConfig_.InteractiveIsOn() && printLevel_ > 0)
+      printResults(nInputs, aVariance, VecVCE.getDVector(), ioPtr);
+
+    //**/ ---------------------------------------------------------
+    //**/ clean up
+    //**/ ---------------------------------------------------------
+    if (constrPtr != NULL) delete constrPtr;
+    return 1.0;
+  }
+
   //**/ ---------------------------------------------------------------
   //**/ allocate spaces for local variables
   //**/ ---------------------------------------------------------------
@@ -244,11 +307,12 @@ double MainEffectAnalyzer::analyze(aData &adata)
   VecTY.setLength(nSamples);
 
   //**/ ---------------------------------------------------------------
-  //**/ first revise nReplications and nSubs (using X1 only to test)
+  //**/ first revise nReplications and nSubs 
   //**/ ---------------------------------------------------------------
   for (ss = 0; ss < nSamples; ss++) VecTY[ss] = VecY[ss];
   for (ii = 0; ii < nInputs; ii++)
   {
+    //**/ find number of replications for each input
     for (ss = 0; ss < nSamples; ss++) VecTX[ss] = X[nInputs*ss+ii];
     sortDbleList2(nSamples,VecTX.getDVector(),VecTY.getDVector());
     nReplications = 1;
@@ -257,22 +321,34 @@ double MainEffectAnalyzer::analyze(aData &adata)
       if (VecTX[ss] == VecTX[0]) nReplications++;
       else                       break;
     }
-    printf("* Number of replications for Input %d = %d\n",ii+1,
-           nReplications);
+    if (psConfig_.InteractiveIsOn() && printLevel_ > 1)
+    {
+      printf("* MainEffect INFO: Number of RLH replications ");
+      printf("for Input %d = %d\n",ii+1, nReplications);
+    }
+    //**/ if number of replications too small, use binning
     if (nReplications <= 5)
     {
       printOutTS(PL_INFO,
-        "* MainEffect INFO: nReps <= 5 for input %d.\n",ii+1);
+        "* MainEffect INFO: RLH nReps <= 5 for input %d.\n",ii+1);
       printOutTS(PL_INFO,
-        "*     ==> probably not replicated Latin hypercube\n");
-      printOutTS(PL_INFO,"*     ==> crude main effect analysis.\n");
+        "*     ==> Probably not replicated Latin hypercube\n");
+      printOutTS(PL_INFO,"*     ==> Crude (1D-binning) analysis.\n");
+
+      //**/ ---------------------------------------------------------
+      //**/ compute main effects
+      //**/ ---------------------------------------------------------
       computeVCECrude(nInputs, nSamples, X, VecY.getDVector(), 
                 iLowerB, iUpperB, aVariance, VecVCE.getDVector());
+
+      //**/ ---------------------------------------------------------
+      //**/ write result to PsuadeData object
+      //**/ ---------------------------------------------------------
       if (ioPtr != NULL)
       {
         pData *pPtr = ioPtr->getAuxData();
         pPtr->nDbles_ = nInputs;
-        pPtr->dbleArray_ = new double[nInputs * nInputs];
+        pPtr->dbleArray_ = new double[nInputs];
         for (ii = 0; ii < nInputs; ii++)
           pPtr->dbleArray_[ii] = VecVCE[ii];
         pPtr->dbleData_ = aVariance;
@@ -280,13 +356,13 @@ double MainEffectAnalyzer::analyze(aData &adata)
       //**/ ---------------------------------------------------------
       //**/ generate matlab (printLevel < 0 when rsmeb is called)
       //**/ ---------------------------------------------------------
-      if (printLevel >= 0)
+      if (printLevel_ > 0)
         printResults(nInputs, aVariance, VecVCE.getDVector(), ioPtr);
 
       //**/ ---------------------------------------------------------
       //**/ clean up
       //**/ ---------------------------------------------------------
-      delete constrPtr;
+      if (constrPtr != NULL) delete constrPtr;
       return 1.0;
     }
   }
@@ -295,16 +371,18 @@ double MainEffectAnalyzer::analyze(aData &adata)
   //**/  fetch matlab file name (interactively or from config file) 
   //**/ ---------------------------------------------------------------
   fp = NULL;
-  if (psConfig_.AnaExpertModeIsOn())
+  if (psConfig_.InteractiveIsOn() && psConfig_.AnaExpertModeIsOn())
   {
     snprintf(pString,100,"Create main effect scatter plot ? (y or n) ");
     getString(pString, winput1);
     if (winput1[0] == 'y')
     {
       if (plotScilab())
-        snprintf(pString,100,"Enter scatter plot file name (ends with .sci): ");
+        snprintf(pString,100,
+                 "Enter scatter plot file name (ends with .sci): ");
       else
-        snprintf(pString,100,"Enter scatter plot file name (ends with .m): ");
+        snprintf(pString,100,
+                 "Enter scatter plot file name (ends with .m): ");
       getString(pString, meFileName);
       meFileName[strlen(meFileName)-1] = '\0';
       fp = fopen(meFileName, "w");
@@ -349,7 +427,7 @@ double MainEffectAnalyzer::analyze(aData &adata)
   }
 
   //**/ ---------------------------------------------------------------
-  //**/ calculate statistics for each input
+  //**/ calculate main effects for each illnput
   //**/ ---------------------------------------------------------------
   status = computeVCE(nInputs,nSamples,nSubSamples,X,VecY.getDVector(), 
                   whichOutput,fp,VecVarVCEMean.getDVector(),
@@ -357,13 +435,21 @@ double MainEffectAnalyzer::analyze(aData &adata)
                   VecVCE.getDVector());
   if (status == -1)
   {
+    //**/ ---------------------------------------------------------------
+    //**/ if it fails the RLH VCE method, use binning
+    //**/ ---------------------------------------------------------------
+    printOutTS(PL_INFO,"ME INFO: Perform crude (1D-binning) analysis.\n");
     computeVCECrude(nInputs,nSamples,X,VecY.getDVector(),iLowerB,
                     iUpperB,aVariance,VecVCE.getDVector());
     //**/ ---------------------------------------------------------------
     //**/ generate matlab (printLevel < 0 when rsmeb is called)
     //**/ ---------------------------------------------------------------
-    if (printLevel >= 0)
+    if (psConfig_.InteractiveIsOn() && printLevel_ > 0)
       printResults(nInputs, aVariance, VecVCE.getDVector(), ioPtr);
+
+    //**/ ---------------------------------------------------------------
+    //**/ write the results to PsuadeData object
+    //**/ ---------------------------------------------------------------
     if (ioPtr != NULL)
     {
       pData *pPtr = ioPtr->getAuxData();
@@ -381,8 +467,11 @@ double MainEffectAnalyzer::analyze(aData &adata)
     if (fp != NULL) fclose(fp);
     return 0.0;
   }
-  if (ioPtr != NULL)
+  else if (ioPtr != NULL)
   {
+    //**/ ---------------------------------------------------------------
+    //**/ if computeVCE successful, write results to the PsuadeData objet
+    //**/ ---------------------------------------------------------------
     pData *pPtr = ioPtr->getAuxData();
     pPtr->nDbles_ = nInputs;
     pPtr->dbleArray_ = new double[nInputs * nInputs];
@@ -408,7 +497,7 @@ double MainEffectAnalyzer::analyze(aData &adata)
   //**/ display VCE for each input
   //**/ ---------------------------------------------------------------
   double totalVCE;
-  if (printLevel >= 0)
+  if (psConfig_.InteractiveIsOn() && printLevel_ >= 0)
   {
     printAsterisks(PL_INFO, 0);
     printOutTS(PL_INFO,"            McKay's correlation ratio\n");
@@ -422,21 +511,22 @@ double MainEffectAnalyzer::analyze(aData &adata)
       {
         totalVCE += VecVCE[ii] / aVariance;
         printOutTS(PL_INFO, 
-          "Input %4d, normalized 1st-order effect = %9.2e (raw = %9.2e)\n",
+          "Input %3d: 1st-order effect = %9.2e (unnormalized = %9.2e)\n",
           ii+1, VecVCE[ii]/aVariance, VecVCE[ii]);
       }
-      printOutTS(PL_INFO, "Total VCE = %9.2e\n", totalVCE);
+      printOutTS(PL_INFO, "Sum of VCEs = %9.2e\n", totalVCE);
     }
+    printAsterisks(PL_INFO, 0);
   }
 
   //**/ ---------------------------------------------------------------
   //**/ display VecVarVCEMean for each input
   //**/ ---------------------------------------------------------------
-  if (printLevel > 2)
+  if (psConfig_.InteractiveIsOn() && printLevel_ > 2)
   {
     printAsterisks(PL_INFO, 0);
     printOutTS(PL_INFO,
-         "     McKay's biased correlation ratio (stdVCEMean)\n");
+         "     McKay's unbiased correlation ratio (stdVCEMean)\n");
     printDashes(PL_INFO, 0);
     totalVCE = 0.0;
     for (ii = 0; ii < nInputs; ii++)
@@ -445,22 +535,24 @@ double MainEffectAnalyzer::analyze(aData &adata)
              VecVarVCEMean[ii]/aVariance,1.0/(double)(nSubs*nSubs));
       totalVCE += VecVarVCEMean[ii] / aVariance;
     }
-    printOutTS(PL_INFO, "Total VCE = %9.2e\n", totalVCE);
+    printOutTS(PL_INFO, "Sum of VCEs = %9.2e\n", totalVCE);
   }
 
   //**/ ---------------------------------------------------------------
   //**/ display variance of vce variance
   //**/ ---------------------------------------------------------------
-  if (printLevel > 2)
+  if (psConfig_.InteractiveIsOn() && printLevel_ > 2)
   {
     printAsterisks(PL_INFO, 0);
-    printOutTS(PL_INFO, "           Strength of interaction (varVCEVar)\n");
+    printOutTS(PL_INFO,
+         "           Strength of interaction (varVCEVar)\n");
     printDashes(PL_INFO, 0);
     for (ii = 0; ii < nInputs; ii++)
       printOutTS(PL_INFO,"    Input %2d = %9.2e (meanVCEVar = %9.2e)\n",
-                 ii+1, VecVarVCEVar[ii], VecMeanVCEVar[ii]);
+           ii+1, VecVarVCEVar[ii], VecMeanVCEVar[ii]);
     printAsterisks(PL_INFO, 0);
-    printOutTS(PL_INFO,"            Hora and Iman sensitivity index\n");
+    printOutTS(PL_INFO,
+         "            Hora and Iman sensitivity index\n");
     printOutTS(PL_INFO,
          "   (may not be valid in the presence of constraints)\n");
     printDashes(PL_INFO, 0);
@@ -475,7 +567,7 @@ double MainEffectAnalyzer::analyze(aData &adata)
 
 #ifdef HAVE_PYTHON
   //**/ ---------------------------------------------------------------
-  //**/ store data for python graphics
+  //**/ store data for python graphics (OBSOLETE)
   //**/ ---------------------------------------------------------------
   //**/ Store scalars as python ints/floats
   PyObject *temp, *Xlist, *XIlist, *Ylist, *VCElist, *vVCEMlist;
@@ -598,7 +690,7 @@ double MainEffectAnalyzer::analyze(aData &adata)
   //**/ ---------------------------------------------------------------
   //**/ bootstrapping runs
   //**/ ---------------------------------------------------------------
-  if (psConfig_.AnaExpertModeIsOn())
+  if (psConfig_.InteractiveIsOn() && psConfig_.AnaExpertModeIsOn())
   {
     printOutTS(PL_INFO, 
        "Bootstrap analysis takes the sample, replicates it n times,\n");
@@ -610,12 +702,14 @@ double MainEffectAnalyzer::analyze(aData &adata)
        "you will need to enter 'no index reuse' below at the first\n");
     printOutTS(PL_INFO, 
        "iteration and 'yes' afterward until the final refinement.\n");
-    snprintf(pString,100,"Perform bootstrap main effect analysis? (y or n) ");
+    snprintf(pString,100,
+       "Perform bootstrap main effect analysis? (y or n) ");
     getString(pString, winput1);
     ncount = 0;
     if (winput1[0] == 'y')
     {
-      snprintf(pString,100,"Number of bootstrap samples to use (>=100): ");
+      snprintf(pString,100,
+         "Number of bootstrap samples to use (>=100): ");
       ncount = getInt(100, 2000, pString);
       psMatrix MatBS;
       MatBS.setFormat(PS_MAT2D);
@@ -636,10 +730,11 @@ double MainEffectAnalyzer::analyze(aData &adata)
           fscanf(fp1, "%d", &ii);
           if (ii != nReplications*ncount)
           {
-            printOutTS(PL_ERROR,"ERROR: expect the first line to be %d.\n",
-                   nReplications*ncount);
+            printOutTS(PL_ERROR,
+               "ERROR: expect the first line to be %d.\n",
+               nReplications*ncount);
             printOutTS(PL_ERROR, 
-                 "       Instead found the first line to be %d.n",ii);
+               "       Instead found the first line to be %d.n",ii);
             exit(1);
           }
         }
@@ -650,7 +745,7 @@ double MainEffectAnalyzer::analyze(aData &adata)
           if (fp1 == NULL)
           {
             printOutTS(PL_ERROR, 
-                 "ERROR: cannot open ME_bootstrap_indset file.\n");
+                 "ERROR: Cannot open ME_bootstrap_indset file.\n");
             exit(1);
           }
           fprintf(fp1, "%d\n", nReplications*ncount);
@@ -662,7 +757,7 @@ double MainEffectAnalyzer::analyze(aData &adata)
         if (fp1 == NULL)
         {
           printOutTS(PL_ERROR, 
-               "ERROR: cannot open .ME_bootstrap_indset file.\n");
+               "ERROR: Cannot open .ME_bootstrap_indset file.\n");
           exit(1);
         }
         fprintf(fp1, "%d\n", nReplications*ncount);
@@ -679,7 +774,7 @@ double MainEffectAnalyzer::analyze(aData &adata)
             if (index < 0 || index >= nReplications)
             {
               printOutTS(PL_ERROR, 
-                 "ERROR: reading index from file .ME_bootstrap_indset\n");
+                 "ERROR: Reading index from file .ME_bootstrap_indset\n");
               printOutTS(PL_ERROR,"       index read = %d\n", index);
               printOutTS(PL_ERROR,"       expected   = [0,%d]\n", 
                          nReplications-1);
@@ -748,8 +843,9 @@ double MainEffectAnalyzer::analyze(aData &adata)
           else              fprintf(fp, "Str = {");
           for (ii = 0; ii < nInputs-1; ii++)
           {
-            if (inputNames[ii] != NULL) fprintf(fp,"'%s',",inputNames[ii]);
-            else                        fprintf(fp,"'X%d',",ii+1);
+            if (inputNames[ii] != NULL) 
+                 fprintf(fp,"'%s',",inputNames[ii]);
+            else fprintf(fp,"'X%d',",ii+1);
           }
           if (plotScilab())  
           {
@@ -777,7 +873,8 @@ double MainEffectAnalyzer::analyze(aData &adata)
         fprintf(fp,"for ii = 1 : nn\n");
         fprintf(fp,"  XX = [ii ii];\n");
         fprintf(fp,"  YY = [VMI(ii)  VMA(ii)];\n");
-        fprintf(fp,"  plot(XX,YY,'-ko','LineWidth',3.0,'MarkerEdgeColor',");
+        fprintf(fp,
+            "  plot(XX,YY,'-ko','LineWidth',3.0,'MarkerEdgeColor',");
         fprintf(fp,"'k','MarkerFaceColor','g','MarkerSize',13)\n");
         fprintf(fp,"end;\n");
         fwritePlotAxes(fp);
@@ -796,12 +893,14 @@ double MainEffectAnalyzer::analyze(aData &adata)
         {
           fprintf(fp,"axis([0  nn+1 ymin ymax])\n");
           fprintf(fp,"set(gca,'XTickLabel',[]);\n");
-          fprintf(fp,"th=text(1:nn, repmat(ymin-0.05*(ymax-ymin),nn,1),");
-          fprintf(fp,"Str,'HorizontalAlignment','left','rotation',90);\n");
+          fprintf(fp,
+            "th=text(1:nn, repmat(ymin-0.05*(ymax-ymin),nn,1),");
+          fprintf(fp,
+            "Str,'HorizontalAlignment','left','rotation',90);\n");
           fprintf(fp,"set(th, 'fontsize', 12)\n");
           fprintf(fp,"set(th, 'fontweight', 'bold')\n");
         }
-        fwritePlotTitle(fp,"Bootstrapped Sobol first  Order Indices");
+        fwritePlotTitle(fp,"Bootstrapped Sobol first-Order Indices");
         fwritePlotYLabel(fp,"Sobol Indices");
         fclose(fp);
       }
@@ -815,7 +914,7 @@ double MainEffectAnalyzer::analyze(aData &adata)
   //**/ ---------------------------------------------------------------
   //**/ generate matlab (printLevel < 0 when rsmeb is called)
   //**/ ---------------------------------------------------------------
-  if (printLevel >= 0)
+  if (psConfig_.InteractiveIsOn() && printLevel_ > 0)
     printResults(nInputs, aVariance, VecVCE.getDVector(), ioPtr);
 
   //**/ ---------------------------------------------------------------
@@ -1010,10 +1109,10 @@ int MainEffectAnalyzer::computeVCE(int nInputs,int nSamples,int nSubSamples,
 
     //**/ Sept 2009: somehow the non-adjusted form works better
     //**/            since validnSubs can be very small after pruning
-    //**/vce[ii] = varVCEMean[ii] - meanVCEVar[ii]/((double) validnSubs);
-    //**/ Sept 2010: revert to adjusted form (rs_qsa confirms this)
     if (validnSubs > 0) vce[ii] = varVCEMean[ii];
     else                vce[ii] = 0.0;
+    //**/ 2024: put the adjusted form in here
+    varVCEMean[ii] = varVCEMean[ii]-meanVCEVar[ii]/((double) validnSubs);
   }
   return 0;
 }
@@ -1039,37 +1138,43 @@ int MainEffectAnalyzer::computeVCECrude(int nInputs, int nSamples,
   if (psConfig_.InteractiveIsOn())
   {
     printAsterisks(PL_INFO, 0);
-    printOutTS(PL_INFO,"*                Crude Main Effect\n");
+    printOutTS(PL_INFO,"*         Crude (1D-binning) Main Effect\n");
     printEquals(PL_INFO, 0);
     printOutTS(PL_INFO, 
       "* For small to moderate sample sizes, this method gives ");
     printOutTS(PL_INFO, 
       "rough estimate\n");
     printOutTS(PL_INFO, 
-      "* of main effect (first order sensitivity).  These estimates ");
+      "* of main effect (first order sensitivity).  These ");
     printOutTS(PL_INFO, 
-      "can vary\n");
+      "estimates can vary\n");
     printOutTS(PL_INFO, 
-      "* with different choices of internal settings.  For example, you ");
+      "* with different choices of internal settings.  For example, ");
     printOutTS(PL_INFO, 
-      "can\n");
+      "you can\n");
     printOutTS(PL_INFO, 
-      "* try different number of levels to assess the computed main effect\n");
+      "* try different number of levels to assess the computed ");
     printOutTS(PL_INFO, 
-      "* measures with respect to the it.\n");
+      "main effect\n");
+    printOutTS(PL_INFO,"* measures with respect to the it.\n");
     printOutTS(PL_INFO, 
-      "* Turn on analysis expert mode to change the settings.\n");
+      "* Turn on analysis expert mode to change internal settings.\n");
   }
-  nIntervals = (int) sqrt(1.0 * nSamples);
+  //nIntervals = (int) sqrt(1.0 * nSamples);
+  nIntervals = (int) pow(1.0 * nSamples, 1.0/2.0);
   nSize = nSamples / nIntervals;
-  if (psConfig_.InteractiveIsOn())
+  if (nSize < 100) nSize = 100;
+//  if (psConfig_.InteractiveIsOn())
   {
-    printOutTS(PL_INFO,"* MainEffect: number of levels   = %d\n", nIntervals);
-    printOutTS(PL_INFO,"* MainEffect: sample size/levels = %d\n", nSize);
+    printOutTS(PL_INFO,
+      "* MainEffect: Number of levels   = %d\n", nIntervals);
+    printOutTS(PL_INFO,
+      "* MainEffect: Sample size/levels = %d\n", nSize);
   }
   if (psConfig_.AnaExpertModeIsOn() && psConfig_.InteractiveIsOn())
   {
-    snprintf(pString,100,"number of levels (>5, default = %d): ", nIntervals);
+    snprintf(pString,100,"number of levels (>5, default = %d): ", 
+             nIntervals);
     nIntervals = getInt(5, nSamples/2, pString);
     nSize = nSamples / nIntervals;
   }
@@ -1139,7 +1244,7 @@ int MainEffectAnalyzer::computeVCECrude(int nInputs, int nSamples,
         nFilled++;
       }
     }
-    if (psConfig_.InteractiveIsOn())
+    if (psConfig_.InteractiveIsOn() && printLevel_ > 1)
       printf("(ME INFO) Input %4d: %d out of %d bins populated.\n",
              ii+1, nFilled,nIntervals);
     vce[ii] = 0.0;
@@ -1159,7 +1264,8 @@ int MainEffectAnalyzer::computeVCECrude(int nInputs, int nSamples,
     }
     VecInputVCE_[ii] = vce[ii];
   }
-  if (psConfig_.InteractiveIsOn()) printEquals(PL_INFO,0);
+  if (psConfig_.InteractiveIsOn() && printLevel_ > 1)
+    printEquals(PL_INFO,0);
 
   //**/ ---------------------------------------------------------------
   //**/ display VCE for each input
@@ -1167,14 +1273,15 @@ int MainEffectAnalyzer::computeVCECrude(int nInputs, int nSamples,
   ddata = 0.0;
   if (psConfig_.InteractiveIsOn()) 
   {
-    if (aVariance == 0) printOutTS(PL_INFO, "Total VCE = %9.2e\n", ddata);
+    if (aVariance == 0) 
+      printOutTS(PL_INFO,"Sum of VCE's = %9.2e\n", ddata);
     else
     {
       for (ii = 0; ii < nInputs; ii++)
       {
         ddata += vce[ii] / aVariance;
         printOutTS(PL_INFO, 
-           "Input %4d, normalized 1st-order effect = %9.2e (raw = %9.2e)\n",
+           "Input %3d: 1st-order effect = %9.2e (Unnormalized = %9.2e)\n",
            ii+1, vce[ii]/aVariance, vce[ii]);
       }
       printOutTS(PL_INFO, "Total VCE = %9.2e\n", ddata);
@@ -1195,7 +1302,8 @@ int MainEffectAnalyzer::computeVCECrude(int nInputs, int nSamples,
 // ------------------------------------------------------------------------
 MainEffectAnalyzer& MainEffectAnalyzer::operator=(const MainEffectAnalyzer &)
 {
-  printOutTS(PL_ERROR,"MainEffect operator= ERROR: operation not allowed.\n");
+  printOutTS(PL_ERROR,
+       "MainEffect operator= ERROR: operation not allowed.\n");
   exit(1);
   return (*this);
 }
@@ -1216,7 +1324,8 @@ int MainEffectAnalyzer::printResults(int nInputs, double variance,
   else                         iNames = NULL;
   if (variance == 0.0)
   {
-    printOutTS(PL_WARN, "Total variance = 0. Hence, no main effect plot.\n");
+    printOutTS(PL_WARN, 
+        "Total variance = 0. Hence, no main effect plot.\n");
     return 0;
   }
   //**/for (ii = 0; ii < nInputs; ii++)
@@ -1225,8 +1334,8 @@ int MainEffectAnalyzer::printResults(int nInputs, double variance,
   //**/          "Input %4d: Sobol' first order sensitivity = %12.4e\n",
   //**/          ii+1,mEffect[ii]/variance);
   //**/}
-  if (plotScilab()) fp = fopen("scilabme.sci", "w");
-  else              fp = fopen("matlabme.m", "w");
+  if (plotScilab()) fp = fopen("scilabvce1_bin.sci", "w");
+  else              fp = fopen("matlabvce1_bin.m", "w");
   if (fp != NULL)
   {
     strcpy(pString," This file contains Sobol' first order indices");
@@ -1302,24 +1411,29 @@ int MainEffectAnalyzer::printResults(int nInputs, double variance,
     {
       fprintf(fp,"axis([0  nn+1 ymin ymax])\n");
       fprintf(fp,"set(gca,'XTickLabel',[]);\n");
-      fprintf(fp,"th=text(1:nn, repmat(ymin-0.05*(ymax-ymin),nn,1),Str,");
+      fprintf(fp,
+        "th=text(1:nn, repmat(ymin-0.05*(ymax-ymin),nn,1),Str,");
       fprintf(fp,"'HorizontalAlignment','left','rotation',90);\n");
       fprintf(fp,"set(th, 'fontsize', 12)\n");
       fprintf(fp,"set(th, 'fontweight', 'bold')\n");
     }
     fwritePlotTitle(fp,"Sobol First Order Indices");
     fwritePlotYLabel(fp,"Sobol Indices");
-    fprintf(fp,"disp('Switch sortFlag to display ranked Sobol indices')\n");
+    fprintf(fp,
+      "disp('Switch sortFlag to display ranked Sobol indices')\n");
     fwriteHold(fp, 0);
     fclose(fp);
     if (plotScilab()) 
-         printOutTS(PL_INFO, "MainEffect plot matlab file = scilabme.sci\n");
-    else printOutTS(PL_INFO, "MainEffect plot matlab file = matlabme.m\n");
+         printOutTS(PL_INFO, 
+           "MainEffect plot matlab file = scilabvce1_bin.sci\n");
+    else printOutTS(PL_INFO, 
+           "MainEffect plot matlab file = matlabvce1_bin.m\n");
     return 0;
   }
   else
   {
-    printOutTS(PL_ERROR,"MainEffect ERROR: cannot create matlabme.m file.\n");
+    printOutTS(PL_ERROR,
+       "MainEffect ERROR: cannot create matlabvce1_bin.m file.\n");
     return 0;
   }
 }

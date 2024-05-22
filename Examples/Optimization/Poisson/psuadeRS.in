@@ -15,10 +15,10 @@ OUTPUT
 END
 METHOD
    sampling         = LPTAU
-   num_samples      = 10
+   num_samples      = 20
 END
 APPLICATION
-   driver = ./smmm_fine_sim
+   driver = ./smmm_coarse_sim
 END
 ANALYSIS
    analyzer rstype = GP3

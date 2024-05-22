@@ -50,6 +50,7 @@
 #include "LBFGSOptimizer.h"
 #include "NomadOptimizer.h"
 #include "OUUMinlpOptimizer.h"
+#include "PSOptimizer.h"
 
 #define PABS(x)  ((x) > 0 ? x : -(x))
 
@@ -147,6 +148,7 @@ int OptimizerSearch(PsuadeData *psuadeIO, FunctionInterface *funcIO,
   LBFGSOptimizer    *lbfgsPtr;
   NomadOptimizer    *nomadPtr;
   OUUMinlpOptimizer *minlpPtr;
+  PSOptimizer       *psoPtr;
   oData             odata;
 
   //**/ ----------------------------------------------------------------
@@ -1776,6 +1778,105 @@ int OptimizerSearch(PsuadeData *psuadeIO, FunctionInterface *funcIO,
       }
     }
     printf("\t OUU/MINLP total number of function evaluations = %d\n",
+           odata.numFuncEvals_);
+  }
+
+  //**/ ======= use particle swarm =======
+  else if ((optimizeFlag == 1) && (optMethod == 23))
+  {
+    numYmin = 0;
+    istart = optimalCount - optimizeNumPts;
+    if (istart < 0) istart = 0;
+    psoPtr = new PSOptimizer();
+    odata.optimalY_ = 1e35;
+    odata.numFuncEvals_ = 0;
+    psuadeIO->getParameter("ana_opt_fmin", pPtr);
+    odata.targetY_ = pPtr.dbleData_;
+    totalEval = 0;
+    for (ind1 = istart; ind1 < optimalCount; ind1++)
+    {
+      printAsterisks(PL_INFO, 0);
+      printf("PSUADE OPTIMIZATION %d (%d) : \n", ind1+1, optimalCount);
+
+      if ((optData[1][ind1] > optCutOff) && (ind1 > 0))
+      {
+        printf("skip optimization (%16.8e > %16.8e) : \n", 
+               optData[1][ind1], optCutOff);
+      }
+      else
+      {
+        for (ii = 0; ii < nInputs; ii++)
+        {
+          ss = (int) optData[0][ind1*nInputs+ii];
+          if (optData[0][ind1*nInputs+ii] - ss == 0)
+            printf("\t starting X(%6d) = %d\n",ii+1,ss);
+          else
+            printf("\t starting X(%6d) = %16.8e\n",ii+1,
+                   optData[0][ind1*nInputs+ii]);
+        }
+        printf("\t starting Y = %16.8e\n",optData[1][ind1]);
+
+        odata.initialX_ = &(optData[0][ind1*nInputs]); 
+        funcIO->setSynchronousMode();
+        odata.funcIO_ = funcIO;
+        odata.nInputs_ = nInputs;
+        odata.nOutputs_ = nOutputs;
+        odata.outputID_ = optID;
+        odata.lowerBounds_ = iLowerB;
+        odata.upperBounds_ = iUpperB;
+        odata.outputLevel_ = optPrintLevel;
+        odata.tolerance_   = optTol;
+        odata.optimalX_ = new double[nInputs];
+        if      (optimalCount-istart == 1) odata.setOptDriver_ = 3;
+        else if (ind1 == istart)           odata.setOptDriver_ = 1;
+        else if (ind1 == optimalCount-1)   odata.setOptDriver_ = 2;
+        else                               odata.setOptDriver_ = 0;
+        psoPtr->optimize(&odata);
+        printf("\t PSO number of function evaluations = %d\n",
+               odata.numFuncEvals_-totalEval);
+        totalEval = odata.numFuncEvals_;
+        if (odata.optimalY_ != 1.0e50)
+        {
+          for (ii = 0; ii < nInputs; ii++)
+          {
+            optData[2][ind1*nInputs+ii] = odata.optimalX_[ii];
+            ss = (int) optData[2][ind1*nInputs+ii];
+            if (optData[2][ind1*nInputs+ii] - ss == 0)
+              printf("\t optimum  X(%6d) = %d\n", ii+1, ss);
+            else
+              printf("\t optimum  X(%6d) = %16.8e\n", ii+1,
+                     odata.optimalX_[ii]);
+          }
+          optData[3][ind1] = odata.optimalY_;
+          printf("\t\t\t optimum Y = %16.8e\n", odata.optimalY_);
+        }
+        else
+        {
+          printf("** PSUADE PSO INFO: no feasible solution found.\n");
+        }
+        delete [] odata.optimalX_;
+        odata.optimalX_ = NULL;
+        odata.initialX_ = NULL;
+        odata.lowerBounds_ = NULL;
+        odata.upperBounds_ = NULL;
+        odata.funcIO_ = NULL;
+        if (optData[3][ind1] <= optFmin) numYmin++;
+      }
+      printAsterisks(PL_INFO, 0);
+    }
+    delete psoPtr;
+    for (ind1 = 0; ind1 < optimalCount; ind1++)
+    {
+      if (optFmin != 0.0) 
+      {
+        if (optData[3][ind1] <= optFmin) returnFlag++;
+      }
+      else
+      {
+        if (PABS(optData[3][ind1]) <= 1.0e-6) returnFlag++;
+      }
+    }
+    printf("\t PSO total number of function evaluations = %d\n",
            odata.numFuncEvals_);
   }
 

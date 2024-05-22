@@ -1,10 +1,4 @@
-RSTrainData: sample for training response surface
-PriorSample: prior sample for uncertain inputs 1,2
-CandidateSet: design candidates for inputs 3,4
-EvalSet: evaluation set for G/I metrics 
+test the equivalence of G-, W- and D- for linear systems
 
-psScript_boptn.in - run boptn
-psScript_boptnbf.in - run boptnbf
-psScript_foptn.in - run boptn
-psScript_foptnbf.in - run boptnbf
+rename to test.m before running with Matlab
 

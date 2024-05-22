@@ -1,20 +1,21 @@
 // ************************************************************************
-// Copyright (c) 2007   Lawrence Livermore National Security, LLC. 
+// Copyright (c) 2007   Lawrence Livermore National Security, LLC.
 // Produced at the Lawrence Livermore National Laboratory.
-// Written by the PSUADE team.
+// Written by the PSUADE team. 
 // All rights reserved.
 //
-// Please see the COPYRIGHT_and_LICENSE file for the copyright notice,
-// disclaimer, contact information and the GNU Lesser General Public License.
+// Please see the COPYRIGHT and LICENSE file for the copyright notice,
+// disclaimer, contact information and the GNU Lesser General Public 
+// License.
 //
-// PSUADE is free software; you can redistribute it and/or modify it under the
-// terms of the GNU General Public License (as published by the Free Software
-// Foundation) version 2.1 dated February 1999.
+// PSUADE is free software; you can redistribute it and/or modify it under 
+// the terms of the GNU Lesser General Public License (as published by the 
+// Free Software Foundation) version 2.1 dated February 1999.
 //
-// PSUADE is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the IMPLIED WARRANTY OF MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE.  See the terms and conditions of the GNU General
-// Public License for more details.
+// PSUADE is distributed in the hope that it will be useful, but WITHOUT 
+// ANY WARRANTY; without even the IMPLIED WARRANTY OF MERCHANTABILITY 
+// or FITNESS FOR A PARTICULAR PURPOSE.  See the terms and conditions of 
+// the GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program; if not, write to the Free Software Foundation,
@@ -68,7 +69,7 @@ double TSIAnalyzer::analyze(aData &adata)
   //**/ ---------------------------------------------------------------
   //**/ extract data
   //**/ ---------------------------------------------------------------
-  int printLevel = adata.printLevel_;
+  int printLevel_ = adata.printLevel_;
   int nInputs  = adata.nInputs_;
   int nOutputs = adata.nOutputs_;
   int nSamples = adata.nSamples_;
@@ -113,10 +114,9 @@ double TSIAnalyzer::analyze(aData &adata)
     if (YIn[nOutputs*ss+outputID] > 0.9*PSUADE_UNDEFINED) status = 1;
   if (status == 1)
   {
-    printOutTS(PL_ERROR,
-         "Total Effect ERROR: Some outputs are undefined. Prune the\n");
-    printOutTS(PL_ERROR, 
-         "                    undefined sample points first.\n");
+    printOutTS(PL_ERROR,"Total Effect ERROR: Some outputs are ");
+    printOutTS(PL_ERROR,"UNDEFINED. Prune the UNDEFINED\n");
+    printOutTS(PL_ERROR,"                    sample points first.\n");
     return PSUADE_UNDEFINED;
   }
   psVector vecYT;
@@ -150,8 +150,8 @@ double TSIAnalyzer::analyze(aData &adata)
   for (ss = 0; ss < nSamples; ss++)
     variance += ((vecYT[ss] - dmean) * (vecYT[ss] - dmean));
   variance /= (double) (nSamples - 1);
-  printOutTS(PL_INFO, "Total Effect: output mean     = %e\n", dmean);
-  printOutTS(PL_INFO, "Total Effect: output variance = %e\n", variance);
+  printOutTS(PL_INFO,"Total Effect: Output mean     = %e\n",dmean);
+  printOutTS(PL_INFO,"Total Effect: Output variance = %e\n",variance);
 
   //**/ ---------------------------------------------------------------
   //**/ set up mesh
@@ -179,22 +179,21 @@ double TSIAnalyzer::analyze(aData &adata)
   printOutTS(PL_INFO,"*          Crude Total Sensitivity Indices\n");
   printEquals(PL_INFO,0);
   printOutTS(PL_INFO,
-     "* Total Effect: number of subdomains          = %d\n",nSamples/50);
+    "* Total Effect: number of subdomains          = %d\n",nSamples/50);
   printOutTS(PL_INFO,
-     "* Total Effect: number of point per subdomain = 50\n");
+    "* Total Effect: number of point per subdomain = 50\n");
   printDashes(PL_INFO,0);
   printOutTS(PL_INFO,
-     "* NOTE: for small to moderate sample size, this method in general\n");
+    "* NOTE: For small to moderate sample size, this method in general\n");
   printOutTS(PL_INFO,
-     "*       gives rough estimates of total sensitivity.\n");
+    "*       gives rough estimates of total sensitivity.\n");
+  printOutTS(PL_INFO,"* Recommendation: Try different numbers of ");
+  printOutTS(PL_INFO,"subdomains to assess the\n");
+  printOutTS(PL_INFO,"*   goodness of the measures. ");
+  printOutTS(PL_INFO,"A rule of thumb for sample size per\n");
+  printOutTS(PL_INFO,"*   subdomain is > 50.\n");
   printOutTS(PL_INFO,
-     "* Recommendation: Try different numbers of subdomains to assess\n");
-  printOutTS(PL_INFO,
-     "*   the goodness of the measures. A rule of thumb for sample size\n");
-  printOutTS(PL_INFO,
-     "*   per subdomain is > 50.\n");
-  printOutTS(PL_INFO,
-     "* Turn on analysis expert mode to modify default settings.\n");
+     "* Turn on analysis expert mode to change internal settings.\n");
   printEquals(PL_INFO,0);
   if (psConfig_.AnaExpertModeIsOn())
   {
@@ -336,15 +335,16 @@ double TSIAnalyzer::analyze(aData &adata)
     if (emptyCnt > 0)
     {
       printOutTS(PL_WARN,
-          "TSIAnalyzer INFO: when computing TSI for input %d, %d bins out of\n",
-          inputID+1, emptyCnt);
+       "TSIAnalyzer INFO: When computing TSI for input %d, %d bins out of\n",
+       inputID+1, emptyCnt);
       printOutTS(PL_WARN, 
-          "            %d are empty. This may be due to unconventional input\n",
-          nAggrs);
+       "            %d are empty. This may be due to unconventional input\n",
+       nAggrs);
       printOutTS(PL_WARN,
-          "            distributions so that sample points are not distributed\n");
+       "            distributions so that sample points are not ");
+      printOutTS(PL_WARN,"distributed\n");
       printOutTS(PL_WARN,
-          "            evenly over the parameter space.\n");
+       "            evenly over the parameter space.\n");
     }
     nFilled = 0;
     for (ii = 0; ii < nAggrs; ii++)
@@ -355,8 +355,9 @@ double TSIAnalyzer::analyze(aData &adata)
         nFilled++;
       }
     }
-    printf("(TSI INFO) Input %4d : %d out of %d subdomains populated.\n",
-           inputID+1, nFilled, nAggrs);
+    if (printLevel_ > 1)
+      printf("(TSI INFO) Input %4d : %d out of %d subdomains populated.\n",
+             inputID+1, nFilled, nAggrs);
     dmean = 0.0;
     for (ii = 0; ii < nAggrs; ii++) 
       dmean += vecAggrMeans[ii] * vecAggrCnts[ii];
@@ -370,17 +371,19 @@ double TSIAnalyzer::analyze(aData &adata)
     if (dvar > variance)
     {
       printOutTS(PL_INFO,
-        "Input %4d: Approximate total sensitivity index %e > variance %e?\n",
-        inputID+1, dvar, variance);
-      printOutTS(PL_INFO,"            Is your sample evenly distributed?\n");
+       "Input %4d: Approximate total sensitivity index %e > variance %e?\n",
+       inputID+1, dvar, variance);
       printOutTS(PL_INFO,
-        "            Do you have too many subdomains (too few in each)?\n");
+       "            Is your sample evenly distributed?\n");
+      printOutTS(PL_INFO,
+       "            Do you have too many subdomains (too few in each)?\n");
       for (ii = 0; ii < nAggrs; ii++)
         printf("Aggregate mean %d = %e (dmean=%e, count=%d)\n",ii+1,
                vecAggrMeans[ii],dmean,vecAggrCnts[ii]);
     }
     vecTSI[inputID] = variance - dvar;
   }
+  if (printLevel_ > 1) printEquals(PL_INFO, 0);
   printResults(nInputs, variance, vecTSI.getDVector(), ioPtr);
   return 0;
 }
@@ -407,7 +410,6 @@ int TSIAnalyzer::printResults(int nInputs, double variance,
   FILE  *fp;
   pData qData;
 
-  printEquals(PL_INFO, 0);
   if (variance == 0.0)
   {
     printOutTS(PL_INFO,

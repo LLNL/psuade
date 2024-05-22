@@ -1,0 +1,26 @@
+PSUADE
+INPUT
+   dimension = 2
+   variable   1 X1  = -1  1
+   variable   2 X2  = -1  1
+END
+OUTPUT
+   dimension = 1
+   variable 1 Y
+END
+METHOD
+   sampling = LPTAU
+   num_samples = 1000000
+END
+APPLICATION
+   ensemble_driver = ./simulator
+   ensemble_run_mode
+   max_parallel_jobs = 1000
+END
+ANALYSIS
+   analyzer output_id  = 1
+   printlevel 1
+   io_expert on
+   #diagnostics on
+END
+END

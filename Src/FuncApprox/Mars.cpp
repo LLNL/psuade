@@ -112,14 +112,15 @@ Mars::Mars(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
          "Mars: Current number of basis functions = %d\n", nBasisFcns_);
     if (nSamples > 10)
     {
-      snprintf(pString,100,"Enter the number of basis functions (>=10, <= %d): ",
-               nSamples);
+      snprintf(pString,100,
+        "Enter the number of basis functions (>=10, <= %d): ",nSamples);
       nBasisFcns_ = getInt(10, nSamples, pString);
     }
     else
     {
-      snprintf(pString,100,"Enter the number of basis functions (>=%d, <= %d): ",
-               nSamples, nSamples);
+      snprintf(pString,100,
+        "Enter the number of basis functions (>=%d, <= %d): ",
+        nSamples,nSamples);
       nBasisFcns_ = getInt(nSamples, nSamples, pString);
     }
     printOutTS(PL_INFO,
@@ -136,9 +137,9 @@ Mars::Mars(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
     //**/snprintf(pString,100,"Change to option (1) ? (1 - yes, 0 - no) ");
     //**/chooseWght_ = getInt(0, 1, pString);
     //**/================================================================
-    snprintf(pString,100,"MARS_num_bases = %d", nBasisFcns_);
+    snprintf(pString,100,"RS_MARS_num_bases = %d", nBasisFcns_);
     psConfig_.putParameter(pString);
-    snprintf(pString,100,"MARS_interaction = %d", maxVarPerBasis_);
+    snprintf(pString,100,"RS_MARS_interaction = %d", maxVarPerBasis_);
     psConfig_.putParameter(pString);
     if (normalizeY_ == 1)
     {
@@ -152,7 +153,7 @@ Mars::Mars(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
     //**/ see if parameter available from config file, read them
     //**/ (only if rs expert mode is off)
     //**/ --------------------------------------------------------------
-    cString = psConfig_.getParameter("MARS_num_bases");
+    cString = psConfig_.getParameter("RS_MARS_num_bases");
     if (cString != NULL)
     {
       sscanf(cString, "%s %s %d", winput1, winput2, &ii);
@@ -171,22 +172,22 @@ Mars::Mars(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
              nBasisFcns_);
       }
     }
-    cString = psConfig_.getParameter("MARS_interaction");
+    cString = psConfig_.getParameter("RS_MARS_interaction");
     if (cString != NULL)
     {
       sscanf(cString, "%s %s %d", winput1, winput2, &ii);
       if (ii > nInputs || ii < 1)
       {
         printOutTS(PL_INFO,
-             "Mars INFO: interaction from config file not valid.\n");
+         "Mars INFO: degree of interaction from config file not valid.\n");
         printOutTS(PL_INFO,
-             "           interaction kept at %d.\n", maxVarPerBasis_);
+         "           degree of interaction kept at %d.\n", maxVarPerBasis_);
       }
       else 
       {
         maxVarPerBasis_ = ii;
         printOutTS(PL_INFO,
-             "Mars INFO: interaction set to %d (config).\n", 
+             "Mars INFO: degree of interaction set to %d (config).\n", 
              maxVarPerBasis_);
       }
     }
@@ -290,16 +291,16 @@ int Mars::initialize(double *XIn, double *YIn)
   if (outputLevel_ >= 2) 
     printOutTS(PL_INFO,"Mars: nBasis,maxVarPerBasis,nSamples = %d %d %d\n", 
          nBasisFcns_, maxVarPerBasis_, nSamples_);
-  if (outputLevel_ >= 2 || psConfig_.MasterModeIsOn() || nSamples_ < 10)
+  if (psConfig_.DiagnosticsIsOn())
   {
     printf("Entering Mars (process)\n");
     printf("If it crashes here, it is mars_process problem.\n");
-    printf("One way to solve the problem is to use different nSamples.\n");
+    printf("One way to solve the problem is to use larger samples.\n");
   }
   mars_process(nSamples_, nInputs_, MX2D, vecMarsY.getDVector(), 
                marsWghts_.getFVector(), nBasisFcns_, maxVarPerBasis_, 
                varFlags_.getIVector(), fm_.getFVector(), im_.getIVector());
-  if (outputLevel_ >= 2 || psConfig_.MasterModeIsOn()) 
+  if (psConfig_.DiagnosticsIsOn())
     printOutTS(PL_INFO,"Returned from Mars (process).\n");
 
   //**/ ----------------------------------------------------------------
@@ -376,14 +377,14 @@ int Mars::genNDGridData(double *XIn, double *YIn, int *NOut, double **XOut,
     for (ss = 0; ss < totPts; ss++)
       MX2D[ss][ii] = (MX2D[ss][ii]-VecXMeans_[ii])/VecXStds_[ii];
   } 
-  if (outputLevel_ >= 2 || psConfig_.MasterModeIsOn())
+  if (psConfig_.DiagnosticsIsOn())
   {
     printOutTS(PL_INFO,"Entering Mars (fmod)\n");
     printOutTS(PL_INFO,"If it crashes here, it is mars_fmod problem.\n");
   }
   mars_fmod(totPts,nInputs_,MX2D,*YOut,fm_.getFVector(),
             im_.getIVector());
-  if (outputLevel_ >= 2 || psConfig_.MasterModeIsOn()) 
+  if (psConfig_.DiagnosticsIsOn())
     printf("Returned from Mars (fmod).\n");
 
   //**/ ----------------------------------------------------------------
@@ -454,14 +455,14 @@ int Mars::gen1DGridData(double *XIn, double *YIn, int ind1,
     (*YOut)[ss] = 0.0;
   }
 
-  if (outputLevel_ >= 2 || psConfig_.MasterModeIsOn())
+  if (psConfig_.DiagnosticsIsOn())
   {
     printOutTS(PL_INFO,"Entering Mars (fmod)\n");
     printOutTS(PL_INFO,"If it crashes here, it is mars_fmod problem.\n");
   }
   mars_fmod(totPts, nInputs_, MX2D, *YOut, fm_.getFVector(), 
             im_.getIVector());
-  if (outputLevel_ >= 2 || psConfig_.MasterModeIsOn()) 
+  if (psConfig_.DiagnosticsIsOn())
     printf("Returned from Mars (fmod).\n");
  
   //**/ ----------------------------------------------------------------
@@ -544,14 +545,14 @@ int Mars::gen2DGridData(double *XIn, double *YIn, int ind1, int ind2,
     }
   }
 
-  if (outputLevel_ >= 2 || psConfig_.MasterModeIsOn()) 
+  if (psConfig_.DiagnosticsIsOn())
   {
     printOutTS(PL_INFO,"Entering Mars (fmod)\n");
     printOutTS(PL_INFO,"If it crashes here, it is mars_fmod problem.\n");
   }
   mars_fmod(totPts, nInputs_, MX2D, *YOut, fm_.getFVector(), 
             im_.getIVector());
-  if (outputLevel_ >= 2 || psConfig_.MasterModeIsOn())
+  if (psConfig_.DiagnosticsIsOn())
     printf("Returned from Mars (fmod).\n");
   
   //**/ ----------------------------------------------------------------
@@ -636,14 +637,14 @@ int Mars::gen3DGridData(double *XIn,double *YIn,int ind1,int ind2,int ind3,
     }
   }
 
-  if (outputLevel_ >= 2 || psConfig_.MasterModeIsOn())
+  if (psConfig_.DiagnosticsIsOn())
   {
     printOutTS(PL_INFO,"Entering Mars (fmod)\n");
     printOutTS(PL_INFO,"If it crashes here, it is mars_fmod problem.\n");
   }
   mars_fmod(totPts, nInputs_, MX2D, *YOut, fm_.getFVector(), 
             im_.getIVector());
-  if (outputLevel_ >= 2 || psConfig_.MasterModeIsOn())
+  if (psConfig_.DiagnosticsIsOn())
     printOutTS(PL_INFO,"Returned from Mars (fmod).\n");
 
   //**/ ----------------------------------------------------------------
@@ -741,14 +742,14 @@ int Mars::gen4DGridData(double *XIn,double *YIn,int ind1,int ind2,int ind3,
       }
     }
   }
-  if (outputLevel_ >= 2 || psConfig_.MasterModeIsOn()) 
+  if (psConfig_.DiagnosticsIsOn()) 
   {
     printOutTS(PL_INFO,"Entering Mars (fmod)\n");
     printOutTS(PL_INFO,"If it crashes here, it is mars_fmod problem.\n");
   }
   mars_fmod(totPts, nInputs_, MX2D, *YOut, fm_.getFVector(), 
             im_.getIVector());
-  if (outputLevel_ >= 2 || psConfig_.MasterModeIsOn())
+  if (psConfig_.DiagnosticsIsOn()) 
     printOutTS(PL_INFO,"Returned from Mars (fmod).\n");
 
   //**/ ----------------------------------------------------------------
@@ -806,7 +807,7 @@ int Mars::writeToFileGrid2DData(double *XIn, double *YIn, int ind1,
   //**/ ----------------------------------------------------------------
   //**/ call mars 
   //**/ ----------------------------------------------------------------
-  if (outputLevel_ >= 2 || psConfig_.MasterModeIsOn() || nSamples_ < 10)
+  if (psConfig_.DiagnosticsIsOn() ) 
   {
     printOutTS(PL_INFO,"Entering Mars (process)\n");
     printOutTS(PL_INFO,
@@ -817,7 +818,7 @@ int Mars::writeToFileGrid2DData(double *XIn, double *YIn, int ind1,
   mars_process(nSamples_, nInputs_, MX2D, YIn, marsWghts_.getFVector(), 
                nBasisFcns_, maxVarPerBasis_, varFlags_.getIVector(), 
                fm_.getFVector(), im_.getIVector());
-  if (outputLevel_ >= 2 || psConfig_.MasterModeIsOn())
+  if (psConfig_.DiagnosticsIsOn() ) 
     printOutTS(PL_INFO,"Returned from Mars (process)\n");
 
   //**/ length = 3 + nBasisFcns_ * (5 * maxVarPerBasis_ + nSamples_ + 6) +
@@ -858,14 +859,14 @@ int Mars::writeToFileGrid2DData(double *XIn, double *YIn, int ind1,
     }
   }
 
-  if (outputLevel_ >= 2 || psConfig_.MasterModeIsOn())
+  if (psConfig_.DiagnosticsIsOn() ) 
   {
     printOutTS(PL_INFO,"Entering Mars (fmod)\n");
     printOutTS(PL_INFO,"If it crashes here, it is mars_fmod problem.\n");
   }
   mars_fmod(totPts, nInputs_, MX2D, vecMarsY.getDVector(), 
             fm_.getFVector(), im_.getIVector());
-  if (outputLevel_ >= 2 || psConfig_.MasterModeIsOn())
+  if (psConfig_.DiagnosticsIsOn() ) 
     printOutTS(PL_INFO,"Returned from Mars (fmod)\n");
 
   fp = fopen("psuade_grid_data", "w");

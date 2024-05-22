@@ -58,14 +58,14 @@ int CentralCompositeSampling::initialize(int initLevel)
   //**/ ----------------------------------------------------------------
   //**/ error checking
   //**/ ----------------------------------------------------------------
-  if (nSamples_ == 0)
-  {
-    printf("CentralCompositeSampling::initialize ERROR: nSamples = 0.\n");
-    exit(1);
-  }
+  //if (nSamples_ == 0)
+  //{
+  //  printf("CentralCompositeSampling initialize ERROR: nSamples = 0.\n");
+  //  exit(1);
+  //}
   if (nInputs_ == 0)
   {
-    printf("CentralCompositeSampling::initialize ERROR: no inputs.\n");
+    printf("CentralCompositeSampling initialize ERROR: no inputs.\n");
     exit(1);
   }
 
@@ -102,7 +102,7 @@ int CentralCompositeSampling::initialize(int initLevel)
   vecDX.setLength(nSamples*nInputs_);
   vecDY.setLength(nSamples*nOutputs_);
   vecDS.setLength(nSamples);
-  samplePtr->getSamples(nSamples, nInputs_, nOutputs_, vecDX.getDVector(), 
+  samplePtr->getSamples(nSamples,nInputs_,nOutputs_,vecDX.getDVector(), 
                         vecDY.getDVector(), vecDS.getIVector());
 
   //**/ ----------------------------------------------------------------
@@ -111,9 +111,12 @@ int CentralCompositeSampling::initialize(int initLevel)
   nSamples_ = nSamples + 2 * nInputs_ + 1;
   if (printLevel_ > 4)
   {
-    printf("CentralCompositeSampling::initialize: nSamples = %d\n",nSamples_);
-    printf("CentralCompositeSampling::initialize: nInputs  = %d\n",nInputs_);
-    printf("CentralCompositeSampling::initialize: nOutputs = %d\n",nOutputs_);
+    printf("CentralCompositeSampling initialize: nSamples = %d\n",
+           nSamples_);
+    printf("CentralCompositeSampling initialize: nInputs  = %d\n",
+           nInputs_);
+    printf("CentralCompositeSampling initialize: nOutputs = %d\n",
+           nOutputs_);
     for (inputID = 0; inputID < nInputs_; inputID++)
       printf("   CentralCompositeSampling input %3d = [%e %e]\n",
              inputID+1, vecLBs_[inputID], vecUBs_[inputID]);

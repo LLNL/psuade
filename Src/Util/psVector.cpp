@@ -27,9 +27,11 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <fstream>
 #include "sysdef.h"
 #include "psVector.h"
 #include "PsuadeUtil.h"
+using namespace std;
 
 //#define PS_DEBUG
 
@@ -57,7 +59,15 @@ psVector::psVector(const psVector & v)
   Vec_ = NULL;
   if (length_ > 0)
   {
-    Vec_ = new double[length_];
+    try {
+      Vec_ = new double[length_];
+    }
+    catch (const exception& e)
+    {
+      printf("psVector ERROR: Failed to allocate (length = %d)\n",
+             length_);
+      exit(1);
+    }
     for (int ii = 0; ii < length_; ii++) Vec_[ii] = v.Vec_[ii];
   }
 }
@@ -73,7 +83,15 @@ psVector & psVector::operator=(const psVector & v)
   length_ = v.length_;
   if (length_ > 0)
   {
-    Vec_ = new double[length_];
+    try {
+      Vec_ = new double[length_];
+    }
+    catch (const exception& e)
+    {
+      printf("psVector ERROR: Failed to allocate (length = %d)\n",
+             length_);
+      exit(1);
+    }
     for (int ii = 0; ii < length_; ii++) Vec_[ii] = v.Vec_[ii];
   }
   return *this;
@@ -116,9 +134,16 @@ int psVector::load(psVector &inVec)
   Vec_ = NULL;
   length_ = inVec.length();
   if (length_ <= 0) return -1;
-  Vec_ = new double[length_];
-  assert(Vec_ != NULL);
-  for (int ii = 0; ii < length_; ii++) Vec_[ii] = inVec[ii];
+  try {
+    Vec_ = new double[length_];
+    for (int ii = 0; ii < length_; ii++) Vec_[ii] = inVec[ii];
+  }
+  catch (const exception& e)
+  {
+    printf("psVector load ERROR: Failed to allocate (length = %d)\n",
+           length_);
+    exit(1);
+  }
 #ifdef PS_DEBUG
   printf("psVector load ends\n");
 #endif
@@ -148,8 +173,15 @@ int psVector::setLength(int leng)
   Vec_ = NULL;
   if (leng == 0) return -1;
   length_ = leng;
-  Vec_ = new double[leng];
-  assert(Vec_ != NULL);
+  try {
+    Vec_ = new double[length_];
+  }
+  catch (const exception& e)
+  {
+    printf("psVector setLength ERROR: Failed to allocate (length = %d)\n",
+           length_);
+    exit(1);
+  }
   for (int ii = 0; ii < leng; ii++) Vec_[ii] = 0.0;
 #ifdef PS_DEBUG
   printf("psVector setLength ends\n");
@@ -170,9 +202,16 @@ int psVector::load(int leng, double *data)
   assert(leng > 0);
   assert(data != NULL);
   length_ = leng;
-  Vec_ = new double[leng];
-  assert(Vec_ != NULL);
-  for (int ii = 0; ii < leng; ii++) Vec_[ii] = data[ii];
+  try {
+    Vec_ = new double[length_];
+    for (int ii = 0; ii < leng; ii++) Vec_[ii] = data[ii];
+  }
+  catch (const exception& e)
+  {
+    printf("psVector load ERROR: Failed to allocate (length = %d)\n",
+           length_);
+    exit(1);
+  }
 #ifdef PS_DEBUG
   printf("psVector load ends\n");
 #endif
@@ -270,6 +309,17 @@ double psVector::stdev()
 }
 
 // ************************************************************************
+// check if there is any UNDEFINED
+// ------------------------------------------------------------------------
+int psVector::countUndefined()
+{
+  int count = 0;
+  for (int ii = 0; ii < length_; ii++) 
+    if (Vec_[ii] > 0.9 * PSUADE_UNDEFINED) count++;
+  return count;
+}
+
+// ************************************************************************
 // scale vector 
 // ------------------------------------------------------------------------
 void psVector::scale(double alpha)
@@ -320,19 +370,27 @@ void psVector::sort()
 int psVector::addElements(int leng, double *data)
 {
 #ifdef PS_DEBUG
-  printf("psVector add, length = %d\n", leng);
+  printf("psVector addElements, length = %d\n", leng);
 #endif
   int    ii;
   double *tmpVec = Vec_;
-  Vec_ = new double[leng+length_];
-  for (ii = 0; ii < length_; ii++) Vec_[ii] = tmpVec[ii];
-  if (data == NULL)
-       for (ii = 0; ii < leng; ii++) Vec_[length_+ii] = 0.0;
-  else for (ii = 0; ii < leng; ii++) Vec_[length_+ii] = data[ii];
+  try {
+    Vec_ = new double[leng+length_];
+    for (ii = 0; ii < length_; ii++) Vec_[ii] = tmpVec[ii];
+    if (data == NULL)
+         for (ii = 0; ii < leng; ii++) Vec_[length_+ii] = 0.0;
+    else for (ii = 0; ii < leng; ii++) Vec_[length_+ii] = data[ii];
+  }
+  catch (const exception& e)
+  {
+    printf("psVector addElements ERROR: Failed to allocate (length=%d)\n",
+           length_);
+    exit(1);
+  }
   delete [] tmpVec;
   length_ += leng;
 #ifdef PS_DEBUG
-   printf("psVector add ends\n");
+   printf("psVector addElements ends\n");
 #endif
    return 0;
 }
@@ -353,7 +411,15 @@ void psVector::subvector(int ibeg, int iend)
   }
   tmpVec = Vec_;
   length_ = leng;
-  Vec_ = new double[leng];
+  try {
+    Vec_ = new double[length_];
+  }
+  catch (const exception& e)
+  {
+    printf("psVector subvector ERROR: Failed to allocate (length = %d)\n",
+           length_);
+    exit(1);
+  }
   for (ii = ibeg; ii < iend+1; ii++) Vec_[ii-ibeg] = tmpVec[ii];
   if (tmpVec != NULL) delete [] tmpVec;
   return;
@@ -431,7 +497,15 @@ psIVector::psIVector(const psIVector & v)
   Vec_ = NULL;
   if (length_ > 0)
   {
-    Vec_ = new int[length_];
+    try {
+      Vec_ = new int[length_];
+    }
+    catch (const exception& e)
+    {
+      printf("psIVector ERROR: Failed to allocate (length = %d)\n",
+             length_);
+      exit(1);
+    }
     for (int ii = 0; ii < length_; ii++) Vec_[ii] = v.Vec_[ii];
   }
 }
@@ -495,7 +569,15 @@ psIVector & psIVector::operator=(const psIVector & v)
   length_ = v.length_;
   if (length_ > 0)
   {
-    Vec_ = new int[length_];
+    try {
+      Vec_ = new int[length_];
+    }
+    catch (const exception& e)
+    {
+      printf("psIVector ERROR: Failed to allocate (length = %d)\n",
+             length_);
+      exit(1);
+    }
     for (int ii = 0; ii < length_; ii++) Vec_[ii] = v.Vec_[ii];
   }
   return *this;
@@ -529,8 +611,15 @@ int psIVector::load(psIVector &inVec)
   Vec_ = NULL;
   length_ = inVec.length();
   if (length_ <= 0) return -1;
-  Vec_ = new int[length_];
-  assert(Vec_ != NULL);
+  try {
+    Vec_ = new int[length_];
+  }
+  catch (const exception& e)
+  {
+    printf("psIVector load ERROR: Failed to allocate (length = %d)\n",
+           length_);
+    exit(1);
+  }
   for (int ii = 0; ii < length_; ii++) Vec_[ii] = inVec[ii];
   return 0;
 }
@@ -545,8 +634,15 @@ int psIVector::setLength(int leng)
   assert(leng >= 0);
   if (leng == 0) return -1;
   length_ = leng;
-  Vec_ = new int[leng];
-  assert(Vec_ != NULL);
+  try {
+    Vec_ = new int[length_];
+  }
+  catch (const exception& e)
+  {
+    printf("psIVector setLength ERROR: Failed to allocate (length = %d)\n",
+           length_);
+    exit(1);
+  }
   for (int ii = 0; ii < leng; ii++) Vec_[ii] = 0;
   return 0;
 }
@@ -561,9 +657,16 @@ int psIVector::load(int leng, int *data)
   assert(leng > 0);
   assert(data != NULL);
   length_ = leng;
-  Vec_ = new int[leng];
-  assert(Vec_ != NULL);
-  for (int ii = 0; ii < leng; ii++) Vec_[ii] = data[ii];
+  try {
+    Vec_ = new int[length_];
+    for (int ii = 0; ii < leng; ii++) Vec_[ii] = data[ii];
+  }
+  catch (const exception& e)
+  {
+    printf("psIVector load ERROR: Failed to allocate (length = %d)\n",
+           length_);
+    exit(1);
+  }
   return 0;
 }
 
@@ -595,7 +698,15 @@ void psIVector::subvector(int ibeg, int iend)
   }
   tmpVec = Vec_;
   length_ = leng;
-  Vec_ = new int[leng];
+  try {
+    Vec_ = new int[length_];
+  }
+  catch (const exception& e)
+  {
+    printf("psIVector subvector: Failed to allocate (length = %d)\n",
+           length_);
+    exit(1);
+  }
   for (ii = ibeg; ii < iend+1; ii++) Vec_[ii-ibeg] = tmpVec[ii];
   if (tmpVec != NULL) delete [] tmpVec;
   return;
@@ -665,7 +776,15 @@ psFVector::psFVector(const psFVector & v)
   Vec_ = NULL;
   if (length_ > 0)
   {
-    Vec_ = new float[length_];
+    try {
+      Vec_ = new float[length_];
+    }
+    catch (const exception& e)
+    {
+      printf("psFVector ERROR: Failed to allocate (length = %d)\n",
+             length_);
+      exit(1);
+    }
     for (int ii = 0; ii < length_; ii++) Vec_[ii] = v.Vec_[ii];
   }
 }
@@ -681,7 +800,15 @@ psFVector & psFVector::operator=(const psFVector & v)
   length_ = v.length_;
   if (length_ > 0)
   {
-    Vec_ = new float[length_];
+    try {
+      Vec_ = new float[length_];
+    }
+    catch (const exception& e)
+    {
+      printf("psFVector ERROR: Failed to allocate (length = %d)\n",
+             length_);
+      exit(1);
+    }
     for (int ii = 0; ii < length_; ii++) Vec_[ii] = v.Vec_[ii];
   }
   return *this;
@@ -715,8 +842,15 @@ int psFVector::load(psFVector &inVec)
   Vec_ = NULL;
   length_ = inVec.length();
   if (length_ <= 0) return -1;
-  Vec_ = new float[length_];
-  assert(Vec_ != NULL);
+  try {
+    Vec_ = new float[length_];
+  }
+  catch (const exception& e)
+  {
+    printf("psFVector load ERROR: Failed to allocate (length = %d)\n",
+           length_);
+    exit(1);
+  }
   for (int ii = 0; ii < length_; ii++) Vec_[ii] = inVec[ii];
   return 0;
 }
@@ -730,8 +864,15 @@ int psFVector::setLength(int leng)
   Vec_ = NULL;
   assert(leng > 0);
   length_ = leng;
-  Vec_ = new float[leng];
-  assert(Vec_ != NULL);
+  try {
+    Vec_ = new float[length_];
+  }
+  catch (const exception& e)
+  {
+    printf("psFVector setLength ERROR: Failed to allocate (length = %d)\n",
+           length_);
+    exit(1);
+  }
   for (int ii = 0; ii < leng; ii++) Vec_[ii] = 0;
   return 0;
 }
@@ -746,9 +887,16 @@ int psFVector::load(int leng, float *data)
   assert(leng > 0);
   assert(data != NULL);
   length_ = leng;
-  Vec_ = new float[leng];
-  assert(Vec_ != NULL);
-  for (int ii = 0; ii < leng; ii++) Vec_[ii] = data[ii];
+  try {
+    Vec_ = new float[length_];
+    for (int ii = 0; ii < leng; ii++) Vec_[ii] = data[ii];
+  }
+  catch (const exception& e)
+  {
+    printf("psFVector load ERROR: Failed to allocate (length = %d)\n",
+           length_);
+    exit(1);
+  }
   return 0;
 }
 
@@ -847,7 +995,15 @@ psLDVector::psLDVector(const psLDVector & v)
   Vec_ = NULL;
   if (length_ > 0)
   {
-    Vec_ = new long double[length_];
+    try {
+      Vec_ = new long double[length_];
+    }
+    catch (const exception& e)
+    {
+      printf("psLDVector ERROR: Failed to allocate (length = %d)\n",
+             length_);
+      exit(1);
+    }
     for (int ii = 0; ii < length_; ii++) Vec_[ii] = v.Vec_[ii];
   }
 }
@@ -863,7 +1019,15 @@ psLDVector & psLDVector::operator=(const psLDVector & v)
   length_ = v.length_;
   if (length_ > 0)
   {
-    Vec_ = new long double[length_];
+    try {
+      Vec_ = new long double[length_];
+    }
+    catch (const exception& e)
+    {
+      printf("psLDVector ERROR: Failed to allocate (length = %d)\n",
+             length_);
+      exit(1);
+    }
     for (int ii = 0; ii < length_; ii++) Vec_[ii] = v.Vec_[ii];
   }
   return *this;
@@ -897,10 +1061,26 @@ int psLDVector::setLength(int leng)
   assert(leng >= 0);
   if (leng == 0) return -1;
   length_ = leng;
-  Vec_ = new long double[leng];
-  assert(Vec_ != NULL);
+  try {
+    Vec_ = new long double[length_];
+  }
+  catch (const exception& e)
+  {
+    printf("psLDVector setLength ERROR: Failed to allocate (length = %d)\n",
+           length_);
+    exit(1);
+  }
   for (int ii = 0; ii < leng; ii++) Vec_[ii] = 0.0;
   return 0;
+}
+
+// ************************************************************************
+// print
+// ------------------------------------------------------------------------
+void psLDVector::print(char *name)
+{
+  for (int ii = 0; ii < length_; ii++) 
+    printf("%s %5d = %24.16llf\n", name, ii+1, Vec_[ii]);
 }
 
 // ************************************************************************

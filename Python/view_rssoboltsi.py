@@ -23,7 +23,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 
 # USA
 # *******************************************************************
-# This file contains Python codes that read matlabrssoboltsi.m 
+# This file contains Python codes that read matlabrstsi_ni.m 
 # created by PSUADE and display the total sensitivity results
 # *******************************************************************
 import os
@@ -37,15 +37,15 @@ except ImportError:
    MATPLOTLIB = False
    sys.exit(0)
 
-# get matlabrssoboltsi.m-like file
+# get matlabrstsi_ni.m-like file
 print('************************************************************')
-print('This function reads from a matlabrssoboltsi.m file and plots')
+print('This function reads from a matlabrstsi_ni.m file and plots')
 print('the total sensitivity results.') 
 print('------------------------------------------------------------')
 if sys.version_info[0] < 3:
-   datafile = raw_input('Enter matlabrssoboltsi.m-like file name : ')
+   datafile = raw_input('Enter matlabrstsi_ni.m-like file name : ')
 else:
-   datafile = input('Enter matlabrssoboltsi.m-like file name : ')
+   datafile = input('Enter matlabrstsi_ni.m-like file name : ')
 if not os.path.isfile(datafile):
    print('ERROR: data file not found.')
    sys.exit(1)
@@ -58,7 +58,7 @@ except:
    sys.exit(0)
 
 #------------------------------------------------------------------
-# read matlabrssoboltsi.m created by psuade
+# read matlabrstsi_ni.m created by psuade
 #------------------------------------------------------------------
 with open(datafile, 'r') as infile:
    doneFlag = 0

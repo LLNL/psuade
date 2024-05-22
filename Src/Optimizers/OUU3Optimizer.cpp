@@ -44,10 +44,12 @@
 // ************************************************************************
 // External functions
 // ------------------------------------------------------------------------
+#ifdef HAVE_BOBYQA
 extern "C" void bobyqa_(int *,int *, double *, double *, double *, double *,
                         double *, int *, int *, double*);
 extern "C" void obobyqa_(int *,int *, double *, double *, double *, double *,
                         double *, int *, int *, double*);
+#endif
 
 // ************************************************************************
 // Internal 'global' variables
@@ -325,8 +327,13 @@ extern "C"
                   }
                }
                bobyqaFlag = 1112;
+#ifdef HAVE_BOBYQA
                obobyqa_(&M2, &nPts, XLocal, lowers, uppers, &rhobeg, &rhoend, 
                         &bobyqaFlag, &maxfun, workArray);
+#else
+               printf("OUU3Optimizer ERROR: Bobyqa not installed.\n");
+               exit(1);
+#endif
                psOUU3SamOutputs_[ss] = psOUU3OptimalY_;
                if (odata->outputLevel_ > 3) 
                   printf("OUU3Optimizer (1) sample %d completed, best Y = %e\n",

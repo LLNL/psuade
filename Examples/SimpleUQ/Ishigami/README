@@ -6,46 +6,35 @@ Y = sin(X_1) + A sin^2(X_2) + B X_3^4 sin(X_1)
 
 X_i = U[-pi, pi]
 
-A = 7
-B = 0.1
+===========================================================
+mean = A / 2
+variance = B pi^4 / 5 + B^2 pi^8/18 + 1/2 + A^2/8 
 
+For A=7, B=0.1
 mean = 3.5
-variance = 0.1 pi^4 / 5 + 0.1^2 pi^8/18 + 1/2 + 49/8 = 13.8445
-
-sensitivity coefficient VCE(X_i)/V
-X1 = 0.3139
-X2 = 0.4424
-X3 = 0
-
-??
-Mutual information for input   1 with output =  3.906e-01
-Mutual information for input   2 with output =  5.458e-01
-Mutual information for input   3 with output =  2.737e-01
-MI for input (  1,  2) with output =  2.952e-06
-MI for input (  1,  3) with output =  1.120e-06
-MI for input (  2,  3) with output =  2.829e-06
+variance = 13.8446
 
 ============================================================
 To run:
 ------------------------------------------------------------
 cc -o simulator simulator.c -lm
 psuade psuade.in
-mv psuadeData sample.psu
+mv psuadeData simdata
 
 ============================================================
 To perform uncertainty analysis on the raw data (mean, std) 
 ------------------------------------------------------------
 psuade
-> load sample.psu
+> load simdata
 > ua
 
 ============================================================
 To perform response surface analysis 
 ------------------------------------------------------------
 psuade
-> load sample.psu
+> load simdata
 > rscheck
-  <select response surface method>
+  <select response surface method, e.g. MARS>
   <select output>
   <say yes to cross validation>
   use 10 (or any other choice of) groups
@@ -60,43 +49,19 @@ The closer all 'x' lie on the diagonal, the more accurate
 the predictions. 
 
 ============================================================
-To perform main effect analysis using response surface 
+To perform response surface-based uncertainty analysis 
 ------------------------------------------------------------
 psuade
-> load sample.psu
-> rssobol1
-Use response surface you found out to be good from response 
-surface analysis
+> load simdata
+> rsua
+  y
+  <select output>
+  <select psuade-generated sample: option 1>
+  <select sample size: 100000>
+  <select response surface method, e.g. MARS>
+> quit
 
-============================================================
-To perform pairwise interaction effect sensitivity analysis  
-(main effect + two-way effect)
-------------------------------------------------------------
-psuade
-> load sample.psu
-> rssobolt2
-
-============================================================
-To perform total effect sensitivity analysis using response
-surfaces 
-------------------------------------------------------------
-psuade
-> load sample.psu
-> rssoboltsi
-Try different response surfaces
-
-============================================================
-To perform group sensitivity analysis  
-Group 1: parameter 1 and 2
-Group 2: parameter 3
-These information have been defined in the 'group' file
-------------------------------------------------------------
-psuade
-> load sample.psu
-> rssobolg
-  group
-
-
+use matlab to view the RSFA_CV_err.m file.
 *** The above commands have been captured by the psScript.in
     file.
     Do: psuade < psScript.in to run all of them automatically.

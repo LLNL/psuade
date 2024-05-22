@@ -20,7 +20,7 @@ int main(int argc, char **argv)
    for (ii = 0; ii < nInputs; ii++) Y += X[ii];
    for (ii = 0; ii < nInputs; ii++) 
      for (jj = ii; jj < nInputs; jj++) Y += 2.0 * X[ii] * X[jj];
-   Y = 1 + exp(-Y/nInputs);
+   /*Y = 1 + exp(-Y/nInputs);*/
 
 /*
    for (ii = 0; ii < nInputs; ii++) 

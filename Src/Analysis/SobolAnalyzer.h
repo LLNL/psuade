@@ -5,16 +5,17 @@
 // All rights reserved.
 //
 // Please see the COPYRIGHT and LICENSE file for the copyright notice,
-// disclaimer, contact information and the GNU Lesser General Public License.
+// disclaimer, contact information and the GNU Lesser General Public 
+// License.
 //
-// PSUADE is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free 
-// Software Foundation) version 2.1 dated February 1999.
+// PSUADE is free software; you can redistribute it and/or modify it under 
+// the terms of the GNU Lesser General Public License (as published by the 
+// Free Software Foundation) version 2.1 dated February 1999.
 //
-// PSUADE is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the IMPLIED WARRANTY OF MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE.  See the terms and conditions of the GNU Lesser
-// General Public License for more details.
+// PSUADE is distributed in the hope that it will be useful, but WITHOUT 
+// ANY WARRANTY; without even the IMPLIED WARRANTY OF MERCHANTABILITY 
+// or FITNESS FOR A PARTICULAR PURPOSE.  See the terms and conditions of 
+// the GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program; if not, write to the Free Software Foundation,
@@ -34,7 +35,6 @@
 // ************************************************************************
 class SobolAnalyzer : public Analyzer 
 {
-
 public:
 
    //**/ Constructor 
@@ -47,28 +47,50 @@ public:
    //**/ @param adata - all data needed for analysis
    double analyze(aData &adata);
 
+   //**/ Perform second-order analysis
+   //**/ @param adata - all data needed for analysis
+   double analyze2(aData &adata);
+
+   //**/ Perform group-order analysis
+   //**/ @param adata - all data needed for analysis
+   double analyze3(aData &adata);
+
+   //**/ Perform MOAT analysis
+   int MOATAnalyze(int, int, double *, double *, double *, 
+                   double *, double *, double *, double*);
+
+   //**/ Set first or second order analysis
+   int setOrder(int);
+
    //**/ assign operator
    //**/ @param analyzer
    SobolAnalyzer& operator=(const SobolAnalyzer &analyzer);
+
    /** Getters for analysis results */
    int get_nInputs();
-   double *get_modifiedMeans();
-   double *get_stds();
-   double *get_S();
-   double *get_ST();
-   double *get_PE();
+   int get_nGroups();
+   double get_variance();
+   double get_modifiedMeans(int ii);
+   double get_stds(int ii);
+   double get_S(int ii);
+   double get_S2(int ii);
+   double get_SG(int ii);
+   double get_ST(int ii);
+   double get_PE(int ii);
 
 private:
    int nInputs_;
+   int nGroups_;
+   int order_;
+   int printLevel_;
+   double   Variance_;
    psVector VecModMeans_;
    psVector VecStds_;
    psVector VecS_;
+   psVector VecS2_;
+   psVector VecSG_;
    psVector VecST_;
    psVector VecPE_;
-
-public:
-   int MOATAnalyze(int, int, double *, double *, double *, double *, 
-                   double *, double *, double*);
 };
 
 #endif // __SOBOLANALYZERH__

@@ -1,0 +1,36 @@
+============================================================
+This example compares 3 different response surface methods
+on a wavy function - sum of 2 sine functions
+This example is especially designed to compare Pade with
+polynomial regression and Kriging.
+============================================================
+
+Y = sin(X_1) + sin(X_2)    
+
+X_i = U[-pi, pi]
+
+============================================================
+Objective: to compare 3 response surface:
+* Kriging
+* Legendre polynomial of 8th order
+* Pade approximation 
+------------------------------------------------------------
+The 3 scripts to run these 3 methods are given as
+* psScript_krig.in
+* psScript_leg.in
+* psScript_pade.in
+
+The idea is: 
+- to split a sample into 2 - sam1 and sam2
+- sam1 is used for building response surface 
+- sam2 is used as a test set
+
+============================================================
+How to run: psuade < psScript_xxxx.in
+
+At the end, a summary statistics on the goodness of the
+interpolation property on the test set is given.
+Compare the 3.
+
+* This example shows that the wavy functions such as sine,
+  Pade may have an advantage.

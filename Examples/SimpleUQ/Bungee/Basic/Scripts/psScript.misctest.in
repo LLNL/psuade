@@ -53,17 +53,17 @@ sys diff simdata abc
 # load the sample again
 load simdata
 # perform response-surface-based main effect analysis (Kriging)
-rssobol1
+rsvce1_sobol
 y
 1
 11
 # perform response-surface-based total effect analysis (Kriging)
-rssoboltsi
+rstsi_sobol
 y
 1
 11
 # perform RS-based pairwise sensitivity analysis (Kriging)
-rssobol2
+rsvce2_sobol
 y
 1
 11

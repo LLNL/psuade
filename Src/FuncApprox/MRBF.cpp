@@ -135,39 +135,39 @@ MRBF::MRBF(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
     snprintf(pString,100,"Enter the partition sample size (500 - 2000) : ");
     partSize_ = getInt(500, 20000, pString);
    
-    snprintf(pString,100,"RBF_kernel = %d", type_);
+    snprintf(pString,100,"RS_RBF_kernel = %d", type_);
     psConfig_.putParameter(pString);
-    snprintf(pString,100,"RBF_scale = %e", gaussScale_);
+    snprintf(pString,100,"RS_RBF_scale = %e", gaussScale_);
     psConfig_.putParameter(pString);
-    snprintf(pString,100,"RBF_thresh = %e", svdThresh_);
+    snprintf(pString,100,"RS_RBF_thresh = %e", svdThresh_);
     psConfig_.putParameter(pString);
-    snprintf(pString,100,"MRBF_max_samples_per_group = %d", partSize_);
+    snprintf(pString,100,"RS_MRBF_max_sam_per_group = %d", partSize_);
     psConfig_.putParameter(pString);
-    snprintf(pString,100,"MRBF_overlap = %e", vecXd_[0]);
+    snprintf(pString,100,"RS_MRBF_overlap = %e", vecXd_[0]);
     psConfig_.putParameter(pString);
   }
   else
   {
-    strPtr = psConfig_.getParameter("RBF_kernel");
+    strPtr = psConfig_.getParameter("RS_RBF_kernel");
     if (strPtr != NULL)
     {
       sscanf(strPtr, "%s %s %d", winput, equal, &type_);
       if (type_ < 0 || type_ > 3) type_ = 0;
     }
 
-    strPtr = psConfig_.getParameter("RBF_scale");
+    strPtr = psConfig_.getParameter("RS_RBF_scale");
     if (strPtr != NULL)
       sscanf(strPtr, "%s %s %lg", winput, equal, &gaussScale_);
 
-    strPtr = psConfig_.getParameter("RBF_thresh");
+    strPtr = psConfig_.getParameter("RS_RBF_thresh");
     if (strPtr != NULL)
       sscanf(strPtr, "%s %s %lg", winput, equal, &svdThresh_);
 
-    strPtr = psConfig_.getParameter("MRBF_max_samples_per_group");
+    strPtr = psConfig_.getParameter("RS_MRBF_max_sam_per_group");
     if (strPtr != NULL)
       sscanf(strPtr, "%s %s %d", winput, equal, &partSize_);
 
-    strPtr = psConfig_.getParameter("MRBF_overlap");
+    strPtr = psConfig_.getParameter("RS_MRBF_overlap");
     if (strPtr != NULL)
     {
       sscanf(strPtr, "%s %s %lg", winput, equal, &ddata);

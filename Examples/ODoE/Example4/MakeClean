@@ -1,4 +1,4 @@
 clean:
-	rm -f RSTrainSample PriorSample UniformSample *.m candidate psuadeApp* simulator *.sci psuadeData .psuade* psuade_stop psuade_print experiment CandidateSet* SelectSet* odoeu_* EvalSet
+	rm -f RSTrainSample PriorSample UniformSample *.m candidate psuadeApp* simulator *.sci psuadeData .psuade* psuade_stop psuade_print experiment CandidateSet* SelectSet* odoeu_* simulator_deriv simdata EvalSet
 
 

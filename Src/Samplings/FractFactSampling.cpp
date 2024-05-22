@@ -57,11 +57,11 @@ int FractFactSampling::initialize(int initLevel)
   //**/ ----------------------------------------------------------------
   //**/ error checking
   //**/ ----------------------------------------------------------------
-  if (nSamples_ == 0)
-  {
-    printf("FractFactSampling::initialize ERROR - nSamples = 0.\n");
-    exit(1);
-  }
+  //if (nSamples_ == 0)
+  //{
+  //  printf("FractFactSampling::initialize ERROR - nSamples = 0.\n");
+  //  exit(1);
+  //}
   if (nInputs_ == 0)
   {
     printf("FractFactSampling::initialize ERROR - input not set up.\n");
@@ -101,7 +101,8 @@ int FractFactSampling::initialize(int initLevel)
   }
   if (nInputCnt > 12)
   {
-    printf("FractFactSampling::initialize ERROR - nInputs > %d not",nInputs_);
+    printf("FractFactSampling initialize ERROR - nInputs > %d not",
+           nInputs_);
     printf(" supported.\n");
     exit(1);
   }
@@ -113,12 +114,12 @@ int FractFactSampling::initialize(int initLevel)
   //**/ ----------------------------------------------------------------
   if (printLevel_ > 3)
   {
-    printf("FractFactSampling::initialize: nSamples = %d\n", nSamples_);
-    printf("FractFactSampling::initialize: nInputs  = %d\n", nInputs_);
-    printf("FractFactSampling::initialize: nOutputs = %d\n", nOutputs_);
+    printf("FractFactSampling initialize: nSamples = %d\n", nSamples_);
+    printf("FractFactSampling initialize: nInputs  = %d\n", nInputs_);
+    printf("FractFactSampling initialize: nOutputs = %d\n", nOutputs_);
     if (printLevel_ > 4)
       for (inputID = 0; inputID < nInputs_; inputID++)
-        printf("    FractFactSampling input %3d = [%e %e]\n", inputID+1,
+        printf("    FractFactSampling input %3d = [%e %e]\n",inputID+1,
                vecLBs_[inputID], vecUBs_[inputID]);
   }
 

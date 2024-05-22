@@ -23,8 +23,8 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 
 # USA
 # *******************************************************************
-# This file contains Python codes that read matlabrs2.m created by
-# PSUADE and display the 2D response surface plot using matplotlib
+# This file contains Python codes that read matlabrsplot2.m created 
+# by PSUADE and display the 2D response surface plot using matplotlib
 # *******************************************************************
 import os
 import sys
@@ -45,17 +45,17 @@ except:
    print('      Will create 2D contour plot instead')
    MPL = False
 
-# get matlabrs2.m-like file
+# get matlabrsplot2.m-like file
 print('************************************************************')
-print('This function extracts plot information from the matlabrs2.m')
+print('This function extracts information from the matlabrsplot2.m')
 print('file (or same but renamed file) and creates a 3D (2-input,')
 print('1-output) response surface plot or a 2D contour plot if the')
 print('MPL library is not available.')
 print('------------------------------------------------------------')
 if sys.version_info[0] < 3:
-   rsfile = raw_input('Enter name of matlabrs2.m-like file : ')
+   rsfile = raw_input('Enter name of matlabrsplot2.m-like file : ')
 else:
-   rsfile = input('Enter name of matlabrs2.m-like file : ')
+   rsfile = input('Enter name of matlabrsplot2.m-like file : ')
 
 # first search for dimensions in X and Y
 try:

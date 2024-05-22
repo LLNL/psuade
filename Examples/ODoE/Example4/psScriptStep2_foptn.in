@@ -1,0 +1,20 @@
+# run first time with PriorSample
+setranseed 943421232321
+odoeu_foptn
+y
+1
+25
+4
+1000
+y
+3
+simdata
+3
+0
+PriorSample
+n
+CandidateSet0
+EvalSet
+0
+q
+

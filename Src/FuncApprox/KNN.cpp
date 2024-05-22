@@ -261,17 +261,17 @@ KNN::KNN(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
     snprintf(pString,100,"Enter number of nearest neighbors (>= 0, <= %d): ",
              kmax_);
     k_ = getInt(0, kmax_, pString);
-    snprintf(pString,100,"KNN_k = %d", k_);
+    snprintf(pString,100,"RS_KNN_k = %d", k_);
     psConfig_.putParameter(pString);
     if (k_ == 0)
     {
       snprintf(pString,100,"Maximum K to be searched (>1,<=%d): ",kmax_);
       kmax_ = getInt(2, kmax_, pString);
-      snprintf(pString,100,"KNN_kmax = %d", kmax_);
+      snprintf(pString,100,"RS_KNN_kmax = %d", kmax_);
       psConfig_.putParameter(pString);
       snprintf(pString,100,"How many fold cross validation (10-%d)? ",kfold_);
       kfold_ = getInt(10, kfold_, pString);
-      snprintf(pString,100,"KNN_kfold = %d", kfold_);
+      snprintf(pString,100,"RS_KNN_kfold = %d", kfold_);
       psConfig_.putParameter(pString);
     }
     printf("There are two options for interpolation: \n");
@@ -280,34 +280,34 @@ KNN::KNN(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
     printf("2: Mode of neigbors (for classification: with integer outputs.\n");
     snprintf(pString,100,"Enter desired mode (0, 1, or 2): ");
     mode_ = getInt(0, 2, pString);
-    snprintf(pString,100,"KNN_mode = %d", mode_);
+    snprintf(pString,100,"RS_KNN_mode = %d", mode_);
     psConfig_.putParameter(pString);
   }
   else
   {
     char keyword[1000], equalSign[100];
-    char *cString = psConfig_.getParameter("KNN_mode");
+    char *cString = psConfig_.getParameter("RS_KNN_mode");
     if (cString != NULL)
     {
       sscanf(cString, "%s %s %d", keyword, equalSign, &mode_);
       if (mode_ < 0 || mode_ > 2) mode_ = 0;
       if (outputLevel_ > 1) printf("KNN_mode = %d\n", mode_);
     }
-    cString = psConfig_.getParameter("KNN_k");
+    cString = psConfig_.getParameter("RS_KNN_k");
     if (cString != NULL)
     {
       sscanf(cString, "%s %s %d", keyword, equalSign, &k_);
       if (k_ < 0) k_ = 0;
       if (outputLevel_ > 1) printf("KNN_k = %d\n", k_);
     }
-    cString = psConfig_.getParameter("KNN_kfold");
+    cString = psConfig_.getParameter("RS_KNN_kfold");
     if (cString != NULL)
     {
       sscanf(cString, "%s %s %d", keyword, equalSign, &kfold_);
       if (kfold_ < 0) kfold_ = 0;
       if (outputLevel_ > 1) printf("KNN_kfold = %d\n", kfold_);
     }
-    cString = psConfig_.getParameter("KNN_kmax");
+    cString = psConfig_.getParameter("RS_KNN_kmax");
     if (cString != NULL)
     {
       sscanf(cString, "%s %s %d", keyword, equalSign, &kmax_);

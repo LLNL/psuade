@@ -354,7 +354,7 @@ PKriging::PKriging(int nInputs,int nSamples, CommManager *comm) :
   //**/ =======================================================
   if (mypid_ == 0)
   {
-    strPtr = psConfig_.getParameter("KRI_DATA_STDEV_FILE");
+    strPtr = psConfig_.getParameter("RS_KRI_DATA_STDEV_FILE");
     if (strPtr != NULL)
     {
       sscanf(strPtr, "%s %s %s", winput, winput2, fname);
@@ -587,7 +587,7 @@ double PKriging::train(double *X, double *Y)
     }
   }
   status = 0;
-  if (mypid_ == 0 && psConfig_.MasterModeIsOn())
+  if (mypid_ == 0 && psConfig_.MasterModeIsOn() && psConfig_.InteractiveIsOn())
   {
     printf("PKriging: current optimization lower bound for input %d = %e",
             ii+1,vecTLowers[ii]);

@@ -39,7 +39,7 @@ class HGP3 : public FuncApprox
 {
 public:
    int      haveQuantiles_;
-   int      noChecking_;
+   int      optimizeFlag_;
    double   expPower_;
    psVector VecHypers_;
    psVector VecCInvY_;
@@ -72,7 +72,6 @@ public:
    double evaluatePointFuzzy(int, double *, double *, double *);
    void   getHyperparameters(psVector &);
    double computeGradients(psVector, psVector &, int &);
-   double setParams(int, char **);
    void   saveFA();
    void   retrieveFA();
 

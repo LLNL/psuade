@@ -8,6 +8,7 @@ run psuadeRSConstr.in
 rename psuadeData constrData
 # run Sobol' main effect analysis
 run psuadeSobol1Constr.in
+2
 q
 
 

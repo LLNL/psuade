@@ -42,7 +42,8 @@
 // ************************************************************************
 class LSASampling: public Sampling 
 {
-  int nPtsPerInput_;
+  double deltaX_;
+
 public:
 
   /** constructor */

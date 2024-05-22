@@ -48,6 +48,7 @@
 class PDFManager 
 {
    int nInputs_;
+   int nGUniform_;
    int nGNormal_;
    int nGLognormal_;
    int printLevel_;
@@ -56,6 +57,7 @@ class PDFManager
    PDFMVLogNormal *PDFMVLogNormalPtr_;
    PsuadeData     *PSIOptr_;
    psMatrix       corMat_;
+   psIVector      vecgUniformInputs_;
    psIVector      vecgNormalInputs_;
    psIVector      vecgLNormalInputs_;
    psIVector      vecUsrPDFFlags_;

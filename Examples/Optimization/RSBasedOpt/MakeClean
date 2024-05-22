@@ -1,3 +1,3 @@
 clean:
-	rm -f simdata psuadeData simulator psuadeOpt* 
+	rm -f simdata psuadeData simulator psuadeOpt.in.* psuadeOpt.out.*
 

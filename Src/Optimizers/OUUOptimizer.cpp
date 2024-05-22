@@ -61,14 +61,20 @@ using namespace NOMAD;
 // ************************************************************************
 // External functions
 // ------------------------------------------------------------------------
+#ifdef HAVE_BOBYQA
 extern "C" void bobyqa_(int *,int *, double *, double *, double *, double *,
                         double *, int *, int *, double*);
 extern "C" void obobyqa_(int *,int *, double *, double *, double *, double *,
                         double *, int *, int *, double*);
+#endif
+#ifdef HAVE_NEWUOA
 extern "C"  void newuoa_(int *,int *,double *,double *,double *,int *,
                          int *,double*);
+#endif
+#ifdef HAVE_LINCOA
 extern "C" void lincoa_(int *,int *, int *, double *, int *, double *,
                         double *,double *,double *, int *, int *, double*);
+#endif
 
 // ************************************************************************
 // Internal 'global' variables (for passing parameters to Fortran and C
@@ -481,8 +487,13 @@ extern "C"
             printf("OUU: inner optimization begins (sample %d of %d)\n",
                    ss+1,nSamp);
           bobyqaFlag = 1112;
+#ifdef HAVE_BOBYQA
           obobyqa_(&M2,&nPts,XLocal,lowers,uppers,&rhobeg,&rhoend, 
                    &bobyqaFlag, &maxfun, workArray);
+#else
+          printf("OUUOptimizer ERROR: BOBYQA not installed.\n");
+          exit(1);
+#endif
           VecPsOUUSamOuts_[ss] = psOUUOptimalY_;
           if (psConfig_.InteractiveIsOn() && odata->outputLevel_ > 3) 
             printf("OUU: inner optimization %d ends, best Y = %e\n",
@@ -3151,6 +3162,8 @@ void OUUOptimizer::optimize(oData *odata)
       printf("OUUOptimizer: calling bobyqa\n");
     bobyqa_(&M1, &nPts, XValues, lowers, uppers,
             &rhobeg, &rhoend, &bobyqaFlag, &maxfun, vecWT.getDVector());
+    printf("OUUOptimizer ERROR: BOBYQA not installed.\n");
+    exit(1);
     delete [] lowers;
     delete [] uppers;
 #else
@@ -4083,12 +4096,14 @@ void OUUOptimizer::displayBanner()
   printEquals(PL_INFO, 0);
   printf("Other options:\n");
   printf(" - turn on save_history to save optimization history\n");
-  printf(" - turn on use_history to search history database before a\n");
-  printf("   simulation is launched so as to save simulation time.\n");
-  printf("save_history is set in the ANALYSIS section via\n");
-  printf("    optimization save_history\n");
-  printf("You will see a text file called 'psuade_ouu_history' after\n");
-  printf("OUU has been completed.\n");
+  printf(" - turn on use_history to search history database ");
+  printf("before a simulation\n");
+  printf("   is launched so as to save simulation time.\n");
+  printf(" - save_history is set in the ANALYSIS section using\n");
+  printf("      optimization save_history\n");
+  printf(" - You will see a text file called 'psuade_ouu_history' ");
+  printf("after OUU has\n");
+  printf("   been completed.\n");
   printAsterisks(PL_INFO, 0);
   printAsterisks(PL_INFO, 0);
   printf("IF YOU ARE READY TO MOVE ON, ENTER 'y' AND RETURN : ");

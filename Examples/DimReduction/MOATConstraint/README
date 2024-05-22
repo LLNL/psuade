@@ -9,23 +9,21 @@ subject to 0 <= X1 + X2 <= 1
 X1, X2, .., X20 = [0, 1]
 
 ***************************************************************
-The idea is to modify the first 2 inputs of the unconstrained
-GMOAT sample based on the MOAT_repair_file information created
-by applying constraints.
+The idea is to create a MOAT 'repair file' and use the it to 
+inform the MOAT sample generator about the constraints so that
+the result is a modified MOAT sample that obeys the constraints.
 
 The steps are:
 
-1. generate a sample expressing the constraints (X1+X2)
-   It is in genConstraint.c
+1. Create a sample expressing the constraints (X1+X2).
+   The constraint relationship is given in genConstraint.c
 
-   so: cc -o genConstraint genConstraint.c -lm
+   A. cc -o genConstraint genConstraint.c -lm
 
-   now run: psuade psuadeGenConstraint.in
+   B. psuade psuadeGenConstraint.in
 
-   mv psuadeData constrData
-
-2. generate a Morris sample for X1 and X2 that obeys the 
-   constraint
+2. Create a Morris sample JUST FOR X1 and X2 that obeys 
+   the constraint
 
    psuade
    > load constrData
@@ -37,55 +35,57 @@ The steps are:
      200 < just use a large number >
    > quit
  
-   At the end a file MOAT_repair_file is generated.
+   At the end a file MOAT_adjust_file is generated.
 
-   Next, go into the MOAT_repair_file and change
+   Next, go into the MOAT_adjust_file and change
    the variable indices on line 3. In this case,
    since the variables are 1 and 2, so no change is
    needed.
 
-3. generate a Morris sample for 20 inputs but do not run
+3. Create a Morris sample for ALL 20 inputs (which
+   does not have the constraint embedded yet)
 
    psuade psuadeGMOAT.in
 
    mv psuadeData gmoatSample
 
-4. repair the Morris sample (repair the first 2 inputs only)
+4. Adjust the Morris sample (based on the constraint
+   for the first inputs in MOAT_adjust_file)
 
    psuade
    > load gmoatSample
-   > gmoat_adjust MOAT_repair_file
-   > write gmoatSample.repaired
+   > gmoat_adjust MOAT_adjust_file
+   > write gmoatSample.adjusted
    > quit
 
-   Now gmoatSample.repaired is ready to be run.
+   Now gmoatSample.adjusted is ready to be run.
 
 5. run simulations on the modified GMOAT sample
 
    cc -o simulator simulator.c -lm
 
-   Open up gmoatSample.repaired, and change the 
+   Open up gmoatSample.adjusted, and change the 
        driver to point to simulator.
 
-   Now do: psuade gmoatSample.repaired
+   Now do: psuade gmoatSample.adjusted
  
-   mv psuadeData gmoatSample.repaired.done
+   mv psuadeData gmoatSample.adjusted.done
 
-6. perform analysis
+6. Perform analysis
 
-   Open up gmoatSample.repaired.done.
+   Open up gmoatSample.adjusted.done.
    Change the line moat_constraint to:
      analyzer moat_constraint = constrData indexFile 0 1
 
    Now start psuade in command line mode:
 
    psuade
-   > load gmoatSample.repaired.done
+   > load gmoatSample.adjusted.done
    > moat
 
-   * Compare the result with the scenario when the 'analyzer
-     moat_constraint' is not used (especially the first 2
-     inputs)
+   * Compare the result with the scenario when the 
+     'analyzer moat_constraint' (for the first 2
+     inputs) is not used 
 
 NOTE: Step 1-5 have been captured by psScript.in
    

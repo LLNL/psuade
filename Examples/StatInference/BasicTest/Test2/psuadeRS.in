@@ -5,15 +5,15 @@ INPUT
    variable   2 X2   =  0.0  2.0
    variable   3 X3   =  0.0  2.0
    variable   4 X4   =  0.0  2.0
-   variable   5 X5   = -60   60
+   variable   5 X5   = -1.0  1.0
 END
 OUTPUT
    dimension = 1
    variable 1 Y
 END
 METHOD
-   sampling = FACT
-   num_samples = 1024
+   sampling = LPTAU
+   num_samples = 500
    random_seed = 1139179171
 END
 APPLICATION
@@ -24,6 +24,6 @@ ANALYSIS
 #  analyzer method = Moment
    analyzer output_id  = 1
    printlevel 1
-   analyzer rs_index_file = indexFile
+   analyzer rs_index_file = rsIndexFile
 END
 END

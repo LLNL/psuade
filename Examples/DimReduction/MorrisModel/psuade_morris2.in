@@ -108,7 +108,7 @@ OUTPUT
 END
 METHOD
    sampling = MOAT
-   num_samples = 303
+   num_samples = 505
 END
 APPLICATION
    driver = ./morris_simulator2

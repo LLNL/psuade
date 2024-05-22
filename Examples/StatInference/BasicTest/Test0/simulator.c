@@ -20,6 +20,7 @@ int main(int argc, char **argv)
    {
      fscanf(fIn, "%lg", &X);
      Y += (X - 0.5);
+     //Y += 0.5 / (0.1 * 0.1) * (X - 0.5) * (X - 0.5);
    }
    fclose(fIn);
    fOut = fopen(argv[2], "w");

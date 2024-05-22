@@ -687,9 +687,9 @@ int Regression::analyze(psVector VecXin, psVector VecY)
   //**/ =================================================================
   psVector VecX;
   VecX.setLength(nSamples_ * nInputs_);
-  if (psConfig_.MasterModeIsOn())
+  if (psConfig_.MasterModeIsOn() && psConfig_.InteractiveIsOn()) 
   {
-    printf("* Regression INFO: scaling turned off in master mode.\n");
+    printf("* Regression INFO: Scaling turned off in master mode.\n");
     printf("*                  To turn scaling on in master mode,\n");
     printf("*                  have rs_expert mode on also.\n");
     initInputScaling(VecXin.getDVector(), VecX.getDVector(), 0);
@@ -728,7 +728,7 @@ int Regression::analyze(psVector VecXin, psVector VecY)
   //**/ =================================================================
   //**/ diagnostics 
   //**/ =================================================================
-  if (psConfig_.MasterModeIsOn())
+  if (psConfig_.MasterModeIsOn() && psConfig_.InteractiveIsOn()) 
   {
     printf("You have the option to store the regression matrix (that\n");
     printf("is, the matrix A in Ax=b) in a matlab file for inspection.\n"); 
@@ -798,26 +798,28 @@ int Regression::analyze(psVector VecXin, psVector VecY)
   {
     NRevised = N;
     for (nn = 1; nn < N; nn++) 
-      if (VecS[nn-1] > 0 && VecS[nn]/VecS[nn-1] < 1.0e-8 && 
-          VecS[nn] < 1e-12) break;
-    if (nn < N) NRevised = nn - 1;
+      if (VecS[nn-1] > 0 && VecS[nn]/VecS[nn-1] < 1.0e-8) break;
+    NRevised = nn;
   }
   if (NRevised < N)
   {
-    printf("* Regression WARNING: true rank of sample = %d (need >= %d)\n",
+    printf("Regression WARNING: True matrix rank = %d (N = %d)\n",
            NRevised, N);
     for (nn = 0; nn < N; nn++) 
       printf("Singular value %5d = %e\n",nn+1,VecS[nn]);
-    printf("Cut off at n when S[n]/S[n-1] < 1e-8\n");
-    printf("* This can be due to the quality of the sample.\n");
+    if (psConfig_.InteractiveIsOn() && outputLevel_ > 1)
+    {
+      printf("INFO: This can be due to the quality of the sample.\n");
+      for (nn = 0; nn < N; nn++)
+        printf("Singular value %5d = %e\n",nn+1,VecS[nn]);
+    }
   }
-  if (psConfig_.MasterModeIsOn())
+  if (psConfig_.MasterModeIsOn() && psConfig_.InteractiveIsOn())
   {
-    printf("Regression: matrix singular values\n");
-    printf("The VERY small ones may cause poor numerical accuracy, ");
-    printf("but not keeping\n");
-    printf("them may ruin the approximation power. So select ");
-    printf("them judiously.\n");
+    printf("Regression: For the matrix singular values\n");
+    printf(" - The VERY small ones may cause poor numerical accuracy\n");
+    printf(" - But not keeping them may ruin the approximation power\n");
+    printf(" - So select them judiously.\n");
     for (nn = 0; nn < N; nn++) 
       printf("Singular value %5d = %e\n", nn+1, VecS[nn]);
     snprintf(pString,100,"How many to keep (1 - %d, 0 - all) ? ", N); 
@@ -827,15 +829,7 @@ int Regression::analyze(psVector VecXin, psVector VecY)
   }
   else
   {
-    NRevised = N;
-    for (nn = 1; nn < N; nn++) 
-    {
-      if (VecS[nn-1] > 0 && VecS[nn]/VecS[nn-1] < 1.0e-8)
-      {
-        VecS[nn] = 0.0;
-        NRevised--;
-      }
-    }
+    for (nn = NRevised; nn < N; nn++) VecS[nn] = 0.0;
     if (NRevised != N) 
       printf("Regression INFO: %d singular values have been truncated.\n",
              N-NRevised);
@@ -874,7 +868,7 @@ int Regression::analyze(psVector VecXin, psVector VecY)
   //**/ compute residual and generate training statistics (error)
   //**/ =================================================================
   fp = NULL;
-  if (psConfig_.MasterModeIsOn())
+  if (psConfig_.MasterModeIsOn() && psConfig_.InteractiveIsOn()) 
   {
     fp = fopen("regression_err_splots.m", "w");
     if(fp == NULL)
@@ -976,6 +970,8 @@ int Regression::analyze(psVector VecXin, psVector VecY)
   //**/ =================================================================
   //**/ generate standalone response surface function
   //**/ =================================================================
+  if (psConfig_.RSCodeGenIsOn()) genRSCode();
+#if 0
   fp = NULL;
   if (psConfig_.RSCodeGenIsOn()) fp = fopen("psuade_rs.info", "w");
   if (fp != NULL)
@@ -1264,6 +1260,7 @@ int Regression::analyze(psVector VecXin, psVector VecY)
     printf("     functional form.\n");
     fclose(fp);
   }
+#endif
   return 0;
 }
 
@@ -1509,7 +1506,7 @@ int Regression::printRC(psVector VecB, psVector VecBstd, psMatrix MatXX,
   printf("*** NOTE: These coefficients may not be true coefficients due\n");
   printf("***       to sample matrix scaling (i.e., they may be scaled).\n");
   printf("***       To turn off scaling, turn on 'master' mode.\n");
-  if (psConfig_.MasterModeIsOn())
+  if (psConfig_.MasterModeIsOn() && psConfig_.InteractiveIsOn()) 
     printf("***       NOTE: master mode is ON (==> no scaling).\n");
   else
     printf("***       NOTE: master mode is OFF (==> scaling is ON)\n");
@@ -1642,7 +1639,8 @@ int Regression::printRC(psVector VecB, psVector VecBstd, psMatrix MatXX,
   //**/ =================================================================
   //**/ print to file
   //**/ =================================================================
-  if (order_ >= 0 && order_ <= 4 && psConfig_.MasterModeIsOn())
+  if (order_ >= 0 && order_ <= 4 && psConfig_.MasterModeIsOn() &&
+      psConfig_.InteractiveIsOn()) 
   {
     fp = fopen(fname, "w");
     if(fp == NULL)
@@ -1671,7 +1669,7 @@ int Regression::printRC(psVector VecB, psVector VecBstd, psMatrix MatXX,
 int Regression::printSRC(psVector VecX, psVector VecB, double SStotal)
 {
   int    nn, mm, ind, ii, nn2, itemp, nn3, nn4;
-  double denom, xmean, coef, Bmax, coef1, coef2, xmean1, xmean2;
+  double ystd, xmean, coef, Bmax, coef1, coef2, xmean1, xmean2;
   double xmean3, coef3, xmean4, coef4;
   psVector  VecB2;
   psIVector VecIndices;
@@ -1689,10 +1687,11 @@ int Regression::printSRC(psVector VecX, psVector VecB, double SStotal)
   if (order_ >= 1)
   {
     VecIndices.setLength(nInputs_);
-    denom = sqrt(SStotal / (double) (nSamples_ - 1));
+    ystd = sqrt(SStotal / (double) (nSamples_ - 1));
     Bmax = 0.0;
     for (nn = 0; nn < nInputs_; nn++)
     {
+      //**/ compute std(x)/std(y)
       xmean = 0.0;
       for (mm = 0; mm < nSamples_; mm++) 
         xmean += VecX[mm*nInputs_+nn] * sqrt(VecWghts_[mm]);
@@ -1703,7 +1702,8 @@ int Regression::printSRC(psVector VecX, psVector VecB, double SStotal)
         coef += (sqrt(VecWghts_[mm])*VecX[mm*nInputs_+nn] - xmean) * 
                 (sqrt(VecWghts_[mm])*VecX[mm*nInputs_+nn] - xmean);
       }
-      coef = sqrt(coef / (double) (nSamples_ - 1)) / denom;
+      coef = sqrt(coef / (double) (nSamples_ - 1)) / ystd;
+      //**/ print SRC = B * std(X) / std(Y)
       printf("* Input %3d ", nn+1);
       for (ii = 1; ii < order_; ii++) printf("    ");
       if ((VecB[nn+1]*coef) > Bmax) Bmax = VecB[nn+1]*coef;
@@ -1747,7 +1747,7 @@ int Regression::printSRC(psVector VecX, psVector VecB, double SStotal)
           coef2 += (sqrt(VecWghts_[mm])*VecX[mm*nInputs_+nn2] - xmean2) * 
                    (sqrt(VecWghts_[mm])*VecX[mm*nInputs_+nn2] - xmean2);
         coef2 = sqrt(coef2 / (double) (nSamples_ - 1));
-        VecB2[ind] = VecB[ind] * coef1 * coef2 / denom;
+        VecB2[ind] = VecB[ind] * coef1 * coef2 / ystd;
         if (PABS(VecB2[ind]) > Bmax) Bmax = PABS(VecB2[ind]);
         ind++;
       }
@@ -1803,7 +1803,7 @@ int Regression::printSRC(psVector VecX, psVector VecB, double SStotal)
             coef3 += (sqrt(VecWghts_[mm])*VecX[mm*nInputs_+nn3] - xmean3) * 
                      (sqrt(VecWghts_[mm])*VecX[mm*nInputs_+nn3] - xmean3);
           coef3 = sqrt(coef3 / (double) (nSamples_ - 1));
-          VecB2[ind] = VecB[ind] * coef1 * coef2 *coef3 / denom;
+          VecB2[ind] = VecB[ind] * coef1 * coef2 *coef3 / ystd;
           if (PABS(VecB2[ind]) > Bmax) Bmax = PABS(VecB2[ind]);
           ind++;
         }
@@ -1874,7 +1874,7 @@ int Regression::printSRC(psVector VecX, psVector VecB, double SStotal)
               coef4 += (sqrt(VecWghts_[mm])*VecX[mm*nInputs_+nn4] - xmean4) * 
                        (sqrt(VecWghts_[mm])*VecX[mm*nInputs_+nn4] - xmean4);
             coef4 = sqrt(coef4 / (double) (nSamples_ - 1));
-            VecB2[ind] = VecB[ind] * coef1 * coef2 *coef3 *coef4 / denom;
+            VecB2[ind] = VecB[ind] * coef1 * coef2 *coef3 *coef4 / ystd;
             if (PABS(VecB2[ind]) > Bmax) Bmax = PABS(VecB2[ind]);
             ind++;
           }

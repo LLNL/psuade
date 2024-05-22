@@ -1,0 +1,24 @@
+Due to LLNL's software release recommendation,
+the external libraries have been removed.
+Nevertheless, you will need a few third-party
+libraries to enable some PSUADE capabilities.
+The most useful ones are:
+
+To use OA and OALH sampling - Bose
+
+To use MARS-based response surface and analyses,
+need MARS
+
+To use several response surfaces (DNN, HGP3, QGP3, 
+HybridGP, KNN, Kriging) and optimization capabilities, 
+need BOBYQA
+
+To use Metis-based sampling and some analysis methods
+(e.g. TSI), and some adaptive sampling, need - METIS
+
+For some response surfaces such as GP, need L-BFGS-B-C
+
+Other useful ones are:
+COBYLA, LINCOA, NEWUOA
+
+

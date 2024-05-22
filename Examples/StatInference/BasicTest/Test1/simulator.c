@@ -27,7 +27,7 @@ int main(int argc, char **argv)
    {
       dtemp = AB[0] * X[i] + AB[1] * X[i] * X[i];
       error = Y[i] - dtemp;
-      fprintf(fOut, " %24.16e\n", error);
+      fprintf(fOut, " %24.16e\n", dtemp);
    }
    fclose(fOut);
 }

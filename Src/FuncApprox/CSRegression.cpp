@@ -20,7 +20,7 @@
 // along with this program; if not, write to the Free Software Foundation,
 // Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 // ************************************************************************
-// Functions for the class CSRegression
+// Functions for the class CSRegression (not done)
 // AUTHOR : CHARLES TONG
 // DATE   : 2016
 // ************************************************************************
@@ -490,7 +490,7 @@ int CSRegression::analyze(psVector VecXin, psVector VecYin)
   //**/ optional scaling of the sample matrix
   //**/ =================================================================
   vecXT.setLength(nSamples_*nInputs_);
-  if (psConfig_.MasterModeIsOn())
+  if (psConfig_.MasterModeIsOn() && psConfig_.InteractiveIsOn())
   {
     printf("* CSRegression INFO: scaling turned off.\n");
     printf("*              To turn on scaling, use rs_expert mode.\n");

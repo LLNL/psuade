@@ -1,0 +1,29 @@
+PSUADE
+INPUT
+   dimension = 2
+   variable   1 X   = -4  4
+   variable   2 X   = -4  4
+END
+OUTPUT
+   dimension = 1
+   variable 1 Y
+END
+METHOD
+   sampling = LPTAU
+   num_samples = 500000
+   randomize
+   random_seed = 41491431
+END
+APPLICATION
+#  driver = ./simulator
+#  if ensemble mode is desired, uncomment the next 3 lines
+   ensemble_driver = ./simulator
+   ensemble_run_mode
+   max_parallel_jobs = 1000
+END
+ANALYSIS
+   analyzer output_id  = 1
+   printlevel 1
+   io_expert on
+END
+END

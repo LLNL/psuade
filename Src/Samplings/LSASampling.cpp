@@ -36,7 +36,7 @@
 LSASampling::LSASampling() : Sampling()
 {
   samplingID_ = PSUADE_SAMP_LSA;
-  nPtsPerInput_ = 1;
+  deltaX_ = 1.0e-8;
 }
 
 // ************************************************************************
@@ -58,29 +58,35 @@ int LSASampling::initialize(int initLevel)
   //**/ ----------------------------------------------------------------
   //**/ error checking
   //**/ ----------------------------------------------------------------
-  if (nSamples_ == 0)
-  {
-    printf("LSASampling::initialize ERROR - nSamples = 0.\n");
-    exit(1);
-  }
   if (nInputs_ == 0)
   {
-    printf("LSASampling::initialize ERROR - input not set up.\n");
+    printf("LSASampling::initialize ERROR - nInput = 0.\n");
+    exit(1);
+  }
+  if (nSamples_ != nInputs_+1)
+  {
+    printf("LSASampling::initialize ERROR - nSamples != nInputs+1.\n");
     exit(1);
   }
   if (psConfig_.SamExpertModeIsOn() && psConfig_.InteractiveIsOn())
   {
-    printf("LSASampling: useful for local sensitivity analysis.\n");
+    printf("LSASampling: Useful for local sensitivity analysis.\n");
     printf("The default pattern consists of one sample ");
     printf("point at the midpoint\n");
-    printf("of the parameter space and one sample point on ");
-    printf("one of the 2 faces\n");
-    printf("for each input. So the default nSamples = nInputs + 1.\n");
-    printf("However, you can define more points per input dimension.\n");
-    snprintf(pString,100,"How many points per input dimension (default=1)? ");
-    nPtsPerInput_ = getInt(1,10000,pString);
+    printf("of the parameter space and one near point of ");
+    printf("deltaX in each dimension.\n");
+    printf("Hence, the default nSamples = nInputs + 1.\n");
+    printf("You may set deltaX (the actual perturbation is ");
+    printf("deltaX*Range(X_i).\n");
+    snprintf(pString,100,
+             "What is your desired desired X (default=1e-8)? ");
+    deltaX_ = 0;
+    while (deltaX_ <= 0)
+    {
+      deltaX_ = getDouble(pString);
+      if (deltaX_ <= 0) printf("ERROR: deltaX needs to be > 0\n");
+    } 
   }
-  nSamples_ = nPtsPerInput_ * nInputs_ + 1;
 
   //**/ ----------------------------------------------------------------
   //**/ diagnostics
@@ -106,45 +112,15 @@ int LSASampling::initialize(int initLevel)
   allocSampleData();
   for (ii = 0; ii < nInputs_; ii++) 
     vecSamInps_[ii] = 0.5*(vecUBs_[ii]+vecLBs_[ii]);
-  if (nPtsPerInput_ == 1)
+  for (ss = 1; ss < nSamples_; ss++)
   {
-    for (ss = 1; ss < nSamples_; ss++)
-    {
-      for (ii = 0; ii < nInputs_; ii++) 
-        vecSamInps_[ss*nInputs_+ii] = 0.5*(vecUBs_[ii]+vecLBs_[ii]);
-      ddata = PSUADE_drand();
-      if (ddata >= 0.5) ddata = 1.0;
-      else              ddata = 0.0;
-      vecSamInps_[ss*nInputs_+ss-1] = vecLBs_[ss-1] + ddata *
-                              (vecUBs_[ss-1] - vecLBs_[ss-1]);
-    }
-  }
-  else
-  {
-    int n1 = nPtsPerInput_ / 2;
-    int n2 = nPtsPerInput_ - n1;
-    int cnt = 1;
-    for (ss = 0; ss < nSamples_; ss++)
-    {
-      for (ii = 0; ii < nInputs_; ii++) 
-        vecSamInps_[ss*nInputs_+ii] = 0.5*(vecUBs_[ii]+vecLBs_[ii]);
-    }
     for (ii = 0; ii < nInputs_; ii++) 
-    {
-      for (ss = 0; ss < n1; ss++)
-      {
-        ddata = ss*(vecUBs_[ii]-vecLBs_[ii])/(2.0*n1) + vecLBs_[ii];  
-        vecSamInps_[cnt*nInputs_+ii] = ddata;
-        cnt++;
-      }
-      for (ss = 1; ss <= n2; ss++)
-      {
-        ddata = ss*(vecUBs_[ii]-vecLBs_[ii])/(2.0*n2)+
-                0.5*(vecLBs_[ii] + vecUBs_[ii]);  
-        vecSamInps_[cnt*nInputs_+ii] = ddata;
-        cnt++;
-      }
-    }
+      vecSamInps_[ss*nInputs_+ii] = 0.5*(vecUBs_[ii]+vecLBs_[ii]);
+    ddata = PSUADE_drand();
+    if (ddata >= 0.5) ddata =  1.0;
+    else              ddata = -1.0;
+    vecSamInps_[ss*nInputs_+ss-1] = vecSamInps_[ss-1] + ddata * deltaX_ *
+                                    (vecUBs_[ss-1] - vecLBs_[ss-1]);
   }
   return 0;
 }

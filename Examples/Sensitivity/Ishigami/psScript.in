@@ -1,0 +1,51 @@
+sys cc -o ensemble_simulator ensemble_simulator.c -lm
+run psuadeRS.in
+rename psuadeData simdata
+load simdata
+# perform variance-based main effect analysis using 
+# MARS response surface 
+rsvce1_sobol
+y
+1
+0
+# perform variance-based 2-input effect analysis 
+# using MARS response surface 
+rsvce2_sobol
+y
+1
+0
+# perform variance-based total effect analysis using 
+# MARS response surface 
+rstsi_sobol
+y
+1
+0
+# perform variance-based group sensitivity analysis  
+# using MARS response surface
+rsvceg_sobol
+y
+1
+0
+group
+# perform entropy-based main effect analysis using 
+# MARS response surface 
+rsentropy1
+y
+1
+0
+# perform entropy-based main effect analysis using 
+# MARS response surface 
+rsentropy2
+y
+1
+0
+# perform entropy-based group sensitivity analysis  
+# using MARS response surface
+rsentropyg
+y
+1
+group
+0
+q
+
+

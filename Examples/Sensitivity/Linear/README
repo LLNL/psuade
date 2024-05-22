@@ -1,0 +1,38 @@
+This test problem is a linear model
+
+   Y = X1 - 2 X2 + 3 X3
+
+I. Local sensitivity analysis
+
+   * compile model
+
+     cc -o simulator simulator.c -lm
+
+   * run psuade in batch mode:
+
+     psuade psuadeLSA.in
+
+   * analyze
+
+     psuade
+     > load psuadeData
+     > lsa
+     ...
+
+II. Correlation analysis 
+
+   * compile model
+
+     cc -o simulator simulator.c -lm
+
+   * run psuade in batch mode:
+
+     psuade psuadeCa.in
+
+   * analyze
+
+     psuade
+     > load psuadeData
+     > ca
+     ...
+   

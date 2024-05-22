@@ -278,7 +278,7 @@ extern "C"
 HKriging::HKriging(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
 {
   int  ii;
-  char pString[101], winput[500];
+  char pString[101], winput[500], equal[500], *strPtr;
 
   //**/ =======================================================
   // initialize variables and parameters
@@ -323,6 +323,9 @@ HKriging::HKriging(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
     printf("(2) very slow mode with multi-start optimization\n");
     snprintf(pString,100,"Please select mode (1 - 2) : ");
     fastMode_ = getInt(1,2,pString);
+    snprintf(pString,100,"RS_HKRI_mode = %d",fastMode_);
+    psConfig_.putParameter(pString);
+
     snprintf(pString,100,"Enter optimization tolerance (default = 1e-4): ");
     optTolerance_ = getDouble(pString);
     if (optTolerance_ <= 0 || optTolerance_ > 0.5)
@@ -331,6 +334,9 @@ HKriging::HKriging(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
       printf("               Tolerance set to default = 1.0e-4.\n");
       optTolerance_ = 1.0e-4;
     }
+    snprintf(pString,100,"RS_HKRI_tol = %e",optTolerance_);
+    psConfig_.putParameter(pString);
+
     printf("HKriging: Current initial length scales = %e\n",Theta_);
     snprintf(pString,100,"Change initial theta? (y or n) ");
     getString(pString, winput);
@@ -343,8 +349,11 @@ HKriging::HKriging(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
         Theta_ = getDouble(pString);
         if (Theta_ <= 0.0) printf("ERROR: theta has to be > 0.\n");
       }
+      snprintf(pString,100,"RS_HKRI_theta = %e",Theta_);
+      psConfig_.putParameter(pString);
     }
-    if (psConfig_.MasterModeIsOn())
+
+    if (psConfig_.MasterModeIsOn() && psConfig_.InteractiveIsOn())
     {
       snprintf(pString,100,"Add nugget? (y or n) ");
       getString(pString, winput);
@@ -356,7 +365,55 @@ HKriging::HKriging(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
           snprintf(pString,100,"Enter nugget ([0,1)) : ");
           HKRI_nugget = getDouble(pString);
         }
+        snprintf(pString,100,"RS_HKRI_nugget = %e",HKRI_nugget);
+        psConfig_.putParameter(pString);
       }
+    }
+  }
+  else
+  {
+    //**/ get mode
+    strPtr = psConfig_.getParameter("RS_HKRI_mode");
+    if (strPtr != NULL)
+    {
+      sscanf(strPtr, "%s %s %d", winput, equal, &fastMode_);
+      if (fastMode_ < 1 || fastMode_ > 2)
+      {
+        printf("HKriging INFO: mode from config not valid.\n");
+        printf("               mode set to %d.\n", fastMode_);
+      }
+      printf("HKriging INFO: mode from config = %d.\n",fastMode_);
+    }
+
+    //**/ get tolerance
+    strPtr = psConfig_.getParameter("RS_HKRI_tol");
+    if (strPtr != NULL)
+    {
+      sscanf(strPtr, "%s %s %lg", winput, equal, &optTolerance_);
+      if (optTolerance_ <= 0 || optTolerance_ > 0.5)
+      {
+        printf("HKriging INFO: optimization tol should be in (0,0.5]).\n");
+        printf("               Tolerance set to default = 1.0e-4.\n");
+        optTolerance_ = 1.0e-4;
+      }
+      printf("HKriging INFO: optimization tolerance from config = %e.\n",
+             optTolerance_);
+    }
+
+    //**/ get length scale
+    strPtr = psConfig_.getParameter("RS_HKRI_theta");
+    if (strPtr != NULL)
+    {
+      sscanf(strPtr, "%s %s %lg", winput, equal, &Theta_);
+      printf("HKriging INFO: length scale from config = %e.\n",Theta_);
+    }
+
+    //**/ get nugget 
+    strPtr = psConfig_.getParameter("RS_HKRI_nugget");
+    if (strPtr != NULL)
+    {
+      sscanf(strPtr, "%s %s %lg", winput, equal, &HKRI_nugget);
+      printf("HKriging INFO: nugget from config = %e.\n",HKRI_nugget);
     }
   }
 }

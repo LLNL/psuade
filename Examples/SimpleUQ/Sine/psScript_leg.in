@@ -1,0 +1,20 @@
+sys cc -o simulator simulator.c -lm
+run psuade.in
+rename psuadeData sam2000.psu
+load sam2000.psu
+ssplit
+y
+200
+2
+rename psuadeSample1 sam200.psu
+rename psuadeSample2 sam1800.psu
+load sam200.psu
+rstest_hs
+sam1800.psu
+1
+7
+n
+8
+n
+q
+

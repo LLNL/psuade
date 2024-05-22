@@ -5,16 +5,17 @@
 // All rights reserved.
 //
 // Please see the COPYRIGHT and LICENSE file for the copyright notice,
-// disclaimer, contact information and the GNU Lesser General Public License.
+// disclaimer, contact information and the GNU Lesser General Public 
+// License.
 //
-// PSUADE is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free 
-// Software Foundation) version 2.1 dated February 1999.
+// PSUADE is free software; you can redistribute it and/or modify it under 
+// the terms of the GNU Lesser General Public License (as published by the 
+// Free Software Foundation) version 2.1 dated February 1999.
 //
-// PSUADE is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the IMPLIED WARRANTY OF MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE.  See the terms and conditions of the GNU Lesser
-// General Public License for more details.
+// PSUADE is distributed in the hope that it will be useful, but WITHOUT 
+// ANY WARRANTY; without even the IMPLIED WARRANTY OF MERCHANTABILITY 
+// or FITNESS FOR A PARTICULAR PURPOSE.  See the terms and conditions of 
+// the GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program; if not, write to the Free Software Foundation,
@@ -63,6 +64,10 @@ public:
   //**/ @param adata - all data needed for analysis
   double analyzeVCE(aData &adata);
 
+  //**/ Perform analysis using TSI-based algorithm
+  //**/ @param adata - all data needed for analysis
+  double analyzeTSI(aData &adata);
+
   //**/ Perform analysis using entropy-based algorithm
   //**/ @param adata - all data needed for analysis
   double analyzeEntropy(aData &adata);
@@ -79,9 +84,13 @@ public:
   int createRandomIntMatrix(int nRows, int nCols, psIMatrix &);
 
   //**/ Look up Shapley value for a random subset
-  //**/ @param vecIn - subset input 
+  //**/ @param vecIn - input set 
   //**/ @param ind   - current input index
-  double ShapleyLookup(psIVector vecIn, int ind);
+  double ShapleyEntropyLookup(psIVector vecIn, int ind, int flag);
+
+  //**/ Look up Shapley value for a random subset
+  //**/ @param vecIn - input set 
+  double ShapleyEntropySave(psIVector vecIn, int, int, double);
 
   //**/ Create a response surface 
   //**/ @param adata - all data needed for analysis

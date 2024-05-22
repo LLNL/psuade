@@ -117,6 +117,9 @@ int     gettimeofday(struct timeval *,struct timezone *);
    void   sortIntList(int,int*);
    void   sortIntList2a(int,int*,double*);
    void   sortDbleList(int,double*);
+   void   sortDbleListBubble(int,double*);
+   void   sortDbleListMerge(int,double*);
+
    void   sortDbleList2(int,double*,double*);
    void   sortDbleList2a(int,double*,int*);
    void   sortDbleList3(int,double*,double*,double*);
@@ -132,8 +135,10 @@ int     gettimeofday(struct timeval *,struct timezone *);
    void   printDashes(int, int);
    void   printEquals(int, int);
    void   checkAllocate(void *, const char *);
+   void   checkDbleArray(char *, int, double *);
 
    //**/ miscellaneous functions
+   int    computeBasicStatistics(psVector, double &, double &);
    void   generateRandomIvector(int, int *);
    int    checkPrime( int );
    int    *factorize( int );
@@ -145,6 +150,7 @@ int     gettimeofday(struct timeval *,struct timezone *);
    int    checkSPDFFileFormat(char *, int);
    int    readIReadDataFile(char *, psMatrix &);
    int    readSampleInputFile(const char *, psIVector &, psMatrix &);
+   int    readGrpInfoFile(char *fname, int nInputs, psIMatrix &Amat);
 
    int    read_csv(char *, int *, int *, double **, int *, 
                    char ***, char ***);

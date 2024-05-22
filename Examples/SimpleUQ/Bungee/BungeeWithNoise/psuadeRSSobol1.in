@@ -48,7 +48,7 @@ OUTPUT
 END
 METHOD
    sampling = LPTAU
-   num_samples = 300
+   num_samples = 3000
 END
 APPLICATION
    driver = ./simulator

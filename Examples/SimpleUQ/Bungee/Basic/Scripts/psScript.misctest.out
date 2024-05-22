@@ -1,6 +1,40 @@
 **********************************************************************
+*      Welcome to PSUADE (version 2.1.0)
+**********************************************************************
+PSUADE - A Problem Solving environment for 
+         Uncertainty Analysis and Design Exploration (2.1.0)
+(for help, enter <help>)
+======================================================================
+psuade> # compile the simulation model
+psuade> psuade> # generate sample outputs
+psuade> Sampling INFO: Creating a sample assuming all uncertain parameters are
+               uniformly distributed.
+PSUADE run: creating interface to user driver.
+PSUADE run: output level = 1
+PSUADE run: max parallel jobs = 1
+PSUADE run: max job wait time = 1000000 seconds
+PSUADE run: min job wait time = 1 seconds
+PSUADE run: launch interval   = 1 seconds
+PSUADE run: save frequency    = every 1000000 runs
+NOTE: If evaluation should be fast but is slow, check save_frequency
+      because it may be due to too much I/O.
+NOTE: To dynamically change max jobs, create psuade_pmachine file
+NOTE: To terminate gracefully, create psuade_stop file
+======================================================================
+PSUADE run: nSamples = 300 
+.........
+Sample point    100 completed (out of 300).
+.........
+Sample point    200 completed (out of 300).
+.........
+Sample point    300 completed (out of 300).
+
+PSUADE run: jobs completed = 300(out of 300)
+======================================================================
 psuade> # rename the psuade output file
-psuade> psuade> # load sample
+psuade> psuade> # random seed 
+psuade> New random seed = 12917411
+psuade> # load sample
 psuade> load complete : nSamples = 300
                 nInputs  = 3
                 nOutputs = 1
@@ -8,34 +42,29 @@ psuade> # load sample one more time so the sample size is 600
 psuade> loadmore complete : nSamples = 600
                     nInputs  = 3
                     nOutputs = 1
-WARNING: Repeated sample points have been detected.
-         This may cause problems for some commands.
-         So beware (if spurge or rm_dup if needed).
+WARNING: Repeated sample points have been detected. This may cause
+         problems for some commands. So beware (see if spurge or
+         rm_dup is needed).
 psuade> # Okay. Going back to the original sample of size 300
 psuade> load complete : nSamples = 300
                 nInputs  = 3
                 nOutputs = 1
 psuade> # delete the first input
-**********************************************************************
+psuade> **********************************************************************
 This command deletes a subset of inputs from the loaded sample.
 ----------------------------------------------------------------------
 Proceed ? (y or n to abort) The current set of inputs are:
 Input   1 = H
 Input   2 = M
 Input   3 = sig
-How many inputs to delete? (1-2) 
-Enter input number (1 - 3) 
-for deletion: You are removing input 1 (H)
+How many inputs to delete? (1-2) Enter input number (1 - 3) : You are removing input 1 (H)
 idelete completed. Use 'write' to store.
-psuade> 
-# Okay. Going back to the original sample of size 300
+psuade> # Okay. Going back to the original sample of size 300
 psuade> load complete : nSamples = 300
                 nInputs  = 3
                 nOutputs = 1
-psuade> 
-# duplicate the sample outputs
-psuade> 
-**********************************************************************
+psuade> # duplicate the sample outputs
+psuade> **********************************************************************
 This command appends one output to the loaded sample. The values
 of this output are obtained from another file in PSUADE format.
 In case the sample in the second file is not the same as the loaded
@@ -45,33 +74,95 @@ Also, nInputs in the second file can be different from (but has to be
 less than) nInputs in the loaded sample, in which case input matching
 information will be needed.
 ----------------------------------------------------------------------
-Proceed ? (y or n to abort) 
-oadd successful: use write to store the revised sample.
+Proceed ? (y or n to abort) NOTE: oadd successful - use write to store the modified sample.
 psuade> # delete output 1
-psuade> 
-**********************************************************************
-This command deletes a single output from the loaded sample.
+psuade> **********************************************************************
+This command deletes a subset of outputs from the loaded sample.
 ----------------------------------------------------------------------
 Proceed ? (y or n to abort) The current set of outputs are:
 Output   1 = Y1
 Output   2 = Y1
-Enter output number (1 - 2) : odelete completed. Use 'write' to store.
+How many outputs to delete? (1-1) Enter output number (1 - 2) : You are removing output 1 (Y1)
+Removing output Y1
+odelete completed. Use 'write' to store.
 psuade> # load the original sample again
 psuade> load complete : nSamples = 300
                 nInputs  = 3
                 nOutputs = 1
 psuade> # response surface analysis with Kriging
-psuade> 
+psuade> **********************************************************************
+This command can be used to check the quality of a response surface
+trained on the loaded sample. The quality metrics may be training
+errors (from resubstitution test) or cross validation errors. Plots
+will be created for visualizing the goodness of the fit.
+----------------------------------------------------------------------
+Proceed ? (y or n to abort) ----------------------------------------------------------------------
+Available response surface tools: 
+----------------------------------------------------------------------
+----------------------------------------------------------------------
+0.  MARS (Friedman's multivariate splines method)
+1.  Linear regression 
+2.  Quadratic regression 
+3.  Cubic regression 
+4.  Quartic regression (may be unstable)
+5.  Selective polynomial regression (user selects terms to use)
+6.  Derivative-based Legendre polynomial regression
+7.  Legendre polynomial regression
+8.  User-defined regression (user provides basis functions)
+10. Gaussian process (Tong's implementation)
+11. Kriging
+12. Radial Basis Function
+13. Sum-of-trees model
+14. K nearest neighbors 
+15. Artificial neural network
+18. Sparse Grid polynomial regression
+19. Splines on regular grid (1D, 2D, or 3D only)
+20. Acosso (by Storlie, LANL. Need R to run)
+21. BSSAnova (by Storlie, LANL. Need R to run)
+22. Partial Least Squares Linear Regression (PLS)
+23. MARS with bootstrap aggregating (bagging)
+24. Radial Basis Function with bagging
+25. Multi-Radial Basis Function (for large samples)
+26. Multi-Gaussian process (Tong, for large samples)
+27. Multi-MARS (for large samples)
+28. Multi-Treed Gaussian process (for large samples)
+29. Homogeneous Legendre regression (HLR)
+30. Homogeneous GP (HGP)
+31. Homogeneous Kriging (all homogeneous inputs: same bounds)
+32. Hybrid Homogeneous GP (HyHGP)
+33. Quantile GP (can be anisotropic)
+34. User-modified general nonlinear function
+    (Need to modify the PsuadeRegression.cpp file)
+35. Multi-domain neural network (for large samples)
+36. Pade regression F(X) ~ P(X) / Q(X)
+Enter your choice ? Enter output number (1 - 1) = No transformation (e.g. log) on sample inputs or outputs.
 **********************************************************************
 Response surface method to be used: Kriging
 ======================================================================
 RSA: Output ID = 1
-RSA: Output Maximum/Minimum =   3.477003e+01  -5.705718e+00
+RSA: Output Maximum/Minimum =   3.574862e+01  -3.734223e+00
 INFO: Set printlevel higher (1-4) to display more information.
 INFO: Turn on ana_expert mode for interpolation error graphics.
 **********************************************************************
+*                Kriging Analysis
+* Set printlevel to 1-4 to see Kriging details.
+* Turn on rs_expert mode to set slow or fast mode.
+*  + Fast mode: no optimization of hyperparameters.
+*      - turn on rs_expert to set hyperparameters.
+*      - default values = 1.0
+*  + Slow mode : hyperparameters are optimized.
+*      - to change optimization parameters, turn on rs_expert mode.
+*  + Snail mode (DEFAULT): use multi-start optimization.
+*      - to change optimization parameters, turn on rs_expert mode.
+* Create 'psuade_stop' file to gracefully terminate.
+* Create 'psuade_print' file to set print level on the fly.
 ======================================================================
 Kriging training begins....
+======================================================================
+* Kriging optimization tolerance = 1.495000e-03
+Kriging training (3) begins.... (order = 0)
+Kriging training (3) ends.
+Kriging variance = 5.735741e+02
 Kriging training completed.
 RSAnalysis: L  1: interpolation error on training set 
              avg error far from 0 ==> systematic bias.
@@ -80,195 +171,189 @@ RSAnalysis: L  1: interpolation error on training set
              max error scaled by (ymax-ymin) large
                  ==> fitting probably not good.
              R-square may not always be a reliable measure.
-  avg error   =  -7.500e-08 (unscaled)
-  avg error   =  -1.188e-07 (scaled)
-  rms error   =   3.697e-06 (unscaled)
-  rms error   =   1.809e-06 (scaled)
-  max error   =   1.100e-05 (unscaled, BASE=8.035e-01)
-  max error   =   1.802e-05 (  scaled, BASE=1.503e-01)
-  max error   =   2.717e-07 (  scaled by (ymax-ymin))
+  avg error   =  -5.802e-08 (unscaled)
+  avg error   =  -4.749e-08 (scaled)
+  rms error   =   4.113e-06 (unscaled)
+  rms error   =   1.802e-06 (scaled)
+  max error   =   1.600e-05 (unscaled, BASE=7.772e+00)
+  max error   =   1.888e-05 (  scaled, BASE=3.900e-01)
+  max error   =   4.051e-07 (  scaled by (ymax-ymin))
   R-square    =   1.00000000e+00
 Based on 300 training points (total=300).
 **********************************************************************
-Next you will be asked whether to do cross validation or not.
-Since cross validation iterates as many times as the number
-of groups. The rs_expert mode will be turned off. To change
-the default parameters for different response surface, you
-will need to exit, create a config file (use genconfigfile
-in command line mode), and set config option in your data file.
+Next, you will be asked whether to do cross validation or not. Since
+cross validation iterates as many times as the number of groups. The
+rs_expert mode will be turned off. To change the default parameters
+for different response surface, you will need to exit, create a config
+file (use genconfigfile in command line mode), and set config option
+in your data file.
 ----------------------------------------------------------------------
-Perform cross validation ? (y or n) 
-Enter the number of groups to validate : (2 - 300) 
-RSFA: number of CV groups = 10
+Perform cross validation ? (y or n) Enter the number of groups to validate : (2 - 300) RSFA: number of CV groups = 10
 RSAnalysis: L  1:cross validation (CV) begins...
-Random selection of leave-out groups ? (y or n) 
-RSAnalysis:: L  1: processing CV group 1 (out of 10)
-RSA: CV error for sample group     1 =   2.145e-06 (avg unscaled)
-RSA: CV error for sample group     1 =   1.320e-05 (rms unscaled)
-RSA: CV error for sample group     1 =   4.527e-05 (max unscaled)
-RSA: CV error for sample group     1 =   1.118e-06 (max   scaled by (ymax-ymin))
+Random selection of leave-out groups ? (y or n) RSAnalysis:: L  1: processing CV group 1 (out of 10)
+RSA: CV error for sample group     1 =   1.711e-06 (avg unscaled)
+RSA: CV error for sample group     1 =   6.413e-06 (rms unscaled)
+RSA: CV error for sample group     1 =   2.134e-05 (max unscaled)
+RSA: CV error for sample group     1 =   5.405e-07 (max   scaled by (ymax-ymin))
 RSAnalysis:: L  1: CV group 1 processed (size=30)
 RSAnalysis:: L  1: processing CV group 2 (out of 10)
-RSA: CV error for sample group     2 =   7.785e-07 (avg unscaled)
-RSA: CV error for sample group     2 =   9.451e-06 (rms unscaled)
-RSA: CV error for sample group     2 =   4.358e-05 (max unscaled)
-RSA: CV error for sample group     2 =   1.077e-06 (max   scaled by (ymax-ymin))
+RSA: CV error for sample group     2 =   1.784e-06 (avg unscaled)
+RSA: CV error for sample group     2 =   1.644e-05 (rms unscaled)
+RSA: CV error for sample group     2 =   6.122e-05 (max unscaled)
+RSA: CV error for sample group     2 =   1.550e-06 (max   scaled by (ymax-ymin))
 RSAnalysis:: L  1: CV group 2 processed (size=30)
 RSAnalysis:: L  1: processing CV group 3 (out of 10)
-RSA: CV error for sample group     3 =  -7.587e-07 (avg unscaled)
-RSA: CV error for sample group     3 =   7.561e-06 (rms unscaled)
-RSA: CV error for sample group     3 =   2.047e-05 (max unscaled)
-RSA: CV error for sample group     3 =   5.058e-07 (max   scaled by (ymax-ymin))
+RSA: CV error for sample group     3 =  -9.869e-07 (avg unscaled)
+RSA: CV error for sample group     3 =   6.628e-06 (rms unscaled)
+RSA: CV error for sample group     3 =   2.008e-05 (max unscaled)
+RSA: CV error for sample group     3 =   5.086e-07 (max   scaled by (ymax-ymin))
 RSAnalysis:: L  1: CV group 3 processed (size=30)
 RSAnalysis:: L  1: processing CV group 4 (out of 10)
-RSA: CV error for sample group     4 =   8.064e-06 (avg unscaled)
-RSA: CV error for sample group     4 =   4.011e-05 (rms unscaled)
-RSA: CV error for sample group     4 =   2.174e-04 (max unscaled)
-RSA: CV error for sample group     4 =   5.371e-06 (max   scaled by (ymax-ymin))
+RSA: CV error for sample group     4 =   1.757e-06 (avg unscaled)
+RSA: CV error for sample group     4 =   8.387e-06 (rms unscaled)
+RSA: CV error for sample group     4 =   2.357e-05 (max unscaled)
+RSA: CV error for sample group     4 =   5.969e-07 (max   scaled by (ymax-ymin))
 RSAnalysis:: L  1: CV group 4 processed (size=30)
 RSAnalysis:: L  1: processing CV group 5 (out of 10)
-RSA: CV error for sample group     5 =   1.322e-07 (avg unscaled)
-RSA: CV error for sample group     5 =   3.310e-06 (rms unscaled)
-RSA: CV error for sample group     5 =   7.807e-06 (max unscaled)
-RSA: CV error for sample group     5 =   1.929e-07 (max   scaled by (ymax-ymin))
+RSA: CV error for sample group     5 =   1.706e-06 (avg unscaled)
+RSA: CV error for sample group     5 =   7.322e-06 (rms unscaled)
+RSA: CV error for sample group     5 =   3.180e-05 (max unscaled)
+RSA: CV error for sample group     5 =   8.054e-07 (max   scaled by (ymax-ymin))
 RSAnalysis:: L  1: CV group 5 processed (size=30)
 RSAnalysis:: L  1: processing CV group 6 (out of 10)
-RSA: CV error for sample group     6 =   4.686e-07 (avg unscaled)
-RSA: CV error for sample group     6 =   5.048e-06 (rms unscaled)
-RSA: CV error for sample group     6 =   1.180e-05 (max unscaled)
-RSA: CV error for sample group     6 =   2.915e-07 (max   scaled by (ymax-ymin))
+RSA: CV error for sample group     6 =   1.463e-06 (avg unscaled)
+RSA: CV error for sample group     6 =   6.213e-06 (rms unscaled)
+RSA: CV error for sample group     6 =   2.112e-05 (max unscaled)
+RSA: CV error for sample group     6 =   5.350e-07 (max   scaled by (ymax-ymin))
 RSAnalysis:: L  1: CV group 6 processed (size=30)
 RSAnalysis:: L  1: processing CV group 7 (out of 10)
-RSA: CV error for sample group     7 =  -4.104e-06 (avg unscaled)
-RSA: CV error for sample group     7 =   9.180e-06 (rms unscaled)
-RSA: CV error for sample group     7 =   2.545e-05 (max unscaled)
-RSA: CV error for sample group     7 =   6.288e-07 (max   scaled by (ymax-ymin))
+RSA: CV error for sample group     7 =  -5.499e-07 (avg unscaled)
+RSA: CV error for sample group     7 =   7.036e-06 (rms unscaled)
+RSA: CV error for sample group     7 =   2.588e-05 (max unscaled)
+RSA: CV error for sample group     7 =   6.554e-07 (max   scaled by (ymax-ymin))
 RSAnalysis:: L  1: CV group 7 processed (size=30)
 RSAnalysis:: L  1: processing CV group 8 (out of 10)
-RSA: CV error for sample group     8 =  -1.571e-06 (avg unscaled)
-RSA: CV error for sample group     8 =   7.001e-06 (rms unscaled)
-RSA: CV error for sample group     8 =   2.119e-05 (max unscaled)
-RSA: CV error for sample group     8 =   5.235e-07 (max   scaled by (ymax-ymin))
+RSA: CV error for sample group     8 =  -2.117e-06 (avg unscaled)
+RSA: CV error for sample group     8 =   5.944e-06 (rms unscaled)
+RSA: CV error for sample group     8 =   1.716e-05 (max unscaled)
+RSA: CV error for sample group     8 =   4.345e-07 (max   scaled by (ymax-ymin))
 RSAnalysis:: L  1: CV group 8 processed (size=30)
 RSAnalysis:: L  1: processing CV group 9 (out of 10)
-RSA: CV error for sample group     9 =   4.135e-07 (avg unscaled)
-RSA: CV error for sample group     9 =   6.490e-06 (rms unscaled)
-RSA: CV error for sample group     9 =   2.754e-05 (max unscaled)
-RSA: CV error for sample group     9 =   6.803e-07 (max   scaled by (ymax-ymin))
+RSA: CV error for sample group     9 =   4.815e-06 (avg unscaled)
+RSA: CV error for sample group     9 =   1.901e-05 (rms unscaled)
+RSA: CV error for sample group     9 =   9.754e-05 (max unscaled)
+RSA: CV error for sample group     9 =   2.470e-06 (max   scaled by (ymax-ymin))
 RSAnalysis:: L  1: CV group 9 processed (size=30)
 RSAnalysis:: L  1: processing CV group 10 (out of 10)
-RSA: CV error for sample group    10 =   3.892e-07 (avg unscaled)
-RSA: CV error for sample group    10 =   5.239e-06 (rms unscaled)
-RSA: CV error for sample group    10 =   1.288e-05 (max unscaled)
-RSA: CV error for sample group    10 =   3.183e-07 (max   scaled by (ymax-ymin))
+RSA: CV error for sample group    10 =  -2.129e-06 (avg unscaled)
+RSA: CV error for sample group    10 =   1.085e-05 (rms unscaled)
+RSA: CV error for sample group    10 =   3.976e-05 (max unscaled)
+RSA: CV error for sample group    10 =   1.007e-06 (max   scaled by (ymax-ymin))
 RSAnalysis:: L  1: CV group 10 processed (size=30)
-RSA: first member of sample group     1 = 202
-RSA: CV error for sample group     1 =   2.145e-06 (avg unscaled)
-RSA: CV error for sample group     1 =   1.122e-06 (avg scaled)
-RSA: CV error for sample group     1 =   1.320e-05 (rms unscaled)
-RSA: CV error for sample group     1 =   4.357e-06 (rms scaled)
-RSA: CV error for sample group     1 =   4.527e-05 (max unscaled,BASE=5.711e+00)
-RSA: CV error for sample group     1 =   2.149e-05 (max   scaled,BASE=4.590e-01)
-RSA: CV error for sample group     1 =   1.118e-06 (max   scaled by (ymax-ymin))
-RSA: first member of sample group     2 = 20
-RSA: CV error for sample group     2 =   7.785e-07 (avg unscaled)
-RSA: CV error for sample group     2 =  -9.128e-09 (avg scaled)
-RSA: CV error for sample group     2 =   9.451e-06 (rms unscaled)
-RSA: CV error for sample group     2 =   6.073e-07 (rms scaled)
-RSA: CV error for sample group     2 =   4.358e-05 (max unscaled,BASE=1.891e+01)
-RSA: CV error for sample group     2 =   2.305e-06 (max   scaled,BASE=1.891e+01)
-RSA: CV error for sample group     2 =   1.077e-06 (max   scaled by (ymax-ymin))
-RSA: first member of sample group     3 = 217
-RSA: CV error for sample group     3 =  -7.587e-07 (avg unscaled)
-RSA: CV error for sample group     3 =  -3.617e-07 (avg scaled)
-RSA: CV error for sample group     3 =   7.561e-06 (rms unscaled)
-RSA: CV error for sample group     3 =   3.643e-06 (rms scaled)
-RSA: CV error for sample group     3 =   2.047e-05 (max unscaled,BASE=1.038e+01)
-RSA: CV error for sample group     3 =   1.865e-05 (max   scaled,BASE=6.270e-01)
-RSA: CV error for sample group     3 =   5.058e-07 (max   scaled by (ymax-ymin))
-RSA: first member of sample group     4 = 297
-RSA: CV error for sample group     4 =   8.064e-06 (avg unscaled)
-RSA: CV error for sample group     4 =   1.351e-06 (avg scaled)
-RSA: CV error for sample group     4 =   4.011e-05 (rms unscaled)
-RSA: CV error for sample group     4 =   6.968e-06 (rms scaled)
-RSA: CV error for sample group     4 =   2.174e-04 (max unscaled,BASE=5.706e+00)
-RSA: CV error for sample group     4 =   3.810e-05 (max   scaled,BASE=5.706e+00)
-RSA: CV error for sample group     4 =   5.371e-06 (max   scaled by (ymax-ymin))
-RSA: first member of sample group     5 = 258
-RSA: CV error for sample group     5 =   1.322e-07 (avg unscaled)
-RSA: CV error for sample group     5 =  -3.272e-08 (avg scaled)
-RSA: CV error for sample group     5 =   3.310e-06 (rms unscaled)
-RSA: CV error for sample group     5 =   3.028e-07 (rms scaled)
-RSA: CV error for sample group     5 =   7.807e-06 (max unscaled,BASE=2.894e+01)
-RSA: CV error for sample group     5 =   1.262e-06 (max   scaled,BASE=3.762e+00)
-RSA: CV error for sample group     5 =   1.929e-07 (max   scaled by (ymax-ymin))
-RSA: first member of sample group     6 = 62
-RSA: CV error for sample group     6 =   4.686e-07 (avg unscaled)
-RSA: CV error for sample group     6 =   1.554e-07 (avg scaled)
-RSA: CV error for sample group     6 =   5.048e-06 (rms unscaled)
-RSA: CV error for sample group     6 =   7.375e-07 (rms scaled)
-RSA: CV error for sample group     6 =   1.180e-05 (max unscaled,BASE=5.681e+00)
-RSA: CV error for sample group     6 =   2.837e-06 (max   scaled,BASE=3.966e+00)
-RSA: CV error for sample group     6 =   2.915e-07 (max   scaled by (ymax-ymin))
-RSA: first member of sample group     7 = 250
-RSA: CV error for sample group     7 =  -4.104e-06 (avg unscaled)
-RSA: CV error for sample group     7 =  -4.048e-06 (avg scaled)
-RSA: CV error for sample group     7 =   9.180e-06 (rms unscaled)
-RSA: CV error for sample group     7 =   1.469e-05 (rms scaled)
-RSA: CV error for sample group     7 =   2.545e-05 (max unscaled,BASE=8.035e-01)
-RSA: CV error for sample group     7 =   7.292e-05 (max   scaled,BASE=1.503e-01)
-RSA: CV error for sample group     7 =   6.288e-07 (max   scaled by (ymax-ymin))
-RSA: first member of sample group     8 = 75
-RSA: CV error for sample group     8 =  -1.571e-06 (avg unscaled)
-RSA: CV error for sample group     8 =  -1.030e-06 (avg scaled)
-RSA: CV error for sample group     8 =   7.001e-06 (rms unscaled)
-RSA: CV error for sample group     8 =   5.072e-06 (rms scaled)
-RSA: CV error for sample group     8 =   2.119e-05 (max unscaled,BASE=2.289e+01)
-RSA: CV error for sample group     8 =   2.770e-05 (max   scaled,BASE=5.328e-01)
-RSA: CV error for sample group     8 =   5.235e-07 (max   scaled by (ymax-ymin))
-RSA: first member of sample group     9 = 106
-RSA: CV error for sample group     9 =   4.135e-07 (avg unscaled)
-RSA: CV error for sample group     9 =   1.237e-07 (avg scaled)
-RSA: CV error for sample group     9 =   6.490e-06 (rms unscaled)
-RSA: CV error for sample group     9 =   5.077e-07 (rms scaled)
-RSA: CV error for sample group     9 =   2.754e-05 (max unscaled,BASE=3.437e+01)
-RSA: CV error for sample group     9 =   2.413e-06 (max   scaled,BASE=5.291e+00)
-RSA: CV error for sample group     9 =   6.803e-07 (max   scaled by (ymax-ymin))
-RSA: first member of sample group    10 = 83
-RSA: CV error for sample group    10 =   3.892e-07 (avg unscaled)
-RSA: CV error for sample group    10 =  -5.090e-08 (avg scaled)
-RSA: CV error for sample group    10 =   5.239e-06 (rms unscaled)
-RSA: CV error for sample group    10 =   9.595e-07 (rms scaled)
-RSA: CV error for sample group    10 =   1.288e-05 (max unscaled,BASE=1.493e+01)
-RSA: CV error for sample group    10 =   3.790e-06 (max   scaled,BASE=8.602e-01)
-RSA: CV error for sample group    10 =   3.183e-07 (max   scaled by (ymax-ymin))
-RSA: final CV error  =   5.957e-07 (avg unscaled)
-RSA: final CV error  =  -2.780e-07 (avg   scaled)
-RSA: final CV error  =   1.473e-05 (rms unscaled)
-RSA: final CV error  =   5.695e-06 (rms   scaled)
-RSA: final CV error  =   2.174e-04 (max unscaled, BASE=5.706e+00)
-RSA: final CV error  =   7.292e-05 (max   scaled, BASE=1.503e-01)
-RSA: final CV error  =   5.371e-06 (max   scaled by (ymax-ymin))
+RSA: first member of sample group     1 = 35
+RSA: CV error for sample group     1 =   1.711e-06 (avg unscaled)
+RSA: CV error for sample group     1 =   1.565e-07 (avg scaled)
+RSA: CV error for sample group     1 =   6.413e-06 (rms unscaled)
+RSA: CV error for sample group     1 =   6.866e-07 (rms scaled)
+RSA: CV error for sample group     1 =   2.134e-05 (max unscaled,BASE=1.604e+01)
+RSA: CV error for sample group     1 =   2.650e-06 (max   scaled,BASE=1.427e+00)
+RSA: CV error for sample group     1 =   5.405e-07 (max   scaled by (ymax-ymin))
+RSA: first member of sample group     2 = 172
+RSA: CV error for sample group     2 =   1.784e-06 (avg unscaled)
+RSA: CV error for sample group     2 =   2.217e-06 (avg scaled)
+RSA: CV error for sample group     2 =   1.644e-05 (rms unscaled)
+RSA: CV error for sample group     2 =   1.045e-05 (rms scaled)
+RSA: CV error for sample group     2 =   6.122e-05 (max unscaled,BASE=3.734e+00)
+RSA: CV error for sample group     2 =   5.477e-05 (max   scaled,BASE=9.177e-01)
+RSA: CV error for sample group     2 =   1.550e-06 (max   scaled by (ymax-ymin))
+RSA: first member of sample group     3 = 298
+RSA: CV error for sample group     3 =  -9.869e-07 (avg unscaled)
+RSA: CV error for sample group     3 =  -9.525e-07 (avg scaled)
+RSA: CV error for sample group     3 =   6.628e-06 (rms unscaled)
+RSA: CV error for sample group     3 =   4.952e-06 (rms scaled)
+RSA: CV error for sample group     3 =   2.008e-05 (max unscaled,BASE=3.159e+01)
+RSA: CV error for sample group     3 =   2.700e-05 (max   scaled,BASE=3.900e-01)
+RSA: CV error for sample group     3 =   5.086e-07 (max   scaled by (ymax-ymin))
+RSA: first member of sample group     4 = 29
+RSA: CV error for sample group     4 =   1.757e-06 (avg unscaled)
+RSA: CV error for sample group     4 =   1.833e-07 (avg scaled)
+RSA: CV error for sample group     4 =   8.387e-06 (rms unscaled)
+RSA: CV error for sample group     4 =   9.267e-07 (rms scaled)
+RSA: CV error for sample group     4 =   2.357e-05 (max unscaled,BASE=7.772e+00)
+RSA: CV error for sample group     4 =   3.032e-06 (max   scaled,BASE=7.772e+00)
+RSA: CV error for sample group     4 =   5.969e-07 (max   scaled by (ymax-ymin))
+RSA: first member of sample group     5 = 85
+RSA: CV error for sample group     5 =   1.706e-06 (avg unscaled)
+RSA: CV error for sample group     5 =   3.532e-07 (avg scaled)
+RSA: CV error for sample group     5 =   7.322e-06 (rms unscaled)
+RSA: CV error for sample group     5 =   1.958e-06 (rms scaled)
+RSA: CV error for sample group     5 =   3.180e-05 (max unscaled,BASE=3.106e+00)
+RSA: CV error for sample group     5 =   1.024e-05 (max   scaled,BASE=3.106e+00)
+RSA: CV error for sample group     5 =   8.054e-07 (max   scaled by (ymax-ymin))
+RSA: first member of sample group     6 = 237
+RSA: CV error for sample group     6 =   1.463e-06 (avg unscaled)
+RSA: CV error for sample group     6 =   2.743e-07 (avg scaled)
+RSA: CV error for sample group     6 =   6.213e-06 (rms unscaled)
+RSA: CV error for sample group     6 =   8.450e-07 (rms scaled)
+RSA: CV error for sample group     6 =   2.112e-05 (max unscaled,BASE=1.278e+01)
+RSA: CV error for sample group     6 =   3.249e-06 (max   scaled,BASE=2.661e+00)
+RSA: CV error for sample group     6 =   5.350e-07 (max   scaled by (ymax-ymin))
+RSA: first member of sample group     7 = 49
+RSA: CV error for sample group     7 =  -5.499e-07 (avg unscaled)
+RSA: CV error for sample group     7 =   1.263e-06 (avg scaled)
+RSA: CV error for sample group     7 =   7.036e-06 (rms unscaled)
+RSA: CV error for sample group     7 =   9.678e-06 (rms scaled)
+RSA: CV error for sample group     7 =   2.588e-05 (max unscaled,BASE=3.575e+01)
+RSA: CV error for sample group     7 =   4.549e-05 (max   scaled,BASE=2.548e-01)
+RSA: CV error for sample group     7 =   6.554e-07 (max   scaled by (ymax-ymin))
+RSA: first member of sample group     8 = 137
+RSA: CV error for sample group     8 =  -2.117e-06 (avg unscaled)
+RSA: CV error for sample group     8 =  -3.926e-07 (avg scaled)
+RSA: CV error for sample group     8 =   5.944e-06 (rms unscaled)
+RSA: CV error for sample group     8 =   1.842e-06 (rms scaled)
+RSA: CV error for sample group     8 =   1.716e-05 (max unscaled,BASE=2.958e+01)
+RSA: CV error for sample group     8 =   9.278e-06 (max   scaled,BASE=8.923e-01)
+RSA: CV error for sample group     8 =   4.345e-07 (max   scaled by (ymax-ymin))
+RSA: first member of sample group     9 = 219
+RSA: CV error for sample group     9 =   4.815e-06 (avg unscaled)
+RSA: CV error for sample group     9 =   5.889e-07 (avg scaled)
+RSA: CV error for sample group     9 =   1.901e-05 (rms unscaled)
+RSA: CV error for sample group     9 =   2.023e-06 (rms scaled)
+RSA: CV error for sample group     9 =   9.754e-05 (max unscaled,BASE=9.538e+00)
+RSA: CV error for sample group     9 =   1.023e-05 (max   scaled,BASE=9.538e+00)
+RSA: CV error for sample group     9 =   2.470e-06 (max   scaled by (ymax-ymin))
+RSA: first member of sample group    10 = 162
+RSA: CV error for sample group    10 =  -2.129e-06 (avg unscaled)
+RSA: CV error for sample group    10 =  -1.508e-07 (avg scaled)
+RSA: CV error for sample group    10 =   1.085e-05 (rms unscaled)
+RSA: CV error for sample group    10 =   9.221e-07 (rms scaled)
+RSA: CV error for sample group    10 =   3.976e-05 (max unscaled,BASE=3.517e+01)
+RSA: CV error for sample group    10 =   4.271e-06 (max   scaled,BASE=6.172e+00)
+RSA: CV error for sample group    10 =   1.007e-06 (max   scaled by (ymax-ymin))
+RSA: final CV error  =   7.453e-07 (avg unscaled)
+RSA: final CV error  =   3.541e-07 (avg   scaled)
+RSA: final CV error  =   1.040e-05 (rms unscaled)
+RSA: final CV error  =   4.916e-06 (rms   scaled)
+RSA: final CV error  =   9.754e-05 (max unscaled, BASE=9.538e+00)
+RSA: final CV error  =   5.477e-05 (max   scaled, BASE=9.177e-01)
+RSA: final CV error  =   2.470e-06 (max   scaled by (ymax-ymin))
 RSA: L  1:cross validation (CV) completed.
 CV error file is RSFA_CV_err.m
 **********************************************************************
 psuade> # split the sample into two sets
-psuade> 
-**********************************************************************
+psuade> **********************************************************************
 This command splits the loaded sample inputs into 2 sub-samples.
 A few splitting options are available.
 ----------------------------------------------------------------------
-Proceed ? (y or n to abort) 
-The current sample size is 300.
-Sample size of the first set? (1 - 299) 
-Select from the following options: 
+Proceed ? (y or n to abort) The current sample size is 300.
+Sample size of the first set? (1 - 299) Select from the following options: 
 1. random draw from the sample
 2. draw the first 150 sample points
 3. draw every other 2 sample points
 4. draw the first m points from every chunk of M points
-your choice: (1 - 4) 
-The 2 data files are in psuadeSample1 and psuadeSample2.
-The loaded sample in the workspace have been destroyed.
+your choice: (1 - 4) The 2 data files are in psuadeSample1 and psuadeSample2.
+The loaded sample in the workspace have been erased so you need to
+re-load to restore the original sample.
 psuade> # load the first splitted sample
 psuade> load complete : nSamples = 150
                 nInputs  = 3
@@ -278,151 +363,199 @@ psuade> loadmore complete : nSamples = 300
                     nInputs  = 3
                     nOutputs = 1
 psuade> # write this concatenated sample into a file called 'abc'
-psuade> 
-psuade> # check that this `abc' file is the same as the original sample
-psuade> 
-psuade> # load the sample again
+psuade> psuade> # check that this `abc' file is the same as the original sample
+psuade> psuade> # load the sample again
 psuade> load complete : nSamples = 300
                 nInputs  = 3
                 nOutputs = 1
-psuade> # perform response-surface-based main effect analysis
-psuade> 
-**********************************************************************
+psuade> # perform response-surface-based main effect analysis (Kriging)
+psuade> **********************************************************************
 This command computes first-order sensitivity indices using the
 response surface constructed from the loaded sample.
+* rsvce1_sobol uses the Sobol' method
+* rsvce1_sobol supports 'non'-uniform input distributions with no
+  input correlations (rsvce1_bin handles all input distributions and
+  constraints).
+* rsvce1_sobol supports input constraints.
+NOTE: Turn on ana_expert mode for bootstrapped analysis.
+**********************************************************************
+Proceed ? (y or n to abort) Enter output number (1 - 1) : ----------------------------------------------------------------------
+Available response surface tools: 
 ----------------------------------------------------------------------
-Proceed ? (y or n to abort) Enter output number (1 - 1) : 
 ----------------------------------------------------------------------
+0.  MARS (Friedman's multivariate splines method)
+1.  Linear regression 
+2.  Quadratic regression 
+3.  Cubic regression 
+4.  Quartic regression (may be unstable)
+5.  Selective polynomial regression (user selects terms to use)
+6.  Derivative-based Legendre polynomial regression
+7.  Legendre polynomial regression
+8.  User-defined regression (user provides basis functions)
+10. Gaussian process (Tong's implementation)
+11. Kriging
+12. Radial Basis Function
+13. Sum-of-trees model
+14. K nearest neighbors 
+15. Artificial neural network
+18. Sparse Grid polynomial regression
+19. Splines on regular grid (1D, 2D, or 3D only)
+20. Acosso (by Storlie, LANL. Need R to run)
+21. BSSAnova (by Storlie, LANL. Need R to run)
+22. Partial Least Squares Linear Regression (PLS)
+23. MARS with bootstrap aggregating (bagging)
+24. Radial Basis Function with bagging
+25. Multi-Radial Basis Function (for large samples)
+26. Multi-Gaussian process (Tong, for large samples)
+27. Multi-MARS (for large samples)
+28. Multi-Treed Gaussian process (for large samples)
+29. Homogeneous Legendre regression (HLR)
+30. Homogeneous GP (HGP)
+31. Homogeneous Kriging (all homogeneous inputs: same bounds)
+32. Hybrid Homogeneous GP (HyHGP)
+33. Quantile GP (can be anisotropic)
+34. User-modified general nonlinear function
+    (Need to modify the PsuadeRegression.cpp file)
+35. Multi-domain neural network (for large samples)
+36. Pade regression F(X) ~ P(X) / Q(X)
+Enter your response surface choice ? RSMSobol1 Sobol: nSams = 1000000
 **********************************************************************
-*          RS-based First Order Sobol' Analysis 
-======================================================================
-* RSMSobol1 INFO: all uniform distributions.
-RSMSobol1 INFO: creating a sample for basic statistics.
-                sample size = 100000
 **********************************************************************
-*                Kriging Analysis
-======================================================================
-RSMSobol1: sample mean (std dev of mean) =  1.807e+01 ( 0.000e+00)
-RSMSobol1: std dev (std dev of std dev)  =  8.697e+00 ( 0.000e+00)
-RSMSobol1: processing input 1
-RSMSobol1: processing input 2
-RSMSobol1: processing input 3
+Sobol' 1st-order indices (normalized, 'sobol'):
+VCE for input   1 =  4.404e-01
+VCE for input   2 =  1.107e-02
+VCE for input   3 =  5.480e-01
+Total variance = 7.567435e+01
 **********************************************************************
-RSMSobol1: Normalized mean VCE for input   1 =  4.415e-01
-RSMSobol1: Normalized mean VCE for input   2 =  1.120e-02
-RSMSobol1: Normalized mean VCE for input   3 =  5.488e-01
-======================================================================
-RSMSobol1: ordered normalized VCE : 
-----------------------------------------------------------------------
-RSMSobol1: Normalized VCE for input   3 =  5.488e-01
-RSMSobol1: Normalized VCE for input   1 =  4.415e-01
-RSMSobol1: Normalized VCE for input   2 =  1.120e-02
-**********************************************************************
-rssobol1 plot file = matlabrssobol1.m
-psuade> # perform response-surface-based total effect analysis
-psuade> 
-**********************************************************************
+RSMVCE1 plot file = matlabrsvce1_sobol.m
+psuade> # perform response-surface-based total effect analysis (Kriging)
+psuade> **********************************************************************
 This command computes total-order sensitivity indices using the
 response surface constructed from the loaded sample.
+* rstsi_sobol uses the Sobol' method
+* rstsi_sobol supports 'non'-uniform input distributions with no
+  input correlations (rstsi_bin handles all input distributions and
+  constraints).
+* rstsi_sobol supports input constraints.
+NOTE: Turn on ana_expert mode for bootstrapped analysis.
+**********************************************************************
+Proceed ? (y or n to abort) Enter output number (1 - 1) : ----------------------------------------------------------------------
+Available response surface tools: 
 ----------------------------------------------------------------------
-Proceed ? (y or n to abort) Enter output number (1 - 1) : 
-**********************************************************************
-*          RS-based Total Order Sobol' Indices 
-======================================================================
-* RSMSobolTSI INFO: all uniform distributions.
-**********************************************************************
-Kriging training begins....
-Kriging training completed.
-**********************************************************************
-* RSMSobolTSIAnalyzer computes the total sensitivities one
-*    input at a time. For each input, it first generates a
-*    sample of size K (that is, K levels). For each level
-*    a sample of size M is created from all other inputs.
-*    The total sample size is thus: M * K * nInputs.
-* nInputs   = 3
-* default M = 10000
-* default K = 50
-To change settings, re-run with ana_expert mode on.
-**********************************************************************
-RSMSobolTSI INFO: creating a sample for basic statistics.
-                  sample size = 1000000
-RSMSobolTSI: sample mean (N=1000000) = 1.806202e+01.
-RSMSobolTSI: sample std  (N=1000000) = 8.703352e+00.
-RSMSobolTSI: sample var  (N=1000000) = 7.574833e+01.
-RSMSobolTSI INFO: 100.00 percent passes the contraints
-RSMSobolTSI: processing input 1 (phase 1)
-RSMSobolTSI: processing input 2 (phase 1)
-RSMSobolTSI: processing input 3 (phase 1)
-RSMSobolTSI: processing input 1 (phase 2)
-RSMSobolTSI: processing input 2 (phase 2)
-RSMSobolTSI: processing input 3 (phase 2)
-======================================================================
-RSM TSI (normalized) for input   1 = 4.495e-01
-RSM TSI (normalized) for input   2 = 1.078e-02
-RSM TSI (normalized) for input   3 = 6.441e-01
-**********************************************************************
-RSMSobolTSI plot file = matlabrssoboltsi.m
-psuade> # perform response-surface-based pairwise sensitivity analysis
-psuade> 
-**********************************************************************
-This command computes input-pair sensitivity indices using the
-response surface constructed from the loaded sample.
 ----------------------------------------------------------------------
-Proceed ? (y or n to abort) Enter output number (1 - 1) : 
+0.  MARS (Friedman's multivariate splines method)
+1.  Linear regression 
+2.  Quadratic regression 
+3.  Cubic regression 
+4.  Quartic regression (may be unstable)
+5.  Selective polynomial regression (user selects terms to use)
+6.  Derivative-based Legendre polynomial regression
+7.  Legendre polynomial regression
+8.  User-defined regression (user provides basis functions)
+10. Gaussian process (Tong's implementation)
+11. Kriging
+12. Radial Basis Function
+13. Sum-of-trees model
+14. K nearest neighbors 
+15. Artificial neural network
+18. Sparse Grid polynomial regression
+19. Splines on regular grid (1D, 2D, or 3D only)
+20. Acosso (by Storlie, LANL. Need R to run)
+21. BSSAnova (by Storlie, LANL. Need R to run)
+22. Partial Least Squares Linear Regression (PLS)
+23. MARS with bootstrap aggregating (bagging)
+24. Radial Basis Function with bagging
+25. Multi-Radial Basis Function (for large samples)
+26. Multi-Gaussian process (Tong, for large samples)
+27. Multi-MARS (for large samples)
+28. Multi-Treed Gaussian process (for large samples)
+29. Homogeneous Legendre regression (HLR)
+30. Homogeneous GP (HGP)
+31. Homogeneous Kriging (all homogeneous inputs: same bounds)
+32. Hybrid Homogeneous GP (HyHGP)
+33. Quantile GP (can be anisotropic)
+34. User-modified general nonlinear function
+    (Need to modify the PsuadeRegression.cpp file)
+35. Multi-domain neural network (for large samples)
+36. Pade regression F(X) ~ P(X) / Q(X)
+Enter your response surface choice ? RSMSobolTSI Sobol: nSams = 1000000
 **********************************************************************
-*          RS-based Second Order Sobol' Indices 
-======================================================================
-* RSMSobol2 INFO: all uniform distributions.
 **********************************************************************
-*                Kriging Analysis
-======================================================================
-Kriging training begins....
-Kriging training completed.
 **********************************************************************
-RSMSobol2: default M = 100.
-RSMSobol2: default K = 100.
-To change these settings, re-run with ana_expert mode on.
-======================================================================
-RSMSobol2 INFO: creating a sample for basic statistics.
-                sample size = 100000
-RSMSobol2: running the sample with response surface...
-RSMSobol2: done running the sample with response surface.
-RSMSobol2: sample mean    (based on N = 100000) =  1.807e+01
-RSMSobol2: sample std dev (based on N = 100000) =  8.696e+00
+Sobol' total-order indices (normalized, 'sobol'):
+Sobol' total-order indices (normalized, 'bin'):
+TSI for input   1 =  4.405e-01
+TSI for input   2 =  1.152e-02
+TSI for input   3 =  5.484e-01
+Total variance = 7.571976e+01
 **********************************************************************
-VCE(  1,  2) =  3.439e+01, (normalized) =  4.548e-01
-VCE(  1,  3) =  7.487e+01, (normalized) =  9.900e-01
-VCE(  2,  3) =  4.222e+01, (normalized) =  5.583e-01
+RSMTSI plot file = matlabrstsi_sobol.m
+psuade> # perform RS-based pairwise sensitivity analysis (Kriging)
+psuade> **********************************************************************
+This command computes second-order sensitivity indices (input pairs)
+using aresponse surface constructed from the loaded sample.
+* rsvce2_sobol uses the Sobol' method
+* rsvce2_sobol supports 'non'-uniform input distributions with no
+  input correlations (rsvce2_bin handles all input distributions and
+  constraints).
+* rsvce2_sobol supports input constraints.
+NOTE: Turn on ana_expert mode for bootstrapped analysis.
 **********************************************************************
-rssobol2 plot file = matlabrssobol2.m
+Proceed ? (y or n to abort) Enter output number (1 - 1) : ----------------------------------------------------------------------
+Available response surface tools: 
+----------------------------------------------------------------------
+----------------------------------------------------------------------
+0.  MARS (Friedman's multivariate splines method)
+1.  Linear regression 
+2.  Quadratic regression 
+3.  Cubic regression 
+4.  Quartic regression (may be unstable)
+5.  Selective polynomial regression (user selects terms to use)
+6.  Derivative-based Legendre polynomial regression
+7.  Legendre polynomial regression
+8.  User-defined regression (user provides basis functions)
+10. Gaussian process (Tong's implementation)
+11. Kriging
+12. Radial Basis Function
+13. Sum-of-trees model
+14. K nearest neighbors 
+15. Artificial neural network
+18. Sparse Grid polynomial regression
+19. Splines on regular grid (1D, 2D, or 3D only)
+20. Acosso (by Storlie, LANL. Need R to run)
+21. BSSAnova (by Storlie, LANL. Need R to run)
+22. Partial Least Squares Linear Regression (PLS)
+23. MARS with bootstrap aggregating (bagging)
+24. Radial Basis Function with bagging
+25. Multi-Radial Basis Function (for large samples)
+26. Multi-Gaussian process (Tong, for large samples)
+27. Multi-MARS (for large samples)
+28. Multi-Treed Gaussian process (for large samples)
+29. Homogeneous Legendre regression (HLR)
+30. Homogeneous GP (HGP)
+31. Homogeneous Kriging (all homogeneous inputs: same bounds)
+32. Hybrid Homogeneous GP (HyHGP)
+33. Quantile GP (can be anisotropic)
+34. User-modified general nonlinear function
+    (Need to modify the PsuadeRegression.cpp file)
+35. Multi-domain neural network (for large samples)
+36. Pade regression F(X) ~ P(X) / Q(X)
+Enter your response surface choice ? RSMSobol2 Sobol: nSams = 100000
+**********************************************************************
+Sobol' input-pair indices (normalized):sobol
+(1st+2nd)VCE for input   1,  2 =  4.514e-01
+(1st+2nd)VCE for input   1,  3 =  9.883e-01
+(1st+2nd)VCE for input   2,  3 =  5.595e-01
+Total variance = 7.567425e+01
+**********************************************************************
+RSMVCE2 plot file = matlabrsvce2_sobol.m
 psuade> # generate basic statistics from the raw sample
-psuade> 
-Enter output number (1 - 1) : 
-No transformation (e.g. log) on sample inputs or outputs.
-
-**********************************************************************
-*             Basic Output Statistics
-======================================================================
-* nSamples =        300
-* nGroups  =          1
-* nInputs  =          3
-* nOutputs =          1
+psuade> **********************************************************************
+This command computes the basic statistics (mean, standard deviation,
+skewness, and kurtosis) of a selected output in the loaded sample.
 ----------------------------------------------------------------------
-* outputID =          1
-*       Sample mean          =   1.7976e+01
-*       Sample std dev       =   8.6050e+00
-*       Sample skewness      =  -2.5970e-01
-*       Sample kurtosis      =   2.4659e+00
-----------------------------------------------------------------------
-**********************************************************************
-Output distribution plot is now in matlabua.m.
-**********************************************************************
-*       std error of mean       =   4.96810632e-01
-**********************************************************************
-psuade> 
-# generate basic statistics from the RS constructed from the sample
-psuade> 
-**********************************************************************
+Proceed ? (y or n to abort) psuade> # generate basic statistics from the RS constructed from the sample
+psuade> **********************************************************************
 * Response surface-based Uncertainty Analysis
 ----------------------------------------------------------------------
 * To include response surface uncertainties, use stochastic response
@@ -431,14 +564,12 @@ psuade>
 * This command computes worst case RS uncertainties. Turn on MASTER
 * mode to select average case RS uncertainties.
 ----------------------------------------------------------------------
-Proceed ? (y or n to abort) Enter output number (1 - 1) : 
-A sample is needed from you to propagate through the RS.
+Proceed ? (y or n to abort) Enter output number (1 - 1) : A sample is needed from you to propagate through the RS.
 Select between the two options below: 
 1. PSUADE will generate the sample
 2. User will provide the sample (in PSUADE data format)
 Enter 1 or 2 : PSUADE will generate a sample for uncertainty analysis.
-Sample size ? (10000 - 100000) 
-**********************************************************************
+Sample size ? (10000 - 100000) **********************************************************************
 NOTE: Uniform distribution is assumed for all inputs. To use other
       than uniform distributions, prescribe them in the sample file
       and set use_input_pdfs in the ANALYSIS section.
@@ -453,24 +584,69 @@ However, you can also perform a worst case analysis (2):
    and a standard deviation. Worst case analysis takes the max and min
    at each sample point as the +/- 3 std dev. Afterward, it creates a
    probability distribution enveloped by the max/min distributions.
-Enter 1 (average case) or 2 (worst case) analysis : 
-** CREATING RESPONSE SURFACE
+Enter 1 (average case) or 2 (worst case) analysis : ** CREATING RESPONSE SURFACE
+----------------------------------------------------------------------
+Available response surface tools: 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
+0.  MARS (Friedman's multivariate splines method)
+1.  Linear regression 
+2.  Quadratic regression 
+3.  Cubic regression 
+4.  Quartic regression (may be unstable)
+5.  Selective polynomial regression (user selects terms to use)
+6.  Derivative-based Legendre polynomial regression
+7.  Legendre polynomial regression
+8.  User-defined regression (user provides basis functions)
+10. Gaussian process (Tong's implementation)
+11. Kriging
+12. Radial Basis Function
+13. Sum-of-trees model
+14. K nearest neighbors 
+15. Artificial neural network
+18. Sparse Grid polynomial regression
+19. Splines on regular grid (1D, 2D, or 3D only)
+20. Acosso (by Storlie, LANL. Need R to run)
+21. BSSAnova (by Storlie, LANL. Need R to run)
+22. Partial Least Squares Linear Regression (PLS)
+23. MARS with bootstrap aggregating (bagging)
+24. Radial Basis Function with bagging
+25. Multi-Radial Basis Function (for large samples)
+26. Multi-Gaussian process (Tong, for large samples)
+27. Multi-MARS (for large samples)
+28. Multi-Treed Gaussian process (for large samples)
+29. Homogeneous Legendre regression (HLR)
+30. Homogeneous GP (HGP)
+31. Homogeneous Kriging (all homogeneous inputs: same bounds)
+32. Hybrid Homogeneous GP (HyHGP)
+33. Quantile GP (can be anisotropic)
+34. User-modified general nonlinear function
+    (Need to modify the PsuadeRegression.cpp file)
+35. Multi-domain neural network (for large samples)
+36. Pade regression F(X) ~ P(X) / Q(X)
+Please enter your choice ? Kriging training begins....
+======================================================================
+* Kriging optimization tolerance = 1.495000e-03
 Kriging training (3) begins.... (order = 0)
+Kriging training (3) ends.
+Kriging variance = 5.735741e+02
 Kriging training completed.
+The outputs and std deviations of the evaluation sample has been
+written into 'rsua_sample'.
 **********************************************************************
 Sample mean    = 1.806958e+01 (RS uncertainties not included)
-Sample std dev = 8.698633e+00 (RS uncertainties not included)
+Sample std dev = 8.698634e+00 (RS uncertainties not included)
 ======================================================================
 Sample mean    = 1.806958e+01 (RS uncertainties included)
-Sample std dev = 8.698633e+00 (RS uncertainties included)
+Sample std dev = 8.698634e+00 (RS uncertainties included)
 **********************************************************************
-Output distribution plots are in matlabrsua.m.
+Output distribution plots file = matlabrsua.m.
 psuade> # correlation analysis
-psuade> 
-Enter output number (1 - 1) : 
-No transformation (e.g. log) on sample inputs or outputs.
+psuade> **********************************************************************
+This command computes correlation information between inputs and a
+selected output of the loaded sample.
+----------------------------------------------------------------------
+Proceed ? (y or n to abort) Enter output number (1 - 1) : No transformation (e.g. log) on sample inputs or outputs.
 **********************************************************************
 *                   Correlation Analysis
 ======================================================================
@@ -478,33 +654,32 @@ No transformation (e.g. log) on sample inputs or outputs.
 ----------------------------------------------------------------------
 * Output of interest = 1
 ----------------------------------------------------------------------
-Correlation: mean     = 1.797567e+01
-Correlation: variance = 7.404624e+01
+Correlation: mean     = 1.795654e+01
+Correlation: variance = 7.557199e+01
 ======================================================================
 *  Pearson correlation coefficients (PEAR) - linear -
 *  which gives a measure of relationship between X_i's & Y.
 ----------------------------------------------------------------------
-* Pearson Correlation coeff.  (Input   1) = 6.655340e-01
-* Pearson Correlation coeff.  (Input   2) = -8.117309e-02
-* Pearson Correlation coeff.  (Input   3) = 7.333974e-01
+* Pearson Correlation coeff.  (Input   1) = 6.622288e-01
+* Pearson Correlation coeff.  (Input   2) = -9.847960e-02
+* Pearson Correlation coeff.  (Input   3) = 7.262922e-01
 ======================================================================
-*  Spearman coefficients (SPEA) - nonlinear relationship -  *
-*  which gives a measure of relationship between X_i's & Y. *
-*  (Idea: use the ranks for the inputs instead)             *
+* Spearman coefficients (SPEA) - nonlinear relationship - which gives
+* a measure of relationship between X_i's & Y
+* (Idea: Use input ranks instead)
 ----------------------------------------------------------------------
-* Spearman coefficient         (Input   1 ) = 6.628145e-01
-* Spearman coefficient         (Input   2 ) = -8.331515e-02
-* Spearman coefficient         (Input   3 ) = 7.253454e-01
+* Spearman coefficient         (Input   1 ) = 6.595100e-01
+* Spearman coefficient         (Input   2 ) = -9.536506e-02
+* Spearman coefficient         (Input   3 ) = 7.177298e-01
 ======================================================================
 Correlation analysis plot file = matlabca.m
 ======================================================================
-* Spearman coefficient(ordered) (Input   3 ) = 7.253454e-01
-* Spearman coefficient(ordered) (Input   1 ) = 6.628145e-01
-* Spearman coefficient(ordered) (Input   2 ) = 8.331515e-02
+* Spearman coefficient(ordered) (Input   3 ) = 7.177298e-01
+* Spearman coefficient(ordered) (Input   1 ) = 6.595100e-01
+* Spearman coefficient(ordered) (Input   2 ) = 9.536506e-02
 **********************************************************************
 psuade> # main effect analysis using the raw sample
-psuade> 
-**********************************************************************
+psuade> **********************************************************************
 This command takes the 'large' (tens of thousands or more) sample that
 has been loaded and then computes the approximate main effects (Sobol'
 first-order indices for all inputs).  It can handle uncorrelated and
@@ -512,22 +687,21 @@ correlated inputs (in the form of joint multivariate distributions or
 inequality constraints, which are expected to have been embedded in
 loaded sample.)
 This command operates directly on the sample, meaning that no response
-surface is used in the process (as opposed to 'rssobol1'), although
+surface is used in the process (as opposed to 'rsvce1_ni'), although
 the sample may have been evaluated using a response surface before
 it is loaded.
 This command performs best with replicated Latin hypercube samples,
 although it works for any random or quasi-random samples, albeit a
 a little less accurate. Larger samples (tens to hundred of thousands)
 should give more accurate results. For small samples hundreds), the
-alternative is 'rssobol1' or 'rssobol1b', which internally generates
-large samples and computes main effects via response surfaces.
+alternative is 'rsvce1_ni', which internally generates large samples
+and computes main effects via response surfaces.
 NOTE: internal parameters for this command can be changed by first
       turning on ana_expert mode before calling this command.
 ----------------------------------------------------------------------
-Enter output number (1 - 1) : 
-No transformation (e.g. log) on sample inputs or outputs.
-MainEffectAnalyzer INFO: nSamples may be too small to give results
-                         with acceptable accuracy (nSamples = 300).
+Proceed ? (y or n to abort) Enter output number (1 - 1) : No transformation (e.g. log) on sample inputs or outputs.
+MainEffect INFO: nSamples may be too small to give results
+           with acceptable accuracy (nSamples = 300).
 **********************************************************************
 *              Main Effect Analysis
 ----------------------------------------------------------------------
@@ -538,13 +712,13 @@ MainEffectAnalyzer INFO: nSamples may be too small to give results
 * Number of Inputs        =          3
 ======================================================================
 Output 1
-====> MainEffect: mean               =   1.7976e+01
-====> MainEffect: standard deviation =   8.5907e+00
-* MainEffect INFO: nReps <= 5 for input 1.
-*     ==> probably not replicated Latin hypercube
-*     ==> crude main effect analysis.
+====> MainEffect: mean               =   1.7957e+01
+====> MainEffect: standard deviation =   8.6787e+00
+* MainEffect INFO: RLH nReps <= 5 for input 1.
+*     ==> Probably not replicated Latin hypercube
+*     ==> Crude (1D-binning) analysis.
 **********************************************************************
-*                Crude Main Effect
+*         Crude (1D-binning) Main Effect
 ======================================================================
 * For small to moderate sample sizes, this method gives rough estimate
 * of main effect (first order sensitivity).  These estimates can vary
@@ -555,27 +729,28 @@ Output 1
 * MainEffect: number of levels   = 17
 * MainEffect: sample size/levels = 17
 ======================================================================
-(INFO) Input    1: 17 out of 17 bins populated.
-(INFO) Input    2: 17 out of 17 bins populated.
-(INFO) Input    3: 17 out of 17 bins populated.
+(ME INFO) Input    1: 17 out of 17 bins populated.
+(ME INFO) Input    2: 17 out of 17 bins populated.
+(ME INFO) Input    3: 17 out of 17 bins populated.
 ======================================================================
-Input    1, normalized 1st-order effect =  4.68e-01 (raw =  3.46e+01)
-Input    2, normalized 1st-order effect =  6.56e-02 (raw =  4.84e+00)
-Input    3, normalized 1st-order effect =  5.66e-01 (raw =  4.17e+01)
-Total VCE =  1.10e+00
+Input    1, normalized 1st-order effect =  4.43e-01 (raw =  3.34e+01)
+Input    2, normalized 1st-order effect =  2.22e-02 (raw =  1.67e+00)
+Input    3, normalized 1st-order effect =  5.52e-01 (raw =  4.16e+01)
+Total VCE =  1.02e+00
 **********************************************************************
 MainEffect plot matlab file = matlabme.m
 psuade> # perform analysis of variation 
-psuade> 
-Enter output number (1 - 1) : 
-No transformation (e.g. log) on sample inputs or outputs.
+psuade> **********************************************************************
+This command performs analysis of variation (ANOVA) on a selected
+output of the loaded sample.
+----------------------------------------------------------------------
+Proceed ? (y or n to abort) Enter output number (1 - 1) : No transformation (e.g. log) on sample inputs or outputs.
 This analysis uses a response surface constructed from your sample.
 The available response surfaces are:
 1. MARS
 2. Legendre polynomial
 3. Gaussian process
-Enter your response surface choice ? 
-**********************************************************************
+Enter your response surface choice ? **********************************************************************
 *           MARS Model
 * Default number of basis functions = 100
 * Default degree of interactions    = 3
@@ -588,13 +763,13 @@ Enter your response surface choice ?
 |  source of | deg. of|   sum of    |   mean      |            |
 |  variation | freedom|   squares   |   square    |       F    |
 -----------------------------------------------------------------
-|          1 |     63 |  6.2111e+03 |  9.8589e+01 |  3.2623e+03|
-|          2 |     63 |  1.5738e+02 |  2.4981e+00 |  4.6852e+01|
-|          3 |     63 |  7.7557e+03 |  1.2311e+02 |  5.0604e+03|
-|      1,  2 |   3969 |  2.0344e-03 |  5.1258e-07 |  9.5063e-06|
-|      1,  3 |   3969 |  9.5663e-03 |  2.4102e-06 |  4.4700e-05|
-|      2,  3 |   3969 |  7.1294e+00 |  1.7963e-03 |  3.3331e-02|
-|   total    | 262143 |  1.4131e+04 |  5.3907e-02 |    -----   |
+|          1 |     63 |  6.2064e+03 |  9.8514e+01 |  3.2604e+03|
+|          2 |     63 |  1.5571e+02 |  2.4716e+00 |  4.6370e+01|
+|          3 |     63 |  7.7567e+03 |  1.2312e+02 |  5.0668e+03|
+|      1,  2 |   3969 |  1.5352e-03 |  3.8681e-07 |  7.1768e-06|
+|      1,  3 |   3969 |  1.6182e-02 |  4.0772e-06 |  7.5648e-05|
+|      2,  3 |   3969 |  6.3987e+00 |  1.6122e-03 |  2.9926e-02|
+|   total    | 262143 |  1.4125e+04 |  5.3884e-02 |    -----   |
 **********************************************************************
 * Mean square : importance indicator of the source
 * F value     : large ==> reject null hypothesis ==> 
@@ -603,10 +778,13 @@ Enter your response surface choice ?
 * Note: pairwise sources of variation exclude individual sources.
 **********************************************************************
 psuade> # perform parameter ranking using MARS measure
-psuade> 
-Enter output number (1 - 1) = 
-MARS (0) or MARS with bagging (1) ? 
-**********************************************************************
+psuade> **********************************************************************
+This command performs COARSE global sensitivity analysis based on the
+result of training the loaded sample with the MARS response surface.
+The loaded sample may be any space-filling design.
+NOTE: COARSE means not quantitatively accurate.
+----------------------------------------------------------------------
+Proceed ? (y or n to abort) Enter output number (1 - 1) = MARS (0) or MARS with bagging (1) ? **********************************************************************
 *           MARS Model
 * Default number of basis functions = 100
 * Default degree of interactions    = 3
@@ -616,22 +794,45 @@ Mars ranking is now in matlabmarsa.m.
 * Mars screening rankings 
 **********************************************************************
 *  Rank   1 : Input =   1 (score = 100.0)
-*  Rank   2 : Input =   3 (score = 81.3)
-*  Rank   3 : Input =   2 (score = 15.0)
+*  Rank   2 : Input =   3 (score = 79.7)
+*  Rank   3 : Input =   2 (score = 15.5)
 **********************************************************************
 psuade> # perform parameter ranking using Kriging measure
-psuade> Enter output number (1 - 1) = 
-**********************************************************************
+psuade> **********************************************************************
+This command performs COARSE global sensitivity analysis based on the
+result of training the loaded sample with the Kriging model (that is,
+magnitudes of the hyperparameters). The loaded sample is expected to
+be any space-filling design.
+NOTE: this command does not work on samples with replicated points.
+NOTE: COARSE means not quantitatively accurate.
+----------------------------------------------------------------------
+Proceed ? (y or n to abort) Enter output number (1 - 1) = **********************************************************************
 *                Kriging Analysis
+* Set printlevel to 1-4 to see Kriging details.
+* Turn on rs_expert mode to set slow or fast mode.
+*  + Fast mode: no optimization of hyperparameters.
+*      - turn on rs_expert to set hyperparameters.
+*      - default values = 1.0
+*  + Slow mode : hyperparameters are optimized.
+*      - to change optimization parameters, turn on rs_expert mode.
+*  + Snail mode (DEFAULT): use multi-start optimization.
+*      - to change optimization parameters, turn on rs_expert mode.
+* Create 'psuade_stop' file to gracefully terminate.
+* Create 'psuade_print' file to set print level on the fly.
 ======================================================================
 Kriging training begins....
+======================================================================
+* Kriging optimization tolerance = 1.495000e-03
+Kriging training (3) begins.... (order = 0)
+Kriging training (3) ends.
+Kriging variance = 5.735741e+02
 Kriging training completed.
 Kriging ranking in file matlabkrisa.m
 **********************************************************************
 * Kriging screening rankings
 **********************************************************************
-*  Rank   1 : Input =    3 (score = 100.0) (ref = 3.595961e-01)
-*  Rank   2 : Input =    1 (score =  10.7) (ref = 3.865358e-02)
-*  Rank   3 : Input =    2 (score =   4.0) (ref = 1.454550e-02)
+*  Rank   1 : Input =    3 (score = 100.0) (ref = 3.599009e-01)
+*  Rank   2 : Input =    1 (score =  10.3) (ref = 3.711364e-02)
+*  Rank   3 : Input =    2 (score =   3.8) (ref = 1.377589e-02)
 **********************************************************************
-
+psuade> psuade> psuade terminates ...

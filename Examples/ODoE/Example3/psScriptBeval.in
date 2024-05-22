@@ -1,0 +1,14 @@
+# Show the use of this command to compute G/I/D/A/E
+# metrics for each member of the set CandidateSet0
+# (This is a 'faster' version of oeodu_evalnb)
+odoeu_beval
+y
+RSTrainSample
+3
+0
+PriorSample
+CandidateSet0
+EvalSet
+0
+q
+

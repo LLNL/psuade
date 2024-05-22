@@ -1,6 +1,13 @@
 Test Problem 0: a very simple inference
+                Linear equation Y = X - 0.5 
+                and experiment is N(0,0.1).
+     Has been verified with MH and Gibbs and BF
 
 Test Problem 1: a simple inference
+         Linear equation Y_i = X1 * A_i + X2 * B_i for i=1,..4
+         Return error: E_i = Y_i - Y(A_i=0.25,B_i=0.75)
+         Experiment is N_i(0,0.1), i=1,..4.
+     Has been verified with MH and Gibbs and BF
 
 Test Problem 2: This problem demonstrates Bayesian inference 
      when there are uncertain parameters that are not to be
@@ -9,4 +16,26 @@ Test Problem 2: This problem demonstrates Bayesian inference
 
 Bobyqa: the same as test problem 1 except that it uses
         deterministic optimization
+
+===========================================================
+To use posterior sample to estimate uncertainties, do:
+- Convert the posterior sample into PSUADE format
+   psuade
+   > iread MCMCPostSample
+   > write <postsample>
+- Uncertainty estimation with posterior
+   psuade
+   > load <simulation data file in PSUADE format>
+     <If simulation has multiple outputs, select only one by
+      deleting the other outputs using odelete>
+   > rsua
+     <select response surface>
+     <select user-provided sample and enter postsample>
+     <select average or worst case>
+     ...
+     <at the end, prediction uncertainties will be displayed>
+
+NOTE: This procedure will be a little more complicated if
+      there are design inputs and uncertain inputs in the
+      simulation model.
 

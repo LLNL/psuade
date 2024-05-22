@@ -60,6 +60,7 @@ aData::aData()
   retValues_     = NULL;
   ioPtr_         = NULL;
   sampler_       = NULL;
+  faType_        = -1;
 }
 
 // ************************************************************************

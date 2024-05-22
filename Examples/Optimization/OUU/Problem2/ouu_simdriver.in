@@ -26,7 +26,8 @@ METHOD
 END
 APPLICATION
    driver = NONE
-   opt_driver = simdriver
+#  opt_driver = simdriver
+   opt_driver = simdata
    launch_interval = 0
 END
 ANALYSIS

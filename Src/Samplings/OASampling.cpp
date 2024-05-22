@@ -38,12 +38,13 @@
 // ************************************************************************
 // external functions
 // ************************************************************************
-
+#ifdef HAVE_BOSE
 extern "C" 
 {
   int  bose_link(int n, int ninputs, int str, int ***AA);
   void OA_strength(int q,int nrow,int ncol,int** A,int *str,int verbose);
 }
+#endif
 
 // ************************************************************************
 // Constructor
@@ -66,6 +67,10 @@ OASampling::~OASampling()
 // ------------------------------------------------------------------------
 int OASampling::initialize(int initLevel)
 {
+#ifndef HAVE_BOSE
+  printf("OASampling ERROR: Bose library not installed.\n");
+  exit(1);
+#else
   int    ii, jj, kk, ll, ss, ss2, index, status, strength, maxMinDist;
   int    dist, dist2, ntimes=1, nReps, repID, offset, nSamples1, nSamples2;
   int    minDist;
@@ -171,7 +176,7 @@ int OASampling::initialize(int initLevel)
              repID+1,nReps);
 
     //**/ use the Bose tool to generate OA
-    status = bose_link(nSamples_/nReps, nInputs_, strength, &itempMatrix);
+    status = bose_link(nSamples_/nReps,nInputs_,strength,&itempMatrix);
     if ((status >= 0 && status != (nSamples_/nReps)) || status < 0)
     {
       printf("OASampling ERROR: Bose failure.\n");
@@ -318,6 +323,7 @@ int OASampling::initialize(int initLevel)
       }
     }
   }
+#endif
   return 0;
 }
 
@@ -327,6 +333,7 @@ int OASampling::initialize(int initLevel)
 int OASampling::refine(int refineRatio, int randomize, double threshold,
                        int nSamples, double *sampleErrors)
 {
+#ifdef HAVE_BOSE
   int    ii2, nReps, symMult, nFactors, ncount, ind1, samMult, nLevels;
   int    strength, status, newNSamples, newNSymbols, ind2, currOffset;
   int    ii, kk, jj, repID, outputID, sampleOffset, newSampleOffset;
@@ -646,6 +653,7 @@ int OASampling::refine(int refineRatio, int randomize, double threshold,
       printf("    OASampling input %3d = [%e %e]\n", jj+1,
              vecLBs_[jj], vecUBs_[jj]);
   }
+#endif
   return 0;
 }
 

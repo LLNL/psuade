@@ -21,6 +21,10 @@
 // Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 // ************************************************************************
 // Functions for the class PsuadeBase
+// This file contains functions that create PSUADE input file and Python
+// driver file that capture pre-processing, simulation runs, and also
+// post-processing
+// ------------------------------------------------------------------------
 // AUTHOR : CHARLES TONG
 // DATE   : 2006
 // ************************************************************************
@@ -42,75 +46,72 @@
 // ------------------------------------------------------------------------
 int PsuadeBase::setupGuide()
 {
-  printOutTS(PL_INFO, 
-     "Suppose you have an application and you would like to use \n");
-  printOutTS(PL_INFO, 
-     "PSUADE to perform UQ on it. In the following you will find a\n");
-  printOutTS(PL_INFO, 
-     "short guide on how to do it:\n");
-  printOutTS(PL_INFO, 
-     "(0) Suppose the name of your application is called FOO and\n");
-  printOutTS(PL_INFO, 
-     "    it takes its input from a file called FOO.in using the\n");
-  printOutTS(PL_INFO,"    following command:\n");
+  printAsterisks(PL_INFO, 0);
+  printOutTS(PL_INFO,"Suppose you have an application and you would ");
+  printOutTS(PL_INFO,"like to use PSUADE to\n");
+  printOutTS(PL_INFO,"perform UQ on it. In the following you will ");
+  printOutTS(PL_INFO,"find a short guide on how\n");
+  printOutTS(PL_INFO,"to do it:\n");
+  printDashes(PL_INFO, 0);
+  printOutTS(PL_INFO,"(0) Suppose your simulation model is called FOO,");
+  printOutTS(PL_INFO," and it takes its\n");
+  printOutTS(PL_INFO,"    inputs from a file called FOO.in using ");
+  printOutTS(PL_INFO,"the following call format:\n");
   printOutTS(PL_INFO,"       srun -n 4 /home/me/FOO FOO.in\n");
-  printOutTS(PL_INFO, 
-     "    and the parameters you will vary live in FOO.in.\n");
-  printOutTS(PL_INFO, 
-     "(1) First create a driver (say, FOOdriver.py) using the\n");
-  printOutTS(PL_INFO, 
-     "    `gendriver' command. This driver will be called PSUADE\n");
-  printOutTS(PL_INFO, 
-     "    to set up and to run your application code. PSUADE will,\n");
-  printOutTS(PL_INFO, 
-     "    for each sample point, outputs a parameter file called\n");
-  printOutTS(PL_INFO, 
-     "    'psuadeApps_ct.in.x', then calls FOOdriver.py with\n");
-  printOutTS(PL_INFO, 
-     "        FOOdriver.py psuadeApps_ct.in.x psuadeApps_ct.out.x\n");
-  printOutTS(PL_INFO, 
-     "    and expects the outputs to be written to psuadeApps_ct.out.x\n");
+  printOutTS(PL_INFO,"    and the inputs are defined in FOO.in.\n");
+  printOutTS(PL_INFO,"(1) First create a driver (say, FOOdriver.py) ");
+  printOutTS(PL_INFO,"using the 'gendriver'\n");
+  printOutTS(PL_INFO,"    command. This driver will be called by ");
+  printOutTS(PL_INFO,"PSUADE to set up and to run\n");
+  printOutTS(PL_INFO,"    your simulation code. At run time, PSUADE ");
+  printOutTS(PL_INFO,"first writes values of \n");
+  printOutTS(PL_INFO,"    sample K into a file called 'psuadeApps_ct.in.K',");
+  printOutTS(PL_INFO," then executes \n");
+  printOutTS(PL_INFO,"    FOOdriver.py with 'FOOdriver.py psuadeApps.in.x ");
+  printOutTS(PL_INFO,"psuadeApps.out.x'\n");
+  printOutTS(PL_INFO,"    and finally waits for the file psuadeApps_ct.out.x ");
+  printOutTS(PL_INFO,"to be ready.\n");
   printOutTS(PL_INFO,"    So FOOdriver.py is expected to do 4 things:\n");
   printOutTS(PL_INFO,"    (a) take the inputs from 'psuadeApps_ct.in.x'\n");
   printOutTS(PL_INFO,"    (b) insert the input values into FOO.in\n");
-  printOutTS(PL_INFO, 
-     "    (c) run the application code and extract the desired outputs\n");
+  printOutTS(PL_INFO,"    (c) run the application code and extract the ");
+  printOutTS(PL_INFO,"desired outputs\n");
   printOutTS(PL_INFO,"    (d) write the output to 'psuadeApps_ct.out.x'\n");
-  printOutTS(PL_INFO, 
-     "    Again, the python template for this step can be accessed via\n");
-  printOutTS(PL_INFO,"    the 'gendriver' command.\n");
-  printOutTS(PL_INFO, 
-     "(2) Then use 'geninputfile' to create a PSUADE input file (say \n");
-  printOutTS(PL_INFO, 
-     "    psuade.in).  This file specifies the number and names of \n");
-  printOutTS(PL_INFO, 
-     "    inputs/outputs, sets up the sampling and analysis methods, \n");
-  printOutTS(PL_INFO, 
-     "    and set up a link to the driver created in step (1).\n");
-  printOutTS(PL_INFO, 
-     "(3) Optionally, use 'genbatchfile' to create a batch file.\n");
+  printOutTS(PL_INFO,"    Again, the Python template for this step can ");
+  printOutTS(PL_INFO,"be created via the\n");
+  printOutTS(PL_INFO,"    'gendriver' command.\n");
+  printOutTS(PL_INFO,"(2) Then use 'geninputfile' to create a PSUADE ");
+  printOutTS(PL_INFO,"input file (e.g.,\n");
+  printOutTS(PL_INFO,"    psuade.in).  This file specifies the number ");
+  printOutTS(PL_INFO,"and names of inputs\n");
+  printOutTS(PL_INFO,"    and outputs, sets up the sampling and analysis ");
+  printOutTS(PL_INFO,"methods, and set\n");
+  printOutTS(PL_INFO,"    up a link to the driver created in step (1).\n");
+  printOutTS(PL_INFO,"(3) Optionally, use 'genbatchfile' to create a ");
+  printOutTS(PL_INFO,"batch file.\n");
   printOutTS(PL_INFO,"    (If you run the jobs on LLNL's machines).\n");
-  printOutTS(PL_INFO, 
-     "(4) Once these files have been created, run PSUADE on your\n");
-  printOutTS(PL_INFO,"    application just by typing:\n");
-  printOutTS(PL_INFO,"         psuade psuade.in\n");
-  printOutTS(PL_INFO, 
-     "    This is done when the run time is relatively short, no more\n");
-  printOutTS(PL_INFO, 
-     "    than a few minutes. If the run time is long, you may want to\n");
-  printOutTS(PL_INFO,"    break up this step into a few tasks: \n");
-  printOutTS(PL_INFO,"    (a) create all the parameter files first\n");
-  printOutTS(PL_INFO, 
-     "        (use 'gen_inputfile_only' in the psuade.in file)\n");
-  printOutTS(PL_INFO,"    (b) launch the jobs in whatever way you desire\n");
-  printOutTS(PL_INFO,
-     "    (c) run postprocessing to generate all output files\n");
-  printOutTS(PL_INFO,"    (d) run PSUADE to collect all output files\n");
+  printOutTS(PL_INFO,"(4) Once these files have been created, run PSUADE ");
+  printOutTS(PL_INFO,"on your application\n");
+  printOutTS(PL_INFO,"    just by using the following call format:\n");
+  printOutTS(PL_INFO,"         /<some path>/psuade psuade.in\n");
+  printDashes(PL_INFO, 0);
+  printOutTS(PL_INFO,"Step (4) can be used if your simulation model takes ");
+  printOutTS(PL_INFO,"little time to run\n");
+  printOutTS(PL_INFO,"(no more than a minute or two). However, if the run ");
+  printOutTS(PL_INFO,"time is long, you\n");
+  printOutTS(PL_INFO,"may want to break up this step into a few tasks: \n");
+  printOutTS(PL_INFO,"(a) Create all the parameter files first\n");
+  printOutTS(PL_INFO,"    (use 'gen_inputfile_only' in the psuade.in file)\n");
+  printOutTS(PL_INFO,"(b) Launch the jobs in whatever way you desire\n");
+  printOutTS(PL_INFO,"(c) Run postprocessing to generate all output files\n");
+  printOutTS(PL_INFO,"(d) Run PSUADE to collect all output files\n");
+  printAsterisks(PL_INFO, 0);
   return 0;
 }
 
 // ************************************************************************
-// create LLNL-specific batch file
+// create LLNL-specific batch file (that can be submitted to LLNL LC 
+// machine scheduler for allocation.
 // ------------------------------------------------------------------------
 int PsuadeBase::genBatchFile(int genFlag)
 {
@@ -172,7 +173,7 @@ int PsuadeBase::genBatchFile(int genFlag)
 }
 
 // ************************************************************************
-// generate psuade driver python or C script
+// generate psuade driver Python or C script
 // ------------------------------------------------------------------------
 int PsuadeBase::genDriver(int genFlag)
 {
@@ -503,11 +504,12 @@ int PsuadeBase::genDriver(int genFlag)
   fprintf(dfp,"   lineIn  = inFile.readline()\n");
   fprintf(dfp,"   nCols   = lineIn.split()\n");
   fprintf(dfp,"   nInputs = int(nCols[0])\n");
-  fprintf(dfp,"   inputData = range(nInputs)\n");
+  fprintf(dfp,"   inputData = []\n");
   fprintf(dfp,"   for ind in range(nInputs):\n");
   fprintf(dfp,"      lineIn  = inFile.readline()\n");
   fprintf(dfp,"      nCols   = lineIn.split()\n");
-  fprintf(dfp,"      inputData[ind] = float(nCols[0])\n");
+  fprintf(dfp,"      ddata   = float(nCols[0])\n");
+  fprintf(dfp,"      inputData.append(ddata)\n");
   fprintf(dfp,"   inFile.close()\n");
   fprintf(dfp,"   return inputData\n\n");
 
@@ -757,9 +759,9 @@ int PsuadeBase::genDriver(int genFlag)
     snprintf(pString,100,"How many outputs are there ? ");
     nOutputs = getInt(1, 100000, pString);
   }
-  fprintf(dfp,"   outData = range(%d)\n",nOutputs);
+  fprintf(dfp,"   outData = []\n");
   fprintf(dfp,"   for ii in range(%d):\n",nOutputs);
-  fprintf(dfp,"      outData[ii] = 1.0e35\n");
+  fprintf(dfp,"      outData.append(1.0e35)\n");
   if (genFlag == 1)
   {
     fprintf(dfp,"   outData[0] = inputData[0] - ");
@@ -773,9 +775,9 @@ int PsuadeBase::genDriver(int genFlag)
   fprintf(dfp,"# create dummy output files \n");
   fprintf(dfp,"#======================================================\n\n");
   fprintf(dfp,"else:\n");
-  fprintf(dfp,"   outData = range(%d)\n",nOutputs);
+  fprintf(dfp,"   outData = []\n");
   fprintf(dfp,"   for ii in range(%d):\n",nOutputs);
-  fprintf(dfp,"      outData[ii] = 1.0e35\n");
+  fprintf(dfp,"      outData.append(1.0e35)\n");
   fprintf(dfp,"   genOutputFile(outputfileName, outData)\n");
   fprintf(dfp,"\n");
   if (genFlag == 1)
@@ -804,7 +806,7 @@ int PsuadeBase::genDriver(int genFlag)
 }
 
 // ************************************************************************
-// interpret command from interactive session
+// function to set up a PSUADE input file
 // genFlag = 0 (regular)
 // genFlag = 1 (Bungee problem)
 // genFlag = 2 (for SDoE input file setup)
@@ -1103,6 +1105,7 @@ int PsuadeBase::genSetup(int genFlag, char *filename)
 
 // ************************************************************************
 // a function to create Python script for computing MCMC likelihood
+// especially for the KPCA module
 // ------------------------------------------------------------------------
 int PsuadeBase::genKPCAMcmcWorkflow()
 {

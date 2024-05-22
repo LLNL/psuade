@@ -70,6 +70,7 @@ public:
   double  sum();
   double  norm();
   double  stdev();
+  int     countUndefined();
   void    scale(double);
   void    setConstant(double);
   void    axpy(const double scale, psVector v1);
@@ -159,6 +160,7 @@ public:
   ~psLDVector();
   int  length();
   int  setLength(int);
+  void print(char *);
   long double & operator[](int ind);
   void clean();
 };

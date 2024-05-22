@@ -1,0 +1,77 @@
+Explanations:
+
+I. Explain why VCE (V(E[Y|X])) of X3 is 0.
+
+   * Recall Y = sin(X1) + 7 sin^2(X2) + 0.1 X3^4 sin(X1)
+   * To compute VCE, we do the following
+     for i = 1, NX (N = sample size drawn from X)
+        mean = 0
+        for j = 1, N2 (N2 = sample size drawn from ~X)
+           mean  += Y(X_i, ~X_j)
+        EY(i) = mean / N2
+   * VCE : take variance of EY
+   * So EY for the 3 inputs are: (cx - constant when X is fixed)
+     for X1:  Y = c1 + 7 sin^2(X2) + 0.1 c2 X3^4
+     for X2:  Y = sin(X1) + c3 + 0.1 X3^4 sin(X1)
+     for X3:  Y = sin(X1) + sin^2(X2) + 0.1 c4 sin(X1)
+                      c4 varies with X3 but mean(sin(X1))=0
+   * We see that
+       for X3: the mean of Y wrt X1 and X2 = 0
+
+II. Explain why VCE(1,2) > VCE(1,3) > VCE(2,3)
+
+    * Using the same rationale as above
+      for X1,X2:  Y = c11 + c12 + 0.1 c3 X3^4
+               mean grows as X3^4 ==> large variance 
+      for X1,X3:  Y = c21 + 7 sin^2(X2) + c22
+               difficult to visualize but VCE should be high
+      for X2,X3:  Y = sin(X1) + c31 + 0.1 c32 sin(X1)
+                     mean(sin(X1))=0
+               c31 changes with X2 ==> contribute to VCE
+               c32 changes with X3 ==> contribute to VCE
+
+    * It makes sense that VCE(1,2) > VCE(1,3) > VCE(2,3)
+                     
+III. Explain why entropy(1,2) > entropy(2,3) > entropy(1,3)
+
+    * Recall entropy metric is H(Y) - E[H(Y|X)]
+    * When running with printlevel 4 on, we see that for the
+      input pair (1,3), H(Y|X) = 1.86 for all values of X2,
+      which makes sense because X1,X3 are correlated but not
+      to X2. So E[H(Y|X)] ~ 1.86 and since total entropy is
+      about 2.7, H(Y)-E[H(Y|X)] ~ 0.84, which seems too low
+      compared to (X2,X3) ~ 1.44 in view of VCE(1,3) > VCE(2,3). 
+    * look at it again: look at for each pair, the spread
+         of Y by fixed the pair at some values
+      for X1,X2:  Y = c11 + c12 + 0.1 c3 X3^4
+          varying X3 ==> Y grows as X3^4 ==> large spread 
+      for X1,X3:  Y = c21 + 7 sin^2(X2) + c22
+          varying X2 ==> spread(7sin(X2)) in [-7,7]
+          spread is constant since it only depends on X2
+          That's why all entropies all 1.86
+      for X2,X3:  Y = sin(X1) + c31 + 0.1 c32 sin(X1)
+          varying X1 ==> spread increases as 0.1 * X3^3
+          at different (X2,X3), spread varies between [-10.7,10.7] 
+          Some H(Y|X2,X3) are negative so average is much smaller
+          than 10.7
+    * So H(Y|X1,X3) is on the average (of X1,X3) smaller than 10.7
+    * So H(Y) - E[H(Y|X1,X3)] is relatively large
+    * Thus it makes sense that entropy(X2,X3) > entropy(X1,X3)
+
+IV. For input pair (2,3), some of the H(Y|X) used to compute
+    E[H(Y|X)] are actually larger than H(Y), which is
+    theoretically (H(Y|X) < H(Y)) impossible. Is this due
+    to limited sample size?
+    * I did select a (2,3) pair that gives large H(Y|X) and
+      modify ensemble_simulator.c to fix (2,3) at the values, then
+      run entropy, and find that entropy ~ 2.85 (use rsentropy
+      command), which is indeed then the total entropy which
+      is ~ 2.71. So, it seems to rule out limited sample size
+      problem because I used very large sample size for
+      rsentropy
+    * Or, is it due to response surface errors? (MARS is used
+      here)
+    * Or, indeed it is possible that H(Y|X) > H(Y)?
+      (because H(Y|X) may be negative)?
+
+

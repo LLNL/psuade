@@ -5,16 +5,17 @@
 // All rights reserved.
 //
 // Please see the COPYRIGHT and LICENSE file for the copyright notice,
-// disclaimer, contact information and the GNU Lesser General Public License.
+// disclaimer, contact information and the GNU Lesser General Public 
+// License.
 //
-// PSUADE is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free 
-// Software Foundation) version 2.1 dated February 1999.
+// PSUADE is free software; you can redistribute it and/or modify it under 
+// the terms of the GNU Lesser General Public License (as published by the 
+// Free Software Foundation) version 2.1 dated February 1999.
 //
-// PSUADE is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the IMPLIED WARRANTY OF MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE.  See the terms and conditions of the GNU Lesser
-// General Public License for more details.
+// PSUADE is distributed in the hope that it will be useful, but WITHOUT 
+// ANY WARRANTY; without even the IMPLIED WARRANTY OF MERCHANTABILITY 
+// or FITNESS FOR A PARTICULAR PURPOSE.  See the terms and conditions of 
+// the GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program; if not, write to the Free Software Foundation,
@@ -397,7 +398,7 @@ double RSFuncApproxAnalyzer::analyze(aData &adata)
     printOutTS(PL_INFO,"will need to exit, create a config\n");
     printOutTS(PL_INFO,"file (use genconfigfile in command ");
     printOutTS(PL_INFO,"line mode), and set config option\n");
-    printOutTS(PL_INFO, " in your data file.\n");
+    printOutTS(PL_INFO,"in your data file.\n");
     printDashes(PL_INFO,0);
     snprintf(pString,100,"Perform cross validation ? (y or n) ");
     getString(pString, winput1);
@@ -425,6 +426,27 @@ double RSFuncApproxAnalyzer::analyze(aData &adata)
           printOutTS(PL_INFO,
              "      number of CV group revised to %d\n",numCVGroups_);
         }
+      }
+      if (rsType_ == PSUADE_RS_HGP3 || rsType_ == PSUADE_RS_QGP)
+      {
+        while (nSamples/numCVGroups_*numCVGroups_ != nSamples)
+        {
+          printf("ERROR: For HGP3 and QGP, the sample is assumed ");
+          printf("to contain quantiles in\n");
+          printf("       blocks. As such, the sample size has to ");
+          printf("be a multiple of the\n");
+          printf("       number of groups.\n");
+          snprintf(pString,100,
+           "Re-enter the number of validation groups: (2 - %d, 0 to quit) ",
+           nSamples-1);
+          ss = getInt(1, nSamples, pString);
+          if (ss == 0)
+          {
+            useCV_ = 0;
+            break;
+          }
+        }
+        if (useCV_ == 1) nSubSamples = nSamples / numCVGroups_;
       }
     }
   }
@@ -477,8 +499,19 @@ double RSFuncApproxAnalyzer::analyze(aData &adata)
     VecW.setLength(nSamples);
     IVec2.setLength(nSamples);
 
-    snprintf(pString,100,"Random selection of leave-out groups ? (y or n) ");
-    getString(pString, winput1);
+    if (rsType_ == PSUADE_RS_HGP3 || rsType_ == PSUADE_RS_QGP)
+    {
+      printf("INFO: For HGP3 and QGP, the sample is assumed to ");
+      printf("contain quantiles in\n");
+      printf("      blocks. As such, non-random leave-out is enforced.\n");
+      winput1[0] = 'n';
+    }
+    else
+    {
+      snprintf(pString,100,
+        "Random selection of leave-out groups ? (y or n) ");
+      getString(pString, winput1);
+    }
     if (winput1[0] == 'y')
       generateRandomIvector(nSamples, IVec1.getIVector());
     else
@@ -514,6 +547,8 @@ double RSFuncApproxAnalyzer::analyze(aData &adata)
 #ifdef PSUADE_OMP
     haveOMP = 1;
 #endif
+    psConfig_.RSExpertModeSaveAndReset();
+    psConfig_.InteractiveSaveAndReset();
     if (haveOMP == 1)
     {
       printOutTS(PL_INFO, "RSAnalysis INFO: OpenMP mode on\n");
@@ -714,6 +749,8 @@ double RSFuncApproxAnalyzer::analyze(aData &adata)
         faPtrs[ig2] = NULL;
       }
     }
+    psConfig_.RSExpertModeRestore();
+    psConfig_.InteractiveRestore();
     if (faPtrs != NULL) delete [] faPtrs;
 
     //**/ compute errors
@@ -770,7 +807,7 @@ double RSFuncApproxAnalyzer::analyze(aData &adata)
 
       //**/ print error information
       printOutTS(PL_INFO,"RSA: first member of sample group %5d = %d\n",
-           ig+1, IVec1[ig]+1);
+           ig+1, IVec1[ig*nSubSamples]+1);
       printOutTS(PL_INFO,
            "RSA: CV error for sample group %5d = %11.3e (avg unscaled)\n",
            ig+1, cvErr1);
@@ -1090,6 +1127,9 @@ double RSFuncApproxAnalyzer::analyze(aData &adata)
       }
     }
   }
+  //**/ clean up any rs_expert settings
+  strncpy(pString,"RS_\0",4);
+  psConfig_.removeParameter2(pString);
 
   //**/ ---------------------------------------------------------------
   //**/  validation: fetch data file name from configure file
@@ -1406,7 +1446,7 @@ double RSFuncApproxAnalyzer::validate(aData &adata, char *dataFile,
   for (ii = 0; ii < nTestSam; ii++) ssum += VecStd[ii];
   if (ssum != 0)
     printOutTS(PL_INFO, 
-         "RSA: Average std. dev. = %11.3e (sum of all points)\n",
+         "RSA: Average std. dev. = %11.3e (average of all points)\n",
          ssum/nSamples);
 
   if (fpErr != NULL) 

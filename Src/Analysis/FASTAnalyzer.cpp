@@ -5,16 +5,17 @@
 // All rights reserved.
 //
 // Please see the COPYRIGHT and LICENSE file for the copyright notice,
-// disclaimer, contact information and the GNU Lesser General Public License.
+// disclaimer, contact information and the GNU Lesser General Public 
+// License.
 //
-// PSUADE is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free 
-// Software Foundation) version 2.1 dated February 1999.
+// PSUADE is free software; you can redistribute it and/or modify it under 
+// the terms of the GNU Lesser General Public License (as published by the 
+// Free Software Foundation) version 2.1 dated February 1999.
 //
-// PSUADE is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the IMPLIED WARRANTY OF MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE.  See the terms and conditions of the GNU Lesser
-// General Public License for more details.
+// PSUADE is distributed in the hope that it will be useful, but WITHOUT 
+// ANY WARRANTY; without even the IMPLIED WARRANTY OF MERCHANTABILITY 
+// or FITNESS FOR A PARTICULAR PURPOSE.  See the terms and conditions of 
+// the GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program; if not, write to the Free Software Foundation,
@@ -39,7 +40,7 @@
 //**/ al definitions
 //**/ ---------------------------------------------------------------------
 #define  PSUADE_FAST_MaxDimension  50
-                                                                                
+
 static unsigned long
 PSUADE_FAST_OMEGA[PSUADE_FAST_MaxDimension] =
 {
@@ -104,10 +105,9 @@ double FASTAnalyzer::analyze(aData &adata)
     for (ii = 0; ii < nInputs; ii++) count += adata.inputPDFs_[ii];
     if (count > 0)
     {
-      printOutTS(PL_WARN, 
-          "FAST INFO: some inputs have non-uniform PDFs, but they are\n");
-      printOutTS(PL_WARN, 
-          "           not relevant in this analysis.\n");
+      printOutTS(PL_WARN,"FAST INFO: Some inputs have non-uniform ");
+      printOutTS(PL_WARN,"PDFs, but they are not relevant\n");
+      printOutTS(PL_WARN,"           in this analysis.\n");
     }
   }
 
@@ -116,7 +116,7 @@ double FASTAnalyzer::analyze(aData &adata)
   //**/ ---------------------------------------------------------------
   if (nInputs <= 0 || nOutputs <= 0 || nSamples <= 0)
   {
-    printOutTS(PL_ERROR,"FAST ERROR: invalid arguments.\n");
+    printOutTS(PL_ERROR,"FAST ERROR: Invalid arguments.\n");
     printOutTS(PL_ERROR,"    nInputs  = %d\n", nInputs);
     printOutTS(PL_ERROR,"    nOutputs = %d\n", nOutputs);
     printOutTS(PL_ERROR,"    nSamples = %d\n", nSamples);
@@ -125,13 +125,13 @@ double FASTAnalyzer::analyze(aData &adata)
   if (nInputs > PSUADE_FAST_MaxDimension)
   {
     printOutTS(PL_ERROR,
-         "FAST ERROR: input dimension needs to be <= 50.\n");
+         "FAST ERROR: Input dimension needs to be <= 50.\n");
     printOutTS(PL_ERROR,"    nInputs  = %d\n", nInputs);
     return PSUADE_UNDEFINED;
   } 
   if (outputID < 0 || outputID >= nOutputs)
   {
-    printOutTS(PL_ERROR, "FAST ERROR: invalid outputID.\n");
+    printOutTS(PL_ERROR, "FAST ERROR: Invalid outputID.\n");
     printOutTS(PL_ERROR, "    outputID = %d\n", outputID+1);
     return PSUADE_UNDEFINED;
   } 
@@ -143,32 +143,36 @@ double FASTAnalyzer::analyze(aData &adata)
   vecYY.setLength(nSamples);
   vecFourierCoefs.setLength(nInputs+1);
   for (ss = 0; ss < nSamples; ss++) vecYY[ss] = Y[ss*nOutputs+outputID];
+  printf("WARNING: No checking is done to ensure this sample is FAST.\n");
   int M = computeCoefficents(nSamples, nInputs, vecYY.getDVector(), 
                              vecFourierCoefs, printLevel);
   if (M < 0) return 0.0; 
   printEquals(PL_INFO, 0);
   printOutTS(PL_INFO, 
-       "* Fourier Amplitude Sensitivity Test (FAST) coefficients\n");
+   "Fourier Amplitude Sensitivity Test (FAST) coefficients (Normalized)\n");
   printOutTS(PL_INFO, 
-       "* (to estimate the Sobol' first-order sensitivity indices)\n");
+   "(to estimate the Sobol' first-order sensitivity indices)\n");
   printDashes(PL_INFO, 0);
   printOutTS(PL_INTERACTIVE, "* M = %d\n", M);
   fsum = 0.0;
   for (ii = 0; ii < nInputs; ii++)
   {
-     printOutTS(PL_INFO, "* Input %4d = %11.3e\n", ii+1, 
-                vecFourierCoefs[ii]);
+     printOutTS(PL_INFO,
+       "Input %3d: sensitivity index = %10.3e (unnormalized = %10.3e)\n",
+               ii+1, vecFourierCoefs[ii],
+               vecFourierCoefs[ii]*vecFourierCoefs[nInputs]);
      fsum += vecFourierCoefs[ii];
   }
-  printOutTS(PL_INFO, "* Sum of FAST coefficients = %11.3e\n", fsum);
+  printOutTS(PL_INFO,"Sum of FAST coefficients = %11.3e\n", fsum);
   printOutTS(PL_INFO, 
-       "* FAST variance            = %11.3e (normalization factor)\n", 
+       "Output variance          = %11.3e\n", 
        vecFourierCoefs[nInputs]);
 
   //save Fourier coefficients
   VecFourierCoefs_.setLength(nInputs_);
   M_ = M;
-  for (ii=0; ii<nInputs_; ii++) VecFourierCoefs_[ii] = vecFourierCoefs[ii];
+  for (ii=0; ii<nInputs_; ii++) 
+    VecFourierCoefs_[ii] = vecFourierCoefs[ii];
   FASTvariance_ = vecFourierCoefs[nInputs];
   printEquals(PL_INFO, 0);
 
@@ -199,7 +203,7 @@ int FASTAnalyzer::calculateOmegas(int nInputs, int nSamples, int *omegas)
   }
   return 0;
 }
-                                                                                
+
 // ************************************************************************ 
 // compute Fourier coefficients
 // ------------------------------------------------------------------------

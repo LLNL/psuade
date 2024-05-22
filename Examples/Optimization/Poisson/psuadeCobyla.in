@@ -20,9 +20,9 @@ APPLICATION
    opt_driver = ./cobyla_simulator
 END
 ANALYSIS
-   optimization method = cobyla
+   optimization method = bobyqa
    optimization tolerance = 1.000000e-06
-   optimization print_level = 2
+   optimization print_level = 4
    printlevel 2
 END
 END

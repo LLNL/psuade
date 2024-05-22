@@ -65,30 +65,66 @@ QGP::QGP(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
   nQuantiles_ = 0;
   meanIndex_ = -1;
   homogeneous_ = 1; 
+  numLBFGS_ = 4;
   if (psConfig_.InteractiveIsOn())
   {
     printAsterisks(PL_INFO, 0);
     printOutTS(PL_INFO,
          "*      Quantile Gaussian Process Analysis\n");
     printDashes(PL_INFO, 0);
+    printOutTS(PL_INFO,"* This method requires that the last ");
+    printOutTS(PL_INFO,"input be the quantile input - \n");
     printOutTS(PL_INFO,
-         "* This method requires that the last input be the quantile\n");
-    printOutTS(PL_INFO,
-         "* input - that is, the last input needs to be in [0,1].\n");
+         "* that is, the last input needs to be in [0,1].\n");
     printOutTS(PL_INFO,"* Let say the number of samples   = N\n");
     printOutTS(PL_INFO,"*         the number of quantiles = m\n");
+    printOutTS(PL_INFO,"* The sample needs to be in N/m groups of ");
+    printOutTS(PL_INFO,"m with each group\n");
+    printOutTS(PL_INFO,"* corresponding to a unique point in ");
+    printOutTS(PL_INFO,"the first nInputs-1 space, and\n");
     printOutTS(PL_INFO,
-         "* The sample needs to be in N/m groups of m with each group\n");
-    printOutTS(PL_INFO,
-         "* corresponding to a unique point in the first nInputs-1\n");
-    printOutTS(PL_INFO,
-         "* space, and each group should have the same quantiles.\n");
+         "* each group should have the same quantiles.\n");
     printOutTS(PL_INFO,
          "* In addition, one of the quantile should be 0.5 (mean).\n");
     printOutTS(PL_INFO, "* There are two options: \n");
-    printOutTS(PL_INFO, "* 1. Isotropic  : if all inputs have same bounds.\n");
-    printOutTS(PL_INFO, "* 2. Anisotropic: some inputs have different bounds.\n");
+    printOutTS(PL_INFO, 
+         "* 1. Homogeneous : All inputs have same bounds.\n");
+    printOutTS(PL_INFO, 
+         "* 2. Otherwise   : Some inputs have different bounds.\n");
     printEquals(PL_INFO, 0);
+  }
+
+  //**/ get internal parameters
+  int  ii;
+  char pString[100], winput[100], equal[100], *strPtr;
+  if (psConfig_.RSExpertModeIsOn() && psConfig_.InteractiveIsOn())
+  { 
+    printf("Option to set number of optimization starts ");
+    printf("(if optimization is done).\n");
+    snprintf(pString,100,
+             "How many optimization starts (1 - 10, default = 4) : ");
+    numLBFGS_ = getInt(1,10,pString);
+    snprintf(pString,100,"RS_QGP_nStarts = %d", numLBFGS_);
+    psConfig_.putParameter(pString);
+  }
+  else
+  {
+    strPtr = psConfig_.getParameter("RS_QGP_nStarts");
+    if (strPtr != NULL)
+    { 
+      sscanf(strPtr, "%s %s %d", winput, equal, &ii);
+      if (ii < 1 || ii > 10)
+      { 
+        printf("QGP INFO: Invalid number of optimization starts.\n");
+        printf("          It is kept at %d.\n", numLBFGS_);
+      } 
+      else
+      {   
+        numLBFGS_ = ii;
+        printf("QGP INFO: number of optimization starts from config = %d.\n",
+               numLBFGS_);
+      }     
+    }     
   }
 }
 
@@ -104,14 +140,18 @@ QGP::~QGP()
 // ------------------------------------------------------------------------
 int QGP::initialize(double *XIn, double *YIn)
 {
+#ifndef HAVE_LBFGS
+  printf("QGP ERROR: LBFGS has not been installed.\n");
+  exit(1);
+#endif
   //**/ ----------------------------------------------------------
   //**/ check whether all except quantile variable have same bounds
   //**/ ----------------------------------------------------------
   int ii, kk, status = 0;
   for (ii = 1; ii < nInputs_-1; ii++)
   {
-    if (VecLBs_[ii] != VecLBs_[ii-1]) status ++;
-    if (VecUBs_[ii] != VecUBs_[ii-1]) status ++;
+    if (VecLBs_[ii] != VecLBs_[ii-1]) status++;
+    if (VecUBs_[ii] != VecUBs_[ii-1]) status++;
   }
   if (status != 0)
   {
@@ -120,11 +160,11 @@ int QGP::initialize(double *XIn, double *YIn)
         printf("Input %4d: bounds = %12.4e %12.4e\n", ii+1, 
                VecLBs_[ii], VecUBs_[ii]);
     printf("QGP INFO: Not all inputs (except last) have same range.\n");
-    printf("           == Assume non-homogeneous.\n");
+    printf("          == Assume non-homogeneity.\n");
     homogeneous_ = 0; 
   } 
-  if (homogeneous_) printf("QGP INFO: assume input homogeneity.\n");
-  else              printf("QGP INFO: assume input heterogeneity.\n");
+  if (homogeneous_) printf("QGP INFO: Assume input homogeneity.\n");
+  else              printf("QGP INFO: Assume input non-homogeneity.\n");
 
   //**/ ----------------------------------------------------------
   //**/ check for how many quantiles and extract levels
@@ -141,10 +181,6 @@ int QGP::initialize(double *XIn, double *YIn)
   if (kk != nSamples_ || nQuantiles_ == 1)
   {
     printf("QGP ERROR: no quantile pattern is detected in the sample.\n");
-    printf("     Diagnosis: you may be performing CV and you are using\n");
-    printf("     number of groups or you do randomization. You may want\n");
-    printf("     to do CV with CV groups sizes a multiple of the number\n");
-    printf("     of quantiles and do not use randomization.\n");
     exit(1);
   }
   else
@@ -605,9 +641,9 @@ int QGP::train()
       printf("Hyperparameter 2: added to all entries in C\n");
       printf("Hyperparameter 3: Ymean (constant)\n");
       printf("Hyperparameter 4: added to diagonal of C\n");
-      printf("Hyperparameter 5: input scale\n");
+      printf("Hyperparameter 5: input 1 scale\n");
+      printf("Hyperparameter 6: input 2 scale (if non-homogeneous)\n");
       printf(".... \n");
-      printf("Hyperparameter 6: input scale\n");
       for (ii = 0; ii < VecHypers_.length(); ii++)
       {
         snprintf(pString,100,"Enter hyperparameter %d : ",ii+1);
@@ -625,24 +661,26 @@ int QGP::train()
   {
     for (ii = 0; ii < nhypers; ii++)
     {
-      snprintf(configCmd,100,"QGP%d", ii+1);
+      snprintf(configCmd,100,"RS_QGP%d", ii+1);
       cString = psConfig_.getParameter(configCmd);
       if (cString == NULL) break;
       else
       {
         sscanf(cString,"%s %lg", winput, &dtmp);
         VecHypers_[ii] = dtmp;
-        printf("QGP hyperparameter %d = %e\n",ii+1,dtmp);
+        if (psConfig_.InteractiveIsOn())
+          printf("QGP hyperparameter %d = %e\n",ii+1,dtmp);
       }
     }
     if (ii == nhypers) 
     {
       optimizeFlag = 0;
       printf("QGP INFO: hyperparameters info from configure object.\n");
+      printf("          ==> no optimization.\n");
     }
     else
     {
-      printf("QGP INFO: no hyperparameter info from configure object\n");
+      printf("QGP INFO: No hyperparameter info from configure object\n");
     }
   }
 
@@ -653,7 +691,7 @@ int QGP::train()
   if (status != 0)
   {
     printf("QGP ERROR: There are repeated sample points.\n");
-    printf("            Prune sample and re-run. BYE.\n");
+    printf("           Prune sample and re-run. BYE.\n");
     exit(1);
   }
 
@@ -720,7 +758,7 @@ int QGP::train()
     //**/ ----------------------------------------------------------
     //**/ initialize variables for optimization
     //**/ ----------------------------------------------------------
-    int       its, nLBFGS=2, nHist, maxHist=10, fail;
+    int       its, nHist, maxHist=10, fail;
     double    dmean, dstd, minVal=1e35, FValue;
     psVector  VecPVals,VecGrads,VecW,VecXS,VecYS,VecHist,VecLB,VecUB;
     psIVector VecIS;
@@ -772,17 +810,18 @@ int QGP::train()
       sampler = SamplingCreateFromID(PSUADE_SAMP_LPTAU);
     sampler->setInputBounds(nhypers,VecLB.getDVector(),VecUB.getDVector());
     sampler->setOutputParams(1);
-    sampler->setSamplingParams(nLBFGS, 1, 0);
+    sampler->setSamplingParams(numLBFGS_, 1, 0);
     sampler->initialize(0);
-    VecIS.setLength(nLBFGS);
-    VecXS.setLength(nLBFGS*nhypers);
-    VecYS.setLength(nLBFGS);
-    sampler->getSamples(nLBFGS,nhypers,1,VecXS.getDVector(),
+    VecIS.setLength(numLBFGS_);
+    VecXS.setLength(numLBFGS_*nhypers);
+    VecYS.setLength(numLBFGS_);
+    sampler->getSamples(numLBFGS_,nhypers,1,VecXS.getDVector(),
                         VecYS.getDVector(), VecIS.getIVector());
     delete sampler;
     for (ii = 0; ii < nhypers; ii++) VecXS[ii] = VecHypers_[ii];
  
     //**/ set up for LBFGS
+#ifdef HAVE_LBFGS
     integer nInps, iprint=0, itask, *task=&itask, lsave[4], isave[44];
     integer *iwork, nCorr=5, *nbds, csave[60];
     double  factr, pgtol, dsave[29];
@@ -799,11 +838,11 @@ int QGP::train()
     its   = 0;
     VecHist.setLength(maxHist);
 
-    for (ii = 0; ii < nLBFGS; ii++)
+    for (ii = 0; ii < numLBFGS_; ii++)
     {
       if (psConfig_.InteractiveIsOn() && outputLevel_ > 3 && 
-          nLBFGS > 1 && ii > 0) 
-        printf("QGP LBFGS sample %d (%d)\n",ii+1, nLBFGS);
+          numLBFGS_ > 1 && ii > 0) 
+        printf("QGP LBFGS sample %d (%d)\n",ii+1, numLBFGS_);
       for (kk = 0; kk < nhypers; kk++) VecPVals[kk] = VecXS[ii*nInps+kk];
       if (psConfig_.InteractiveIsOn() && outputLevel_ > 3 && ii > 0) 
       {
@@ -816,7 +855,7 @@ int QGP::train()
       fail = 0;
       its = 0;
       *task = (integer) START;
-      while (1 && its < 1000)
+      while (1 && its < 5000)
       {
         its++;
         setulb(&nInps,&nCorr,VecPVals.getDVector(),VecLB.getDVector(),
@@ -923,10 +962,11 @@ int QGP::train()
                  VecHypers_[kk]);
         printf("   Sample %5d: Fvalue (final) = %e\n", ii+1, minVal);
       }
-      if (ii == (nLBFGS-1) && (fail == 1)) nLBFGS++;
+      if (ii == (numLBFGS_-1) && (fail == 1)) numLBFGS_++;
     }
     delete [] iwork;
     delete [] nbds;
+#endif
 
     if (psConfig_.InteractiveIsOn() && outputLevel_ > 3) 
     {
@@ -937,8 +977,8 @@ int QGP::train()
     }
     for (ii = 0; ii < VecHypers_.length(); ii++)
     {
-      snprintf(configCmd,100,"QGP%d %e",ii+1,VecHypers_[ii]);
-      //psConfig_.putParameter(configCmd);
+      snprintf(configCmd,100,"RS_QGP%d %e",ii+1,VecHypers_[ii]);
+      psConfig_.putParameter(configCmd);
     }
   }
 

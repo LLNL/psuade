@@ -1,0 +1,28 @@
+PSUADE
+INPUT
+   dimension = 3
+   variable   1 X1 = 0  1
+   variable   2 X2 = 0  1
+   variable   3 X3 = 0  1
+END
+OUTPUT
+   dimension = 1
+   variable 1 Y
+END
+METHOD
+   sampling = LPTAU
+   num_samples = 1000
+   randomize
+   random_seed = 41491431
+END
+APPLICATION
+#  the next 3 lines are for ensemble runs
+   ensemble_driver = ./ensemble_simulator
+   ensemble_run_mode
+   max_parallel_jobs = 1000
+END
+ANALYSIS
+   analyzer output_id  = 1
+   printlevel 1
+END
+END

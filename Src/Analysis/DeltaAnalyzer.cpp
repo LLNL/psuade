@@ -576,8 +576,6 @@ double DeltaAnalyzer::analyze(aData &adata)
         //  newMinFlag = 1;
         //else if (nBins_ < 100 && delta < minDeltas[nBins_-1]) 
         //  newMinFlag = 1;
-if (delta < minDeltas[nBins_-1]) 
-printf("delta, min = %e %e\n",delta,minDeltas[nBins_-1]);
         if (delta < minDeltas[nBins_-1]) newMinFlag = 1;
         //**/ put the new minimum at the first position (replace old)
         minDeltas[0] = delta;

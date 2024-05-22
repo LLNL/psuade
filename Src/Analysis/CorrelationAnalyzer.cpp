@@ -61,14 +61,14 @@ CorrelationAnalyzer::~CorrelationAnalyzer()
 // ------------------------------------------------------------------------
 double CorrelationAnalyzer::analyze(aData &adata)
 {
-  int     ii, jj, ss, info, idata, count, iOne=1;
+  int     ii, jj, ss, idata, count, iOne=1;
   double  xmean, xvar, ymean, yvar, yval, ddata, dmean, dvar;
   FILE    *fp;
   FuncApprox *faPtr=NULL;
   PsuadeData *ioPtr=NULL;
   pData   pData;
-  psVector vecXMeans, vecYMeans, vecXVars, vecYVars, vecXVals, vecYVals; 
-  psVector vecXLocal, vecYLocal, vecWLocal, vecXX, vecYY;
+  psVector vecXMeans, vecYMeans, vecXVars, vecYVars; 
+  psVector vecXT, vecYT, vecWT, vecXX, vecYY;
 
   //**/ ---------------------------------------------------------------
   // clean up
@@ -79,9 +79,7 @@ double CorrelationAnalyzer::analyze(aData &adata)
   // extract data
   //**/ ---------------------------------------------------------------
   nInputs_ = adata.nInputs_;
-  int nInputs  = nInputs_;
   nOutputs_ = adata.nOutputs_;
-  int nOutputs = nOutputs_;
   int nSamples = adata.nSamples_;
   double *X = adata.sampleInputs_;
   double *Y = adata.sampleOutputs_;
@@ -90,15 +88,14 @@ double CorrelationAnalyzer::analyze(aData &adata)
   if (adata.inputPDFs_ != NULL)
   {
     count = 0;
-    for (ii = 0; ii < nInputs; ii++) count += adata.inputPDFs_[ii];
+    for (ii = 0; ii < nInputs_; ii++) count += adata.inputPDFs_[ii];
     if (count > 0)
     {
-      printOutTS(PL_INFO, 
-         "Correlation INFO: non-uniform probability distributions\n");
-      printOutTS(PL_INFO, 
-         "           have been defined in the data file, but they\n");
-      printOutTS(PL_INFO,
-         "           will not be used in this analysis.\n");
+      printOutTS(PL_INFO,"Correlation INFO: Non-uniform probability ");
+      printOutTS(PL_INFO,"distributions have been\n");
+      printOutTS(PL_INFO,"            defined in the data file, but ");
+      printOutTS(PL_INFO,"they will not be used in\n");
+      printOutTS(PL_INFO,"            this analysis.\n");
     }
   }
   ioPtr = adata.ioPtr_;
@@ -107,83 +104,98 @@ double CorrelationAnalyzer::analyze(aData &adata)
   //**/ ---------------------------------------------------------------
   // error checking
   //**/ ---------------------------------------------------------------
-  if (nInputs <= 0 || nOutputs <= 0 || nSamples <= 0)
+  if (nInputs_ <= 0 || nOutputs_ <= 0 || nSamples <= 0)
   {
-    printOutTS(PL_ERROR, "Correlation ERROR: invalid arguments.\n");
-    printOutTS(PL_ERROR, "    nInputs  = %d\n", nInputs);
-    printOutTS(PL_ERROR, "    nOutputs = %d\n", nOutputs);
-    printOutTS(PL_ERROR, "    nSamples = %d\n", nSamples);
+    printOutTS(PL_ERROR,"Correlation ERROR: Invalid arguments.\n");
+    printOutTS(PL_ERROR,"    nInputs  = %d\n", nInputs_);
+    printOutTS(PL_ERROR,"    nOutputs = %d\n", nOutputs_);
+    printOutTS(PL_ERROR,"    nSamples = %d\n", nSamples);
     return PSUADE_UNDEFINED;
   } 
-  if (outputID < 0 || outputID >= nOutputs)
+  if (outputID < 0 || outputID >= nOutputs_)
   {
-    printOutTS(PL_ERROR, "Correlation ERROR: invalid outputID.\n");
-    printOutTS(PL_ERROR, "    nOutputs = %d\n", nOutputs);
-    printOutTS(PL_ERROR, "    outputID = %d\n", outputID+1);
+    printOutTS(PL_ERROR,"Correlation ERROR: Invalid outputID.\n");
+    printOutTS(PL_ERROR,"    nOutputs = %d\n", nOutputs_);
+    printOutTS(PL_ERROR,"    outputID = %d\n", outputID+1);
     return PSUADE_UNDEFINED;
   } 
+  if (nInputs_ > 1)
+  {
+    printOutTS(PL_WARN,
+      "Correlation INFO: This analysis is primarily for nInputs=1.\n");
+  }
   if (nSamples == 1)
   {
     printOutTS(PL_ERROR, 
-         "Correlation INFO: analysis not meaningful for nSamples=1\n");
+       "Correlation INFO: analysis not meaningful for nSamples=1\n");
     return PSUADE_UNDEFINED;
   } 
-  info = 0; 
+  int status = 0; 
   for (ss = 0; ss < nSamples; ss++)
-    if (Y[nOutputs*ss+outputID] == PSUADE_UNDEFINED) info = 1;
-  if (info == 1)
+    if (Y[nOutputs_*ss+outputID] == PSUADE_UNDEFINED) status = 1;
+  if (status == 1)
   {
-    printOutTS(PL_ERROR,
-         "Correlation ERROR: Some outputs are undefined.\n");
-    printOutTS(PL_ERROR,
-         "                   Prune the undefined's first.\n");
+    printOutTS(PL_ERROR,"Correlation ERROR: Some outputs are ");
+    printOutTS(PL_ERROR,"undefined. Prune the undefined\n");
+    printOutTS(PL_ERROR,"                   sample point first.\n");
     return PSUADE_UNDEFINED;
   } 
    
   //**/ ---------------------------------------------------------------
-  // first find the mean of the current set of samples
+  // first find the mean of the current set of sample points
   //**/ ---------------------------------------------------------------
   printAsterisks(PL_INFO, 0);
   printOutTS(PL_INFO, "*                   Correlation Analysis\n");
-  printEquals(PL_INFO, 0);
-  printOutTS(PL_INFO, "*  Basic Statistics\n");
-  printDashes(PL_INFO, 0);
   printOutTS(PL_INFO, "* Output of interest = %d\n", outputID+1);
+  printEquals(PL_INFO, 0);
+  printOutTS(PL_INFO, "* Basic Statistics\n");
   printDashes(PL_INFO, 0);
-  computeMeanVariance(nSamples,nOutputs,Y,&ymean,&yvar,outputID,1);
+  computeMeanVariance(nSamples,nOutputs_,Y,&ymean,&yvar,outputID,1);
   outputMean_ = ymean;
   outputVar_ = yvar;
 
   //**/ ---------------------------------------------------------------
-  // compute the Pearson product moment correlation coefficient (PEAR)
+  //**/ compute the partial correlation coefficient but it is scaled
+  //**/ since the unscaled ranges is [-1,1]
   //**/ ---------------------------------------------------------------
   printEquals(PL_INFO, 0);
+  if (nInputs_ == 1)
+    printOutTS(PL_INFO,"*  Scaled Spearman Correlation Coefficient: ");
+  else
+    printOutTS(PL_INFO,"*  Scaled Partial Correlation Coefficients: ");
+  printOutTS(PL_INFO,"These coefficients give a\n");
   printOutTS(PL_INFO,
-       "*  Pearson correlation coefficients (PEAR) - linear -\n");
+       "*  measure of linear relationship between X_i's & Y.\n");
   printOutTS(PL_INFO,
-       "*  which gives a measure of relationship between X_i's & Y.\n");
+       "*  The signs show directions of relationship.\n");
+  printOutTS(PL_INFO,
+       "*  The magnitudes show strength of relationship.\n");
   printDashes(PL_INFO, 0);
-  vecXMeans.setLength(nInputs);
-  vecXVars.setLength(nInputs);
-  vecXVals.setLength(nInputs);
+  vecXMeans.setLength(nInputs_);
+  vecXVars.setLength(nInputs_);
   VecInpMeans_.setLength(nInputs_);
   VecInpVars_.setLength(nInputs_);
   VecInpPearsonCoef_.setLength(nInputs_);
 
-  for (ii = 0; ii < nInputs; ii++)
+  for (ii = 0; ii < nInputs_; ii++)
   {
-    computeMeanVariance(nSamples, nInputs, X, &dmean, &dvar, ii, 0);
+    computeMeanVariance(nSamples, nInputs_, X, &dmean, &dvar, ii, 0);
     VecInpMeans_[ii] = vecXMeans[ii] = dmean;
     VecInpVars_[ii] = vecXVars[ii] = dvar;
   }
-  computeCovariance(nSamples,nInputs,X,nOutputs,Y,vecXMeans.getDVector(),
-           vecXVars.getDVector(),ymean,yvar,outputID,vecXVals.getDVector());
-  for (ii = 0; ii < nInputs; ii++)
+  computeCovariance(nSamples,nInputs_,X,nOutputs_,Y,
+         vecXMeans.getDVector(),vecXVars.getDVector(),ymean,yvar,
+         outputID,VecInpPearsonCoef_.getDVector());
+  for (ii = 0; ii < nInputs_; ii++)
   {
-    printOutTS(PL_INFO,
-         "* Pearson Correlation coeff.  (Input %3d) = %e\n", 
-         ii+1, vecXVals[ii]);
-    VecInpPearsonCoef_[ii] = vecXVals[ii];
+    if (nInputs_ == 1)
+      printOutTS(PL_INFO,
+      "* Scaled Correlation Coeffient (Input %3d) = %11.4e\n", 
+      ii+1, VecInpPearsonCoef_[ii]);
+    else
+      printOutTS(PL_INFO,
+      "* Scaled Partial Correlation Coeffient (Input %3d) = %11.4e\n", 
+      ii+1, VecInpPearsonCoef_[ii]);
   }
 
   //**/ ---------------------------------------------------------------
@@ -210,22 +222,23 @@ double CorrelationAnalyzer::analyze(aData &adata)
   if (fp != NULL)
   {
     fprintf(fp, "sortFlag = 0;\n");
-    fprintf(fp, "nn = %d;\n", nInputs);
+    fprintf(fp, "nn = %d;\n", nInputs_);
     fprintf(fp, "PCC = [\n");
-    for (ii = 0; ii < nInputs; ii++) fprintf(fp,"%24.16e\n", vecXVals[ii]);
+    for (ii = 0; ii < nInputs_; ii++) 
+      fprintf(fp,"%24.16e\n", VecInpPearsonCoef_[ii]);
     fprintf(fp, "];\n");
     if (pData.strArray_ != NULL)
     {
       if (plotScilab()) fprintf(fp, "  Str = [");
       else              fprintf(fp, "  Str = {");
-      for (ii = 0; ii < nInputs-1; ii++) fprintf(fp,"'X%d',",ii+1);
-      fprintf(fp,"'X%d'];\n",nInputs);
+      for (ii = 0; ii < nInputs_-1; ii++) fprintf(fp,"'X%d',",ii+1);
+      fprintf(fp,"'X%d'];\n",nInputs_);
     }
     else
     {
       if (plotScilab()) fprintf(fp, "  Str = [");
       else              fprintf(fp, "  Str = {");
-      for (ii = 0; ii < nInputs-1; ii++)
+      for (ii = 0; ii < nInputs_-1; ii++)
       {
         if (pData.strArray_[ii] != NULL) 
              fprintf(fp,"'%s',",pData.strArray_[ii]);
@@ -233,15 +246,15 @@ double CorrelationAnalyzer::analyze(aData &adata)
       }
       if (plotScilab()) 
       {
-        if (pData.strArray_[nInputs-1] != NULL) 
-             fprintf(fp,"'%s'];\n",pData.strArray_[nInputs-1]);
-        else fprintf(fp,"'X%d'];\n",nInputs);
+        if (pData.strArray_[nInputs_-1] != NULL) 
+             fprintf(fp,"'%s'];\n",pData.strArray_[nInputs_-1]);
+        else fprintf(fp,"'X%d'];\n",nInputs_);
       }
       else
       {
-        if (pData.strArray_[nInputs-1] != NULL) 
-             fprintf(fp,"'%s'};\n",pData.strArray_[nInputs-1]);
-        else fprintf(fp,"'X%d'};\n",nInputs);
+        if (pData.strArray_[nInputs_-1] != NULL) 
+             fprintf(fp,"'%s'};\n",pData.strArray_[nInputs_-1]);
+        else fprintf(fp,"'X%d'};\n",nInputs_);
       }
     }
     fwritePlotCLF(fp);
@@ -261,7 +274,7 @@ double CorrelationAnalyzer::analyze(aData &adata)
     fprintf(fp, "subplot(1,2,1)\n");
     fprintf(fp, "bar(PCC,0.8);\n");
     fwritePlotAxes(fp);
-    fwritePlotTitle(fp,"Pearson Correlation Coefficients");
+    fwritePlotTitle(fp,"Scaled Correlation Coefficients");
     fwritePlotYLabel(fp, "Correlation Coefficient");
     if (plotScilab())
     {
@@ -284,86 +297,128 @@ double CorrelationAnalyzer::analyze(aData &adata)
   }
 
   //**/ ---------------------------------------------------------------
-  // compute write these information to a plot file
+  // compute correlation for outputs
   //**/ ---------------------------------------------------------------
-  vecYMeans.setLength(nOutputs);
-  vecYVars.setLength(nOutputs);
-  vecYVals.setLength(nOutputs);
+  vecYMeans.setLength(nOutputs_);
+  vecYVars.setLength(nOutputs_);
 
   VecOutMeans_.setLength(nOutputs_);
   VecOutVars_.setLength(nOutputs_);
   VecOutPearsonCoef_.setLength(nOutputs_);
+  vecYT.setLength(nSamples);
 
-  if (nOutputs > 1)
+  if (psConfig_.AnaExpertModeIsOn() && nOutputs_ > 1)
   {
     printEquals(PL_INFO, 0);
-    printOutTS(PL_INFO, "*  PEAR (linear) for Y_i's versus Y.\n");
+    printOutTS(PL_INFO, 
+      "* Scaled Correlation Coefficients for Y_k versus all Ys\n");
     printDashes(PL_INFO, 0);
-    for (ii = 0; ii < nOutputs; ii++)
+    for (ii = 0; ii < nOutputs_; ii++)
     {
-      computeMeanVariance(nSamples, nOutputs, Y, &dmean, &dvar, ii, 0);
+      computeMeanVariance(nSamples,nOutputs_,Y,&dmean,&dvar,ii,0);
       VecOutMeans_[ii] = vecYMeans[ii] = dmean;
       VecOutVars_[ii] = vecYVars[ii] = dvar;
     }
-    computeCovariance(nSamples,nOutputs,Y,nOutputs,Y,vecYMeans.getDVector(),
-           vecYVars.getDVector(),ymean,yvar,outputID,vecYVals.getDVector());
-    for (ii = 0; ii < nOutputs; ii++)
+    for (ii = 0; ii < nOutputs_; ii++)
     {
-      VecOutPearsonCoef_[ii] = vecYVals[ii];
+      for (ss = 0; ss < nSamples; ss++) 
+        vecYT[ss] = Y[ss*nOutputs_+ii];
+      dmean = vecYMeans[ii];
+      dvar  = vecYVars[ii];
+      computeCovariance(nSamples,iOne,vecYT.getDVector(),nOutputs_,
+           Y,&dmean,&dvar,ymean,yvar,outputID,&ddata);
+      VecOutPearsonCoef_[ii] = ddata;
       if (ii != outputID)
         printOutTS(PL_INFO, 
-             "* Pearson Correlation coeff. (Output %2d) = %e\n", ii+1,
-             vecYVals[ii]);
+         "* Scaled Correlation Coefficient (Output %2d vs %2d) = %e\n", 
+         outputID+1, ii+1, VecOutPearsonCoef_[ii]);
     }
   }
   printEquals(PL_INFO, 0);
-
-  //**/ why did I do this?
-  //**/YY = new double[nSamples];
-  //**/for (ss = 0; ss < nSamples; ss++) YY[ss] = Y[ss*nOutputs+outputID];
-  //**/faPtr = genFA(PSUADE_RS_REGR1, nInputs, nSamples);
-  //**/faPtr->setOutputLevel(0);
-  //**/faPtr->initialize(X, YY);
-  //**/delete faPtr;
-  //**/delete [] YY;
+  //**/ these are allocated here to avoid crash when 
+  //**/ these are retrieved
+  VecInpSpearmanCoef_.setLength(nInputs_);
+  VecOutSpearmanCoef_.setLength(nOutputs_);
+  VecInpKendallCoef_.setLength(nInputs_);
+  //**/ Do not do Spearman yet since Spearman replaces vectors with
+  //**/ ranks so the scales are lost (how to rank then?)
+  return 0.0;
 
   //**/ ---------------------------------------------------------------
   //**/ compute the Spearman coefficient (SPEA)
+  //**/ NOTE: The following are turned off because partial correlation
+  //**/       after rank transformation doesn't sound good
   //**/ ---------------------------------------------------------------
-  printOutTS(PL_INFO, 
-       "*  Spearman coefficients (SPEA) - nonlinear relationship -  *\n");
-  printOutTS(PL_INFO, 
-       "*  which gives a measure of relationship between X_i's & Y. *\n");
-  printOutTS(PL_INFO, 
-       "*  (Idea: use the ranks for the inputs instead)             *\n");
+  printOutTS(PL_INFO,"* Partial Rank Correlation Coefficients ");
+  printOutTS(PL_INFO,"gives a measure of\n");
+  printOutTS(PL_INFO,"* monotonic relationship between X_i's & Y\n");
+  printOutTS(PL_INFO,"* (Idea: Use input and output ranks instead)\n");
   printDashes(PL_INFO, 0);
-  vecXLocal.setLength(nSamples);
+  vecXT.setLength(nSamples);
+  vecWT.setLength(nSamples);
+  vecYT.setLength(nSamples);
+  vecXX.setLength(nSamples*nInputs_);
   vecYY.setLength(nSamples);
-  VecInpSpearmanCoef_.setLength(nInputs_);
-  for (ii = 0; ii < nInputs; ii++)
+
+  //**/ convert X to ranks ==> vecXX
+  for (ii = 0; ii < nInputs_; ii++)
   {
+    //**/ first sort X 
     for (ss = 0; ss < nSamples; ss++)
     {
-      vecXLocal[ss] = X[ss*nInputs+ii];
-      vecYY[ss] = Y[ss*nOutputs+outputID];
+      vecXT[ss] = X[ss*nInputs_+ii];
+      vecWT[ss] = (double) ss;
     }
-    sortDbleList2(nSamples, vecXLocal.getDVector(), vecYY.getDVector());
-    for (ss = 0; ss < nSamples; ss++) vecXLocal[ss] = (double) ss;
-    sortDbleList2(nSamples, vecYY.getDVector(), vecXLocal.getDVector());
-    for (ss = 0; ss < nSamples; ss++) vecYY[ss] = (double) ss;
-    computeMeanVariance(nSamples,1,vecXLocal.getDVector(),&xmean,&xvar,0,0);
-    computeMeanVariance(nSamples,1,vecYY.getDVector(),&ymean,&yvar,0,0);
-    computeCovariance(nSamples,1,vecXLocal.getDVector(),1,
-           vecYY.getDVector(),&xmean,&xvar,ymean,yvar,0,&ddata);
-    VecInpSpearmanCoef_[ii] = vecXVals[ii] = ddata;
+    sortDbleList2(nSamples, vecXT.getDVector(), vecWT.getDVector());
+    //**/ store the rank of X to vecXX 
+    for (ss = 0; ss < nSamples; ss++)
+    {
+      jj = (int) vecWT[ss];
+      vecXX[jj*nInputs_+ii] = 1.0 + ss;
+    }
+  }
+  //**/ convert Y to ranks ==> vecYY
+  for (ss = 0; ss < nSamples; ss++)
+  {
+    vecYT[ss] = Y[ss*nOutputs_+outputID];
+    vecWT[ss] = (double) ss;
+  }
+  sortDbleList2(nSamples, vecYT.getDVector(), vecWT.getDVector());
+  for (ss = 0; ss < nSamples; ss++)
+  {
+    jj = (int) vecWT[ss];
+    vecYY[jj] = 1.0 + ss;
+  }
+  //**/ compute mean and variance of each input for the ranked X
+  vecXT.setLength(nInputs_);
+  vecWT.setLength(nInputs_);
+  for (ii = 0; ii < nInputs_; ii++)
+  {
+    computeMeanVariance(nSamples,nInputs_,vecXX.getDVector(), 
+                        &dmean, &dvar, ii, 0);
+    vecXT[ii] = dmean;
+    vecWT[ii] = dvar;
+  }
+  //**/ compute mean and variance of the ranked Y 
+  computeMeanVariance(nSamples,iOne,vecYY.getDVector(), &dmean, 
+                      &dvar, 0, 0);
+
+  //**/ compute partial rank correlations 
+  computeCovariance(nSamples,nInputs_,vecXX.getDVector(),iOne,
+         vecYY.getDVector(),vecXT.getDVector(),vecWT.getDVector(),
+         dmean,dvar,0,VecInpSpearmanCoef_.getDVector());
+
+  for (ii = 0; ii < nInputs_; ii++)
+  {
     printOutTS(PL_INFO, 
-         "* Spearman coefficient         (Input %3d ) = %e\n", ii+1,
-         vecXVals[ii]);
+      "* Partial Rank Correlation Coefficient (Input %3d) = %11.4e\n", 
+      ii+1,VecInpSpearmanCoef_[ii]);
   }
   if (fp != NULL)
   {
     fprintf(fp, "SPEA = [\n");
-    for (ii = 0; ii < nInputs; ii++) fprintf(fp,"%24.16e\n", vecXVals[ii]);
+    for (ii = 0; ii < nInputs_; ii++) 
+      fprintf(fp,"%24.16e\n", VecInpSpearmanCoef_[ii]);
     fprintf(fp, "];\n");
     fprintf(fp, "if (sortFlag == 1)\n");
     if (plotScilab())
@@ -410,93 +465,43 @@ double CorrelationAnalyzer::analyze(aData &adata)
     fp = NULL;
   }
   printEquals(PL_INFO, 0);
-  for (ii = 0; ii < nInputs; ii++) vecXMeans[ii] = (double) ii;
-  for (ii = 0; ii < nInputs; ii++) vecXVals[ii] = PABS(vecXVals[ii]);
-  sortDbleList2(nInputs, vecXVals.getDVector(), vecXMeans.getDVector());
-  for (ii = nInputs-1; ii >= 0; ii--)
-    printOutTS(PL_INFO,
-         "* Spearman coefficient(ordered) (Input %3d ) = %e\n",
-         (int) (vecXMeans[ii]+1), vecXVals[ii]);
 
-  vecYLocal.setLength(nSamples);
-  VecOutSpearmanCoef_.setLength(nOutputs_);
-  if (nOutputs > 1)
-  {
-    printEquals(PL_INFO, 0);
-    printOutTS(PL_INFO,
-       "*  SPEA (nonlinear) for Y_i's versus Y.                     *\n");
-    printDashes(PL_INFO, 0);
-    for (ii = 0; ii < nOutputs; ii++)
-    {
-      if (ii != outputID)
-      {
-        for (ss = 0; ss < nSamples; ss++)
-        {
-          vecYLocal[ss] = Y[ss*nOutputs+ii];
-          vecYY[ss] = Y[ss*nOutputs+outputID];
-        }
-        sortDbleList2(nSamples,vecYLocal.getDVector(),vecYY.getDVector());
-        for (ss = 0; ss < nSamples; ss++) vecYLocal[ss] = (double) ss;
-        sortDbleList2(nSamples,vecYY.getDVector(),vecYLocal.getDVector());
-        for (ss = 0; ss < nSamples; ss++) vecYY[ss] = (double) ss;
-        computeMeanVariance(nSamples,1,vecYLocal.getDVector(),&xmean,
-                            &xvar,0,0);
-        computeMeanVariance(nSamples,1,vecYY.getDVector(),&ymean,&yvar,0,0);
-        computeCovariance(nSamples,1,vecYLocal.getDVector(),1,
-               vecYY.getDVector(),&xmean,&xvar,ymean,yvar,0,&yval);
-        VecOutSpearmanCoef_[ii] = vecYVals[ii] = yval;
-        printOutTS(PL_INFO,
-           "* Spearman coefficient        (Input %3d ) = %e\n", ii+1,
-           vecYVals[ii]);
-      }
-    }
-  }
-
+#if 0
   //**/ ---------------------------------------------------------------
   //**/ run Kendall tau rank correlation test
+  //**/ (have to figure out how it works with multivariate models)
   //**/ ---------------------------------------------------------------
-  VecInpKendallCoef_.setLength(nInputs_);
   if (printLevel > 1)
   {
     int nc=0, nd=0;
     printEquals(PL_INFO, 0);
-    printOutTS(PL_INFO, "*  Kendall coefficients of concordance\n");
+    printOutTS(PL_INFO,"* Kendall Coefficients of Concordance\n");
     printOutTS(PL_INFO, 
-       "*  (Idea: use the ranks for both inputs and outputs)\n");
-    printOutTS(PL_INFO, 
-       "* Kendall coefficients (in the scale of -1 to 1) measure the strength\n");
-    printOutTS(PL_INFO, 
-       "* of relationship between an input and the output. The direction of\n");
-    printOutTS(PL_INFO, 
-       "* the relationship is indicated by the sign of the coefficient.\n");
-    printOutTS(PL_INFO, 
-       "* This nonparametric test is an alternative to Pearson's correlation\n");
-    printOutTS(PL_INFO, 
-       "* when the model input-output has a nonlinear relationship, and this\n");
-    printOutTS(PL_INFO, 
-       "* method is an alternative to the Spearman's correlation for small\n");
-    printOutTS(PL_INFO, 
-       "* sample size and there are many tied ranks.\n");
+       "* (Idea: Use the ranks for both inputs and outputs)\n");
+    printOutTS(PL_INFO,"* Kendall coefficients (in the scale of -1 ");
+    printOutTS(PL_INFO,"to 1) measure the strength\n");
+    printOutTS(PL_INFO,"* of relationship between an input and ");
+    printOutTS(PL_INFO,"the output. The direction of\n");
+    printOutTS(PL_INFO,"* the relationship is indicated by the ");
+    printOutTS(PL_INFO,"sign of the coefficient.\n");
+    printOutTS(PL_INFO,"* This nonparametric test is an alternative ");
+    printOutTS(PL_INFO,"to Pearson's correlation\n");
+    printOutTS(PL_INFO,"* when the model input-output has a ");
+    printOutTS(PL_INFO,"nonlinear relationship, and this\n");
+    printOutTS(PL_INFO,"* method is an alternative to the Spearman's ");
+    printOutTS(PL_INFO,"correlation for small\n");
+    printOutTS(PL_INFO,"* sample size and there are many tied ranks.\n");
     printDashes(PL_INFO, 0);
-    for (ii = 0; ii < nInputs; ii++)
+    for (ii = 0; ii < nInputs_; ii++)
     {
       nc = nd = 0;
-      for (ss = 0; ss < nSamples; ss++)
-      {
-        vecXLocal.getDVector()[ss] = X[ss*nInputs+ii];
-        vecYY[ss] = Y[ss*nOutputs+outputID];
-      }
-      //**/ reorder input ii based on magnitude of output
-      sortDbleList2(nSamples, vecYY.getDVector(), vecXLocal.getDVector());
-      for (ss = 0; ss < nSamples; ss++) vecYY[ss] = (double) ss;
-      //**/ get the orderings from above
-      sortDbleList2(nSamples, vecXLocal.getDVector(), vecYY.getDVector());
-      for (ss = 0; ss < nSamples; ss++) vecXLocal[ss] = (double) ss;
+      for (ss = 0; ss < nSamples; ss++) 
+        vecXT[ss] = vecXX[ss*nInputs_+ii];
       for (ss = 0; ss < nSamples; ss++)
       {
         for (jj = ss+1; jj < nSamples; jj++)
         {
-          ddata = vecXLocal[ss] - vecXLocal[jj];
+          ddata = vecXT[ss] - vecXT[jj];
           if (ddata != 0.0)
           {
             ddata = (vecYY[ss] - vecYY[jj]) / ddata;
@@ -511,63 +516,12 @@ double CorrelationAnalyzer::analyze(aData &adata)
           }
         }
       }
-      //printOutTS(PL_INFO, 
-      //     "* Kendall coefficient         (Input %3d ) = %10.2e \n",
-      //     ii+1, 2.0*(nc-nd)/(nSamples*(nSamples-1)));
-      vecXVals[ii] = 2.0 * (nc - nd) / (nSamples * (nSamples - 1));
-      VecInpKendallCoef_[ii] = vecXVals[ii];
+      VecInpKendallCoef_[ii] = 2.0*(nc-nd)/(nSamples * (nSamples - 1));
+      printOutTS(PL_INFO, 
+        "* Kendall Correlation Coefficient (Input %3d) = %11.3e \n",
+        ii+1, VecInpKendallCoef_[ii]);
     }
     printDashes(PL_INFO, 0);
-    for (ii = 0; ii < nInputs; ii++) vecXMeans[ii] = (double) ii;
-    for (ii = 0; ii < nInputs; ii++) vecXVals[ii] = PABS(vecXVals[ii]);
-    sortDbleList2(nInputs, vecXVals.getDVector(), vecXMeans.getDVector());
-    for (ii = nInputs-1; ii >= 0; ii--)
-      printOutTS(PL_INFO,
-           "* Kendall coefficient(ordered) (Input %3d ) = %e\n",
-           (int) (vecXMeans[ii]+1), vecXVals[ii]);
-  }
-
-#if 0
-  //**/ ---------------------------------------------------------------
-  //**/ run linear regression analysis on the rank-ordered data
-  //**/ ---------------------------------------------------------------
-  if (printLevel > 2)
-  {
-    printEquals(PL_INFO, 0);
-    printOutTS(PL_INFO, 
-      "*  Regression analysis on rank-ordered inputs/outputs       *\n");
-    vecXX.setLength(nSamples*nInputs);
-    vecWLocal.setLength(nSamples);
-    for (ss = 0; ss < nSamples*nInputs; ss++) vecXX[ss] = X[ss];
-    for (ss = 0; ss < nSamples; ss++)
-    {
-      vecYY[ss] = Y[ss*nOutputs+outputID];
-      vecWLocal[ss] = (double) ss;
-    }
-    sortDbleList2(nSamples, vecYY.getDVector(), vecWLocal.getDVector());
-    for (ss = 0; ss < nSamples; ss++)
-    {
-      idata = (int) vecWLocal[ss];
-      vecYY[idata] = (double) (ss + 1);
-    }
-    for (ii = 0; ii < nInputs; ii++)
-    {
-      for (ss = 0; ss < nSamples; ss++)
-      {
-        vecWLocal[ss] = (double) ss;
-        vecXLocal[ss] = vecXX[nSamples*ii+ss];
-      }
-      sortDbleList2(nSamples,vecXLocal.getDVector(),vecWLocal.getDVector());
-      for (ss = 0; ss < nSamples; ss++)
-      {
-        idata = (int) vecWLocal[ss];
-        vecXX[ii*nSamples+idata] = (double) (ss + 1);
-      }
-    }
-    faPtr = genFA(PSUADE_RS_REGR1, nInputs, iOne, nSamples);
-    faPtr->setOutputLevel(-1);
-    faPtr->initialize(vecXX.getDVector(), vecYY.getDVector());
-    delete faPtr;
   }
 #endif
   printAsterisks(PL_INFO, 0);
@@ -594,8 +548,8 @@ int CorrelationAnalyzer::computeMeanVariance(int nSamples, int xDim,
   (*xvar)  = variance;
   if (flag == 1)
   {
-    printOutTS(PL_INFO, "Correlation: mean     = %e\n", mean);
-    printOutTS(PL_INFO, "Correlation: variance = %e\n", variance);
+    printOutTS(PL_INFO, "Output mean     = %e\n", mean);
+    printOutTS(PL_INFO, "Output variance = %e\n", variance);
   }
   return 0;
 }
@@ -603,28 +557,97 @@ int CorrelationAnalyzer::computeMeanVariance(int nSamples, int xDim,
 // *************************************************************************
 // Compute agglomerated covariances
 // -------------------------------------------------------------------------
-int CorrelationAnalyzer::computeCovariance(int nSamples,int nX,double *X,
-             int nY, double *Y, double *xmeans, double *xvars, double ymean,
-             double yvar, int yID, double *Rvalues)
+int CorrelationAnalyzer::computeCovariance(int nSamples,int nInps,double *X,
+          int nOuts, double *Y, double *xmeans, double *xvars, double ymean,
+          double yvar, int yID, double *Rvalues)
 {
   int    ii, ss;
   double denom, numer;
 
-  for (ii = 0; ii < nX; ii++)
+  //**/ Case: nInputs = 1
+  if (nInps == 1)
   {
     numer = 0.0;
     for (ss = 0; ss < nSamples; ss++)
-      numer += ((X[ss*nX+ii] - xmeans[ii]) * (Y[ss*nY+yID] - ymean));
+      numer += ((X[ss*nInps] - xmeans[0]) * (Y[ss*nOuts+yID] - ymean));
     numer /= (double) (nSamples - 1);
-    denom = sqrt(xvars[ii] * yvar);
+    denom = sqrt(xvars[0] * yvar);
     if (denom == 0.0)
     {
-      printOutTS(PL_INFO,"Correlation ERROR: denom=0 for input %d\n",ii+1);
+      printOutTS(PL_INFO,"Correlation ERROR: denom=0 for input 1\n");
       printOutTS(PL_INFO, 
-           "denom = xvar * yvar : xvar = %e, yvar = %e\n",xvars[ii],yvar);
-      Rvalues[ii] = 0.0;
+           "denom = xvar * yvar : xvar = %e, yvar = %e\n",xvars[0],yvar);
+      Rvalues[0] = 0.0;
     }
-    else Rvalues[ii] = numer / denom;
+    //else Rvalues[0] = numer / denom * yvar / xvars[0];
+    else Rvalues[0] = numer / xvars[0];
+  }
+  else
+  //**/ Case: nInputs > 1
+  {
+    int    jj, iOne=1, iZero=0;
+    double Xmean, Xvar, Ymean, Yvar;
+    FuncApprox *faPtr=NULL;
+    psVector vecXX, vecYY, vecXY;
+    vecXX.setLength(nSamples*nInps);
+    vecXY.setLength(nSamples);
+    vecYY.setLength(nSamples);
+    double *XX = vecXX.getDVector();
+    double *XY = vecXY.getDVector();
+    for (ii = 0; ii < nInps; ii++)
+    {
+      //**/ build a RS with X \ X_i and Y
+      for (ss = 0; ss < nSamples; ss++)
+      {
+        for (jj = 0; jj < nInps; jj++)
+        {
+          if (jj < ii) XX[ss*(nInps-1)+jj] = X[ss*nInps+jj];
+          if (jj > ii) XX[ss*(nInps-1)+jj-1] = X[ss*nInps+jj];
+        }
+        vecYY[ss] = Y[ss*nOuts+yID];
+      }
+      psConfig_.InteractiveSaveAndReset();
+      faPtr = genFA(PSUADE_RS_REGR1, nInps-1, iZero, nSamples);
+      faPtr->setOutputLevel(0);
+      faPtr->initialize(XX, vecYY.getDVector());
+      psConfig_.InteractiveRestore();
+      //**/ form new(Y) = Y - predicted Y
+      for (ss = 0; ss < nSamples; ss++)
+      {
+        vecYY[ss] = faPtr->evaluatePoint(&XX[ss*(nInps-1)]);
+        vecYY[ss] = Y[ss] - vecYY[ss];
+      }
+      delete faPtr;
+      //**/ now build a RS with X\X_i and X_i
+      for (ss = 0; ss < nSamples; ss++)
+      {
+        for (jj = 0; jj < nInps; jj++)
+        {
+          if (jj < ii) XX[ss*(nInps-1)+jj] = X[ss*nInps+jj];
+          if (jj > ii) XX[ss*(nInps-1)+jj-1] = X[ss*nInps+jj];
+        }
+        vecXY[ss] = X[ss*nInps+ii];
+      }
+      psConfig_.InteractiveSaveAndReset();
+      faPtr = genFA(PSUADE_RS_REGR1, nInps-1, iZero, nSamples);
+      faPtr->setOutputLevel(0);
+      faPtr->initialize(XX, vecXY.getDVector());
+      psConfig_.InteractiveRestore();
+      //**/ form new(X_i) = X_i - predicted X_i
+      for (ss = 0; ss < nSamples; ss++)
+      {
+        vecXY[ss] = faPtr->evaluatePoint(&XX[ss*(nInps-1)]);
+        vecXY[ss] = X[ss*nInps+ii] - vecXY[ss];
+      }
+      delete faPtr;
+      //**/ compute mean(new(X_i)) and variance(new(X_i))
+      computeMeanVariance(nSamples,iOne,vecXY.getDVector(),&Xmean,
+                          &Xvar,iZero,iZero);
+      computeMeanVariance(nSamples,iOne,vecYY.getDVector(),&Ymean,
+                          &Yvar,iZero,iZero);
+      computeCovariance(nSamples,iOne,vecXY.getDVector(),iOne,
+             vecYY.getDVector(),&Xmean,&Xvar,Ymean,Yvar,iZero,&Rvalues[ii]);
+    }
   }
   return 0;
 }

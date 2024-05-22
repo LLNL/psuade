@@ -18,7 +18,7 @@ METHOD
    randomize
 END
 APPLICATION
-   driver = ./simulator
+   driver = ./simulator_deriv
 END
 ANALYSIS
    analyzer output_id  = 1

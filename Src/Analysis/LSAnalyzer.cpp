@@ -122,12 +122,13 @@ double LSAnalyzer::analyze(aData &adata)
   printAsterisks(PL_INFO, 0);
   printAsterisks(PL_INFO, 0);
   printOutTS(PL_INFO,"* Local Sensitivity Analysis\n");
-  printOutTS(PL_INFO,"* This analysis works if the model output can be\n");
-  printOutTS(PL_INFO,"* approximated by linear combination of the inputs.\n");
+  printOutTS(PL_INFO,"* This analysis works best if the model ");
+  printOutTS(PL_INFO,"output can be approximated by\n");
+  printOutTS(PL_INFO,"* linear combination of the inputs.\n");
   printDashes(PL_INFO, 0);
   printOutTS(PL_INFO, "* total number of samples = %d\n",nSamples);
   printOutTS(PL_INFO, "* number of Inputs        = %d\n",nInputs);
-  printOutTS(PL_INFO, "* Output number           = %d\n", whichOutput+1);
+  //printOutTS(PL_INFO, "* Output number           = %d\n", whichOutput+1);
   printDashes(PL_INFO, 0);
 
   //**/ ---------------------------------------------------------------
@@ -159,7 +160,7 @@ double LSAnalyzer::analyze(aData &adata)
       vecGrads[ss] = Y[nOutputs*ss+whichOutput] - Y[whichOutput];
       vecGrads[ss] /= (X[nInputs*ss+index] - X[index]);
       vecGrads[ss] *= (xUpper[index] - xLower[index]); 
-      if (vecGrads[ss] < 0.0) vecGrads[ss] = - vecGrads[ss];
+      //if (vecGrads[ss] < 0.0) vecGrads[ss] = - vecGrads[ss];
       vecInpInds[ss] = index;
       if (printLevel > 3)
         printf("LSA sample %4d: input = %4d, grad = %12.4e\n",ss+1,
@@ -186,9 +187,10 @@ double LSAnalyzer::analyze(aData &adata)
   for (ii = 0; ii < nInputs; ii++)
   {
     if (vecCnts[ii] > 0) VecLSMeas_[ii] /= (double) vecCnts[ii];
-    printOutTS(PL_INFO,"* Input %3d avg importance measure = %11.4e ", 
-               ii+1, VecLSMeas_[ii]);
-    printOutTS(PL_INFO,"(based on %d points)\n",vecCnts[ii]); 
+    printOutTS(PL_INFO,"* Input %3d sensitivity measure = %11.4e ", 
+               ii+1, PABS(VecLSMeas_[ii]));
+    printOutTS(PL_INFO,"(unscaled = %11.4e)\n",
+               VecLSMeas_[ii]/(xUpper[ii]-xLower[ii])); 
   }
 
   //**/ ---------------------------------------------------------------
@@ -316,7 +318,7 @@ double LSAnalyzer::analyze(aData &adata)
       fprintf(fp,"  ];\n");
       if (plotMatlab()) fprintf(fp,"figure(2)\n");
       else              fprintf(fp,"scf(2)\n");
-      fprintf(fp,"plot(G(:,1),G(:,2),'*','MarkerSize',12)\n");
+      fprintf(fp,"plot(Grads(:,1),Grads(:,2),'*','MarkerSize',12)\n");
       snprintf(pString,100,"Input Numbers");
       fwritePlotXLabel(fp, pString);
       snprintf(pString,100,"Individual Gradients (normalized)");
@@ -326,8 +328,8 @@ double LSAnalyzer::analyze(aData &adata)
       fwritePlotAxes(fp);
       fprintf(fp, "xmin = 0;\n");
       fprintf(fp, "xmax = %d;\n", nInputs+1);
-      fprintf(fp, "ymin = min(G(:,2));\n");
-      fprintf(fp, "ymax = max(G(:,2));\n");
+      fprintf(fp, "ymin = min(Grads(:,2));\n");
+      fprintf(fp, "ymax = max(Grads(:,2));\n");
       fprintf(fp, "ytmp = ymin;\n");
       fprintf(fp, "ymin = ymin - 0.1 * (ymax - ymin);\n");
       fprintf(fp, "ymax = ymax + 0.1 * (ymax - ytmp);\n");

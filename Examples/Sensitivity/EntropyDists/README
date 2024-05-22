@@ -1,0 +1,68 @@
+Analyzing entropies for different distributions
+
+*************************************************************
+Let mu  = mean
+    sig = standard deviation
+-------------------------------------------------------------
+1. Entropy of normal distribution (use natural log)
+
+    1/2 ln(2 pi e sig^2)
+
+   0. Derivation
+               f(X) = 1/(sig sqrt(2pi)) exp[-1/2 (X-mu)^2/sig^2]
+         -log(f(X)) = (X-mu)^2/2sig^2 + log(sig \sqrt(2pi))
+       -E[log(f(X))]= 1/2 sig^2 E[(X-mu)^2] + E[log((2pi sig^2)^1/2)
+                    = 1/2 + 1/2 log(2pi sig^2) 
+         because E[(X-mu)^2] = sig^2
+
+     
+   A. Create a large sample from N(mu, sig^2)
+
+      - start psuade with no argument and use the gendist
+        command: 
+        % psuade
+        psuade> gendist
+          <pick sample size - say 1000000>
+          <pick distribution and parameters - say, mu=5,sig=2>
+        psuade> quit
+      - at this point a file called sample1D has been created
+      - edit the first line to become <1000000 1 1> 
+
+   B. run entropy
+   
+      - start psuade with no argument and run the entropy
+        command
+        % psuade
+        psuade> read_std sample1D
+        psuade> entropy
+                <enter information>
+      - see the display for entropy result 
+        (For mu=5, sig=2, entropy = 2.1121)
+
+2. Entropy of lognormal distribution (use natural log)
+
+    mu + 1/2 ln(2 pi e sig^2)
+
+   0. derivation: Let Z = standard normal so that X = e^(mu+sig Z)
+               f(X) = 1/(X sig sqrt(2pi)) exp[-1/2 Z^2]
+         -log(f(X)) = Z^2/2 + log(X sig \sqrt(2pi))
+                    = Z^2/2 + log(sig sqrt(2pi)) + mu + sig Z 
+      Since E[Z] = 0 and E[Z^2]=1,
+          h(X) = -E[log f(X)] = 1/2 + log(sig sqrt(2pi)) + mu
+
+   A. How to analyze: same as (1) above except use lognormal
+      distribution in `gendist'
+      (For mu=5, sig=2, entropy = 7.1121)
+   
+3. Entropy of a uniform distribution X in [a, b]
+
+   The entropy is log(b-a) : proved by using the
+   definition of probability density function
+
+   f(X) = { 1/(b-a)   a <= X <= b
+          {   0       otherwide
+
+   Plug this into the definition of differential entropy
+
+   H(X) = - \int_{-infty}^{infty} f(X) ln f(X) dx
+

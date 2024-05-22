@@ -1,0 +1,30 @@
+PSUADE
+INPUT
+   dimension = 8
+   variable  1 X1 =  0.0   1.0
+   variable  2 X2 =  0.0   1.0
+   variable  3 X3 =  0.0   1.0
+   variable  4 X4 =  0.0   1.0
+   variable  5 X5 =  0.0   1.0
+   variable  6 X6 =  0.0   1.0
+   variable  7 X7 =  0.0   1.0
+   variable  8 X8 =  0.0   1.0
+END
+OUTPUT
+   dimension = 1
+   variable 1 Y
+END
+METHOD
+   sampling = LPTAU
+   num_samples = 10
+END
+APPLICATION
+   ensemble_driver = ./ensemble_simulator
+   ensemble_run_mode
+   max_parallel_jobs = 1000
+END
+ANALYSIS
+   analyzer output_id  = 1
+   printlevel 1
+END
+END

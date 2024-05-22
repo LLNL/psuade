@@ -45,7 +45,7 @@ HomLegendreRegression::HomLegendreRegression(int nInputs,int nSamples):
   //**/ default parameters
   //**/ =================================================================
   faID_ = PSUADE_RS_HLEG;
-  pOrder_ = -1;
+  pOrder_ = 1;
   numPerms_ = 0;
 
   //**/ =================================================================
@@ -59,6 +59,42 @@ HomLegendreRegression::HomLegendreRegression(int nInputs,int nSamples):
     printf("* R-square should be close to 1 if it is a good model.\n");
     printf("* Turn on master mode to spit out regression matrix stuff.\n");
     printDashes(PL_INFO, 0);
+  }
+
+  //**/ =================================================================
+  //**/ set options through expert mode or config file
+  //**/ =================================================================
+  int  ii;
+  char pString[500], *cString, winput[500], equal[100];
+  if (psConfig_.InteractiveIsOn())
+  {
+    snprintf(pString,100,"HomLegendre: desired polynomial order (1 - 5): ");
+    pOrder_ = getInt(1, 5, pString);
+    snprintf(pString,100,"RS_HomLegendre_order = %d", pOrder_);
+    psConfig_.putParameter(pString);
+  }
+  else
+  {
+    cString = psConfig_.getParameter("RS_HomLegendre_order");
+    if (cString != NULL)
+    {
+      sscanf(cString, "%s %s %d", winput, equal, &ii);
+      if (ii < 0)
+      {
+        printf("HomLegendre INFO: Invalid polynomial order %d.\n",ii);
+        printf("                  Polynomial order unchanged at %d.\n",
+               pOrder_);
+      }
+      else
+      {
+        pOrder_ = ii;
+        printf("HomLegendre INFO: polynomial order set to %d (config)\n",
+               pOrder_);
+      }
+    }
+    else
+      printf("HomLegendre INFO: default polynomial = %d\n",pOrder_);
+
   }
 }
 
@@ -588,49 +624,10 @@ int HomLegendreRegression::analyze(psVector VecX, psVector VecY)
 {
   int    N, M, ii, mm, nn, info;
   double SSresid, SStotal, R2, var, esum, ymax;
-  char   pString[101], response[1000], winput1[1000], winput2[1000];
-  char   *cString;
+  char   pString[101], response[1000];
   FILE   *fp;
   psMatrix eigMatT, MatXX;
   psVector eigVals;
-
-  //**/ =================================================================
-  //**/ set options through expert mode or config file
-  //**/ =================================================================
-  if (pOrder_ <= 0)
-  {
-    if (psConfig_.InteractiveIsOn())
-    {
-      snprintf(pString,100,"HomLegendre: desired polynomial order (1 - 5): ");
-      pOrder_ = getInt(1, 5, pString);
-      snprintf(pString,100,"HomLegendre_order = %d", pOrder_);
-      psConfig_.putParameter(pString);
-    }
-    else if (!psConfig_.RSExpertModeIsOn())
-    {
-      cString = psConfig_.getParameter("HomLegendre_order");
-      if (cString != NULL)
-      {
-        sscanf(cString, "%s %s %d", winput1, winput2, &ii);
-        if (ii < 0)
-        {
-          if (psConfig_.InteractiveIsOn())
-          {
-            printf("HomLegendre INFO: invalid polynomial order %d.\n",ii);
-            printf("                Polynomial order unchanged at %d.\n",
-                   pOrder_);
-          }
-        }
-        else
-        {
-          pOrder_ = ii;
-          if (psConfig_.InteractiveIsOn())
-            printf("HomLegendre INFO: polynomial order set to %d (config)\n",
-                   pOrder_);
-        }
-      }
-    }
-  }
 
   //**/ =================================================================
   //**/ set up permutation 
@@ -729,7 +726,7 @@ int HomLegendreRegression::analyze(psVector VecX, psVector VecY)
   //**/ =================================================================
   //**/ compute residual
   //**/ =================================================================
-  if (psConfig_.MasterModeIsOn())
+  if (psConfig_.MasterModeIsOn() && psConfig_.InteractiveIsOn())
   {
     fp = fopen("homlegendre_regression_error.m", "w");
     if(fp == NULL)
@@ -802,7 +799,7 @@ int HomLegendreRegression::analyze(psVector VecX, psVector VecY)
   //**/ =================================================================
   //**/ this is for diagnostics
   //**/ =================================================================
-  if (psConfig_.MasterModeIsOn())
+  if (psConfig_.MasterModeIsOn() && psConfig_.InteractiveIsOn())
   {
     printf("You have the option to store the regression matrix (that\n");
     printf("is, the matrix A in Ax=b) in a matlab file for inspection.\n");

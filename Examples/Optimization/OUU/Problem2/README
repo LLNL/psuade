@@ -1,23 +1,25 @@
-First step: compiler ouu_driver.c
+First step: compile optdriver.c and simdriver.c
 
-Case 1: Run ouu_optdriver.in
+Case 1: Run ouu_optdriver.in (1-leverl OUU)
         with all uncertain parameters (9-12) as type 3 variables
  
         psuade < psScript_nors3.in
 
-Case 2: Run ouu_optdriver.in
+Case 2: Run ouu_optdriver.in (1-leverl OUU)
         with all uncertain parameters (9-12) as type 4 variables
  
         psuade < psScript_nors4.in
 
-Case 3: Run ouu_optdriver.in
+Case 3: Run ouu_optdriver.in (1-leverl OUU)
         with all uncertain parameters (9-12) as type 4 variables
         and use response surface for it
  
         psuade < psScript_rs4.in
 
-Case 4: Run ouu_simdriver.in
+Case 4: Run ouu_simdriver.in (2-leverl OUU)
         with all uncertain parameters (9-12) as type 4 variables
+        inner loop uses simulator
+        (This method will be very time-consuming)
  
         psuade < psScript_sim_rs4.in
 

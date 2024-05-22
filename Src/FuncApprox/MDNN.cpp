@@ -100,29 +100,42 @@ MDNN::MDNN(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
       printf("ERROR: Degree of overlap should be > 0 and <= 0.4.\n");
       printf("INFO:  Degree of overlap set to default = 0.05\n");
     }
+    snprintf(pString,100,"RS_MDNN_overlap = %e\n",ddata);
+    psConfig_.putParameter(pString);
     for (ii = 0; ii < nInputs_; ii++) vecXd_[ii] = ddata;
     printf("You can decide the average sample size of each partition.\n");
     printf("Larger sample size per partition will take more setup time.\n");
     printf("The default is 1000 (will have more if there is overlap).\n");
     snprintf(pString,100,"Enter the partition sample size (1000 - 10000) : ");
     partSize_ = getInt(200, 20000, pString);
+    snprintf(pString,100,"RS_MDNN_max_sam_per_group = %d\n",partSize_);
+    psConfig_.putParameter(pString);
   }
-
-  //**/ =======================================================
-  // user-adjustable parameters
-  //**/ =======================================================
-  char *strPtr = psConfig_.getParameter("MDNN_max_samples_per_group");
-  if (strPtr != NULL)
+  else
   {
-    sscanf(strPtr, "%s %s %d", winput, equal, &partSize_);
-    if (partSize_ < 200) 
+    //**/ =======================================================
+    // user-adjustable parameters
+    //**/ =======================================================
+    char *strPtr = psConfig_.getParameter("RS_MDNN_max_sam_per_group");
+    if (strPtr != NULL)
     {
-      printf("MDNN INFO: config parameter setting not done.\n");
-      printf("     max_samples_per_group %d too small.\n",partSize_);
-      printf("     max_samples_per_group should be >= 200.\n");
-      partSize_ = 200;
+      sscanf(strPtr, "%s %s %d", winput, equal, &partSize_);
+      if (partSize_ < 200) 
+      {
+        printf("MDNN INFO: config parameter setting not done.\n");
+        printf("     max_samples_per_group %d too small.\n",partSize_);
+        printf("     max_samples_per_group should be >= 200.\n");
+        partSize_ = 200;
+      }
+    }
+    strPtr = psConfig_.getParameter("RS_MDNN_overlap");
+    if (strPtr != NULL)
+    {
+      sscanf(strPtr, "%s %s %lg", winput, equal, &ddata);
+      for (ii = 0; ii < nInputs_; ii++) vecXd_[ii] = ddata;
     }
   }
+
   nPartitions_ = (nSamples + partSize_/2) / partSize_;
   ddata = log(1.0*nPartitions_) / log(2.0);
   int idata = (int) ddata;
@@ -143,18 +156,18 @@ MDNN::MDNN(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
   {
     snprintf(pString,100,"How many hidden layers? (1 - 4) ");
     nLevels_  = getInt(1,4,pString) + 1;
-    snprintf(pString,100,"DNN_nlevels = %d", nLevels_);
+    snprintf(pString,100,"RS_DNN_nlevels = %d", nLevels_);
     psConfig_.putParameter(pString);
 
     snprintf(pString,100,"Number of nodes in each hidden layer? (3 - 100) ");
     numNodes_ = getInt(3,100,pString);
-    snprintf(pString,100,"DNN_nnodes = %d", numNodes_);
+    snprintf(pString,100,"RS_DNN_nnodes = %d", numNodes_);
     psConfig_.putParameter(pString);
 
     snprintf(pString,100,
       "Optimization scheme (0: LBFGS, 1: Gradient descent) ? (0 - 1) ");
     optScheme_ = getInt(0,1,pString);
-    snprintf(pString,100,"DNN_optscheme = %d", optScheme_);
+    snprintf(pString,100,"RS_DNN_optscheme = %d", optScheme_);
     psConfig_.putParameter(pString);
 
     //snprintf(pString,100,
@@ -164,7 +177,7 @@ MDNN::MDNN(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
   else
   {
     char winput1[1000], winput2[1000];
-    char *cString = psConfig_.getParameter("DNN_nlevels");
+    char *cString = psConfig_.getParameter("RS_DNN_nlevels");
     if (cString != NULL)
     {
       sscanf(cString, "%s %s %d", winput1, winput2, &nLevels_);
@@ -176,7 +189,7 @@ MDNN::MDNN(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
       if (psConfig_.InteractiveIsOn())
         printOutTS(PL_INFO,"NN nLevels set to %d\n",nLevels_);
     }
-    cString = psConfig_.getParameter("DNN_nnodes");
+    cString = psConfig_.getParameter("RS_DNN_nnodes");
     if (cString != NULL)
     {
       sscanf(cString, "%s %s %d", winput1, winput2, &numNodes_);
@@ -189,7 +202,7 @@ MDNN::MDNN(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
       if (psConfig_.InteractiveIsOn())
         printOutTS(PL_INFO,"NN numNodes set to %d\n",numNodes_);
     }
-    cString = psConfig_.getParameter("DNN_optscheme");
+    cString = psConfig_.getParameter("RS_DNN_optscheme");
     if (cString != NULL)
     {
       sscanf(cString, "%s %s %d", winput1, winput2, &optScheme_);

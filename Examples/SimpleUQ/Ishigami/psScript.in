@@ -1,38 +1,27 @@
 sys cc -o simulator simulator.c -lm
 run psuade.in
-rename psuadeData sample.psu
-load sample.psu
+rename psuadeData simdata
+load simdata
 ua
 y
 1
-# validate response surface with Kriging
+# validate response surface with MARS
 rscheck
+y
 0
 1
 y
 10
 y
-# perform main effect analysis using response surface 
-rssobol1
+# perform uncertainty analysis with Kriging 
+printlevel 4
+rsua
 y
 1
-0
-# perform two-way effect analysis using response surface 
-rssobol2
-y
+1
+100000
 1
 0
-# perform total effect analysis using response surface 
-rssoboltsi
-y
-1
-0
-# perform group sensitivity analysis  
-rssobolg
-y
-1
-0
-group
 q
 
 

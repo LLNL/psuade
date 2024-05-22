@@ -64,6 +64,7 @@
 #include "MMars.h"
 #include "HybridGP.h"
 #include "QGP.h"
+#include "PadeRegression.h"
 #include "sysdef.h"
 #include "PsuadeUtil.h"
 #include "PDFBase.h"
@@ -609,6 +610,9 @@ void printThisFA(int faType)
     case PSUADE_RS_MDNN: 
          printf("Multi-Domain Neural Network (Tong)\n"); 
          break;
+    case PSUADE_RS_PADE: 
+         printf("Pade Regression\n"); 
+         break;
     case PSUADE_RS_HLEG: 
          printf("Homogeneous Legendre Regression\n"); 
          break;
@@ -700,6 +704,7 @@ int writeFAInfo(int level)
    printf(" MDNN - (Neural Network process) for larger data set (> 2000).\n");
    printf(" MTGP - (multiple TGP) for larger data set (> 2000).\n");
    printf(" MMARS - (multiple MARS) for even larger data set (> 20000).\n");
+   printf(" PADE - Pade regression.\n");
    printf(" HLR - Legendre polynomial for homogeneous (isotropic) inputs\n");
    printf(" HGP - GP for isotropic inputs (optional: last input quantile)\n");
    printf(" HKR - Kriging for isotropic inputs (last input quantile)\n");
@@ -809,6 +814,7 @@ int writeFAInfo(int level)
   printf("34. User-modified general nonlinear function\n");
   printf("    (Need to modify the PsuadeRegression.cpp file)\n");
   printf("35. Multi-domain neural network (for large samples)\n");
+  printf("36. Pade regression F(X) ~ P(X) / Q(X)\n");
   return PSUADE_NUM_RS;
 }
 
@@ -858,7 +864,7 @@ FuncApprox *genFA(int faType, int nInputs, int outLevel, int nSamples)
     if (faPtr == NULL)
     {
       nsize = 2000; 
-      strPtr = psConfig_.getParameter("MGP_max_samples_per_group");
+      strPtr = psConfig_.getParameter("RS_MGP_max_sam_per_group");
       if (strPtr != NULL)
       {
         sscanf(strPtr, "%s %s %d", winput, equal, &nsize);
@@ -910,7 +916,7 @@ FuncApprox *genFA(int faType, int nInputs, int outLevel, int nSamples)
     if (faPtr == NULL)
     {
       nsize = 5000; 
-      strPtr = psConfig_.getParameter("MRBF_max_samples_per_group");
+      strPtr = psConfig_.getParameter("RS_MRBF_max_sam_per_group");
       if (strPtr != NULL)
       {
         sscanf(strPtr, "%s %s %d", winput, equal, &nsize);
@@ -939,6 +945,8 @@ FuncApprox *genFA(int faType, int nInputs, int outLevel, int nSamples)
        faPtr = new MGP3(nInputs, nSamples);
   else if (rsType == PSUADE_RS_MDNN)
        faPtr = new MDNN(nInputs, nSamples);
+  else if (rsType == PSUADE_RS_PADE)
+       faPtr = new PadeRegression(nInputs, nSamples);
   else if (rsType == PSUADE_RS_MMARS)
        faPtr = new MMars(nInputs, nSamples);
   else if (faType == PSUADE_RS_LOCAL)
@@ -1033,9 +1041,9 @@ FuncApprox *genFAInteractive(PsuadeData *psuadeIO, int flag)
   {
     printf("PSUADE WARNING: For nSamples > %d,\n", 
            psConfig_.RSMaxPts_);
-    printf("  it can be extremely expensive to create\n");
-    printf("  response surfaces.\n");
-    printf("  Consult PSUADE developers before moving on.\n");
+    printf("  It can be very expensive to create ");
+    printf("response surfaces.\n");
+    printf("  Use the rsmax <num> to override.\n");
     exit(1);
   }
   psuadeIO->getParameter("ana_outputid", pPtr);
@@ -1073,7 +1081,7 @@ FuncApprox *genFAInteractive(PsuadeData *psuadeIO, int flag)
     if (faPtr == NULL)
     {
       nsize = 2000; 
-      strPtr = psConfig_.getParameter("MGP_max_samples_per_group");
+      strPtr = psConfig_.getParameter("RS_MGP_max_sam_per_group");
       if (strPtr != NULL)
       {
         sscanf(strPtr, "%s %s %d", winput, equal, &nsize);
@@ -1137,7 +1145,7 @@ FuncApprox *genFAInteractive(PsuadeData *psuadeIO, int flag)
     if (faPtr == NULL)
     {
       nsize = 5000; 
-      strPtr = psConfig_.getParameter("MRBF_max_samples_per_group");
+      strPtr = psConfig_.getParameter("RS_MRBF_max_sam_per_group");
       if (strPtr != NULL)
       {
         sscanf(strPtr, "%s %s %d", winput, equal, &nsize);
@@ -1165,6 +1173,8 @@ FuncApprox *genFAInteractive(PsuadeData *psuadeIO, int flag)
        faPtr = new MGP3(nInputs, nSamples);
   else if (faType == PSUADE_RS_MDNN)
        faPtr = new MDNN(nInputs, nSamples);
+  else if (faType == PSUADE_RS_PADE)
+       faPtr = new PadeRegression(nInputs, nSamples);
   else if (faType == PSUADE_RS_MMARS)
        faPtr = new MMars(nInputs, nSamples);
   else if (faType == PSUADE_RS_LOCAL)

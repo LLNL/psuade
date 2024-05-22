@@ -365,6 +365,25 @@ int main(int argc, char** argv)
   int ind, status=0, mypid=0, nprocs=1, continueFlag=1, mode=0, root=0;
   PsuadeBase *psuade;
 
+  //**/-----------------------------------------------------------
+  //**/ optional tracking usage
+  //**/----------------------------------------------------------- 
+  //**/time_t     t;
+  //**/struct tm  *tm;
+  //**/char *inputString;
+  //**/FILE *fp;
+  //**/inputString = getenv("USER");
+  //**/if (inputString != NULL)
+  //**/{
+  //**/  fp = fopen(".data", "a");
+  //**/  if (fp != NULL)
+  //**/  {
+  //**/    t = time(NULL);
+  //**/    tm = localtime(&t);
+  //**/    fprintf(fp, "%s %s", inputString, asctime(tm));
+  //**/    fclose(fp);
+  //**/  }
+  //**/}
   // --------------------------------------------------------------
   // if made for parallel processing, get machine parameters
   // -------------------------------------------------------------- 

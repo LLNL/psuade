@@ -5,7 +5,7 @@ in several forms:
 1. correlation coefficients in Gaussian distributions (nonzero
    off-diagonal terms in the covariance matrix)
 2. correlation embedded in parameter distribution in the form of a
-   large sample
+   large sample (e.g. posterior sample from MCMC)
 3. correlation in the form of inequality constraints
    (e.g. 0 <= X1 + X2 <= 1)
 
@@ -55,20 +55,21 @@ B. With correlation:
      VCE(X2) = 2.56 (unnormalized)
      VCE(X3) = 1    (unnormalized)
 
-NOTE: Since samples are drawn from these distribution within the 
-      confines of the parameter ranges, and in order to truly draw
-      samples from N(0,1), you may want to set the parameter ranges
-      to be [-5, 5] (see psuadeME.in file) to ensure >99.999% 
-      coverage.
+NOTE: Since samples are drawn from these distribution within 
+      the confines of the parameter ranges, and in order to 
+      truly draw samples from N(0,1), you may want to set 
+      the parameter ranges to be [-5, 5] (see psuadeME.in 
+      file) to ensure >99.999% coverage.
 
 There are two ways to compute sensitivity indices in this case:
-a. create a large sample using RS and use the main effect (ME) method
-b. call 'rssobol1' directly
+a. Create a large sample using RS and use the main effect 
+   (ME) method
+b. call 'rsvce1_xxx' directly
 
-Case 1a and 1b are shown below (both with correlation = 0.7)
+Case 1 is shown below (with correlation = 0.7)
 ----------------------------------------------------------------------
-Case 1a: run psuade with psScriptCase1a.in
-         (note that psuadeME.in has COR set to 0.7)
+Perform the following steps to run Case 1:
+(note that psuadeME.in has COR set to 0.7)
 
 i.   compile the simulator
      cc -o simulator simulator.c -lm
@@ -78,11 +79,8 @@ ii.  create a sample to build response surface by doing
 iii. use main effect analysis by running
      psuade psuadeME.in
 
-Case 1b: run psuade with psScriptCase1b.in
-         (note that psuadeSobol1Cor.in has COR set to 0.7)
-
-i.  use RSMSobol1 by running
-    psuade psuadeSobol1Cor.in
+These 3 steps have been captured in psScriptCase1.in so you can
+also run: psuade < psScriptCase1.in
 
 **********************************************************************
 Case 2: parameters with possibly non-normal/correlated distributions 
@@ -122,7 +120,7 @@ Case 3: parameters with possibly non-normal/correlated distributions
         that are represented by a large sample (e.g. posterior 
         sample from MCMC) AS WELL AS inequality constraint
         E.g. -5 <= X1 + X2 <= 5
-There are several ways of doing this. One method using 'rssobol1'.
+There are several ways of doing this. One method using 'rsvce1_ni'.
 ======================================================================
 The idea is to append the problem with inequality constraints. The 
 mechanism to implement inequality constraint is to add a line in the 
@@ -145,19 +143,25 @@ where
    Lbnd - lower bound for filtering : -5 in this case
    Ubnd - upper bound for filtering : +5 in this case
 
-to create psData, do:
+to create constrData, do:
 > cc -o constraint constraint.c -lm
 > psuade psuadeRSConstr.in
 > mv psuadeData constrData
 
 NOW everything is ready, the next step is to run:
-> psuade psuadeSobol1Constr.in
+> psuade psuadeSobol1Constr.in (choose response surface method 1)
 
-Normalized mean VCE for input   1 =  3.055e-02
-Normalized mean VCE for input   2 =  4.886e-01
-Normalized mean VCE for input   3 =  1.466e-01
+Normalized mean VCE for input   1 =  2.5e-02 
+Normalized mean VCE for input   2 =  4.0e-01
+Normalized mean VCE for input   3 =  1.5e-01
+
+NOTE: The steps above have been captured in psScriptCase3.in so you
+      can just run : psuade < psScriptCase3.in
 **********************************************************************
 Case 4: You can combine correlated distribution with inequality
         constraints too. No example is given here, but you got the 
         idea.
+**********************************************************************
+You can clean up the files by running: make -f MakeClean
+
 

@@ -9,14 +9,11 @@ printlevel 3
 rsmcmc
 y
 3
-
 expdata
 n
 2
 2
 100000
-20
--1
 n
 q
 

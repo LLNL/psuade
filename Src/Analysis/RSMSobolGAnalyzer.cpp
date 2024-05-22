@@ -5,16 +5,17 @@
 // All rights reserved.
 //
 // Please see the COPYRIGHT and LICENSE file for the copyright notice,
-// disclaimer, contact information and the GNU Lesser General Public License.
+// disclaimer, contact information and the GNU Lesser General Public 
+// License.
 //
-// PSUADE is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free 
-// Software Foundation) version 2.1 dated February 1999.
+// PSUADE is free software; you can redistribute it and/or modify it under 
+// the terms of the GNU Lesser General Public License (as published by the 
+// Free Software Foundation) version 2.1 dated February 1999.
 //
-// PSUADE is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the IMPLIED WARRANTY OF MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE.  See the terms and conditions of the GNU Lesser
-// General Public License for more details.
+// PSUADE is distributed in the hope that it will be useful, but WITHOUT 
+// ANY WARRANTY; without even the IMPLIED WARRANTY OF MERCHANTABILITY 
+// or FITNESS FOR A PARTICULAR PURPOSE.  See the terms and conditions of 
+// the GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program; if not, write to the Free Software Foundation,
@@ -41,6 +42,9 @@
 #include "PsuadeData.h"
 #include "pData.h"
 #include "RSMSobolGAnalyzer.h"
+#include "SobolSampling.h"
+#include "SobolAnalyzer.h"
+#include "pdfData.h"
 #include "sysdef.h"
 #include "PrintingTS.h"
 
@@ -49,7 +53,8 @@
 // ------------------------------------------------------------------------
 RSMSobolGAnalyzer::RSMSobolGAnalyzer() : Analyzer()
 {
-   setName("RSMSOBOLG");
+  setName("RSMSOBOLG");
+  method_ = 1;
 }
 
 // ************************************************************************
@@ -64,20 +69,6 @@ RSMSobolGAnalyzer::~RSMSobolGAnalyzer()
 // ------------------------------------------------------------------------
 double RSMSobolGAnalyzer::analyze(aData &adata)
 {
-  int ii, ii2, jj, kk, ir, index, length, sCnt, nGroups, groupID;
-  int currNSamples, nSubSamplesG, nInputsG, nInputsN;
-  int nSubSamplesN, nSamp, totalCnt;
-  size_t compFlag;
-  double ddata, variance, vce, dmean, ecv;
-  FILE   *fp=NULL;
-  char   cfname[1001], pString[1001], *cString, winput1[1001];
-  char   winput2[1001], lineIn[1001];
-  psVector   vecIn, vecOut, vecUB, vecLB;
-  pData      pCorMat;
-  psMatrix   *corMatp, corMat;
-  PDFManager *pdfman, *pdfmanN, *pdfmanG;
-  Sampling   *sampler;
-
   //**/ ===============================================================
   //**/ display header 
   //**/ ===============================================================
@@ -101,7 +92,7 @@ double RSMSobolGAnalyzer::analyze(aData &adata)
   }
 
   //**/ ---------------------------------------------------------------
-  //**/ extract test data
+  //**/ extract sample information
   //**/ ---------------------------------------------------------------
   int printLevel = adata.printLevel_;
   int nInputs  = adata.nInputs_;
@@ -114,31 +105,35 @@ double RSMSobolGAnalyzer::analyze(aData &adata)
   int outputID = adata.outputID_;
   PsuadeData *ioPtr = adata.ioPtr_;
   int *pdfFlags     = adata.inputPDFs_;
-  double *inputMeans  = adata.inputMeans_;
-  double *inputStdevs = adata.inputStdevs_;
-  int noPDF = 1;
+  double *inputMeans = adata.inputMeans_;
+  double *inputStdvs = adata.inputStdevs_;
+  int hasPDF = 0, ii;
   if (pdfFlags != NULL)
   {
     for (ii = 0; ii < nInputs; ii++)
-      if (pdfFlags[ii] != 0) noPDF = 0;
+      if (pdfFlags[ii] != 0) hasPDF = 1;
     for (ii = 0; ii < nInputs; ii++)
     {
       if (pdfFlags[ii] == PSUADE_PDF_SAMPLE)
       {
         printOutTS(PL_ERROR,
-           "* RSMSobolG ERROR: S PDF type currently not supported.\n");
+          "* RSMSobolG ERROR: S PDF type currently not supported.\n");
         return PSUADE_UNDEFINED;
       }
     }
   }
-  if (noPDF == 1) 
-    printOutTS(PL_INFO,"RSMSobolG INFO: all uniform distributions.\n");
-  else
+  if (psConfig_.InteractiveIsOn())
   {
-    printOutTS(PL_INFO,
-        "RSMSobolG INFO: non-uniform distributions detected,\n");
-    printOutTS(PL_INFO,
-        "                which will be used in this analysis.\n");
+    if (hasPDF == 0) 
+      printOutTS(PL_INFO,
+                 "RSMSobolG INFO: All uniform distributions.\n");
+    else
+    {
+      printOutTS(PL_INFO,
+          "RSMSobolG INFO: Non-uniform distributions detected,\n");
+      printOutTS(PL_INFO,
+          "                which will be used in this analysis.\n");
+    }
   }
 
   //**/ ---------------------------------------------------------------
@@ -146,15 +141,15 @@ double RSMSobolGAnalyzer::analyze(aData &adata)
   //**/ ---------------------------------------------------------------
   if (nInputs <= 1 || nSamples <= 0 || nOutputs <= 0)
   {
-    printOutTS(PL_ERROR, "RSMSobolG ERROR: invalid arguments.\n");
-    printOutTS(PL_ERROR, "   nInputs  = %d\n", nInputs);
-    printOutTS(PL_ERROR, "   nOutputs = %d\n", nOutputs);
-    printOutTS(PL_ERROR, "   nSamples = %d\n", nSamples);
+    printOutTS(PL_ERROR,"RSMSobolG ERROR: Invalid arguments.\n");
+    printOutTS(PL_ERROR,"   nInputs  = %d\n", nInputs);
+    printOutTS(PL_ERROR,"   nOutputs = %d\n", nOutputs);
+    printOutTS(PL_ERROR,"   nSamples = %d\n", nSamples);
     return PSUADE_UNDEFINED;
   } 
   if (nInputs <= 2)
   {
-    printOutTS(PL_ERROR, "RSMSobolG INFO: nInputs == 2.\n");
+    printOutTS(PL_ERROR,"RSMSobolG INFO: nInputs == 2.\n");
     printOutTS(PL_ERROR, 
          "   You do not need to perform this when nInputs = 2.\n");
     return PSUADE_UNDEFINED;
@@ -162,17 +157,18 @@ double RSMSobolGAnalyzer::analyze(aData &adata)
   if (outputID >= nOutputs || outputID < 0)
   {
     printOutTS(PL_ERROR,
-         "RSMSobolG ERROR: invalid output ID (%d).\n",outputID);
+         "RSMSobolG ERROR: Invalid output ID (%d).\n",outputID);
     return PSUADE_UNDEFINED;
   }
   if (ioPtr == NULL)
   {
-    printOutTS(PL_ERROR, "RSMSobolG ERROR: no data.\n");
+    printOutTS(PL_ERROR, "RSMSobolG ERROR: No data.\n");
     return PSUADE_UNDEFINED;
   } 
   int status = 0;
   for (ii = 0; ii < nSamples; ii++)
-     if (YIn[nOutputs*ii+outputID] > 0.9*PSUADE_UNDEFINED) status = 1;
+     if (YIn[nOutputs*ii+outputID] > 0.9*PSUADE_UNDEFINED) 
+       status = 1;
   if (status == 1)
   {
     printOutTS(PL_ERROR,
@@ -181,115 +177,82 @@ double RSMSobolGAnalyzer::analyze(aData &adata)
         "                 the undefined sample points first.\n");
     return PSUADE_UNDEFINED;
   }
-  psVector vecYIn2;
-  vecYIn2.setLength(nSamples);
-  for (ii = 0; ii < nSamples; ii++) 
-    vecYIn2[ii] = YIn[ii*nOutputs+outputID];
 
   //**/ ---------------------------------------------------------------
   //**/ get group information
   //**/ ---------------------------------------------------------------
-  printAsterisks(PL_INFO, 0);
-  printOutTS(PL_INFO,"To use this function, you need to provide a file\n");
-  printOutTS(PL_INFO,"specifying group information, in the form of : \n");
-  printOutTS(PL_INFO,"line 1: PSUADE_BEGIN\n");
-  printOutTS(PL_INFO,"line 2: <d> specifying the number of groups\n");
-  printOutTS(PL_INFO,
-       "line 3 to line <d>+2: group number, size, input numbers\n");
-  printOutTS(PL_INFO,"last line: PSUADE_END\n");
-  while (1)
+  //**/ first check if the group file has been passed in via adata
+  char cfname[1001],pString[1001],*cString,winput1[1001],winput2[1001];
+  FILE *fp = fopen(adata.grpFileName_, "r");
+  if (fp != NULL) 
   {
-    printOutTS(PL_INFO,"Enter the group file : ");
-    scanf("%s", cfname);
-    fp = fopen(cfname, "r");
-    if (fp != NULL) 
-    {
-      fclose(fp);
-      break;
-    }
-    else 
-      printOutTS(PL_ERROR,
-           "ERROR : file not found (or file name too long).\n");
+    printOutTS(PL_INFO,"RSMSOBOLG: Found group file found (1).\n");
+    int length = strlen(adata.grpFileName_);
+    strncpy(cfname, adata.grpFileName_, length);
+    fclose(fp);
   }
-  fgets(lineIn, 1000, stdin);
-  fp = fopen(cfname, "r");
-
+  else if (fp == NULL && psConfig_.InteractiveIsOn())
+  {
+    //**/ ask user for the group file, if interactive is on
+    printAsterisks(PL_INFO, 0);
+    printOutTS(PL_INFO,
+      "This group sensitivity analysis requires a file specifying\n");
+    printOutTS(PL_INFO,
+      "group information in the form of : \n");
+    printOutTS(PL_INFO,
+      "line 1: PSUADE_BEGIN\n");
+    printOutTS(PL_INFO,
+      "line 2: <d> specifying the number of groups\n");
+    printOutTS(PL_INFO,
+      "line 3 to line <d>+2: group number, size, input numbers\n");
+    printOutTS(PL_INFO,"last line: PSUADE_END\n");
+    while (1)
+    {
+      printOutTS(PL_INFO,"Enter the group file name : ");
+      scanf("%s", cfname);
+      fp = fopen(cfname, "r");
+      if (fp != NULL) 
+      {
+        fclose(fp);
+        break;
+      }
+      else 
+        printOutTS(PL_ERROR,
+         "ERROR: File %s not found (or file name too long).\n",cfname);
+    }
+  }
+  else
+  {
+    printOutTS(PL_ERROR,
+      "ERROR: Group sensitivity analysis group file not provided.\n");
+    exit(1);
+  }
+  //**/ at this point group file should be in cfname
   psIMatrix matGrpMembers;
   matGrpMembers.setFormat(PS_MAT2D);
-  if (fp != NULL)
+  //cfname[strlen(cfname)-1] = '\0';
+  int errFlag = readGrpInfoFile(cfname, nInputs, matGrpMembers);
+  if (errFlag != 0)
   {
-    fgets(lineIn, 1000, fp);
-    sscanf(lineIn, "%s", pString);
-    if (!strcmp(pString, "PSUADE_BEGIN"))
-    {
-      fscanf(fp, "%d", &nGroups);
-      if (nGroups <= 0)
-      {
-        printOutTS(PL_ERROR, "RSMSobolG ERROR: nGroups <= 0.\n");
-        fclose(fp);
-        exit(1);
-      }
-      matGrpMembers.setDim(nGroups, nInputs);
-      for (ii = 0; ii < nGroups; ii++)
-      {
-        fscanf(fp, "%d", &groupID);
-        if (groupID != ii+1)
-        {
-          printOutTS(PL_ERROR,
-               "RSMSobolG ERROR: invalid groupID %d",groupID);
-          printOutTS(PL_ERROR," should be %d\n", ii+1);
-          fclose(fp);
-          exit(1);
-        }
-        fscanf(fp, "%d", &length);
-        if (length <= 0 || length >= nInputs)
-        {
-          printOutTS(PL_ERROR, 
-              "RSMSobolG ERROR: invalid group length.\n");
-          fclose(fp);
-          exit(1);
-        }
-        sCnt = 1;
-        for (jj = 0; jj < length; jj++)
-        {
-          fscanf(fp, "%d", &index);
-          if (index <= 0 || index > nInputs)
-          {
-            printOutTS(PL_ERROR, 
-                 "RSMSobolG ERROR: invalid group member.\n");
-            fclose(fp);
-            exit(1);
-          }
-          matGrpMembers.setEntry(ii,index-1, sCnt);
-          sCnt++;
-        }
-      }
-      fgets(lineIn, 1000, fp);
-      fgets(lineIn, 1000, fp);
-      sscanf(lineIn, "%s", pString);
-      if (strcmp(pString, "PSUADE_END"))
-      {
-        printOutTS(PL_ERROR, 
-           "RSMSobolG ERROR: PSUADE_END not found.\n");
-        fclose(fp);
-        exit(1);
-      }
-    }
-    else
-    {
-      printOutTS(PL_ERROR, "RSMSobolG ERROR: PSUADE_BEGIN not found.\n");
-      fclose(fp);
-      exit(1);
-    }
-    fclose(fp);
+    printOutTS(PL_ERROR,
+      "ERROR: Failed to read group information file.\n");
+    exit(1);
+  } 
+  int nGroups = matGrpMembers.nrows();
+  if (printLevel > 3) 
+  {
+    printOutTS(PL_INFO, 
+        "RSMSobolG INFO: Group information: \n");
+    matGrpMembers.print();
   }
 
   //**/ ---------------------------------------------------------------
   //**/ analyze whether group information consistent with joint PDFs
   //**/ ---------------------------------------------------------------
+  pData pCorMat;
   ioPtr->getParameter("input_cor_matrix", pCorMat);
-  corMatp = (psMatrix *) pCorMat.psObject_;
-  int ind1, ind2;
+  psMatrix *corMatp = (psMatrix *) pCorMat.psObject_;
+  int ii2, jj, ind1, ind2;
   for (ii = 0; ii < nGroups; ii++)
   {
     for (ii2 = 0; ii2 < nInputs; ii2++)
@@ -301,9 +264,12 @@ double RSMSobolGAnalyzer::analyze(aData &adata)
         if (((ind1 != 0 && ind2 == 0) || (ind1 == 0 && ind2 != 0)) &&
             corMatp->getEntry(ii2,jj) != 0.0)
         {
-          printOutTS(PL_ERROR,"RSMSobolG INFO: currently cannot handle\n");
-          printOutTS(PL_ERROR,"          correlated inputs (joint PDF)\n");
-          printOutTS(PL_ERROR,"          across different groups.\n");
+          printOutTS(PL_ERROR,
+               "RSMSobolG INFO: Currently cannot handle\n");
+          printOutTS(PL_ERROR,
+               "          correlated inputs (joint PDF)\n");
+          printOutTS(PL_ERROR,
+               "          across different groups.\n");
           matGrpMembers.clean();
           return PSUADE_UNDEFINED;
         }
@@ -314,47 +280,67 @@ double RSMSobolGAnalyzer::analyze(aData &adata)
   //**/ ---------------------------------------------------------------
   //**/ set up constraint filters
   //**/ ---------------------------------------------------------------
-  RSConstraints *constrPtr = new RSConstraints();
-  constrPtr->genConstraints(ioPtr);
+  RSConstraints *constrPtr = NULL;
+  if (ioPtr != NULL)
+  {
+    constrPtr = new RSConstraints();
+    constrPtr->genConstraints(ioPtr);
+    int nConstr = constrPtr->getNumConstraints();
+    if (nConstr == 0)
+    {
+      delete constrPtr;
+      constrPtr = NULL;
+    }
+  }
 
   //**/ ---------------------------------------------------------------
   //**/ build response surface
   //**/ ---------------------------------------------------------------
-  FuncApprox *faPtr = genFAInteractive(ioPtr, 0);
+  int rstype=-1;
+  if (adata.faType_ < 0)
+  {
+    printf("Select response surface. Options are: \n");
+    writeFAInfo(0); 
+    strcpy(pString, "Choose response surface: ");
+    rstype = getInt(0, PSUADE_NUM_RS, pString);
+  }
+  else rstype = adata.faType_;
+
+  FuncApprox *faPtr = genFA(rstype, nInputs, 0, nSamples);
+  faPtr->setBounds(xLower, xUpper);
+  faPtr->setOutputLevel(0);
+  psVector vecYIn2;
+  vecYIn2.setLength(nSamples);
+  for (ii = 0; ii < nSamples; ii++) 
+    vecYIn2[ii] = YIn[ii*nOutputs+outputID];
   status = faPtr->initialize(XIn, vecYIn2.getDVector());
 
   //**/ ---------------------------------------------------------------
   //**/  get internal parameters 
   //**/ ---------------------------------------------------------------
-  if (psConfig_.InteractiveIsOn()) printAsterisks(PL_INFO, 0);
-  if (psConfig_.AnaExpertModeIsOn())
+  int nSubSamplesG=50000, nSubSamplesN=1000;
+  if (psConfig_.InteractiveIsOn() && psConfig_.AnaExpertModeIsOn())
   {
-    printOutTS(PL_INFO,
-         "* RSMSobolG creates a sample of size M1 for each subgroup\n");
-    printOutTS(PL_INFO,
-         "* of inputs and M2 for the other inputs when computing\n");
-    printOutTS(PL_INFO,
-         "* group sensitivity indices. The total sample size is thus:\n");
-    printOutTS(PL_INFO,"*     N = M1 * M2 * nGroups.\n");
-    nSubSamplesG = 20000;
-    nSubSamplesN = 100;
-    printOutTS(PL_INFO,"  default M1 = %d.\n", nSubSamplesG);
-    printOutTS(PL_INFO,"  default M2 = %d.\n", nSubSamplesN);
-    printOutTS(PL_INFO,"* Please select your desired M1 and M2.\n");
-    printOutTS(PL_INFO,"* Recommendation: M1 > M2.\n");
-    printOutTS(PL_INFO,"* Note: large M1 and M2 can take a long time.\n");
+    printAsterisks(PL_INFO, 0);
+    printOutTS(PL_INFO,"This analysis creates a sample of ");
+    printOutTS(PL_INFO,"size M1 for each subgroup of inputs\n");
+    printOutTS(PL_INFO,"and M2 for the other inputs when ");
+    printOutTS(PL_INFO,"computing group sensitivity indices.\n");
+    printOutTS(PL_INFO,"The total sample size is thus:\n");
+    printOutTS(PL_INFO,"      N = M1 * M2 * nGroups.\n");
+    printOutTS(PL_INFO,"  Default M1 = %d.\n", nSubSamplesG);
+    printOutTS(PL_INFO,"  Default M2 = %d.\n", nSubSamplesN);
+    printOutTS(PL_INFO,"You can change M1 and M2 (make sure M1 >> M2).\n");
+    printOutTS(PL_INFO,"NOTE: Large M1 and M2 can take a long time.\n");
     printEquals(PL_INFO, 0);
-    snprintf(pString,100,
-         "Enter M1 (suggestion: 10000 - 100000, default = 20000) : ");
-    nSubSamplesG = getInt(10000, 200000, pString);
-    snprintf(pString,100,"Enter M2 (suggestion: 100 - 500, default = 100) : ");
-    nSubSamplesN = getInt(100, 1000, pString);
+    snprintf(pString,100,"Enter M1 (suggestion: 20000 - 1000000) : ");
+    nSubSamplesG = getInt(1000, 1000000, pString);
+    snprintf(pString,100,"Enter M2 (suggestion: 100 - 10000) : ");
+    nSubSamplesN = getInt(100, 10000, pString);
     printAsterisks(PL_INFO, 0);
   }
   else
   {
-    nSubSamplesG = 20000;
-    nSubSamplesN = 100;
     cString = psConfig_.getParameter("RSMSobolG_nsubsamples_ingroup");
     if (cString != NULL)
     {
@@ -362,8 +348,8 @@ double RSMSobolGAnalyzer::analyze(aData &adata)
       if (nSubSamplesG < 10000)
       {
         printOutTS(PL_INFO,
-             "RSMSobolG INFO: nSubSamplesG should be >= 10000.\n");
-        nSubSamplesG = 10000;
+             "RSMSobolG INFO: nSubSamplesG should be >= 20000.\n");
+        nSubSamplesG = 20000;
       }
       else
       {
@@ -389,10 +375,13 @@ double RSMSobolGAnalyzer::analyze(aData &adata)
              nSubSamplesN);
       }
     }
-    printOutTS(PL_INFO,"RSMSobolG: default M1 = %d.\n",nSubSamplesG);
-    printOutTS(PL_INFO,"RSMSobolG: default M2 = %d.\n",nSubSamplesN);
-    printOutTS(PL_INFO,
+    if (psConfig_.InteractiveIsOn())
+    {
+      printOutTS(PL_INFO,"RSMSobolG: Default M1 = %d.\n",nSubSamplesG);
+      printOutTS(PL_INFO,"RSMSobolG: Default M2 = %d.\n",nSubSamplesN);
+      printOutTS(PL_INFO,
         "To change these settings, re-run with ana_expert mode on.\n");
+    }
   }
   if (psConfig_.InteractiveIsOn()) printEquals(PL_INFO, 0);
 
@@ -402,7 +391,7 @@ double RSMSobolGAnalyzer::analyze(aData &adata)
   //**/ ------------------------
   //**/ use a large sample size
   //**/ ------------------------
-  nSamp = 25000;
+  int nSamp = 1000000;
   if (psConfig_.InteractiveIsOn()) 
   {
     printOutTS(PL_INFO,
@@ -412,124 +401,260 @@ double RSMSobolGAnalyzer::analyze(aData &adata)
   //**/ ------------------------
   //**/ allocate space
   //**/ ------------------------
-  psVector  vecXT, vecYT;
+  psVector  vecXT, vecYT, vecUB, vecLB, vecOut;
   psIVector vecST;
-  vecXT.setLength(nSamp*8*nInputs);
-  vecYT.setLength(nSamp*8);
-  vecST.setLength(nSamp*8);
+  vecXT.setLength(nSamp*nInputs);
+  vecYT.setLength(nSamp);
+  vecST.setLength(nSamp);
 
-  for (ir = 0; ir < 3; ir++)
-  {
-    if (psConfig_.InteractiveIsOn()) 
-      printOutTS(PL_INFO, 
-         "RSMSobolG: compute statistics, sample size = %d\n",nSamp);
+  if (psConfig_.InteractiveIsOn()) 
+    printOutTS(PL_INFO, 
+       "RSMSobolG: Compute statistics, sample size = %d\n",nSamp);
        
-    //**/ ------------------------
-    //**/ create a sample
-    //**/ ------------------------
-    if (noPDF == 0)
+  //**/ ------------------------
+  //**/ create a sample
+  //**/ ------------------------
+  PDFManager *pdfman=NULL;
+  Sampling   *sampler=NULL;
+  if (hasPDF == 1)
+  {
+    printOutTS(PL_INFO,"RSMSobolG INFO: Non-uniform PDFs detected.\n");
+    pdfman = new PDFManager();
+    pdfman->initialize(nInputs,pdfFlags,inputMeans,
+                       inputStdvs,*corMatp,NULL,NULL);
+    vecLB.load(nInputs, xLower);
+    vecUB.load(nInputs, xUpper);
+    vecOut.setLength(nSamp*nInputs);
+    pdfman->genSample(nSamp, vecOut, vecLB, vecUB);
+    for (ii = 0; ii < nSamp*nInputs; ii++) vecXT[ii] = vecOut[ii];
+    delete pdfman;
+  }
+  else
+  {
+    if (nInputs > 51)
     {
-      printOutTS(PL_INFO,"RSMSobolG INFO: non-uniform PDFs detected. \n");
-      pdfman = new PDFManager();
-      pdfman->initialize(nInputs,pdfFlags,inputMeans,
-                         inputStdevs,*corMatp,NULL,NULL);
-      vecLB.load(nInputs, xLower);
-      vecUB.load(nInputs, xUpper);
-      vecOut.setLength(nSamp*nInputs);
-      pdfman->genSample(nSamp, vecOut, vecLB, vecUB);
-      for (ii = 0; ii < nSamp*nInputs; ii++) vecXT[ii] = vecOut[ii];
-      delete pdfman;
+      sampler = SamplingCreateFromID(PSUADE_SAMP_LHS);
+      sampler->setSamplingParams(nSamp, 1, 1);
     }
     else
     {
-      if (nInputs > 51)
-      {
-        sampler = SamplingCreateFromID(PSUADE_SAMP_LHS);
-        sampler->setSamplingParams(nSamp, 1, 1);
-      }
-      else
-      {
-        sampler = SamplingCreateFromID(PSUADE_SAMP_LPTAU);
-        sampler->setSamplingParams(nSamp, 1, 0);
-      }
-      sampler->setInputBounds(nInputs, xLower, xUpper);
-      sampler->setOutputParams(1);
-      sampler->initialize(0);
-      sampler->getSamples(nSamp, nInputs, 1, vecXT.getDVector(), 
-                          vecYT.getDVector(), vecST.getIVector());
-      delete sampler;
+      sampler = SamplingCreateFromID(PSUADE_SAMP_LPTAU);
+      sampler->setSamplingParams(nSamp, 1, 0);
     }
+    sampler->setInputBounds(nInputs, xLower, xUpper);
+    sampler->setOutputParams(1);
+    sampler->initialize(0);
+    sampler->getSamples(nSamp, nInputs, 1, vecXT.getDVector(), 
+                        vecYT.getDVector(), vecST.getIVector());
+    delete sampler;
+  }
 
-    //**/ ------------------------
-    //**/ evaluate 
-    //**/ ------------------------
-    if (ir < 3 && printLevel > 1)
-      printOutTS(PL_INFO,
-           "RSMSobolG: running the sample with response surface...\n");
-    faPtr->evaluatePoint(nSamp, vecXT.getDVector(), vecYT.getDVector());
-    if (ir < 3 && printLevel > 1)
-      printOutTS(PL_INFO,
-           "RSMSobolG: done running the sample with response surface.\n");
+  //**/ ------------------------
+  //**/ evaluate 
+  //**/ ------------------------
+  if (psConfig_.InteractiveIsOn() && printLevel > 1)
+    printOutTS(PL_INFO,
+      "RSMSobolG: Running the sample with response surface...\n");
+  faPtr->evaluatePoint(nSamp, vecXT.getDVector(), vecYT.getDVector());
+  if (psConfig_.InteractiveIsOn() && printLevel > 1)
+    printOutTS(PL_INFO,
+      "RSMSobolG: Running the sample with response surface complete.\n");
 
-    //**/ ------------------------
-    //**/ apply filters
-    //**/ ------------------------
-    double *XT = vecXT.getDVector();
-    double *YT = vecYT.getDVector();
-    double *oneSamplePt;
-    for (ii = 0; ii < nSamp; ii++)
-    {
-      oneSamplePt = &(XT[ii*nInputs]);
+  //**/ ------------------------
+  //**/ apply filters
+  //**/ ------------------------
+  double *XT = vecXT.getDVector();
+  double *YT = vecYT.getDVector();
+  double *oneSamplePt, ddata;
+  for (ii = 0; ii < nSamp; ii++)
+  {
+    oneSamplePt = &(XT[ii*nInputs]);
+    status = 1;
+    if (constrPtr != NULL)
       ddata = constrPtr->evaluate(oneSamplePt,YT[ii],status);
-      if (status == 0) vecYT[ii] = PSUADE_UNDEFINED;
-    }
+    if (status == 0) vecYT[ii] = PSUADE_UNDEFINED;
+  }
 
-    //**/ ------------------------
-    //**/ compute statistics
-    //**/ ------------------------
-    dmean = 0.0;
-    sCnt = 0;
-    for (ii = 0; ii < nSamp; ii++)
+  //**/ ------------------------
+  //**/ compute statistics
+  //**/ ------------------------
+  double dmean = 0.0;
+  int sCnt = 0;
+  for (ii = 0; ii < nSamp; ii++)
+  {
+    if (vecYT[ii] != PSUADE_UNDEFINED)
     {
-      if (vecYT[ii] != PSUADE_UNDEFINED)
-      {
-        dmean += vecYT[ii];
-        sCnt++;
-      }
+      dmean += vecYT[ii];
+      sCnt++;
     }
-    if (sCnt > 1) dmean /= (double) sCnt;
-    else
-    {
-      printOutTS(PL_ERROR, 
-           "RSMSobolG ERROR: too few samples that satisify the\n");
-      printOutTS(PL_ERROR,"constraints (%d out of %d)\n",sCnt,nSamp);
-      delete faPtr;
-      return PSUADE_UNDEFINED;
-    }
-    variance = 0.0;
-    for (ii = 0; ii < nSamp; ii++)
-    {
-      if (vecYT[ii] != PSUADE_UNDEFINED)
-        variance += (vecYT[ii] - dmean) * (vecYT[ii] - dmean) ;
-    }
-    variance /= (double) sCnt;
-    if (printLevel > 3 || ir == 2)
-    {
-      printOutTS(PL_INFO,
-           "RSMSobolG: sample mean    (based on N = %d) = %10.3e\n",
-           sCnt, dmean);
-      printOutTS(PL_INFO,
-           "RSMSobolG: sample std dev (based on N = %d) = %10.3e\n",
-           sCnt, sqrt(variance));
-    }
-    nSamp *= 2;
+  }
+  if (sCnt > 1) dmean /= (double) sCnt;
+  else
+  {
+    printOutTS(PL_ERROR, 
+          "RSMSobolG ERROR: Too few samples that satisify the\n");
+    printOutTS(PL_ERROR,"constraints (%d out of %d)\n",sCnt,nSamp);
+    delete faPtr;
+    return PSUADE_UNDEFINED;
+  }
+  double variance = 0.0;
+  for (ii = 0; ii < nSamp; ii++)
+  {
+    if (vecYT[ii] != PSUADE_UNDEFINED)
+      variance += (vecYT[ii] - dmean) * (vecYT[ii] - dmean) ;
+  }
+  variance /= (double) sCnt;
+  if (psConfig_.InteractiveIsOn() && printLevel > 3)
+  {
+    printOutTS(PL_INFO,
+       "RSMSobolG: Sample mean    (based on N = %d) = %10.3e\n",
+       sCnt, dmean);
+    printOutTS(PL_INFO,
+       "RSMSobolG: Sample std dev (based on N = %d) = %10.3e\n",
+       sCnt, sqrt(variance));
   }
   if (variance == 0.0) variance = 1.0;
 
-  //**/ ---------------------------------------------------------------
+  //**/ ===============================================================
+  //**/ use Sobol' method if requested
+  //**/ ===============================================================
+  if (method_ == 1)
+  {
+    if (psConfig_.DiagnosticsIsOn())
+      printf("Entering RSMSobolGAnalzer::analyze::Sobol\n");
+    int nPerBlk = 1000000 / (nGroups + 2);
+    printf("RSMSobol1 Sobol: nSams = 1000000\n");
+    int nSobolSams = nPerBlk*(nGroups+2), iOne=1;
+
+    //**/ create M1 and M2 assuming input distributions
+#if 0
+    pdfman = new PDFManager();
+    pdfman->initialize(nInputs,pdfFlags,inputMeans,inputStdvs,
+                       *corMatp,NULL,NULL);
+    vecLB.load(nInputs, xLower);
+    vecUB.load(nInputs, xUpper);
+    vecOut.setLength(nPerBlk*2*nInputs);
+    pdfman->genSample(nPerBlk*2, vecOut, vecLB, vecUB);
+    delete pdfman;
+#endif
+    pdfData pdfObj;
+    pdfObj.nInputs_  = nInputs;
+    pdfObj.nSamples_ = nPerBlk;
+    pdfObj.VecPTypes_.load(nInputs, pdfFlags);
+    pdfObj.VecParam1_.load(nInputs, inputMeans);
+    pdfObj.VecParam2_.load(nInputs, inputStdvs);
+    pdfObj.VecLBs_.load(nInputs, xLower);
+    pdfObj.VecUBs_.load(nInputs, xUpper);
+    pdfObj.MatCor_ = (*corMatp);
+
+    //**/ Step 1: Create a Sobol' sample
+    SobolSampling *sobolSampler = new SobolSampling();
+    sobolSampler->setPrintLevel(-2);
+    sobolSampler->setInputBounds(nInputs,xLower,xUpper);
+    sobolSampler->setOutputParams(iOne);
+    sobolSampler->setSamplingParams(nSobolSams, 1, 0);
+    //sobolSampler->setM1M2(vecOut);
+    sobolSampler->createM1M2(pdfObj);
+    sobolSampler->initialize3(0, matGrpMembers);
+    psVector  vecSobolX, vecSobolY;
+    psIVector vecSobolS;
+    vecSobolX.setLength(nInputs*nSobolSams);
+    vecSobolY.setLength(nSobolSams);
+    vecSobolS.setLength(nSobolSams);
+    sobolSampler->getSamples(nSobolSams, nInputs, iOne,
+                     vecSobolX.getDVector(), vecSobolY.getDVector(),
+                     vecSobolS.getIVector());
+
+    //**/ Step 2: evaluate the sample
+    faPtr->evaluatePoint(nSobolSams,vecSobolX.getDVector(),
+                         vecSobolY.getDVector());
+
+    //**/ Step 3: filter out infeasible points
+    int count, kk;
+    double *tempV;
+    if (constrPtr != NULL)
+    { 
+      count = 0;
+      tempV = vecSobolX.getDVector();
+      for (kk = 0; kk < nSobolSams; kk++)
+      {
+        ddata = constrPtr->evaluate(&tempV[kk*nInputs],vecSobolY[kk],
+                                    status);
+        if (status == 0)
+        {
+          vecSobolY[kk] = PSUADE_UNDEFINED;
+          count++;
+        } 
+      }
+      if (count <= 1)
+      {
+        printf("RSMAnalysis ERROR: Too few samples left after filtering\n");
+        if (faPtr != NULL) delete faPtr;
+        return -1;
+      }
+      if (count > nSobolSams/2)
+        printf("RSMAnalysis INFO: Constraints filter out > 1/2 points.\n");
+    } 
+
+    //**/ Step 4: analyze
+    SobolAnalyzer *sobolAnalyzer = new SobolAnalyzer();
+    aData sobolAPtr;
+    sobolAPtr.printLevel_ = -1;
+    sobolAPtr.nSamples_   = nSobolSams;
+    sobolAPtr.nInputs_    = nInputs;
+    sobolAPtr.nOutputs_   = iOne;
+    sobolAPtr.sampleInputs_  = vecSobolX.getDVector();
+    sobolAPtr.sampleOutputs_ = vecSobolY.getDVector();
+    strcpy(sobolAPtr.grpFileName_, cfname);
+    for (ii = 0; ii < nSobolSams; ii++) vecSobolS[ii] = 1;
+    sobolAPtr.sampleStates_  = vecSobolS.getIVector();
+    sobolAPtr.iLowerB_  = xLower;
+    sobolAPtr.iUpperB_  = xUpper;
+    sobolAPtr.outputID_ = 0;
+    sobolAPtr.ioPtr_    = NULL;
+    sobolAnalyzer->analyze3(sobolAPtr);
+    //**/ these have been normalized
+    int nGroups = sobolAnalyzer->get_nGroups();
+    VecVCEG_.setLength(nGroups);
+    for (ii = 0; ii < nGroups; ii++)
+      VecVCEG_[ii] = sobolAnalyzer->get_SG(ii);
+    delete sobolAnalyzer;
+    delete faPtr;
+
+    //**/ Step 5: print results
+    if (psConfig_.InteractiveIsOn())
+    {
+      printAsterisks(PL_INFO, 0);
+      for (ii = 0; ii < nGroups; ii++)
+      {
+        printOutTS(PL_INFO,
+          "Sobol' group-order index for group %3d = %10.3e\n",
+          ii+1, VecVCEG_[ii]);
+      }
+    }
+    pData *pObj = NULL;
+    if (ioPtr != NULL)
+    {
+      pObj = ioPtr->getAuxData();
+      pObj->nDbles_ = nGroups;
+      pObj->dbleArray_ = new double[nGroups];
+      //**/ returns unnormalized results
+      for (ii = 0; ii < nGroups; ii++)
+        pObj->dbleArray_[ii] = VecVCEG_[ii] * variance;
+      pObj->dbleData_ = variance;
+    }
+    return 0;
+  }
+
+  //**/ ===============================================================
   //**/  use response surface to perform Sobol group test
+  //**/ ===============================================================
   //**/ ---------------------------------------------------------------
   //**/ set up the sampling method for out of group
+  //**/ ---------------------------------------------------------------
+  int      kk, ir, nInputsG, nInputsN, totalCnt, currNSamples;
+  double   vce, ecv;
+  psMatrix corMat;
   psVector vecCLs, vecCUs, vecXTG, vecXTN, vecYY, vecMeans, vecVars;
   vecCLs.setLength(nInputs);
   vecCUs.setLength(nInputs);
@@ -551,16 +676,21 @@ double RSMSobolGAnalyzer::analyze(aData &adata)
   psIVector vecPdfFlagsG, vecPdfFlagsN;
   vecPdfFlagsG.setLength(nInputs);
   vecPdfFlagsN.setLength(nInputs);
+  PDFManager *pdfmanN=NULL, *pdfmanG=NULL;
 
   //**/ loop through each pair of inputs
-  psVector vecVCEs;
-  vecVCEs.setLength(nGroups);
-  printAsterisks(PL_INFO, 0);
-  printf("**                Group Sensitivity Analysis Summary\n");
-  printEquals(PL_INFO, 0);
+  VecVCEG_.setLength(nGroups);
+  if (psConfig_.InteractiveIsOn())
+  {
+    printAsterisks(PL_INFO, 0);
+    printf("**                Group Sensitivity Analysis Summary\n");
+    printEquals(PL_INFO, 0);
+  }
+  printf("RSMSobolG(ni): nSam1, nSam2 = %d %d\n",nSubSamplesN,
+         nSubSamplesG);
   for (ii = 0; ii < nGroups; ii++)
   {
-    if (printLevel > 1)
+    if (psConfig_.InteractiveIsOn() && printLevel > 1)
     {
       printOutTS(PL_INFO, "RSMSobolG: processing group %d\n", ii+1);
       printOutTS(PL_INFO, "           group members: ");
@@ -583,7 +713,7 @@ double RSMSobolGAnalyzer::analyze(aData &adata)
         nInputsN++;
       }
     }
-    if (noPDF == 0) 
+    if (hasPDF == 1) 
     {
       nInputsN = 0;
       for (jj = 0; jj < nInputs; jj++)
@@ -592,7 +722,7 @@ double RSMSobolGAnalyzer::analyze(aData &adata)
         {
           vecPdfFlagsN[nInputsN] = pdfFlags[jj];
           vecInpMeansN[nInputsN] = inputMeans[jj];
-          vecInpStdsN[nInputsN]  = inputStdevs[jj];
+          vecInpStdsN[nInputsN]  = inputStdvs[jj];
           nInputsN++;
         }
       }
@@ -642,7 +772,7 @@ double RSMSobolGAnalyzer::analyze(aData &adata)
         nInputsG++;
       }
     }
-    if (noPDF == 0) 
+    if (hasPDF == 1) 
     {
       nInputsG = 0;
       for (jj = 0; jj < nInputs; jj++)
@@ -651,7 +781,7 @@ double RSMSobolGAnalyzer::analyze(aData &adata)
         {
           vecPdfFlagsG[nInputsG] = pdfFlags[jj];
           vecInpMeansG[nInputsG] = inputMeans[jj];
-          vecInpStdsG[nInputsG]  = inputStdevs[jj];
+          vecInpStdsG[nInputsG]  = inputStdvs[jj];
           nInputsG++;
         }
       }
@@ -671,7 +801,7 @@ double RSMSobolGAnalyzer::analyze(aData &adata)
            "   processing refinement %d\n",ir+1);
       printOutTS(PL_DETAIL,"   nSamplesG = %d, nSamplesN = %d\n",
                  currNSamples, nSubSamplesN);
-      if (noPDF == 0) 
+      if (hasPDF == 1) 
       {
         pdfmanG = new PDFManager();
         pdfmanG->initialize(nInputsG, vecPdfFlagsG.getIVector(), 
@@ -699,7 +829,8 @@ double RSMSobolGAnalyzer::analyze(aData &adata)
       }
 
       //**/ evaluate sample points
-      printOutTS(PL_DETAIL,"   evaluating ... \n");
+      if (psConfig_.InteractiveIsOn() || psConfig_.DiagnosticsIsOn())
+        printOutTS(PL_DETAIL,"   evaluating ... \n");
       for (ii2 = 0; ii2 < nSubSamplesG; ii2++)
       {
         //**/ set the within group data
@@ -738,8 +869,10 @@ double RSMSobolGAnalyzer::analyze(aData &adata)
         double *mSamplePts = vecMSamPts.getDVector();
         for (jj = 0; jj < nSubSamplesN; jj++)
         {
-          ddata = constrPtr->evaluate(&(mSamplePts[jj*nInputs]),
-                                      vecYY[jj],status);
+          status = 1;
+          if (constrPtr != NULL)
+            ddata = constrPtr->evaluate(&(mSamplePts[jj*nInputs]),
+                                        vecYY[jj],status);
           if (status == 0) vecYY[jj] = PSUADE_UNDEFINED;
         }
 
@@ -755,8 +888,9 @@ double RSMSobolGAnalyzer::analyze(aData &adata)
           }
         }
         vecBins[ii2] = sCnt;
-        if (sCnt < 1 && printLevel >= 5)
-          printOutTS(PL_DUMP, "RSMSobolG WARNING: subsample size = 0.\n");
+        if (psConfig_.InteractiveIsOn() || psConfig_.DiagnosticsIsOn())
+          if (sCnt < 1 && printLevel >= 5)
+            printOutTS(PL_DUMP, "RSMSobolG WARNING: subsample size = 0.\n");
         if (sCnt < 1) vecMeans[ii2] = PSUADE_UNDEFINED;
         else          vecMeans[ii2] /= (double) sCnt;
 
@@ -771,15 +905,19 @@ double RSMSobolGAnalyzer::analyze(aData &adata)
         if (sCnt < 1) vecVars[ii2] = PSUADE_UNDEFINED;
         else          vecVars[ii2] /= (double) sCnt;
 
-        printOutTS(PL_DUMP, "RSMSobolG: Group %d\n", ii+1);
-        printOutTS(PL_DUMP, "  refinement = %d, size = %d (%d),",ir,
-                   sCnt, nSubSamplesN);
-        printOutTS(PL_DUMP, 
-           " mean = %12.4e, var = %12.4e\n",vecMeans[ii2],vecVars[ii2]);
+        if (psConfig_.InteractiveIsOn() || psConfig_.DiagnosticsIsOn())
+        {
+          printOutTS(PL_DUMP, "RSMSobolG: Group %d\n", ii+1);
+          printOutTS(PL_DUMP, "  refinement = %d, size = %d (%d),",ir,
+                     sCnt, nSubSamplesN);
+          printOutTS(PL_DUMP, 
+             " mean = %12.4e, var = %12.4e\n",vecMeans[ii2],vecVars[ii2]);
+        }
       }
 
       //**/ compute the variance of the means for each group
-      printOutTS(PL_DETAIL,"   computing statistics ... \n");
+      if (psConfig_.InteractiveIsOn() || psConfig_.DiagnosticsIsOn())
+        printOutTS(PL_DETAIL,"   computing statistics ... \n");
       totalCnt = 0;
       for (ii2 = 0; ii2 < nSubSamplesG; ii2++) totalCnt += vecBins[ii2];
       if (totalCnt == 0)
@@ -810,29 +948,67 @@ double RSMSobolGAnalyzer::analyze(aData &adata)
           ecv += vecVars[ii2] * vecBins[ii2] / totalCnt;
       }
 
-      printOutTS(PL_DETAIL,"   Unnormalized ECV (refinement =%3d) ",ir+1);
-      printOutTS(PL_DETAIL,"for input group %3d = %10.3e\n", ii+1, ecv);
-      printOutTS(PL_DETAIL,"   Unnormalized VCE (refinement =%3d) ",ir+1);
-      printOutTS(PL_DETAIL,"for input group %3d = %10.3e\n", ii+1, vce);
+      if (psConfig_.InteractiveIsOn() || psConfig_.DiagnosticsIsOn())
+      {
+        printOutTS(PL_DETAIL,
+             "   Unnormalized ECV (refinement =%3d) ",ir+1);
+        printOutTS(PL_DETAIL,
+             "for input group %3d = %10.3e\n", ii+1, ecv);
+        printOutTS(PL_DETAIL,
+             "   Unnormalized VCE (refinement =%3d) ",ir+1);
+        printOutTS(PL_DETAIL,
+             "for input group %3d = %10.3e\n", ii+1, vce);
+      }
       currNSamples *= 2;
     }
-    vecVCEs[ii] = vce;
+    VecVCEG_[ii] = vce;
   }
-  printAsterisks(PL_INFO, 0);
-  printf("*          Group RSSobol Summary\n");
-  printEquals(PL_INFO, 0);
-  for (ii = 0; ii < nGroups; ii++)
-    printOutTS(PL_INFO,
+  if (psConfig_.InteractiveIsOn() || psConfig_.DiagnosticsIsOn())
+  {
+    printAsterisks(PL_INFO, 0);
+    printf("*          Group Main Effect Summary\n");
+    printEquals(PL_INFO, 0);
+    for (ii = 0; ii < nGroups; ii++)
+      printOutTS(PL_INFO,
         "** VCE for input group %3d = %10.3e (normalized = %10.3e)\n",
-        ii+1, vecVCEs[ii], vecVCEs[ii]/variance);
-  printAsterisks(PL_INFO, 0);
+        ii+1, VecVCEG_[ii], VecVCEG_[ii]/variance);
+    printAsterisks(PL_INFO, 0);
+  }
     
+  //**/ ---------------------------------------------------------------
+  //**/ return more detailed data
+  //**/ ---------------------------------------------------------------
+  pData *pObj = NULL;
+  if (ioPtr != NULL)
+  {
+    pObj = ioPtr->getAuxData();
+    {
+      pObj->nDbles_ = nGroups;
+      pObj->dbleArray_ = new double[nGroups];
+      //**/ returns unnormalized results
+      for (ii = 0; ii < nGroups; ii++)
+        pObj->dbleArray_[ii] = VecVCEG_[ii];
+      pObj->dbleData_ = variance;
+    }
+  }
+
   //**/ ---------------------------------------------------------------
   //**/ clean up
   //**/ ---------------------------------------------------------------
-  delete constrPtr;
+  if (constrPtr != NULL) delete constrPtr;
   delete faPtr;
   return 0.0;
+}
+
+// ************************************************************************
+// set internal parameters
+// ------------------------------------------------------------------------
+int RSMSobolGAnalyzer::setParam(int argc, char **argv)
+{
+  char  *request = (char *) argv[0];
+  if      (!strcmp(request,"ana_rssobolg_ni"))    method_ = 0;
+  else if (!strcmp(request,"ana_rssobolg_sobol")) method_ = 1; 
+  return 0; 
 }
 
 // ************************************************************************

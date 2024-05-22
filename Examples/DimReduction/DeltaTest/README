@@ -22,4 +22,5 @@ psuade
 > load psdata
 > delta_test
 <answer questions>
+<wait for result>
 

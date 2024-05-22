@@ -29,16 +29,17 @@ So, the exercises are:
 
    (The model is homogeneous because the model gives the 
     same output - albeit the stochasticity - even if the 
-    inputs are re-ordered.)
+    inputs are permuted.)
 
-   - homogeneous regression
-   - homogeneous Kriging
-   - homogeneous GP
+   - homogeneous Legendre regression (HLR)
+   - homogeneous Kriging (HKriging)
+   - homogeneous GP (HGP3)
 
 Step 1: compute averages for unique samples
 
    - load sam50k.psu
    - use rm_dup and select AVERAGE for compression
+   - rm_dup reduces the sample size to 50 (block size=1000)
 
 Step 2: now use rscheck and choose the 3 possible 
         homogeneous response surfaces to compare
@@ -79,8 +80,8 @@ B. Use rm_dup and select the STD DEV option.
               be created for plotting individual distribution 
               of each of the 50 points.
    iii. now you have 250 sample points (50 x 5 quantiles), you
-        can use the quantile GP method to do response surface
-        check
+        can use the quantile GP method (QGP) to do response 
+        surface check
         NOTE: Make sure the number of groups is division by 
               5 and DO NOT use randomization
  

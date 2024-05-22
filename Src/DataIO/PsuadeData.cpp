@@ -1533,7 +1533,7 @@ int PsuadeData::readPsuadeIO(const char *fname)
     fscanf(fIn, "%d %d %d\n", &nInputs, &nOutputs, &nSamples);
     if (nInputs <= 0 || nOutputs <= 0 || nSamples <= 0)
     {
-      printf("readPsuadeIO ERROR: invalid parameters.\n");
+      printf("readPsuadeIO ERROR: Invalid parameters.\n");
       printf(" nSamples = %d\n", nSamples);
       printf(" nInputs  = %d\n", nInputs);
       printf(" nOutputs = %d\n", nOutputs);
@@ -1656,7 +1656,7 @@ int PsuadeData::readInputSection(FILE *fp)
       {
         if (winput2[ii] < '0' || winput2[ii] > '9')
         {
-          printf("INPUT SECTION syntax ERROR: invalid dimension\n");
+          printf("INPUT SECTION syntax ERROR: Invalid dimension\n");
           printf("Line read = %s\n",line);
           printf("CORRECT Syntax: (an example with 1 input)\n");
           printf("    dimension = 1\n");
@@ -1737,7 +1737,7 @@ int PsuadeData::readInputSection(FILE *fp)
       {
         if (winput[ii] < '0' || winput[ii] > '9')
         {
-          printf("INPUT SECTION syntax ERROR: invalid variable number\n");
+          printf("INPUT SECTION syntax ERROR: Invalid variable number\n");
           printf("Line read = %s\n",line);
           printf("CORRECT Syntax: (an example with 1 input)\n");
           printf("    dimension = 1\n");
@@ -1748,7 +1748,7 @@ int PsuadeData::readInputSection(FILE *fp)
       sscanf(winput, "%d", &idata); 
       if (idata < 1 || idata > pInput_.nInputs_)
       {
-        printf("INPUT SECTION ERROR: invalid input number %d\n",idata);
+        printf("INPUT SECTION ERROR: Invalid input number %d\n",idata);
         printf("Line read = %s\n",line);
         printf("    input number should be between 1 and %d\n",nInputs);
         return -1;
@@ -1768,7 +1768,7 @@ int PsuadeData::readInputSection(FILE *fp)
       sscanf(line,"%s %d %s %s", winput, &itmp, winput2, winput3);
       if (strcmp(winput3, "=") != 0 )
       {
-        printf("INPUT SECTION ERROR: invalid format for input %d\n",itmp);
+        printf("INPUT SECTION ERROR: Invalid format for input %d\n",itmp);
         printf("Line read = %s\n",line);
         printf("CORRECT Syntax:   variable 1 X1 = 0.0 1.0\n");
         return -1;
@@ -1801,7 +1801,7 @@ int PsuadeData::readInputSection(FILE *fp)
       sscanf(line,"%s %d", winput, &idata);
       if (idata <= 0 || idata > pInput_.nInputs_)
       {
-        printf("INPUT SECTION ERROR: invalid input number %d.\n",idata);
+        printf("INPUT SECTION ERROR: Invalid input number %d.\n",idata);
         printf("Line read = %s\n",line);
         printf("     input number should be between 1 and %d\n",nInputs);
         return -1;
@@ -1936,7 +1936,7 @@ int PsuadeData::readInputSection(FILE *fp)
         } 
         if ((fp2=fopen(winput3,"r")) == NULL)
         {
-          printf("INPUT SECTION ERROR: no S type sample file %s found.\n",
+          printf("INPUT SECTION ERROR: No S type sample file %s found.\n",
                  winput3);
           return -1;
         } 
@@ -1946,27 +1946,24 @@ int PsuadeData::readInputSection(FILE *fp)
           if (!strcmp(winput2,"PSUADE_BEGIN")) fgets(winput2, 500, fp2);
           fclose(fp2);
           sscanf(winput2,"%d %d",&itmp,&ii);
-          if (itmp >= 100000 && ii <= 10)
-          {
-            pInput_.VecInpPDFs_[idata] = PSUADE_PDF_SAMPLEHIST;
-            printf("PDF for input %d: switch from S to S2\n",idata+1); 
-          }
+          //**/ Don't remember why I did the following
+          //if (itmp >= 100000 && ii <= 10)
+          //{
+          //  pInput_.VecInpPDFs_[idata] = PSUADE_PDF_SAMPLEHIST;
+          //  printf("PDF for input %d: switch from S to S2\n",idata+1); 
+          //}
         }
         winput2[strlen(winput3)] = '\0';
         pInput_.StrSamFileNames_.loadOneString(idata,winput3);
-        if (ind < 0 || ind > nInputs)
+        if (ind < 1 || ind > nInputs)
         {
-          printf("INPUT SECTION ERROR: invalid PDF type S sample index %d\n",
+          printf("INPUT SECTION ERROR: Invalid PDF S-type index %d\n",
                  ind);
-          return -1;
-        } 
-        else ind--;
-        if (ind < 0)
-        {
-          printf("INPUT SECTION INFO: PDF type S sample index not given.\n");
-          printf("                    Index is set to the default = 1.\n");
-          ind = 0;
+          printf("                     Must be between 1 and %d\n",
+                 nInputs);
+          exit(1);
         }
+        else ind--;
         pInput_.VecInpSInds_[idata] = ind;
         pInput_.useInputPDFs_ = 1;
       }
@@ -1986,14 +1983,14 @@ int PsuadeData::readInputSection(FILE *fp)
         if (pInput_.StrSamFileNames_.numStrings() == 0)
         {
           printf("INPUT SECTION ERROR: nInputs has not been read yet.\n");
-          printf("Line read = %s\n",line);
-          return -1;
+          printf("Current line = %s\n",line);
+          exit(1);
         } 
         if ((fp2=fopen(winput3,"r")) == NULL)
         {
           printf("INPUT SECTION ERROR: S2 type sample file %s not found\n",
                  winput3);
-          return -1;
+          exit(1);
         } 
         else
         {
@@ -2004,21 +2001,24 @@ int PsuadeData::readInputSection(FILE *fp)
           if (itmp < 100000 || ii > 10)
           {
             pInput_.VecInpPDFs_[idata] = PSUADE_PDF_SAMPLE;
-            printf("INFO: PDF for input %d: switch from S2 to S\n",idata+1); 
+            printf("INFO: PDF for input %d: switch from S2 to S\n",
+                   idata+1); 
+            printf("      (since sample size < 100k or nInputs > 10)\n");
           }
         }
         winput3[strlen(winput3)] = '\0';
         pInput_.StrSamFileNames_.loadOneString(idata, winput3);
         if (ind < 0 || ind > nInputs)
         {
-          printf("INPUT SECTION ERROR: invalid PDF type S2 index %d.\n",
+          printf("INPUT SECTION ERROR: Invalid PDF type S2 index %d.\n",
                  ind);
-          return -1;
+          printf("                     Check your %s file\n",winput3);
+          exit(1);
         } 
         else ind--;
         if (ind < 0)
         {
-          printf("INPUT SECTION INFO: PDF type S2 sample index not given.\n");
+          printf("INPUT SECTION INFO: PDF type S2 sample index not given\n");
           printf("              Index set is set to the default = 1.\n");
           ind = 0;
         }
@@ -2027,7 +2027,7 @@ int PsuadeData::readInputSection(FILE *fp)
       }
       else
       {
-        printf("INPUT SECTION ERROR: input distribution %c not recognized.\n",
+        printf("INPUT SECTION ERROR: Input distribution %c not recognized\n",
                winput2[0]);
         return -1;
       } 
@@ -2052,7 +2052,7 @@ int PsuadeData::readInputSection(FILE *fp)
       if (idata < 0 || idata >= pInput_.nInputs_ ||
           itmp < 0 || itmp >= pInput_.nInputs_)
       {
-        printf("INPUT SECTION ERROR: invalid input numbers (%d,%d)\n",
+        printf("INPUT SECTION ERROR: Invalid input numbers (%d,%d)\n",
                idata+1, itmp+1);
         printf("    input numbers should be between 1 and %d\n",nInputs);
         return -1;
@@ -2113,7 +2113,7 @@ int PsuadeData::readInputSection(FILE *fp)
       idata--;
       if (idata < 0 || idata >= pInput_.nFixedInps_)
       {
-        printf("INPUT SECTION ERROR : invalid fixed input number %d\n",
+        printf("INPUT SECTION ERROR : Invalid fixed input number %d\n",
                idata+1);
         printf("    input number should be between 1 and %d\n",
                pInput_.nFixedInps_);
@@ -2148,7 +2148,7 @@ int PsuadeData::readInputSection(FILE *fp)
       sscanf(line,"%s %d", winput, &idata);
       if (idata < 1 || idata > pInput_.nInputs_)
       {
-        printf("INPUT SECTION ERROR: invalid input number %d\n",idata);
+        printf("INPUT SECTION ERROR: Invalid input number %d\n",idata);
         printf("    input number should be between 1 and %d\n",nInputs);
         return -1;
       }
@@ -2247,7 +2247,7 @@ int PsuadeData::readOutputSection(FILE *fp)
       {
         if (winput2[ii] < '0' || winput2[ii] > '9')
         {
-          printf("OUTPUT SECTION syntax ERROR: invalid dimension\n");
+          printf("OUTPUT SECTION syntax ERROR: Invalid dimension\n");
           printf("Line read = %s\n",line);
           printf("CORRECT Syntax: (an example with 1 input)\n");
           printf("    dimension = 1\n");
@@ -2288,7 +2288,7 @@ int PsuadeData::readOutputSection(FILE *fp)
       {
         if (winput2[ii] < '0' || winput2[ii] > '9')
         {
-          printf("OUTPUT SECTION syntax ERROR: invalid variable index\n");
+          printf("OUTPUT SECTION syntax ERROR: Invalid variable index\n");
           printf("Line read = %s\n",line);
           printf("CORRECT Syntax: (an example with 1 input)\n");
           printf("    dimension = 1\n");
@@ -2300,7 +2300,7 @@ int PsuadeData::readOutputSection(FILE *fp)
       idata--;
       if (idata < 0 || idata >= pOutput_.nOutputs_)
       {
-        printf("OUTPUT SECTION ERROR: invalid output no. %d.\n",
+        printf("OUTPUT SECTION ERROR: Invalid output no. %d.\n",
                idata+1);
         printf("    Output number should be between 1 and %d\n", 
                pOutput_.nOutputs_);
@@ -2356,8 +2356,8 @@ int PsuadeData::readOutputSection(FILE *fp)
 // ------------------------------------------------------------------------ 
 //  METHOD
 //     sampling <MC,FACT,LH,OA,OALH,MOAT,SOBOL,LPTAU,
-//               METIS,FAST,BBD,PBD,FF4,FF5,CCI4,CCI5,CCIF,CCF4,
-//               CCF5,CCFF,CCC4,CCC5,CCCF,SFAST,UMETIS,GMOAT,SG,RFF4,RFF5>
+//               METIS,FAST,BBD,PBD,FF4,FF5,CCI4,CCI5,CCIF,CCF4,CCF5,CCFF,
+//               CCC4,CCC5,CCCF,SFAST,UMETIS,GMOAT,SG,RFF4,RFF5,SOBOL2>
 //     randomize 
 //     randomize_more (truly randomize for replicated Latin hypercube) 
 //     num_samples 100
@@ -2378,13 +2378,13 @@ int PsuadeData::readMethodSection(FILE *fp)
                             "refinement_type", "input_settings",
                             "random_seed", "refinement_size", 
                             "num_symbols", "END"}; 
-  int  nMethods=32;
+  int  nMethods=35;
   const char *methods[] = {"MC","FACT","LH","OA","OALH","MOAT","SOBOL",
                            "LPTAU", "METIS","FAST","BBD","PBD","FF4","FF5",
                            "CCI4","CCI5", "CCIF","CCF4","CCF5","CCFF",
                            "CCC4","CCC5","CCCF", "SFAST","UMETIS","GMOAT",
                            "GMETIS","SPARSEGRID","DISCRETE", "LSA", "RFF4",
-                           "RFF5"};
+                           "RFF5","GP","SOBOL2","SOBOLG"};
 
   //**/  ----------------------------------------------------------------
   //**/  if file exists, read input data
@@ -2418,7 +2418,7 @@ int PsuadeData::readMethodSection(FILE *fp)
       }
       if (methodID >= nMethods) 
       {
-        printf("METHOD SECTION ERROR: invalid method %s.\n",winput3);
+        printf("METHOD SECTION ERROR: Invalid method %s.\n",winput3);
         return -1;
       }
     }   
@@ -2502,7 +2502,7 @@ int PsuadeData::readMethodSection(FILE *fp)
       if (idata < 1 || idata > pInput_.nInputs_ ||
           pInput_.nInputs_ == 0 || idata2 <= 0)
       {
-        printf("METHOD SECTION ERROR: invalid input %d",idata);
+        printf("METHOD SECTION ERROR: Invalid input %d",idata);
         printf(" in input_settings.\n");
         return -1;
       } 
@@ -2555,7 +2555,7 @@ int PsuadeData::readMethodSection(FILE *fp)
       if (idata < 1 || idata > pInput_.nInputs_ ||
           pInput_.nInputs_ == 0 || idata2 <= 0)
       {
-        printf("METHOD SECTION ERROR: invalid input %d",idata);
+        printf("METHOD SECTION ERROR: Invalid input %d",idata);
         printf(" in num_symbols.\n");
         return -1;
       } 
@@ -2844,12 +2844,12 @@ int PsuadeData::readApplicationSection(FILE *fp)
 
       if (pApplication_.maxParallelJobs_ < 1)
         pApplication_.maxParallelJobs_ = 1;
-      if (pApplication_.maxParallelJobs_ > 200) 
+      if (pApplication_.maxParallelJobs_ > 1000) 
       {
         printf("APPLICATION SECTION WARNING: parallel jobs = %d.\n",
                pApplication_.maxParallelJobs_);
-        printf("   Max parallel jobs too large : reset to 20.\n");
-        pApplication_.maxParallelJobs_ = 20; 
+        printf("   Max parallel jobs too large : reset to 1000.\n");
+        pApplication_.maxParallelJobs_ = 1000; 
       }
     }
     else if (strcmp(winput, keywords[6]) == 0) /* maximum job wait time */
@@ -3209,7 +3209,8 @@ int PsuadeData::readAnalysisSection(FILE *fp)
              "crude", "txmath", "appspack", "minpack", "cobyla", "sm", "mm",
              "mm_adaptive", "bobyqa", "sce", "moo", "ouu", "ouu1", "ouu2",
              "lincoa", "newuoa", "ouu_unconstr", "ouu_bndconstr",
-             "ouu_ineq_constr", "lbfgs", "ouu_lbfgs", "nomad", "ouu_minlp"};
+             "ouu_ineq_constr", "lbfgs", "ouu_lbfgs", "nomad", "ouu_minlp",
+             "pso"};
   psuadeFilter **filters;
   FILE   *fconf;
 
@@ -3288,7 +3289,7 @@ int PsuadeData::readAnalysisSection(FILE *fp)
            pAnalysis_.analysisIntOptions_[0] |= PSUADE_ANA_LSA;
         else
         {
-          printf("ANALYSIS SECTION ERROR: invalid method %s\n",winput4);
+          printf("ANALYSIS SECTION ERROR: Invalid method %s\n",winput4);
           return -1;
         }
       }
@@ -3297,7 +3298,7 @@ int PsuadeData::readAnalysisSection(FILE *fp)
         sscanf(line,"%s %s %s %lg", winput, winput2, winput3, &threshold);
         if (threshold < 0.0 || threshold > 1.0)
         {
-          printf("ANALYSIS SECTION ERROR: invalid threshold %e.\n",
+          printf("ANALYSIS SECTION ERROR: Invalid threshold %e.\n",
                  threshold);
           printf("           (threshold has to be > 0.0 and < 1.0.\n");
           return -1;
@@ -3309,7 +3310,7 @@ int PsuadeData::readAnalysisSection(FILE *fp)
         sscanf(line,"%s %s %s %d", winput, winput2, winput3, &outputID);
         if (outputID <= 0 || outputID > pOutput_.nOutputs_)
         {
-          printf("ANALYSIS SECTION ERROR: invalid output ID %d\n",
+          printf("ANALYSIS SECTION ERROR: Invalid output ID %d\n",
                  outputID);
           printf("           output ID has to be between 1 and %d\n",
                  pOutput_.nOutputs_);
@@ -3394,7 +3395,7 @@ int PsuadeData::readAnalysisSection(FILE *fp)
              rstype = PSUADE_RS_HGP3;
         else
         {
-          printf("ANALYSIS SECTION ERROR: invalid RS type %s\n",winput4);
+          printf("ANALYSIS SECTION ERROR: Invalid RS type %s\n",winput4);
           return -1;
         }
         pAnalysis_.analysisIntOptions_[2] = rstype;
@@ -3407,7 +3408,7 @@ int PsuadeData::readAnalysisSection(FILE *fp)
         else if (!strcmp(winput4,transformTypes[1])) transform |= 2;
         else
         {
-          printf("ANALYSIS SECTION ERROR: invalid transform %s\n",winput4);
+          printf("ANALYSIS SECTION ERROR: Invalid transform %s\n",winput4);
           return -1;
         }
         pAnalysis_.analysisIntOptions_[5] |= transform;
@@ -3482,21 +3483,21 @@ int PsuadeData::readAnalysisSection(FILE *fp)
       {
         sscanf(line,"%s %s %s %d", winput, winput2, winput3, 
                &pAnalysis_.legendreOrder_);
-        snprintf(winput,100,"Legendre_order = %d", pAnalysis_.legendreOrder_);
+        snprintf(winput,100,"Legendre_order = %d",pAnalysis_.legendreOrder_);
         psConfig_.putParameter(winput);
       }
       else if (strcmp(winput2, analysisOptions[10]) == 0) /* _mars_nbases */
       {
         sscanf(line,"%s %s %s %d", winput, winput2, winput3, 
                &pAnalysis_.marsNbasis_);
-        snprintf(winput,100,"MARS_num_bases = %d", pAnalysis_.marsNbasis_);
+        snprintf(winput,100,"MARS_num_bases = %d",pAnalysis_.marsNbasis_);
         psConfig_.putParameter(winput);
       }
       else if (strcmp(winput2, analysisOptions[11]) == 0) 
       {
         sscanf(line,"%s %s %s %d", winput, winput2, winput3, 
                &pAnalysis_.marsNdegrees_);
-        snprintf(winput,100,"MARS_interaction = %d", pAnalysis_.marsNdegrees_);
+        snprintf(winput,100,"MARS_interaction = %d",pAnalysis_.marsNdegrees_);
         psConfig_.putParameter(winput);
       }
       else if (strcmp(winput2, analysisOptions[12]) == 0) /* rs_num_mars*/
@@ -3506,7 +3507,7 @@ int PsuadeData::readAnalysisSection(FILE *fp)
         if (pAnalysis_.marsNum_ < 2)
         {
           pAnalysis_.marsNum_ = 51;
-          printf("ANALYSIS SECTION ERROR: invalid number of MARS (>= 2).\n");
+          printf("ANALYSIS SECTION ERROR: Invalid number of MARS (>= 2).\n");
         }
         else 
         {
@@ -3521,7 +3522,7 @@ int PsuadeData::readAnalysisSection(FILE *fp)
         if (pAnalysis_.kriMode_ < 1 || pAnalysis_.kriMode_ > 3)
         {
           pAnalysis_.kriMode_ = -1;
-          printf("ANALYSIS SECTION ERROR: invalid Kriging mode (1-3 only).\n");
+          printf("ANALYSIS SECTION ERROR: Invalid Kriging mode (1-3 only).\n");
         }
         else
         {
@@ -3536,7 +3537,7 @@ int PsuadeData::readAnalysisSection(FILE *fp)
         if (pAnalysis_.kriTol_ <= 1.0e-14 || pAnalysis_.kriTol_ > 0.1)
         {
           pAnalysis_.kriTol_ = -1;
-          printf("ANALYSIS SECTION ERROR: invalid Kriging tolerance.\n");
+          printf("ANALYSIS SECTION ERROR: Invalid Kriging tolerance.\n");
           printf("         Should be in the range of 1e-14 and 1e-1.\n");
         }
         else
@@ -3553,7 +3554,7 @@ int PsuadeData::readAnalysisSection(FILE *fp)
       else 
       {
         printf("ANALYSIS SECTION ERROR: ");
-        printf("unrecognized analyzer option - %s\n", winput2);
+        printf("Unrecognized analyzer option - %s\n", winput2);
         return -1;
       }
     }
@@ -3680,9 +3681,14 @@ int PsuadeData::readAnalysisSection(FILE *fp)
           pAnalysis_.optimizeIntOptions_[0] = 1;
           pAnalysis_.optimizeIntOptions_[1] = 22;
         }
+        else if (!strcmp(winput4, optimizeSchemes[23])) /* pso */
+        {
+          pAnalysis_.optimizeIntOptions_[0] = 1;
+          pAnalysis_.optimizeIntOptions_[1] = 23;
+        }
         else
         {
-          printf("ANALYSIS SECTION ERROR: invalid opt scheme %s\n",winput4);
+          printf("ANALYSIS SECTION ERROR: Invalid opt scheme %s\n",winput4);
           return -1;
         }
       }
@@ -3745,7 +3751,7 @@ int PsuadeData::readAnalysisSection(FILE *fp)
         sscanf(line,"%s %s %s %d", winput, winput2, winput3, &outputID);
         if (outputID <= 0 || outputID > pOutput_.nOutputs_)
         {
-          printf("ANALYSIS SECTION ERROR: invalid outputID %d\n",
+          printf("ANALYSIS SECTION ERROR: Invalid outputID %d\n",
                  outputID);
           return -1;
         }
@@ -3930,6 +3936,11 @@ int PsuadeData::readAnalysisSection(FILE *fp)
     }
     else if (strcmp(winput, keywords[20]) == 0) /* END */
     {
+      break;
+    }
+    else if (strcmp(winput, keywords[21]) == 0) /* diagnostics */
+    {
+      psConfig_.PDFDiagnosticsOn();
       break;
     }
     else if (strcmp(winput, keywords[22]) == 0) /* Create config */
@@ -4912,6 +4923,12 @@ void PsuadeData::writeAnalysisSection(FILE *fOut)
       (pAnalysis_.optimizeIntOptions_[1] == 22))
        fprintf(fOut, "   optimization method = ouu_minlp\n");
   else fprintf(fOut, "#  optimization method = ouu_minlp\n");
+  fprintf(fOut, "##==============================================\n");
+  fprintf(fOut, "## pso - particle swarm \n");
+  if ((pAnalysis_.optimizeIntOptions_[0] > 0) &&
+      (pAnalysis_.optimizeIntOptions_[1] == 23))
+       fprintf(fOut, "   optimization method = pso\n");
+  else fprintf(fOut, "#  optimization method = pso\n");
   //**/ Dec, 2015 - hide from users
   //**/ Dec, 2015 - hide from users
   //**/if ((pAnalysis_.optimizeIntOptions_[0] > 0) &&
@@ -5235,8 +5252,8 @@ void psuadeAnalysisSection::reset()
   optimizeIntOptions_[6]  = 0;
   /* maximum number of function evaluation */
   optimizeIntOptions_[7]  = 10000;
-  /* function mimumum */
-  optimizeDbleOptions_[0] = 0.0;
+  /* expected function mimumum - set to undefined (=not to be used)*/
+  optimizeDbleOptions_[0] = PSUADE_UNDEFINED;
   /* cut off point for optimization */
   optimizeDbleOptions_[1] = 1.0e50;
   /* optimization tolerance */

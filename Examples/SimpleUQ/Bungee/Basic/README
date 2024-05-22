@@ -1,10 +1,12 @@
 =============================================================
 Bungee problem
 =============================================================
-To run:
+To run: do (1a) or (1b), then do (2)
 
-cc -o simulator simulator.c -lm
-psuade psuade.in
+1a.  cc -o simulator simulator.c -lm
+1b.  use simulator.py (go to psuade.in and change driver to this)
+
+2.   psuade psuade.in
 
 This will create a file called called psuadeData with 300
 samples that have already been run. Rename this file to be
@@ -33,26 +35,26 @@ called psSave.
 
     - psuade
       > load psSave
-      > rssobol1
+      > rsvce1_sobol
       Enter your selected response surfac type
 
 (3) to perform pairwise interaction analysis
 
     - psuade
       > load psSave
-      > rssobol2
+      > rsvce2_sobol
 
 (4) to perform total order analysis
 
     - psuade
       > load psSave
-      > rssoboltsi
+      > rstsi_sobol
 
 (5) to perform group-based order analysis
 
     - psuade
       > load psSave
-      > rssobolg
+      > rsvceg_sobol
       Use 'grpfile' to specify groupings
 
 (6) to generate response surface or sample plots
@@ -156,8 +158,4 @@ Do: First, copy psScript.ensemble.in up one directory
 Normalized VCE for input   1 =  4.415e-01
 Normalized VCE for input   2 =  1.106e-02
 Normalized VCE for input   3 =  5.492e-01
-
-MI for input (  1,  2) with output =  4.172e-01 ??
-MI for input (  1,  3) with output =  4.186e-01 ??
-MI for input (  2,  3) with output =  6.637e-03 ??
 

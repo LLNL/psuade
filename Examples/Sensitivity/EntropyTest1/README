@@ -1,0 +1,82 @@
+This test studies the different metrics for entropy.
+
+The function has 2 variables and 
+
+Y = X1 * X1 + 10 * random()
+
+**********************************************************************
+Result: (nSam1=4000, nSam2=4000, nLevels=100)
+Calculating H(Y) induced by input 1
+  Input   1: 
+        H(E_{~X}[Y|X])         =  3.060e+00 (VCE-like)
+        E_{X}[H(Y|X)] = H(Y|X) =  0.000e+00
+        H(Y) - E_{X}[H(Y|X)]   =  3.079e+00 (TSI-Like)
+        H(X)                   =  2.079e+00
+        H(X,Y) = H(Y|X) + H(X) =  2.079e+00
+Calculating H(Y) induced by input 2
+  Input   2: 
+        H(E_{~X}[Y|X])         =  2.290e+00 (VCE-like)
+        E_{X}[H(Y|X)] = H(Y|X) =  2.469e+00
+        H(Y) - E_{X}[H(Y|X)]   =  6.098e-01 (TSI-Like)
+        H(X)                   =  2.079e+00
+        H(X,Y) = H(Y|X) + H(X) =  4.548e+00
+----------------------------------------------------------------------
+Input    1 entropy = 3.078819e+00 (TotalEnt - E_{X}[H(Y|~X)])
+Input    2 entropy = 6.098388e-01 (TotalEnt - E_{X}[H(Y|~X)])
+Total output entropy = 3.078819e+00
+**********************************************************************
+Result: (nSam1=8000, nSam2=8000, nLevels=100)
+Calculating H(Y) induced by input 1
+  Input   1: 
+        H(E_{~X}[Y|X])         =  3.071e+00 (VCE-like)
+        E_{X}[H(Y|X)] = H(Y|X) =  0.000e+00
+        H(Y) - E_{X}[H(Y|X)]   =  3.079e+00 (TSI-Like)
+        H(X)                   =  2.079e+00
+        H(X,Y) = H(Y|X) + H(X) =  2.079e+00
+Calculating H(Y) induced by input 2
+  Input   2: 
+        H(E_{~X}[Y|X])         =  2.296e+00 (VCE-like)
+        E_{X}[H(Y|X)] = H(Y|X) =  2.469e+00
+        H(Y) - E_{X}[H(Y|X)]   =  6.097e-01 (TSI-Like)
+        H(X)                   =  2.079e+00
+        H(X,Y) = H(Y|X) + H(X) =  4.548e+00
+----------------------------------------------------------------------
+Input    1 entropy = 3.078819e+00 (TotalEnt - E_{X}[H(Y|~X)])
+Input    2 entropy = 6.096602e-01 (TotalEnt - E_{X}[H(Y|~X)])
+Total output entropy = 3.078819e+00
+**********************************************************************
+Result: (nSam1=4000, nSam2=4000, nLevels=200)
+Calculating H(Y) induced by input 1
+  Input   1: 
+        H(E_{~X}[Y|X])         =  3.051e+00 (VCE-like)
+        E_{X}[H(Y|X)] = H(Y|X) =  0.000e+00
+        H(Y) - E_{X}[H(Y|X)]   =  3.077e+00 (TSI-Like)
+        H(X)                   =  2.079e+00
+        H(X,Y) = H(Y|X) + H(X) =  2.079e+00
+Calculating H(Y) induced by input 2
+  Input   2: 
+        H(E_{~X}[Y|X])         =  2.275e+00 (VCE-like)
+        E_{X}[H(Y|X)] = H(Y|X) =  2.467e+00
+        H(Y) - E_{X}[H(Y|X)]   =  6.104e-01 (TSI-Like)
+        H(X)                   =  2.079e+00
+        H(X,Y) = H(Y|X) + H(X) =  4.546e+00
+----------------------------------------------------------------------
+Input    1 entropy = 3.077384e+00 (TotalEnt - E_{X}[H(Y|~X)])
+Input    2 entropy = 6.103669e-01 (TotalEnt - E_{X}[H(Y|~X)])
+Total output entropy = 3.077384e+00
+**********************************************************************
+
+Interpretation:
+* Main sensitivity measure:
+  Input 1: H(Y) - E_{X}[H(Y|~X)] = 3.079e+00 (TSI-Like)
+  Input 2: H(Y) - E_{X}[H(Y|~X)] = 6.098e-01 (TSI-Like)
+* Since input 1 completely determines Y, 
+  entropy measure ~ H(Y)
+  Since Y does not depend on input 2, 
+  sensitivity measure for X1 ~ H(E_{~X}[Y|X]), where 
+     Y = random*10 (uniform[a,b] = log(b-a)) = 2.3026
+* VCE
+  Input 1, 1st-order effect =  7.34e-01 (raw =  2.36e+01)
+  Input 2, 1st-order effect =  7.30e-04 (raw =  2.34e-02)
+  Total VCE =  7.34e-01 
+

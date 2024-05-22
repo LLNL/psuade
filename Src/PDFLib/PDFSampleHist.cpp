@@ -56,8 +56,8 @@ PDFSampleHist::PDFSampleHist(char *fname, int scount, int *indices)
   //**/ -------------------------------------------------------------
   if (fname == NULL || !strcmp(fname, "NONE"))
   {
-    printf("PDFSampleHist constructor: expecting a sample file.\n");
-    printf("                         having the following format: \n");
+    printf("PDFSampleHist: Expecting a sample file having the ");
+    printf("following format: \n");
     printf("line 1: (optional) PSUADE_BEGIN\n");
     printf("line 2: <number of sample points> <number of inputs>\n");
     printf("line 3: (optional) : '#' followed by input names\n");
@@ -71,7 +71,7 @@ PDFSampleHist::PDFSampleHist(char *fname, int scount, int *indices)
     nn = strlen(filename);
     if (nn > 1000)
     {
-      printf("PDFSampleHist constructor ERROR: file name too long.\n");
+      printf("PDFSampleHist ERROR: file name too long.\n");
       exit(1);
     }
     filename[nn-1] = '\0';
@@ -87,7 +87,8 @@ PDFSampleHist::PDFSampleHist(char *fname, int scount, int *indices)
   fp = fopen(filename, "r");
   if (fp == NULL)
   {
-    printf("PDFSampleHist ERROR: cannot open sample file %s.\n",filename);
+    printf("PDFSampleHist ERROR: Cannot open sample file %s.\n",
+           filename);
     exit(1);
   }
   fscanf(fp, "%s", pString);
@@ -99,12 +100,12 @@ PDFSampleHist::PDFSampleHist(char *fname, int scount, int *indices)
   fscanf(fp, "%d %d", &nSamples_, &nInps);
   if (nSamples_ < 100000)
   {
-    printf("PDFSampleHist ERROR: sample file has nSamples < 100000.\n");
+    printf("PDFSampleHist ERROR: Sample file has nSamples < 100000.\n");
     exit(1);
   }
   if (nInps < 1 || nInps > 10)
   {
-    printf("PDFSampleHist ERROR: sample file has nInputs <= 0 or > 10.\n");
+    printf("PDFSampleHist ERROR: Sample file has nInputs <= 0 or > 10.\n");
     exit(1);
   }
   //**/ if sample file has different nInputs than the declared nInputs, 
@@ -122,10 +123,11 @@ PDFSampleHist::PDFSampleHist(char *fname, int scount, int *indices)
     {
       if (indices[ii] < 0 || indices[ii] >= nInps)
       {
-        printf("PDFSampleHist ERROR: sample index > nInputs in sample file.\n");
-        printf("            sample index requested         = %d\n",
+        printf("PDFSampleHist ERROR: Sample index > nInputs.\n");
+        printf("              sample index requested         = %d\n",
                indices[ii]+1);
-        printf("            nInputs in your sample file    = %d\n",nInps);
+        printf("              nInputs in your sample file    = %d\n",
+               nInps);
         exit(1);
       } 
     }
@@ -150,9 +152,10 @@ PDFSampleHist::PDFSampleHist(char *fname, int scount, int *indices)
     if (nn != (ii+1))
     {
       printf("PDFSampleHist ERROR: invalid sample number.\n");
-      printf("            Expected: %d\n", ii+1);
-      printf("            Read:     %d\n", nn);
-      printf("Advice: check your data format and line number %d.\n\n",ii+2);
+      printf("              Expected: %d\n", ii+1);
+      printf("              Read:     %d\n", nn);
+      printf("Advice: check your data format and line number %d.\n\n",
+             ii+2);
       printf("Correct Format: \n");
       printf("line 1: (optional) PSUADE_BEGIN\n");
       printf("line 2: <number of sample points> <number of inputs>\n");
@@ -181,19 +184,20 @@ PDFSampleHist::PDFSampleHist(char *fname, int scount, int *indices)
   //**/fscanf(fp, "%s", pString);
   //**/if (strcmp(pString, "PSUADE_END"))
   //**/{
-  //**/   printf("PDFSampleHist ERROR: file should end with PSUADE_END.\n");
-  //**/   exit(1);
+  //**/  printf("PDFSampleHist ERROR: File should end with PSUADE_END\n");
+  //**/  exit(1);
   //**/} 
   fclose(fp);
-  printOutTS(PL_INFO,"PDFSampleHist INFO: sample file '%s' has been read.\n", 
-             fname);
+  printOutTS(PL_INFO,
+      "PDFSampleHist INFO: Sample file '%s' has been read.\n",fname);
   printOutTS(PL_INFO,"   Sample size   = %d\n", nSamples_);
   printOutTS(PL_INFO,"   No. of inputs = %d\n", nInputs_);
   if (indices != NULL)
   {
     for (ii = 0; ii < nInputs_; ii++)
-      printOutTS(PL_INFO,"   Input %d has column %d in the sample file.\n",
-                 ii+1, indices[ii]+1);
+      printOutTS(PL_INFO,
+        "   Input %d has column %d in the sample file.\n",ii+1, 
+        indices[ii]+1);
   }
   //**/ -------------------------------------------------------------
   //**/ generate pdf
@@ -214,7 +218,7 @@ PDFSampleHist::PDFSampleHist(char *fname, int scount, int *indices)
     vecUpperBs_[ii] = dmax + 0.01 * (dmax - dmin);
     if (vecLowerBs_[ii] == vecUpperBs_[ii])
     {
-      printf("PDFSampleHist ERROR: upper bound=lower bound for input %d.\n",
+      printf("PDFSampleHist ERROR: Upper bound=lower bound for input %d.\n",
              ii+1);
       exit(1);
     }

@@ -1,20 +1,27 @@
+sys cc -o simulator simulator.c -lm
+run psSim.in
+rename psuadeData simdata
+sys cc -o experiment experiment.c -lm
+run psExper.in
+load psuadeData
+write_std exp.std
+sys cc -o processExp processExp.c -lm
+sys processExp
 load simdata
 ana_expert
 rsmcmc
 y
-3
-
+1
 expdata
 n
 2
 500000
-20
--1
 y
 1
-y
-y
-0.5
-1
+n
+2
+3
+1.05
+n
 q
 

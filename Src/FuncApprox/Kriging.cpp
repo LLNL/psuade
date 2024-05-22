@@ -137,6 +137,9 @@ extern "C"
       (*YValue) = KRI_OptY;
       return NULL;
     }
+    if (psConfig_.RSExpertModeIsOn() && KRI_outputLevel > 3)
+      printf("\t Kriging : iteration %d\n", KRI_iter);
+
     //**/ =======================================================
     //**/ fill matrix
     //**/ =======================================================
@@ -455,6 +458,8 @@ Kriging::Kriging(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
       printf("(4) another fast mode using another optimization\n");
       snprintf(pString,100,"Please select mode (1 - 3) : ");
       fastMode_ = getInt(1,4,pString);
+      snprintf(pString,100,"RS_KRI_mode = %d", fastMode_);
+      psConfig_.putParameter(pString);
       if (fastMode_ == 1)
       {
         for (ii = 0; ii < nInputs_; ii++)
@@ -467,6 +472,9 @@ Kriging::Kriging(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
             printf("ERROR: theta <= 0 not valid.\n");
             exit(1);
           }
+          snprintf(pString,100,"RS_KRI_LENG_SCALE %d = %e",ii+1,
+                   VecThetas_[ii]);
+          psConfig_.putParameter(pString);
           if (ii == 0)
           {
             snprintf(pString,100,"Use %e for all other thetas? (y or n) ",
@@ -475,7 +483,12 @@ Kriging::Kriging(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
             if (winput[0] == 'y')
             {
               for (jj = 1; jj < nInputs_; jj++) 
+              {
                 VecThetas_[jj] = VecThetas_[0];
+                snprintf(pString,100,"RS_KRI_LENG_SCALE %d = %e",jj+1,
+                         VecThetas_[0]);
+                psConfig_.putParameter(pString);
+              }
               break;
             }
           }
@@ -491,6 +504,9 @@ Kriging::Kriging(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
           printf("              Tolerance set to default = 1.0e-4.\n");
           optTolerance_ = 1.0e-4;
         }
+        snprintf(pString,100,"RS_KRI_tol = %e", optTolerance_);
+        psConfig_.putParameter(pString);
+
         if (fastMode_ == 2)
         {
           printf("Kriging: Current initial parameter values (thetas) are:\n");
@@ -528,7 +544,7 @@ Kriging::Kriging(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
 
       //**/ nugget is a positive small value added to the diagonal of the
       //**/ covariance matrix
-      if (psConfig_.MasterModeIsOn())
+      if (psConfig_.MasterModeIsOn() && psConfig_.InteractiveIsOn())
       {
         snprintf(pString,100,"Add nugget? (y or n) ");
         getString(pString, winput);
@@ -540,6 +556,8 @@ Kriging::Kriging(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
             snprintf(pString,100,"Enter nugget ([0,1)) : ");
             KRI_nugget = getDouble(pString);
           }
+          snprintf(pString,100,"RS_KRI_nugget = %e",KRI_nugget);
+          psConfig_.putParameter(pString);
         }
       }
     }
@@ -549,7 +567,9 @@ Kriging::Kriging(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
     //**/ =======================================================
     // read from configure file, if any 
     //**/ =======================================================
-    strPtr = psConfig_.getParameter("KRI_mode");
+
+    //**/ get mode
+    strPtr = psConfig_.getParameter("RS_KRI_mode");
     if (strPtr != NULL)
     {
       sscanf(strPtr, "%s %s %d", winput, winput2, &ii);
@@ -564,7 +584,9 @@ Kriging::Kriging(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
         printf("Kriging INFO: mode from config = %d.\n",fastMode_);
       }
     }
-    strPtr = psConfig_.getParameter("KRI_tol");
+
+    //**/ get tolerance
+    strPtr = psConfig_.getParameter("RS_KRI_tol");
     if (strPtr != NULL)
     {
       sscanf(strPtr, "%s %s %lg", winput, winput2, &optTolerance_);
@@ -580,23 +602,36 @@ Kriging::Kriging(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
                optTolerance_);
       }
     }
-    strPtr = psConfig_.getParameter("KRI_LENG_SCALE");
+
+    //**/ get length scales
+    strPtr = psConfig_.getParameter("RS_KRI_LENG_SCALE");
     if (strPtr != NULL)
     {
       sscanf(strPtr, "%s %d %s %lg", winput, &ii, winput2, &ddata);
       if (ii < 1 || ii > nInputs_)
       {
-        printf("Kriging INFO: invalid input number for parameter.\n");
+        printf("Kriging INFO: Invalid input number for parameter.\n");
         printf("              Input number read = %d.\n", ii);
       }
       else
       {
         VecThetas_[ii-1] = ddata;
-        printf("Kriging INFO: parameter value %d set to %e.\n",
+        printf("Kriging INFO: Parameter value %d set to %e.\n",
                ii, ddata);
       }
     }
-    strPtr = psConfig_.getParameter("KRI_DATA_STDEV_FILE");
+
+    //**/ get nugget 
+    strPtr = psConfig_.getParameter("RS_KRI_nugget");
+    if (strPtr != NULL)
+    {
+      sscanf(strPtr, "%s %s %lg", winput, winput2, &KRI_nugget);
+      if (KRI_nugget >= 1.0 || KRI_nugget < 0.0) KRI_nugget = 0.9;
+      printf("Kriging INFO: nugget from config = %e.\n",KRI_nugget);
+    }
+
+    //**/ get standard deviations
+    strPtr = psConfig_.getParameter("RS_KRI_DATA_STDEV_FILE");
     if (strPtr != NULL)
     {
       sscanf(strPtr, "%s %s %s", winput, winput2, fname);
@@ -1011,7 +1046,7 @@ double Kriging::train(double *X, double *Y)
   //**/ if there are repeated points, the covariance matrix will be
   //**/ singular. 
   //**/ ============================================================
-  if (fastMode_ == 2 || fastMode_ == 3) 
+  if (fastMode_ >= 1 && fastMode_ <= 3) 
   {
     status = computeDistances(VecXDists);
     if (status != 0)
@@ -1085,7 +1120,7 @@ double Kriging::train(double *X, double *Y)
     fp = fopen("psuade_stop", "r");
     if (fp != NULL)
     {
-      printf("Kriging ERROR: remove the 'psuade_stop' file\n");
+      printf("Kriging ERROR: Remove the 'psuade_stop' file\n");
       printf("               first and re-do.\n");
       fclose(fp);
       exit(1);
@@ -1180,10 +1215,10 @@ double Kriging::train(double *X, double *Y)
       if (outputLevel_ >= 1) 
         printf("Kriging training (3) begins.... (order = %d)\n",pOrder_);
       mode = 1;
-      nSamOpt = 10;
+      nSamOpt = 5;
       if (psConfig_.GMModeIsOn() && psConfig_.InteractiveIsOn())
       {
-        printf("Kriging: slow mode with multi-start (10) optimization.\n");
+        printf("Kriging: slow mode with multi-start (5) optimization.\n");
         printf("Choose sampling method to generate multi-start.\n");
         snprintf(pString,100,"Sampling method (1-QMC, 2-LHS, 3-FF) : ");
         mode = getInt(1,3,pString);
@@ -1320,7 +1355,7 @@ double Kriging::train(double *X, double *Y)
           VecOptThetas[ii] = KRI_VecOptThetas[ii];
         if (optY < rhoend)
         {
-          if (outputLevel_ > 2) 
+          if (outputLevel_ > 1) 
             printf("Kriging INFO: termination (sufficiently accurate)\n");
           break;
         }
@@ -1363,7 +1398,7 @@ double Kriging::train(double *X, double *Y)
         {
           if (outputLevel_ > 1) 
           {
-            printf("Kriging INFO: same optimum after %d iterations.\n",
+            printf("Kriging INFO: Same optimum after %d iterations.\n",
                    kk+1);
             printf("              Stop further processing.\n");
           }
@@ -1560,10 +1595,10 @@ double Kriging::train(double *X, double *Y)
   {
     FILE *fp = fopen("psuade_kriging_optdata", "w");
     for (ii = 0; ii < nInputs_; ii++)
-      fprintf(fp,"%e ", VecThetas_[ii]);
-    fprintf(fp, "\n");
+      fprintf(fp,"%e\n", VecThetas_[ii]);
     fclose(fp);
-    printf("INFO: Kriging optimal parameters are in psuade_kriging_optdata.\n");
+    printf("INFO: Kriging optimal parameters are in ");
+    printf("psuade_kriging_optdata.\n");
   }
   if (noReuse_ == 1 || !psConfig_.RSCodeGenIsOn()) return 0;
   genRSCode();

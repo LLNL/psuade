@@ -39,10 +39,12 @@
 // ************************************************************************
 // external functions
 // ************************************************************************
+#ifdef HAVE_BOSE
 extern "C" 
 {
   void OA_strength(int q,int nrow,int ncol,int** A,int *str,int verbose);
 }
+#endif
 
 // ************************************************************************
 // Constructor 
@@ -194,6 +196,7 @@ int LHSampling::initialize(int initLevel)
   //**/ ----------------------------------------------------------------
   //**/ check for correctness 
   //**/ ----------------------------------------------------------------
+#ifdef HAVE_BOSE
   if (nSamples_ < 1000)
   {
     int *intPtr = vecPerm.getIVector();
@@ -214,6 +217,7 @@ int LHSampling::initialize(int initLevel)
       }
     }
   }
+#endif
 
   //**/ ----------------------------------------------------------------
   //**/ crude optimization if CE is not used
@@ -733,11 +737,13 @@ int LHSampling::refine(int refineRatio, int randomize, double thresh,
           permMatrix[ss][ii] = jj-1;
         }
       }
+#ifdef HAVE_BOSE
       OA_strength(nSamples_/nReps, nSymbols_, nInputs_,
                   permMatrix, &strength, 0);
       if (strength != 1)
         printf("LHS refine ERROR : replication %d : OA_strength = %d\n",
                repID, strength);
+#endif
       sampleOffset += (nSamples_/nReps);
     }
     for (ss = 0; ss < nSamples_/nReps; ss++) delete [] permMatrix[ss];

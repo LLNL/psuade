@@ -23,6 +23,6 @@ ANALYSIS
    analyzer method = Moment
    analyzer output_id  = 1
    analyzer threshold = 1e-4
-   printlevel 5
+   printlevel 1
 END
 END

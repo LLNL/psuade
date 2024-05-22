@@ -42,6 +42,7 @@ oData::oData()
   lowerBounds_ = NULL;
   upperBounds_ = NULL;
   optimalX_ = NULL;
+  targetY_ = PSUADE_UNDEFINED;
   funcIO_ = NULL;
   psIO_ = NULL;
   intData_ = -1;

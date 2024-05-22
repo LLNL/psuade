@@ -31,6 +31,9 @@
 #include <string.h>
 #include <math.h>
 #include "Sampling.h"
+#include "psMatrix.h"
+#include "psVector.h"
+#include "pdfData.h"
 
 /**
  * @name Sobol samping method
@@ -42,37 +45,72 @@
 // ************************************************************************
 class SobolSampling: public Sampling 
 {
+  int order_;
+  psVector VecM1_;
+  psVector VecM2_;
+
 public:
 
-   /** constructor */
-   SobolSampling();
+  /** constructor */
+  SobolSampling();
 
-   /** destructor */
-   ~SobolSampling();
+  /** destructor */
+  ~SobolSampling();
 
-   /** initialization 
-       @param flag: flag to signal how far to initialize
-    */
-   int initialize(int flag);
+  /** initialization 
+      @param flag: flag to signal how far to initialize
+   */
+  int initialize(int flag);
 
-   /** This function refines an incoming sample
-       @param ratio: refinement ratio
-       @param randomize: generate randomized sample
-       @param thresh: threshold
-       @param nSamples: sample size
-       @param sampleErrs: errors for each sample point
-    */
-   int refine(int ratio,int randomize,double thresh,int nSamples,
-              double *sampleErrs);
+  /** initialization for second order 
+      @param flag: flag to signal how far to initialize
+   */
+  int initialize2(int flag);
 
-   /** This function overloads the assignment operator
-       @param obj : Sampling object
-    */
-   SobolSampling& operator=(const SobolSampling &);
+  /** initialization for second order 
+      @param flag: flag to signal how far to initialize
+      @param matGrp: matrix to provide group information
+   */
+  int initialize3(int flag, psIMatrix matGrp);
+
+  /** This function refines an incoming sample
+      @param ratio: refinement ratio
+      @param randomize: generate randomized sample
+      @param thresh: threshold
+      @param nSamples: sample size
+      @param sampleErrs: errors for each sample point
+   */
+  int refine(int ratio,int randomize,double thresh,int nSamples,
+             double *sampleErrs);
+
+  /** This function sets M1 and M2
+      @param vecM - 2 samples
+   */
+  int setM1M2(psVector vecM);
+
+  /** This function creates M1 and M2 from some distributions
+      @param sobj 
+   */
+  int createM1M2(pdfData sobj);
+
+  /** This function sets first or second order 
+      @param order - 1, 2, or 3
+   */
+  int setOrder(int order);
+
+  /** This function sets internal parameter
+      @param sparam 
+   */
+  int setParam(char *sparam);
+
+  /** This function overloads the assignment operator
+      @param obj : Sampling object
+   */
+  SobolSampling& operator=(const SobolSampling &);
 
 private:
 
-   int generate(double **, int);
+  int generate(double **, int);
 };
 
 #endif // __SOBOLSAMPLINGH__

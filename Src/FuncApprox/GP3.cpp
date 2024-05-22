@@ -98,57 +98,62 @@ GP3::GP3(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
   optLinTerm_ = 0;
   faID_ = PSUADE_RS_GP3;
   expPower_ = 2.0; // but some prefers 1.9 (more stable?)
-  nStarts_ = 10;   // number of starts in optimization
+  nStarts_  = 5;   // number of starts in optimization
   strcpy(hyperParamFile_, ".psuade_gp3");
   if (psConfig_.InteractiveIsOn())
   {
     printAsterisks(PL_INFO, 0);
     printOutTS(PL_INFO,
          "*           Gaussian Process Model\n");
-    printOutTS(PL_INFO,"* Default exponential degree    = %e\n",expPower_);
-    printOutTS(PL_INFO,"* Number of optimization starts = %d\n",nStarts_);
+    printOutTS(PL_INFO,
+         "* Default exponential degree    = %e\n",expPower_);
+    printOutTS(PL_INFO,
+         "* Number of optimization starts = %d\n",nStarts_);
     printEquals(PL_INFO, 0);
   }
   if (psConfig_.InteractiveIsOn() && psConfig_.RSExpertModeIsOn())
   {
     char pString[101];
-    printOutTS(PL_INFO,"* Default exponential degree = %e\n",expPower_);
+    printOutTS(PL_INFO,
+         "* Default exponential degree = %e\n",expPower_);
     snprintf(pString,100,"Set the exponential degree to? [1.5,2.0] ");
     expPower_ = 1;
     while (expPower_ < 1.5 || expPower_ > 2) 
       expPower_ = getDouble(pString);
     printf("GP3: Exponential degree = %e\n", expPower_);
-    snprintf(pString,100,"GP_power = %e", expPower_);
+    snprintf(pString,100,"RS_GP_power = %e", expPower_);
     psConfig_.putParameter(pString);
     printOutTS(PL_INFO,
          "* Default optimization choice = %d starts\n",nStarts_);
-    snprintf(pString,100,"Set the number of optimization starts ? [1 - 20] ");
+    snprintf(pString,100,
+             "Set the number of optimization starts ? [1 - 20] ");
     nStarts_ = getInt(1, 20, pString);
     printf("GP3: opt num_starts = %d\n", nStarts_);
-    snprintf(pString,100,"GP_nstarts = %d", nStarts_);
+    snprintf(pString,100,"RS_GP_nstarts = %d", nStarts_);
     psConfig_.putParameter(pString);
   }
   else
   {
     char winput1[1000], winput2[1000];
-    char *cString = psConfig_.getParameter("GP_power");
+    char *cString = psConfig_.getParameter("RS_GP_power");
     if (cString != NULL)
     {
       sscanf(cString, "%s %s %lg", winput1, winput2, &expPower_);
       if (expPower_ < 1.5 || expPower_ > 2) 
       {
-        printOutTS(PL_INFO,"GP3 exponential (%e) invalid - reset to 2\n",
-                   expPower_);
+        printOutTS(PL_INFO,
+           "GP3 exponential (%e) invalid - reset to 2\n",expPower_);
         expPower_ = 2.0;
       }
-      if (psConfig_.InteractiveIsOn())
-        printOutTS(PL_INFO,"GP3 exponential degree set to %e\n",expPower_);
+      printOutTS(PL_INFO,"GP3 INFO: exponential degree set to %e\n",
+                   expPower_);
     }
-    cString = psConfig_.getParameter("GP_nstarts");
+    cString = psConfig_.getParameter("RS_GP_nstarts");
     if (cString != NULL)
     {
       sscanf(cString, "%s %s %d", winput1, winput2, &nStarts_);
-      printOutTS(PL_INFO,"GP3 Number of optimization starts = %d\n",nStarts_);
+      printOutTS(PL_INFO,
+         "GP3 INFO: Number of optimization starts = %d\n",nStarts_);
     } 
   }
 }
@@ -498,7 +503,7 @@ double GP3::evaluatePoint(int npts, double *X, double *Y)
 
   if (VecXMeans_.length() == 0)
   {
-    printf("GP3 ERROR : not initialized yet.\n");
+    printf("GP3 ERROR : Not initialized yet.\n");
     exit(1);
   }
   VecXX.setLength(npts*nInputs_);
@@ -522,7 +527,7 @@ double GP3::evaluatePointFuzzy(double *X, double &std)
 
   if (VecXMeans_.length() == 0)
   {
-    printf("GP3 ERROR : not initialized yet.\n");
+    printf("GP3 ERROR : Not initialized yet.\n");
     exit(1);
   }
   VecXX.setLength(nInputs_);
@@ -545,7 +550,7 @@ double GP3::evaluatePointFuzzy(int npts,double *X, double *Y,double *Ystds)
 
   if (VecXMeans_.length() == 0)
   {
-    printf("GP3 ERROR : not initialized yet.\n");
+    printf("GP3 ERROR : Not initialized yet.\n");
     exit(1);
   }
   VecXX.setLength(npts*nInputs_);
@@ -557,8 +562,9 @@ double GP3::evaluatePointFuzzy(int npts,double *X, double *Y,double *Ystds)
   for (int ii = 0; ii < npts; ii++)
   {
     Y[ii] = Y[ii] * YStd_ + YMean_;
-    if (Ystds[ii] < 0) printf("GP3 ERROR: variance (%e) < 0\n", Ystds[ii]);
-    else               Ystds[ii] = sqrt(Ystds[ii]) * YStd_;
+    if (Ystds[ii] < 0) 
+         printf("GP3 ERROR: variance (%e) < 0\n", Ystds[ii]);
+    else Ystds[ii] = sqrt(Ystds[ii]) * YStd_;
   }
   return 0.0;
 }
@@ -682,8 +688,10 @@ int GP3::train()
     }   
     if (errFlag == 1)
     {
-      printf("GP3 INFO: Hyperparameter file is found but it is not valid.\n");
-      printf("          Will perform optimization to obtain Hyperparameters.\n");
+      printf("GP3 INFO: Hyperparameter file is found but ");
+      printf("it is not valid.\n");
+      printf("          Will perform optimization to obtain ");
+      printf("Hyperparameters.\n");
       //snprintf(pString,100,"Enter hyperparameters manually ? (y or n) ");
       //getString(pString, winput);
       //if (winput[0] == 'y')
@@ -809,9 +817,9 @@ int GP3::train()
     //**/ nugget for diagonal of the covariance matrix
     //**/ if nInputs == 2, nugget should be larger to
     //**/ avoid oscillations
-    VecLB[nInputs_+3] = -24;
+    VecLB[nInputs_+3] = -16;
     if (nInputs_ <= 2) VecLB[nInputs_+3] = log(1e-12);
-    VecUB[nInputs_+3] = - 2;
+    VecUB[nInputs_+3] = -2;
     count = nInputs_ + 4;
     if (optLinTerm_) 
     {
@@ -827,12 +835,15 @@ int GP3::train()
         printf("   Hyperparameter bounds %3d = %12.4e %12.4e\n",ii+1,
                VecLB[ii],VecUB[ii]);
     }
+
+    //**/ create a sample to be used as multi-starts
     nSamp = nStarts_;
     if (nhypers > 51)
       sampler = SamplingCreateFromID(PSUADE_SAMP_LHS);
     else
       sampler = SamplingCreateFromID(PSUADE_SAMP_LPTAU);
-    sampler->setInputBounds(nhypers,VecLB.getDVector(),VecUB.getDVector());
+    sampler->setInputBounds(nhypers,VecLB.getDVector(),
+                            VecUB.getDVector());
     sampler->setOutputParams(1);
     sampler->setSamplingParams(nSamp, 1, 0);
     sampler->initialize(0);
@@ -868,6 +879,23 @@ int GP3::train()
              nLBFGS);
     for (ii = 0; ii < nLBFGS; ii++)
     {
+      //**/ on-the-fly modification of output print level
+      fp = fopen("psuade_print", "r");
+      if (fp != NULL)
+      {
+        fscanf(fp, "%d", &outputLevel_);
+        fclose(fp);
+        fp = NULL;
+        if (outputLevel_ > 0 && outputLevel_ <= 5)
+          printf("GP3: Output level set to %d.\n", outputLevel_);
+        else
+        {
+          outputLevel_ = 4;
+          printf("GP3: Output level set to %d.\n", outputLevel_);
+        }
+      }
+
+      //**/ display initial information for current iteration
       if (psConfig_.InteractiveIsOn() && outputLevel_ > 1)
         printf("GP3 LBFGS #%d (%d)\n",ii+1, nLBFGS);
       for (jj = 0; jj < nInps; jj++) VecPVals[jj] = VecXS[ii*nInps+jj];
@@ -878,6 +906,8 @@ int GP3::train()
           printf("   Hyperparameter %2d = %e\n",jj+1,
                  VecPVals[jj]);
       }
+
+      //**/ initialization for optimization
       nHist = 0;
       fail = 0;
       its = 0;
@@ -940,16 +970,16 @@ int GP3::train()
               if (psConfig_.InteractiveIsOn() && outputLevel_ > 3) 
               {
                 printf("INFO: PSUADE issues a stop (converged))\n");
-                printf("INFO: current iteration   = %d\n", its);
-                printf("INFO: current best FValue = %e (%e)\n",minVal,
+                printf("INFO: Current iteration   = %d\n", its);
+                printf("INFO: Current best FValue = %e (%e)\n",minVal,
                        PABS(dstd/dmean));
-                printf("INFO: current grad norm   = %e\n",dtemp);
+                printf("INFO: Current grad norm   = %e\n",dtemp);
               }
             }
             else
             {
               if (psConfig_.InteractiveIsOn() && outputLevel_ > 3) 
-                printf("INFO: convergence check: %e < 1e-3?\n",
+                printf("INFO: Convergence check: %e < 1e-3?\n",
                        PABS(dstd/dmean));
             }
           }
@@ -959,7 +989,7 @@ int GP3::train()
             if (outputLevel_ > 3) 
             {
               printf("INFO: PSUADE issues a stop (> 300 iterations)\n");
-              printf("INFO: current best FValue = %e\n", minVal);
+              printf("INFO: Current best FValue = %e\n", minVal);
             }
           }
         }
@@ -977,7 +1007,7 @@ int GP3::train()
           if (psConfig_.InteractiveIsOn() && outputLevel_ > 3) 
           {
             printf("INFO: LBFGS issues a stop (its = %d)\n",its);
-            printf("INFO: current best FValue = %e\n", minVal);
+            printf("INFO: Current best FValue = %e\n", minVal);
           }
           break;
         }
@@ -1006,7 +1036,7 @@ int GP3::train()
   }
   else if (optimizeFlag == 2)
   {
-    printf("GP3: you are choosing optimization option 2.\n");
+    printf("GP3: You are choosing optimization option 2.\n");
     printf("     This isn't working as good as option 1.\n");
     nhypers = VecHypers_.length();
     VecPVals.setLength(nhypers);

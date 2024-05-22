@@ -96,7 +96,6 @@ double MOATAnalyzer::analyze(aData &adata)
   BootstrapAnalyzer bsAnalyzer;
   aData             bData;
   pData             qData;
-  MOATConstraints   *constrPtr;
   psVector          YY,YG,XG,YB,Xbase,XSort,YSort,sortedModifiedMeans;
   psVector          indexes;
   psIVector         counts, indexTrack; 
@@ -184,16 +183,15 @@ double MOATAnalyzer::analyze(aData &adata)
     dtemp2 = XUpper[ii] - XLower[ii];
     if (psConfig_.InteractiveIsOn() && PABS(dtemp-dtemp2) > 1.0e-6)
     {
-      printOutTS(PL_WARN, 
-          "MOATAnalyzer WARNING: input and data range mismatch but there\n");
-      printOutTS(PL_WARN, 
-          "             is no need to be alarmed, as this may be the\n");
-      printOutTS(PL_WARN, 
-          "             result of applying MOAT constraints. However, it\n");
-      printOutTS(PL_WARN, 
-          "             may also be due to applying input transformation\n");
-      printOutTS(PL_WARN, 
-          "             in which case you need to make proper changes.\n");
+      printOutTS(PL_WARN,"MOATAnalyzer WARNING: Input and data ");
+      printOutTS(PL_WARN,"range mismatch but there is no\n");
+      printOutTS(PL_WARN,"             need to be alarmed, as ");
+      printOutTS(PL_WARN,"this may be the result of applying\n");
+      printOutTS(PL_WARN,"             MOAT constraints. ");
+      printOutTS(PL_WARN,"However, it may also be due to using\n");
+      printOutTS(PL_WARN,"             input transformation ");
+      printOutTS(PL_WARN,"in which case you may need to make\n");
+      printOutTS(PL_WARN,"             proper changes.\n");
       printOutTS(PL_WARN, "    Diagnostics: \n");
       printOutTS(PL_WARN, 
           "    Input %3d: original vs new ranges = %e %e\n", ii+1,
@@ -204,7 +202,7 @@ double MOATAnalyzer::analyze(aData &adata)
   //**/ ---------------------------------------------------------------
   //**/ get response surface filter information, if any
   //**/ ---------------------------------------------------------------
-  constrPtr = NULL;
+  MOATConstraints *constrPtr = NULL;
   if (ioPtr != NULL)
   {
     constrPtr = new MOATConstraints();

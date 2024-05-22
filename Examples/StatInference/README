@@ -17,20 +17,21 @@ Bayesian inferences. As such, it requires
         exp(-0.5*(negLL-mean)^2/std^2))
 
 Since statistical inference using response surfaces is relatively
-cheap computationally, 2 inference methods are provided in PSUADE:
+cheap computationally, 3 inference methods are provided in PSUADE:
 - brute force (not smart sampling such as MCMC)
 - MCMC with multiple chains and Gibbs sampling
+- MCMC with multiple chains and MH sampling
 
-Note: it turns out that in many cases the brute force method may
-      be faster than the MCMC because Gibbs searching may be
-      expensive (Metropolis-Hastings has not been implemented).
-      If high dimensions or when the posterior is focused in a
-      tiny region, the brute force method may have problems, but
-      so does Gibbs.
+Note: In many cases the MH and brute force methods may be faster
+      than the MCMC-Gibbs method because Gibbs searching may be
+      expensive.  If high dimensions or when the posterior is 
+      focused in a tiny region, the brute force method may have 
+      problems due to uniform sampling. MH and Gibbs also have
+      problems with high-dimensionality.
 =======================================================================
 Inference with discrepancy models:
-There are five ways discrepancy models can be incorporated in inference
-but only two are provided in PSUADE:
+There are several  ways discrepancy models can be incorporated in 
+inference but only two are provided in PSUADE:
 - A constant discrepancy function
 - A discrepancy model as a function of the design variables
 

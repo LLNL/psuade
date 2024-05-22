@@ -1,0 +1,82 @@
+Experiment 1: Look at the function Y = X with 2
+              different input distributions
+
+1a. Y = X   X in [-0.5, 0.5]     (wide)
+1b. Y = X   X in [-0.25, 0.25]   (narrower)
+
+Compare VCE and entropy1 (Cannot use RS because 
+it is an discontinuous function)
+
+Steps for entropy:
+* cc -o simulator1a simulator1a.c -lm
+* cc -o simulator1b simulator1b.c -lm
+* launch psuade, load psuade1a.in/psuade1b.in 
+  and run 'entropy1' 
+
+1a. entropy result: -1.637489e+00 == total entropy 
+1b. entropy result: -3.601455e+00 == total entropy 
+
+Steps for VCE:
+* psuade psuade1a.in
+  rename psuadeData sim1a
+* psuade psuade1b.in
+  rename psuadeData sim1b
+* launch psuade, load sim1a/sim1b, and run vce1_bin
+
+1a. VCE result: 4.17e-02 
+1b. VCE result: 5.11e-03
+
+======================================================
+Experiment 2: Use different binning in entropy1
+
+Steps for entropy:
+* cc -o simulator1a simulator1a.c -lm
+* cc -o simulator1b simulator1b.c -lm
+* launch psuade, load psuade1a.in/psuade1b.in, turn on
+  ana_expert mode, run entropy1, and select nLevels=200. 
+
+2a. entropy result: -1.971764e+00 = total entropy
+2b. entropy result: -4.113799e+00 = total entropy
+
+Question for you: Why the answers are different in 1a 
+   and 2a (also 1b and 2b) just by changing the number
+   of levels in binning? Is entropy calculation then
+   sensitive to number of bins used?
+
+======================================================
+Experiment 3: combine 2a and 2b (Y = X1 + X2 so there
+              is no interaction)
+
+X1 in [-0.5, 0.5]     ==> Y = Y + X1
+X2 in [-0.25, 0.25]   ==> Y = Y + X2
+
+Since this is an abrupt function, response surface
+SA methods are not recommended. Thus we use vce1_bin
+and entropy1
+
+Steps for entropy1:
+* cc -o simulator simulator.c -lm
+* start psuade, load psuade.in, and run 'entropy1' 
+* result: Y = X1 + 10 X2 within ranges
+  Input 1 entropy = 3.552058e+00 
+  Input 2 entropy = 3.828246e+00 
+  Total output entropy = 2.073763e-01
+* result: Y = X1 + 5 X2 within ranges
+  Input    1 entropy = 4.336776e+00
+  Input    2 entropy = 3.399609e+00
+  Total output entropy = -2.212597e-01
+
+Steps for vce1_bin 
+* cc -o simulator simulator.c -lm
+* psuade psuade2.in
+* launch psuade, load psuadeData, run vce1_bin
+* result: Y = X1 + 10 X2 within ranges
+  Input 1, 1st-order effect =  7.41e-02 (raw =  4.17e-02)
+  Input 2, 1st-order effect =  9.26e-01 (raw =  5.21e-01)
+* result: Y = X1 + 5 X2 within ranges
+  Input 1, 1st-order effect =  2.42e-01 (raw =  4.17e-02)
+  Input 2, 1st-order effect =  7.58e-01 (raw =  1.30e-01)
+
+Q: Why is entropy result different from VCE results for
+   Y = X1 + 5 X2?
+

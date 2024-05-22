@@ -1,6 +1,7 @@
 This case runs inference without discrepancy modeling
 
-I. To run inference, do: psuade < script.mcmc
+I. To run inference, copy script.mcmc up one level and
+   do: psuade < script.mcmc
 
    You will see something like this:
 
@@ -18,7 +19,9 @@ I. To run inference, do: psuade < script.mcmc
    - also, note that the standard deviation of the posterior
      distribution of beta is 0.009 - too small to be reasonable
 
-II. Now use the posterior sample for prediction
+II. Now use the posterior sample for prediction by 
+    copying MCMCPostSample and script.post up one 
+    level and then do:
 
     psuade < script.post
 

@@ -87,29 +87,45 @@ MTGP::MTGP(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
       printf("ERROR: Degree of overlap should be > 0 and <= 0.4.\n");
       printf("INFO:  Degree of overlap set to default = 0.05\n");
     }
+    snprintf(pString,100,"RS_MTGP_overlap = %e",ddata);
+    psConfig_.putParameter(pString);
     for (ii = 0; ii < nInputs_; ii++) vecXd_[ii] = ddata;
     printf("You can decide the sample size of each partition.\n");
     printf("Larger sample size per partition will take more setup time.\n");
     printf("The default is 300 (will have more if there is overlap).\n");
     snprintf(pString,100,"Enter the partition sample size (300 - 1000) : ");
     partSize_ = getInt(100, 3000, pString);
+    snprintf(pString,100,"RS_MTGP_max_sam_per_group = %d",partSize_);
+    psConfig_.putParameter(pString);
   }
-
-  //**/ =======================================================
-  // user-adjustable parameters
-  //**/ =======================================================
-  strPtr = psConfig_.getParameter("MTGP_max_samples_per_group");
-  if (strPtr != NULL)
+  else
   {
-    sscanf(strPtr, "%s %s %d", winput, equal, &partSize_);
-    if (partSize_ < 100) 
+    //**/ =======================================================
+    // user-adjustable parameters
+    //**/ =======================================================
+    strPtr = psConfig_.getParameter("RS_MTGP_max_sam_per_group");
+    if (strPtr != NULL)
     {
-      printf("MTGP INFO: config parameter setting not done.\n");
-      printf("     max_samples_per_group %d too small.\n",partSize_);
-      printf("     max_samples_per_group should be >= 100.\n");
-      partSize_ = 100;
+      sscanf(strPtr, "%s %s %d", winput, equal, &partSize_);
+      if (partSize_ < 100) 
+      {
+        printf("MTGP INFO: config parameter setting not done.\n");
+        printf("     max_samples_per_group %d too small.\n",partSize_);
+        printf("     max_samples_per_group should be >= 100.\n");
+        partSize_ = 100;
+      }
+      printf("MTGP maximum number of samples per subdomain = %d\n",
+             partSize_); 
+    }
+    strPtr = psConfig_.getParameter("RS_MTGP_overlap");
+    if (strPtr != NULL)
+    {
+      sscanf(strPtr, "%s %s %lg", winput, equal, &ddata);
+      printf("MTGP subdomain degree of overlap = %e\n",ddata); 
+      for (ii = 0; ii < nInputs_; ii++) vecXd_[ii] = ddata;
     }
   }
+
   nPartitions_ = (nSamples + partSize_/2) / partSize_;
   ddata = log(1.0*nPartitions_) / log(2.0);
   idata = (int) ddata;

@@ -48,6 +48,7 @@
 #include "PDFF.h"
 #include "PDFSampleHist.h"
 #include "PDFUser.h"
+#include "Sampling.h"
 
 #define PABS(x)  ((x) > 0 ? x : -(x))
 
@@ -60,7 +61,7 @@ PDFManager::PDFManager()
   //**/ indicate which PDFptrs each input is assigned to 
   //**/ (some inputs may belong to the same pointer)
   vecPdfMap_.clean(); 
-  //**/ PDF pointers (if uniform, NULL)
+  //**/ PDF pointers 
   //**/ (pointers to different pdfs)
   PDFptrs_ = NULL;
   PDFMVNormalPtr_ = NULL;
@@ -69,6 +70,9 @@ PDFManager::PDFManager()
   //**/ PsuadeData pointer given in the initialize function
   PSIOptr_ = NULL;
 
+  //**/ store the input indices in group uniform
+  nGUniform_ = 0;
+  vecgUniformInputs_.clean();
   //**/ store the input indices in group normal
   nGNormal_ = 0;
   vecgNormalInputs_.clean();
@@ -94,6 +98,7 @@ PDFManager::~PDFManager()
   if (PDFMVNormalPtr_ != NULL) delete PDFMVNormalPtr_;
   if (PDFMVLogNormalPtr_ != NULL) delete PDFMVLogNormalPtr_;
   vecPdfMap_.clean(); 
+  vecgUniformInputs_.clean();
   vecgNormalInputs_.clean();
   vecgLNormalInputs_.clean();
   vecUsrPDFFlags_.clean();
@@ -122,9 +127,10 @@ int PDFManager::initialize(PsuadeData *psData)
   if (PDFMVNormalPtr_ != NULL) delete PDFMVNormalPtr_;
   if (PDFMVLogNormalPtr_ != NULL) delete PDFMVLogNormalPtr_;
   vecPdfMap_.clean(); 
+  vecgUniformInputs_.clean();
   vecgNormalInputs_.clean();
   vecgLNormalInputs_.clean();
-  nInputs_ = nGNormal_ = nGLognormal_ = 0;
+  nInputs_ = nGUniform_ = nGNormal_ = nGLognormal_ = 0;
   PDFptrs_ = NULL;
   PDFMVNormalPtr_ = NULL;
   PDFMVLogNormalPtr_ = NULL;
@@ -166,7 +172,7 @@ int PDFManager::initialize(PsuadeData *psData)
   for (ii = 0; ii < nInputs_; ii++) count += inputPDFs[ii];
   if (count > 0) 
   {
-    printf("PDFManager INFO: some distributions are not UNIFORM.\n");
+    printf("PDFManager INFO: Some distributions are not UNIFORM.\n");
     psData->getParameter("method_sampling", pPtr);
     samplingMethod = pPtr.intData_;
     if (samplingMethod != PSUADE_SAMP_MC)  
@@ -200,7 +206,7 @@ int PDFManager::initialize(int nInputs, int *inputPDFs, double *inputMeans,
                            double *inputStdevs, psMatrix &corMatrix, 
                            char **snames, int *indices)
 {
-  int ii, jj, kk, scount, errFlag, normalFlag, lognormalFlag, corErrFlag;
+  int ii, jj, kk, errFlag, corErrFlag;
   double mean, stdev, ddata;
   char   pString[1001];
   FILE   *fp;
@@ -287,7 +293,7 @@ int PDFManager::initialize(int nInputs, int *inputPDFs, double *inputMeans,
     {
       if (snames == NULL)
       {
-        printf("PDFManager ERROR: no sample file provided.\n"); 
+        printf("PDFManager ERROR: No sample file provided.\n"); 
         exit(1);
       }
       for (jj = 0; jj < ii; jj++)
@@ -323,14 +329,17 @@ int PDFManager::initialize(int nInputs, int *inputPDFs, double *inputMeans,
   //**/ ----------------------------------------------------------------
   //**/ searching for groupings (even if covariance = 0)
   //**/ ----------------------------------------------------------------
-  nGNormal_ = nGLognormal_ = 0;
+  nGUniform_ = nGNormal_ = nGLognormal_ = 0;
+  vecgUniformInputs_.setLength(nInputs_);
   vecgNormalInputs_.setLength(nInputs_);
   vecgLNormalInputs_.setLength(nInputs_);
   vecPdfMap_.setLength(nInputs_);
-  normalFlag = lognormalFlag = 0;
+  int uniformFlag=0, normalFlag=0, lognormalFlag=0;
   for (ii = 0; ii < nInputs_; ii++)
   {
     vecPdfMap_[ii] = inputPDFs[ii];
+    if (inputPDFs[ii] == PSUADE_PDF_UNIFORM)
+      vecgUniformInputs_[nGUniform_++] = ii;
     if (inputPDFs[ii] == PSUADE_PDF_NORMAL)
     {
       for (jj = 0; jj < nInputs_; jj++)
@@ -367,10 +376,11 @@ int PDFManager::initialize(int nInputs, int *inputPDFs, double *inputMeans,
   //**/ construct the corresponding PDF objects
   //**/ PDFptrs[nInputs] and PDFptrs[nInputs+1] reserved for group
   //**/ normal and group lognormal
+  //**/ Note: no need to handle uniform case
   //**/ ----------------------------------------------------------------
-  scount = 0;
-  PDFptrs_ = new PDFBase*[nInputs_];
+  int scount = 0;
   normalFlag = lognormalFlag = 0;
+  PDFptrs_ = new PDFBase*[nInputs_];
   for (ii = 0; ii < nInputs_; ii++) PDFptrs_[ii] = NULL;
   for (ii = 0; ii < nInputs_; ii++)
   {
@@ -418,22 +428,23 @@ int PDFManager::initialize(int nInputs, int *inputPDFs, double *inputMeans,
       {
         if (indices == NULL)
         {
-          printf("PDFManager ERROR: null index array.\n"); 
+          printf("PDFManager ERROR: Null index array.\n"); 
           exit(1);
         }
-        //**/ compress sample input indices
+        //**/ compress sample input indices for the current sample
+        //**/ file ito vecInds
         vecInds.setLength(nInputs_);
         scount = 0;
         for (jj = 0; jj < nInputs_; jj++)
           if (vecUsrPDFFlags_[jj] == ii) vecInds[scount++] = indices[jj];
-        //**/ instantiate 
+        //**/ instantiate and give a set of input indices
         PDFptrs_[ii] = 
            (PDFBase *) new PDFSample(scount,snames[ii],vecInds.getIVector());
         //**/ error checking 
         fp = fopen(snames[ii], "r");
         if (fp == NULL)
         {
-          printf("PDFManager ERROR: cannot open sample file %s.\n",
+          printf("PDFManager ERROR: Cannot open sample file %s.\n",
                  snames[ii]);
           exit(1);
         }
@@ -531,7 +542,7 @@ int PDFManager::initialize(int nInputs, int *inputPDFs, double *inputMeans,
     {
       for (jj = 0; jj < nInputs_; jj++)
       {
-        if (vecPdfMap_[ii] != PSUADE_PDF_USER)
+        if (vecPdfMap_[jj] != PSUADE_PDF_USER)
         {
           printf("PDFManager ERROR: if U(ser) PDF is selected,\n");
           printf("           it must be used on all inputs.\n");
@@ -553,7 +564,6 @@ int PDFManager::getPDF(int nSamples, psVector &vecIn, psVector &vecOut,
 {
   int  ss, ii, jj, nInputs;
   char cString[1001];
-  psVector vecLocalIn, vecLocalOut, vecData1, vecData2;
 
   //**/ -------------------------------------------------------------
   //**/ error checking
@@ -599,6 +609,7 @@ int PDFManager::getPDF(int nSamples, psVector &vecIn, psVector &vecOut,
   //**/ ----------------------------------------------------------------
   //**/ perform transformation
   //**/ ----------------------------------------------------------------
+  psVector vecData1, vecData2;
   vecData1.setLength(nSamples*nInputs_);
   vecData2.setLength(nSamples*nInputs_);
   for (ii = 0; ii < nSamples*nInputs_; ii++) vecData2[ii] = 0.0;
@@ -773,11 +784,8 @@ int PDFManager::getPDF(int nSamples, psVector &vecIn, psVector &vecOut,
 int PDFManager::genSample(int nSamples, psVector &vecOut, 
                           psVector &vecLower, psVector &vecUpper)
 {
-  int    ss, ii, jj, normalFlag, lognormalFlag, ind, nInputs;
-  int    scount;
-  double range, low, high;
-  psVector  vecLocalOut, vLower, vUpper, vecData;
-  psIVector vecCounts;
+  int    ss, ii, jj, ind, nInputs;
+  double range, low, high, ddata;
 
   //**/ -------------------------------------------------------------
   //**/ error checking
@@ -808,18 +816,89 @@ int PDFManager::genSample(int nSamples, psVector &vecOut,
   //**/ ----------------------------------------------------------------
   //**/ generate sample
   //**/ ----------------------------------------------------------------
-  scount = 0;
-  vecCounts.setLength(nInputs_);
-  normalFlag = lognormalFlag = 0;
+  //**/ for user type, get sample for ALL inputs
+  if (vecPdfMap_[0] == PSUADE_PDF_USER)
+  {
+    PDFptrs_[0]->genSample(nSamples,vecOut.getDVector(),NULL,NULL);
+  }
+  //**/ for the rest
+  int uniformFlag=0, normalFlag=0, lognormalFlag=0;
+  psVector  vecXOut, vLower, vUpper, vecData, vecDT;
+  psIVector vecIT;
   vecData.setLength(nSamples*nInputs);
   for (ii = 0; ii < nInputs_; ii++)
   {
     if (vecPdfMap_[ii] == PSUADE_PDF_UNIFORM)
     {
-      //**/ uniform, just copy
+#if 0
+      //**/ collect all inputs that has uniform distribution
+      if (uniformFlag == 0)
+      {
+        vLower.setLength(nGUniform_);
+        vUpper.setLength(nGUniform_);
+        for (jj = 0; jj < nGUniform_; jj++)
+        {
+          ind = vecgUniformInputs_[jj];
+          vLower[jj] = vecLower[ind];
+          vUpper[jj] = vecUpper[ind];
+        }
+        Sampling *sampler = SamplingCreateFromID(PSUADE_SAMP_LPTAU);
+        sampler->setInputBounds(nGUniform_, vLower.getDVector(),
+                                vUpper.getDVector());
+        sampler->setOutputParams(1);
+        //**/ randomFlag = 1 for SobolSampling to work
+        sampler->setSamplingParams(nSamples, 1, 1);
+        sampler->initialize(0);
+        psVector vecYU;
+        vecYU.setLength(nSamples);
+        psIVector vecSU;
+        vecSU.setLength(nSamples);
+        vecXOut.setLength(nSamples*nGUniform_);
+        sampler->getSamples(nSamples,nGUniform_,1,
+                   vecXOut.getDVector(),vecYU.getDVector(),
+                   vecSU.getIVector());
+        delete sampler;
+        for (jj = 0; jj < nGUniform_; jj++)
+        {
+          ind = vecgUniformInputs_[jj];
+          for (ss = 0; ss < nSamples; ss++)
+          {
+            vecOut[ss*nInputs+ind] = vecXOut[ss*nGUniform_+jj];
+            if (vecOut[ss*nInputs_+ind] > vecUpper[ind])
+              vecOut[ss*nInputs_+ind] = vecUpper[ind];
+            if (vecOut[ss*nInputs_+ind] < vecLower[ind])
+              vecOut[ss*nInputs_+ind] = vecLower[ind];
+          }
+        }
+        uniformFlag = 1;
+      }
+#else
+      //**/ create a random vector, sort, and use it to
+      //**/ randomize a uniform sample
       range = vecUpper[ii] - vecLower[ii];
+      vecDT.setLength(nSamples);
+      vecIT.setLength(nSamples);
       for (ss = 0; ss < nSamples; ss++)
-        vecOut[ss*nInputs+ii] = PSUADE_drand()*range+vecLower[ii];
+      {
+        vecDT[ss] = PSUADE_drand();
+        vecIT[ss] = ss;
+      } 
+      //**/ sort the sample
+      sortDbleList2a(nSamples,vecDT.getDVector(),
+                     vecIT.getIVector());
+      //**/ sort the sample
+      for (ss = 0; ss < nSamples; ss++)
+      {
+        if (nSamples == 1) ddata = 0.5 * range;
+        else
+          //**/ add random perturbation for it to 
+          //**/ work with SobolSampling
+          ddata = (1.0+0.2*PSUADE_drand()/nSamples)*ss/(nSamples-1.0) * 
+                  range;
+        ind = vecIT[ss];
+        vecOut[ind*nInputs+ii] = ddata + vecLower[ii];
+      }
+#endif
     }
     if (vecPdfMap_[ii] == PSUADE_PDF_TRIANGLE ||
         vecPdfMap_[ii] == PSUADE_PDF_BETA ||
@@ -844,20 +923,20 @@ int PDFManager::genSample(int nSamples, psVector &vecOut,
       {
         vLower.setLength(nGNormal_);
         vUpper.setLength(nGNormal_);
-        vecLocalOut.setLength(nSamples*nGNormal_);
+        vecXOut.setLength(nSamples*nGNormal_);
         for (jj = 0; jj < nGNormal_; jj++)
         {
           ind = vecgNormalInputs_[jj];
           vLower[jj] = vecLower[ind];
           vUpper[jj] = vecUpper[ind];
         }
-        PDFMVNormalPtr_->genSample(nSamples,vecLocalOut,vLower,vUpper);
+        PDFMVNormalPtr_->genSample(nSamples,vecXOut,vLower,vUpper);
         for (jj = 0; jj < nGNormal_; jj++)
         {
           ind = vecgNormalInputs_[jj];
           for (ss = 0; ss < nSamples; ss++)
           {
-            vecOut[ss*nInputs+ind] = vecLocalOut[ss*nGNormal_+jj];
+            vecOut[ss*nInputs+ind] = vecXOut[ss*nGNormal_+jj];
             if (vecOut[ss*nInputs_+ind] > vecUpper[ind])
               vecOut[ss*nInputs_+ind] = vecUpper[ind];
             if (vecOut[ss*nInputs_+ind] < vecLower[ind])
@@ -873,20 +952,20 @@ int PDFManager::genSample(int nSamples, psVector &vecOut,
       {
         vLower.setLength(nGLognormal_);
         vUpper.setLength(nGLognormal_);
-        vecLocalOut.setLength(nSamples*nGLognormal_);
+        vecXOut.setLength(nSamples*nGLognormal_);
         for (jj = 0; jj < nGLognormal_; jj++)
         {
           ind = vecgLNormalInputs_[jj];
           vLower[jj] = vecLower[ind];
           vUpper[jj] = vecUpper[ind];
         }
-        PDFMVLogNormalPtr_->genSample(nSamples,vecLocalOut,vLower,vUpper);
+        PDFMVLogNormalPtr_->genSample(nSamples,vecXOut,vLower,vUpper);
         for (jj = 0; jj < nGLognormal_; jj++)
         {
           ind = vecgLNormalInputs_[jj];
           for (ss = 0; ss < nSamples; ss++)
           {
-            vecOut[ss*nInputs+ind] = vecLocalOut[ss*nGLognormal_+jj];
+            vecOut[ss*nInputs+ind] = vecXOut[ss*nGLognormal_+jj];
             if (vecOut[ss*nInputs_+ind] > vecUpper[ind])
               vecOut[ss*nInputs_+ind] = vecUpper[ind];
             if (vecOut[ss*nInputs_+ind] < vecLower[ind])
@@ -901,6 +980,9 @@ int PDFManager::genSample(int nSamples, psVector &vecOut,
   //**/ ----------------------------------------------------------------
   //**/ special processing for user-generated sample
   //**/ ----------------------------------------------------------------
+  int scount=0;
+  psIVector vecCounts;
+  vecCounts.setLength(nInputs_);
   for (ii = 0; ii < nInputs_; ii++)
   {
     if (vecPdfMap_[ii] == PSUADE_PDF_SAMPLE)
@@ -941,11 +1023,6 @@ int PDFManager::genSample(int nSamples, psVector &vecOut,
       }
     }
   }
-  //**/ for user type, get sample for all inputs
-  if (vecPdfMap_[0] == PSUADE_PDF_USER)
-  {
-    PDFptrs_[0]->genSample(nSamples,vecOut.getDVector(),NULL,NULL);
-  }
   return 0;
 }
 
@@ -956,7 +1033,7 @@ int PDFManager::genSample()
 {
   int       ss, ii;
   pData     pPtr, pLowerB, pUpperB;
-  psVector  vecLocalIn,vecLocalOut,vecUpper,vecLower,vecSamIns,vecSamOuts;
+  psVector  vecXIn,vecXOut,vecUpper,vecLower,vecSamIns,vecSamOuts;
   psIVector vecSamStates;
 
   //**/--------------------------------------------------------
@@ -999,12 +1076,12 @@ int PDFManager::genSample()
 
   vecUpper.load(nInputs_, iUpperB);
   vecLower.load(nInputs_, iLowerB);
-  vecLocalOut.setLength(nSamples*nInputs_);
-  genSample(nSamples, vecLocalOut, vecLower, vecUpper);
+  vecXOut.setLength(nSamples*nInputs_);
+  genSample(nSamples, vecXOut, vecLower, vecUpper);
   for (ss = 0; ss < nSamples; ss++)
   {
     for (ii = 0; ii < nInputs; ii++)
-      vecSamIns[ss*nInputs+ii] = vecLocalOut[ss*nInputs+ii];
+      vecSamIns[ss*nInputs+ii] = vecXOut[ss*nInputs+ii];
     for (ii = 0; ii < nOutputs; ii++)
       vecSamOuts[ss*nOutputs+ii] = PSUADE_UNDEFINED;
     vecSamStates[ss] = 0;
@@ -1024,7 +1101,6 @@ int PDFManager::invCDF(int nSamples, psVector &vecIn, psVector &vecOut,
 {
   int  ss, ii, jj, nInputs;
   char cString[1001];
-  psVector vecLocalIn, vecLocalOut, vecData1, vecData2;
 
   //**/ -------------------------------------------------------------
   //**/ error checking
@@ -1072,6 +1148,7 @@ int PDFManager::invCDF(int nSamples, psVector &vecIn, psVector &vecOut,
   //**/ ----------------------------------------------------------------
   //**/ perform transformation
   //**/ ----------------------------------------------------------------
+  psVector vecData1, vecData2;
   vecData1.setLength(nSamples*nInputs);
   vecData2.setLength(nSamples*nInputs);
   for (ii = 0; ii < nInputs_; ii++)
@@ -1236,21 +1313,6 @@ int PDFManager::invCDF(int nSamples, psVector &vecIn, psVector &vecOut,
     }
     else if (vecPdfMap_[ii] == PSUADE_PDF_USER)
     {
-      for (jj = 0; jj < nInputs_; jj++)
-      {
-        if (vecPdfMap_[ii] != PSUADE_PDF_USER)
-        {
-          printf("PDFManager ERROR: if U(ser) PDF is selected,\n");
-          printf("           it must be used on all inputs.\n");
-          exit(1);
-        }
-        PDFptrs_[0]->invCDF(nSamples,vecData1.getDVector(),
-                            vecData2.getDVector());
-        break;
-      }
-    }
-    else if (vecPdfMap_[ii] == PSUADE_PDF_USER)
-    {
       printf("invCDF for user distribution is not available.\n");
       exit(1);
     }
@@ -1275,7 +1337,6 @@ int PDFManager::getCDF(int nSamples, psVector &vecIn, psVector &vecOut,
   int    ss, ii, jj, nInputs;
   double range;
   char   cString[1001];
-  psVector vecLocalIn, vecLocalOut, vecData1, vecData2;
 
   //**/ -------------------------------------------------------------
   //**/ error checking
@@ -1318,6 +1379,7 @@ int PDFManager::getCDF(int nSamples, psVector &vecIn, psVector &vecOut,
   //**/ ----------------------------------------------------------------
   //**/ perform transformation
   //**/ ----------------------------------------------------------------
+  psVector vecData1, vecData2;
   vecData1.setLength(nSamples*nInputs);
   vecData2.setLength(nSamples*nInputs);
   for (ii = 0; ii < nInputs_; ii++)

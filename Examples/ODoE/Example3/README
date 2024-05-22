@@ -2,7 +2,8 @@ This test problem demonstrates running sequential batch ODE.
 * The simulation model has 3 parameters whereby parameter 3
   is the uncertain parameter with a uniform prior.
   - The largest uncertainty should be at (0.75, 0.75)
-    so the largest uncertainty is around candidate 19.
+    for the first 2 inputs so the largest uncertainty 
+    is around candidate 19.
   - to speed up the whole process, response surfaces are
     used instead of the actual simulator. Thus a training
     sample will be created.
@@ -143,10 +144,10 @@ MORE
 
 **********************************************************
 * Compute GIDAE metrics for each candidate point using 
-  MCMC-based inference (odoeu_evalnb)
+  MCMC-based inference (odoeu_beval)
 
   - RUN: psuade < psScriptStep0.in
-  - RUN: psuade < psScriptEvalnb.in
+  - RUN: psuade < psScriptBeval.in
 
   The result will be a list of GIDAE metrics for all 
   candidate points. You may pick the ones with the 
@@ -155,18 +156,3 @@ MORE
   odoe_mmd (weighted version) to add space-fillingness to
   your selection criterion.
 
-**********************************************************
-* Compute GIDAE metrics for each candidate point using 
-  modified MCMC-based inference (odoeu_evalnb2)
-
-  - RUN: psuade < psScriptStep0.in
-  - RUN: psuade < psScriptEvalnb2.in
-
-**********************************************************
-* Compute DAE metrics for each candidate point using 
-  the Fisher information method (odoeu_evalnf)
-
-  - RUN: psuade < psScriptStep0.in
-  - RUN: psuade < psScriptEvalnf.in
-
-  

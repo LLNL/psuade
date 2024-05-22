@@ -5,16 +5,17 @@
 // All rights reserved.
 //
 // Please see the COPYRIGHT and LICENSE file for the copyright notice,
-// disclaimer, contact information and the GNU Lesser General Public License.
+// disclaimer, contact information and the GNU Lesser General Public 
+// License.
 //
-// PSUADE is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free 
-// Software Foundation) version 2.1 dated February 1999.
+// PSUADE is free software; you can redistribute it and/or modify it under 
+// the terms of the GNU Lesser General Public License (as published by the 
+// Free Software Foundation) version 2.1 dated February 1999.
 //
-// PSUADE is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the IMPLIED WARRANTY OF MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE.  See the terms and conditions of the GNU Lesser
-// General Public License for more details.
+// PSUADE is distributed in the hope that it will be useful, but WITHOUT 
+// ANY WARRANTY; without even the IMPLIED WARRANTY OF MERCHANTABILITY 
+// or FITNESS FOR A PARTICULAR PURPOSE.  See the terms and conditions of 
+// the GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program; if not, write to the Free Software Foundation,
@@ -85,7 +86,7 @@ double TwoParamAnalyzer::analyze(aData &adata)
   double *XIn     = adata.sampleInputs_;
   double *YIn     = adata.sampleOutputs_;
   int outputID    = adata.outputID_;
-  int printLevel  = adata.printLevel_;
+  int printLevel_ = adata.printLevel_;
   int nSubSamples = adata.nSubSamples_;
   int *pdfFlags   = adata.inputPDFs_;
   PsuadeData *ioPtr = adata.ioPtr_;
@@ -95,7 +96,7 @@ double TwoParamAnalyzer::analyze(aData &adata)
   //**/ ---------------------------------------------------------------
   if (nInputs <= 0 || nOutputs <= 0 || nSamples <= 0)
   {
-    printOutTS(PL_ERROR,"TwoParamEffect ERROR: invalid arguments.\n");
+    printOutTS(PL_ERROR,"TwoParamEffect ERROR: Invalid arguments.\n");
     printOutTS(PL_ERROR,"    nInputs  = %d\n", nInputs);
     printOutTS(PL_ERROR,"    nOutputs = %d\n", nOutputs);
     printOutTS(PL_ERROR,"    nSamples = %d\n", nSamples);
@@ -104,7 +105,7 @@ double TwoParamAnalyzer::analyze(aData &adata)
   if (nInputs <= 2)
   {
     printOutTS(PL_ERROR,
-         "TwoParamEffect ERROR: not available for nInputs <= 2.\n");
+         "TwoParamEffect ERROR: Not available for nInputs <= 2.\n");
     return PSUADE_UNDEFINED;
   } 
   if (nSamples/nSubSamples*nSubSamples != nSamples)
@@ -118,7 +119,7 @@ double TwoParamAnalyzer::analyze(aData &adata)
   whichOutput = outputID;
   if (whichOutput >= nOutputs || whichOutput < 0)
   {
-    printOutTS(PL_ERROR,"TwoParamEffect ERROR: invalid outputID.\n");
+    printOutTS(PL_ERROR,"TwoParamEffect ERROR: Invalid outputID.\n");
     printOutTS(PL_ERROR,"    nOutputs = %d\n", nOutputs);
     printOutTS(PL_ERROR,"    outputID = %d\n", whichOutput+1);
     printOutTS(PL_ERROR,"    outputID reset to 1\n");
@@ -126,7 +127,7 @@ double TwoParamAnalyzer::analyze(aData &adata)
   }
   if (ioPtr == NULL)
   {
-    printOutTS(PL_ERROR,"TwoParamEffect ERROR: no data (PsuadeData).\n");
+    printOutTS(PL_ERROR,"TwoParamEffect ERROR: No data (PsuadeData).\n");
     return PSUADE_UNDEFINED;
   }
   int status = 0;
@@ -150,7 +151,7 @@ double TwoParamAnalyzer::analyze(aData &adata)
     if (pdfFlags != NULL && pdfFlags[ii] != PSUADE_PDF_UNIFORM)
     {
       printOutTS(PL_INFO,
-        "* TwoParamEffect INFO: some inputs have non-uniform PDFs.\n");
+        "* TwoParamEffect INFO: Some inputs have non-uniform PDFs.\n");
       printOutTS(PL_INFO,
         "*      However, they will not be relevant in this analysis\n");
       printOutTS(PL_INFO,
@@ -170,7 +171,7 @@ double TwoParamAnalyzer::analyze(aData &adata)
       if (corMatp->getEntry(ii,jj) != 0.0)
       {
         printOutTS(PL_ERROR,
-          "* TwoParamEffect INFO: this method should not be used if\n");
+          "* TwoParamEffect INFO: This method should not be used if\n");
         printOutTS(PL_ERROR,
           "*      additional input correlations not already embedded\n");
         printOutTS(PL_ERROR,
@@ -195,6 +196,14 @@ double TwoParamAnalyzer::analyze(aData &adata)
   {
     constrPtr = new RSConstraints();
     constrPtr->genConstraints(ioPtr);
+    int nConstr = constrPtr->getNumConstraints();
+    if (nConstr == 0)
+    {
+      delete constrPtr;
+      constrPtr = NULL;
+    }
+    else
+      printf("RSMAnalysis INFO: %d constraints detected.\n",nConstr);
   }
   double *localX = XIn;
   vecLocalY.setLength(nSamples);
@@ -202,14 +211,16 @@ double TwoParamAnalyzer::analyze(aData &adata)
   for (ss = 0; ss < nSamples; ss++)
   {
     vecLocalY[ss] = YIn[nOutputs*ss+whichOutput];
-    ddata = constrPtr->evaluate(&(localX[ss*nInputs]), vecLocalY[ss], 
-                                status);
+    status = 1;
+    if (constrPtr != NULL)
+      ddata = constrPtr->evaluate(&(localX[ss*nInputs]), vecLocalY[ss], 
+                                  status);
     if (status == 0) vecLocalY[ss] = PSUADE_UNDEFINED;
     else             ncount++;
   }
   if (ncount == 0)
   {
-    printOutTS(PL_ERROR,"TwoParamEffect ERROR: no valid sample point.\n");
+    printOutTS(PL_ERROR,"TwoParamEffect ERROR: No valid sample point.\n");
     printOutTS(PL_ERROR,"    nSamples before filtering = %d\n",nSamples);
     printOutTS(PL_ERROR,"    nSamples after  filtering = %d\n",ncount);
     printOutTS(PL_ERROR,
@@ -239,20 +250,42 @@ double TwoParamAnalyzer::analyze(aData &adata)
   if (PABS(aVariance) < 1.0e-15)
   {
     printOutTS(PL_INFO, 
-         "* =====> TwoParamEffect: variance = %12.4e (sd =%12.4e)\n",
+         "* =====> TwoParamEffect: variance = %11.4e (sd =%10.4e)\n",
          aVariance, sqrt(aVariance));
     printOutTS(PL_ERROR, 
          "TwoParamEffect INFO: std dev too small ==> terminate.\n");
     return PSUADE_UNDEFINED;
   }
+  if (nSamples > 2000000)
+  {
+    printf("INFO: Sample size is large ==> Crude (2D binning) analysis.\n");
+    vecVCE.setLength(nInputs*(nInputs+1));
+    status = computeVCECrude(nInputs, nSamples, localX, 
+                  vecLocalY.getDVector(), aVariance,
+                   xLower, xUpper, vecVCE.getDVector());
+    //**/ ---------------------------------------------------------
+    //**/ return more detailed data
+    //**/ ---------------------------------------------------------
+    if (status == 0)
+    {
+      pData *pPtr = ioPtr->getAuxData();
+      pPtr->nDbles_ = nInputs * nInputs;
+      pPtr->dbleArray_ = new double[nInputs * (nInputs+1)];
+      for (ii = 0; ii < nInputs*(nInputs+1); ii++)
+        pPtr->dbleArray_[ii] = vecVCE[ii];
+      pPtr->dbleData_ = aVariance;
+      //genPlots(adata);
+    }
+    return 1.0;
+  }
   if (psConfig_.AnaExpertModeIsOn())
   {
-    printOutTS(PL_INFO, 
-     "This method normally operates on replicated orthogonal array (ROA)\n");
-    printOutTS(PL_INFO, 
-     "samples. If the sample is not ROA, it uses a crude method to compute\n");
-    printOutTS(PL_INFO, 
-     "sensitivities. However, even though it is ROA, you can still force it\n");
+    printOutTS(PL_INFO,"This method normally operates on replicated");
+    printOutTS(PL_INFO," orthogonal array (ROA)\n");
+    printOutTS(PL_INFO,"samples. If the sample is not ROA, it ");
+    printOutTS(PL_INFO,"uses a crude method to compute\n");
+    printOutTS(PL_INFO,"sensitivities. However, even though it is");
+    printOutTS(PL_INFO," ROA, you can still force it\n");
     printOutTS(PL_INFO, 
      "to use the crude method (when analysis expert mode is on).\n");
     printOutTS(PL_INFO, "Perform crude analysis? (y or n) ");
@@ -274,11 +307,8 @@ double TwoParamAnalyzer::analyze(aData &adata)
         for (ii = 0; ii < nInputs*(nInputs+1); ii++)
           pPtr->dbleArray_[ii] = vecVCE[ii];
         pPtr->dbleData_ = aVariance;
-        genPlots(adata);
+        //genPlots(adata);
       }
-      //**/ ---------------------------------------------------------
-      //**/ clean up
-      //**/ ---------------------------------------------------------
       return 1.0;
     }
   }
@@ -303,16 +333,24 @@ double TwoParamAnalyzer::analyze(aData &adata)
   printOutTS(PL_INFO,"\n");
   printAsterisks(PL_INFO, 0);
   printOutTS(PL_INFO,
-     "* Two-Parameter Sensitivity Analysis on Raw Sample Data\n");
+     "*       Two-Parameter Sensitivity Analysis on Sample Data\n");
   printEquals(PL_INFO, 0);
   printOutTS(PL_INFO,
-     "* Note: This method needs large samples for more accurate results\n");
+     "* Note: This method needs large samples for more ");
   printOutTS(PL_INFO,
-     "*       (e.g. tens of thousands or more depending on the functions).\n");
+     "accurate results\n");
   printOutTS(PL_INFO,
-     "*       For small to moderate sample sizes, use rssobol2.\n");
+     "*       (e.g. tens of thousands or more depending on ");
   printOutTS(PL_INFO,
-     "* Note: This method works on replicated orthogonal arrays. For random\n");
+     "the functions).\n");
+  printOutTS(PL_INFO,
+     "*       For small to moderate sample sizes, use ");
+  printOutTS(PL_INFO,
+     "response surface.\n");
+  printOutTS(PL_INFO,
+     "* Note: This method works on replicated orthogonal ");
+  printOutTS(PL_INFO,
+     "arrays. For random\n");
   printOutTS(PL_INFO,
      "*       samples, a crude analysis will be performed.\n");
   printDashes(PL_INFO, 0);
@@ -320,9 +358,10 @@ double TwoParamAnalyzer::analyze(aData &adata)
   printOutTS(PL_INFO,"* Number of nInputs = %10d\n",nInputs);
   printDashes(PL_INFO, 0);
   printOutTS(PL_INFO,"Output %d\n", whichOutput+1);
-  printOutTS(PL_INFO,"* ====> TwoParamEffect: mean     = %12.4e\n", aMean);
   printOutTS(PL_INFO,
-       "* ====> TwoParamEffect: variance = %12.4e (sd = %12.4e)\n",
+    "* ====> TwoParamEffect: mean     = %11.4e\n", aMean);
+  printOutTS(PL_INFO,
+       "* ====> TwoParamEffect: variance = %11.4e (sd = %11.4e)\n",
        aVariance, sqrt(aVariance));
 
   psVector vecTX, vecTW, vecTY;
@@ -337,9 +376,9 @@ double TwoParamAnalyzer::analyze(aData &adata)
   {
     for (ii2 = ii+1; ii2 < nInputs; ii2++)
     {
-      if (printLevel > 4 || nSamples > 100000)
+      if (printLevel_ > 4 || nSamples > 100000)
         printOutTS(PL_DUMP,
-            "TwoParamEffect:: input pairs = %d %d\n", ii+1, ii2+1);
+            "TwoParamEffect:: Input pairs = %d %d\n", ii+1, ii2+1);
       for (ss = 0; ss < nSamples; ss++)
       {
         vecTX[ss] = localX[nInputs*ss+ii];
@@ -347,6 +386,9 @@ double TwoParamAnalyzer::analyze(aData &adata)
         vecTY[ss] = vecLocalY[ss];
       }
 
+      if (printLevel_ > 4)
+        printf("TwoParamEffect:: Input pairs = %d %d Sorting\n",
+               ii+1,ii2+1);
       sortDbleList3(nSamples, vecTX.getDVector(), vecTW.getDVector(), 
                     vecTY.getDVector());
 
@@ -361,7 +403,7 @@ double TwoParamAnalyzer::analyze(aData &adata)
         printOutTS(PL_INFO,
            "        ==> not replicated orthogonal array nor Factorial\n");
         printOutTS(PL_INFO,
-           "        ==> crude 2-way interaction analysis.\n");
+           "        ==> crude (2D binning) 2-way interaction analysis.\n");
         status = computeVCECrude(nInputs, nSamples, localX, 
                        vecLocalY.getDVector(), aVariance,
                        xLower, xUpper, vecVCE.getDVector());
@@ -376,7 +418,7 @@ double TwoParamAnalyzer::analyze(aData &adata)
           for (ii = 0; ii < nInputs*(nInputs+1); ii++) 
             pPtr->dbleArray_[ii] = vecVCE[ii];
           pPtr->dbleData_ = aVariance;
-          genPlots(adata);
+          //genPlots(adata);
         }
         return 1.0;
       }
@@ -414,13 +456,16 @@ double TwoParamAnalyzer::analyze(aData &adata)
           for (ii = 0; ii < nInputs*(nInputs+1); ii++) 
             pPtr->dbleArray_[ii] = vecVCE[ii];
           pPtr->dbleData_ = aVariance;
-          genPlots(adata);
+          //genPlots(adata);
         }
         return 1.0;
       }
 
       double *tws = vecTW.getDVector();
       double *tys = vecTY.getDVector();
+      if (printLevel_ > 4)
+        printf("TwoParamEffect:: Input pairs = %d %d Sorting 2\n",
+               ii+1,ii2+1);
       for (ss = 0; ss < nSamples; ss+=nReps1)
         sortDbleList2(nReps1,&tws[ss],&tys[ss]);
 
@@ -433,11 +478,11 @@ double TwoParamAnalyzer::analyze(aData &adata)
         printOutTS(PL_WARN,
            "TwoParamEffect WARNING(3): replications not satisified.\n");
         printOutTS(PL_WARN,
-            "    Are you using replicated orthogonal array or Factorial?\n");
+            " Are you using replicated orthogonal array or Factorial?\n");
         printOutTS(PL_WARN,
-            "    If so, you need to use > 1 replications.\n");
+            " If so, you need to use > 1 replications.\n");
         printOutTS(PL_WARN,
-            "A Crude 2-way interaction analysis will be done instead.\n");
+            " A 2D-binning interaction analysis will be done instead.\n");
         status = computeVCECrude(nInputs, nSamples, localX, 
                        vecLocalY.getDVector(), aVariance,
                        xLower, xUpper, vecVCE.getDVector());
@@ -452,11 +497,14 @@ double TwoParamAnalyzer::analyze(aData &adata)
           for (ii = 0; ii < nInputs*(nInputs+1); ii++)   
             pPtr->dbleArray_[ii] = vecVCE[ii];
           pPtr->dbleData_ = aVariance;
-          genPlots(adata);
+          //genPlots(adata);
         }
         return 1.0;
       }
 
+      if (printLevel_ > 4)
+        printf("TwoParamEffect:: Input pairs = %d %d Processing\n",
+               ii+1,ii2+1);
       for (ss = 0; ss < nSamples; ss+=nReps1)
       {
         for (ss2 = 0; ss2 < nReps1; ss2+=nReps)
@@ -486,7 +534,7 @@ double TwoParamAnalyzer::analyze(aData &adata)
         printOutTS(PL_WARN,
             "    If so, you need to use > 1 replications.\n");
         printOutTS(PL_WARN,
-            "A Crude 2-way interaction analysis will be done instead.\n");
+            "A 2D-binning interaction analysis will be done instead.\n");
         status = computeVCECrude(nInputs, nSamples, localX, 
                       vecLocalY.getDVector(), aVariance,
                       xLower, xUpper, vecVCE.getDVector());
@@ -501,7 +549,7 @@ double TwoParamAnalyzer::analyze(aData &adata)
           for (ii = 0; ii < nInputs*(nInputs+1); ii++)
             pPtr->dbleArray_[ii] = vecVCE[ii];
           pPtr->dbleData_ = aVariance;
-          genPlots(adata);
+          //genPlots(adata);
         }
         return 1.0;
       }
@@ -586,7 +634,7 @@ double TwoParamAnalyzer::analyze(aData &adata)
                 ((vecVCEVars[subID]-vecMeanVars[ii*nInputs+ii2])*
                  (vecVCEVars[subID]-vecMeanVars[ii*nInputs+ii2]) * 
                 vecBins[subID] / totalCnt);
-        if (printLevel > 4 || nSamples > 100000) 
+        if (printLevel_ > 4 || nSamples > 100000) 
           printOutTS(PL_DUMP, "Interaction %3d %d = %10.3e\n",ii+1,
                      ii2+1, vecVCE[ii*nInputs+ii2]/aVariance);
     }
@@ -612,14 +660,14 @@ double TwoParamAnalyzer::analyze(aData &adata)
   for (ii = 0; ii < nInputs*(nInputs+1); ii++) 
     pPtr->dbleArray_[ii] = vecVCE[ii];
   pPtr->dbleData_ = aVariance;
-  genPlots(adata);
+  //genPlots(adata);
 
   VecMainEffects_.setLength(nInputs_);
   if (errflag == 0)
   {
     printEquals(PL_INFO, 0);
     printOutTS(PL_INFO,
-               "* Main effect sensitivity indices (normalized)\n");
+               "* First-order Sensitivity Indices\n");
     printDashes(PL_INFO, 0);
     for (ii = 0; ii < nInputs; ii++)
     {
@@ -627,31 +675,37 @@ double TwoParamAnalyzer::analyze(aData &adata)
         vecMEs[ii] = 0.0;
       if (vecSTIs[ii] < 0.0) vecSTIs[ii] = 0.0;
       printOutTS(PL_INFO, 
-             "* Main effect (Inputs %3d) = %10.3e (raw = %10.3e)\n",
-             ii+1,vecMEs[ii]/aVariance,vecMEs[ii]);
+          "Input %3d: Sobol' index = %10.3e (Unnormalized = %10.3e)\n",
+          ii+1,vecMEs[ii]/aVariance,vecMEs[ii]);
 
       //save sensitivity
       VecMainEffects_[ii] = vecMEs[ii];
     }
-    printEquals(PL_INFO, 0);
-    printOutTS(PL_INFO, 
-         "* Two-parameter sensitivity indices (normalized)\n");
-    printDashes(PL_INFO, 0);
+    if (psConfig_.InteractiveIsOn() || psConfig_.DiagnosticsIsOn())
+    {
+      printEquals(PL_INFO, 0);
+      printOutTS(PL_INFO, 
+           "* Two-parameter sensitivity indices\n");
+      printDashes(PL_INFO, 0);
+    }
     for (ii = 0; ii < nInputs; ii++)
     {
       for (ii2 = ii+1; ii2 < nInputs; ii2++)
       {
-        printOutTS(PL_INFO, 
-         "* Sensitivity index (Inputs %2d %2d) = %10.3e (raw = %10.3e)\n",
-         ii+1,ii2+1,vecVCE[ii*nInputs+ii2]/aVariance,vecVCE[ii*nInputs+ii2]);
+        if (psConfig_.InteractiveIsOn() || psConfig_.DiagnosticsIsOn())
+          printOutTS(PL_INFO, 
+           "* Sobol' index (Inputs %2d %2d) = %10.3e (raw = %10.3e)\n",
+           ii+1,ii2+1,vecVCE[ii*nInputs+ii2]/aVariance,
+           vecVCE[ii*nInputs+ii2]);
         Mat2ParamEffects_.setEntry(ii,ii2,vecVCE[ii*nInputs+ii2]);
       }
     }
+    if (psConfig_.InteractiveIsOn() || psConfig_.DiagnosticsIsOn())
+      printAsterisks(PL_INFO, 0);
   }
 
-  printAsterisks(PL_INFO, 0);
-
 #if 0
+ //**/ bootstrap to be generated external to this file
   printAsterisks(PL_INFO, 0);
   if (psConfig_.AnaExpertModeIsOn())
   {
@@ -925,7 +979,6 @@ double TwoParamAnalyzer::analyze(aData &adata)
     }
   }
 #endif
-
   if (constrPtr != NULL) delete constrPtr;
   // return 1.0 to facilitate continuous refinement
   return 1.0;
@@ -1199,7 +1252,7 @@ int TwoParamAnalyzer::computeVCECrude(int nInputs, int nSamples,
   psIVector vecBins, vecTags;
   psVector  vecVce1, vecVceMean, vecVceVar;
 
-  nSize = 50;
+  nSize = 100;
   ddata = 1.0 * nSamples / nSize;
   ddata = pow(ddata, 0.5);
   nIntervals = (int) ddata;
@@ -1208,74 +1261,84 @@ int TwoParamAnalyzer::computeVCECrude(int nInputs, int nSamples,
   //**/nIntervals1 = nIntervals * nIntervals;
   if (nIntervals < 4)
   {
-    printOutTS(PL_ERROR,"ERROR: sample size too small.\n");
+    printOutTS(PL_ERROR,"ERROR: Sample size too small.\n");
     printOutTS(PL_ERROR,
        "       Need larger sample to give meaningful results.\n");
     return -1;
   }
-  printAsterisks(PL_INFO, 0);
-  printOutTS(PL_INFO,"           Crude 2-way Interaction Effect\n");
-  printEquals(PL_INFO, 0);
-  printOutTS(PL_INFO,
-       "TwoParamEffect: default number of levels in each input  = %d\n",
-         nIntervals);
-  printOutTS(PL_INFO,
-       "TwoParamEffect: default number of level for main effect = %d\n",
-         nIntervals1);
-  printOutTS(PL_INFO,
-       "TwoParamEffect: sample size for each 2-dimensional box  = %d\n",
-         nSize);
-  printDashes(PL_INFO, 0);
-  printOutTS(PL_INFO,
-       "* For small to moderate sample sizes, this method gives rough\n");
-  printOutTS(PL_INFO,
-       "* estimates of interaction effect (two-parameter sensitivity).\n");
-  printOutTS(PL_INFO,
-       "* These estimates can vary with different choices of internal\n");
-  printOutTS(PL_INFO,
-       "* settings. For example, try different number of levels to\n");
-  printOutTS(PL_INFO,
-       "* assess sensitivity of the computed measures with respect to\n");
-  printOutTS(PL_INFO,
-       "* it. Turn on analysis expert mode to change the settings.\n");
-  printOutTS(PL_INFO,
-       "* Recommended sample size per 2D box is 10 or larger.\n");
-  if (psConfig_.AnaExpertModeIsOn())
+  if (psConfig_.InteractiveIsOn())
   {
+    printAsterisks(PL_INFO, 0);
+    printOutTS(PL_INFO,
+     "        Crude (2D-binning) Interaction Effect\n");
     printEquals(PL_INFO, 0);
-    snprintf(pString,100,
+    printOutTS(PL_INFO,
+     "TwoParamEffect: default number of levels in each input  = %d\n",
+     nIntervals);
+    printOutTS(PL_INFO,
+     "TwoParamEffect: default number of level for main effect = %d\n",
+     nIntervals1);
+    printOutTS(PL_INFO,
+     "TwoParamEffect: sample size for each 2-dimensional box  = %d\n",
+     nSize);
+    printDashes(PL_INFO, 0);
+    printOutTS(PL_INFO,
+     "* For small to moderate sample sizes, this method ");
+    printOutTS(PL_INFO,
+     "computes rough\n");
+    printOutTS(PL_INFO,
+     "* estimates of interaction effect (two-parameter ");
+    printOutTS(PL_INFO,
+     "sensitivity). These\n");
+    printOutTS(PL_INFO,
+     "* estimates can vary with different choices of ");
+    printOutTS(PL_INFO,
+     "internal settings. For\n");
+    printOutTS(PL_INFO,
+     "* example, try different number of levels to ");
+    printOutTS(PL_INFO,
+     "assess sensitivity of the\n");
+    printOutTS(PL_INFO,
+     "* computed measures with respect to it.\n");
+    printOutTS(PL_INFO,
+     "* Turn on analysis expert mode to change internal settings.\n");
+    if (psConfig_.AnaExpertModeIsOn())
+    {
+      printEquals(PL_INFO, 0);
+      snprintf(pString,100,
         "Number of levels for 2-way analysis (>= 4, default = %d): ",
         nIntervals);
-    nIntervals = getInt(4, nSamples, pString);
-    nSize = nSamples / nIntervals / nIntervals;
-    if (nSize < 10)
-    {
-      printOutTS(PL_INFO,
+      nIntervals = getInt(4, nSamples, pString);
+      nSize = nSamples / nIntervals / nIntervals;
+      if (nSize < 10)
+      {
+        printOutTS(PL_INFO,
          "* Using number of levels = %d for 2-way effect will give\n",
          nIntervals);
-      printOutTS(PL_INFO,
+        printOutTS(PL_INFO,
          "  each 2D box less than 10 sample points. That is too small.\n");
-      nSize = 10;
-      ddata = 1.0 * nSamples / nSize;
-      ddata = pow(ddata, 0.5);
-      nIntervals = (int) ddata;
-      printOutTS(PL_INFO, 
+        nSize = 10;
+        ddata = 1.0 * nSamples / nSize;
+        ddata = pow(ddata, 0.5);
+        nIntervals = (int) ddata;
+        printOutTS(PL_INFO, 
          "* Number of levels for 2-way analysis defaulted to %d\n", 
          nIntervals);
-    } 
-    snprintf(pString,100,
+      } 
+      snprintf(pString,100,
             "Number of levels for main effect (>= %d): ",nIntervals);
-    nIntervals1 = getInt(nIntervals, nSamples, pString);
+      nIntervals1 = getInt(nIntervals, nSamples, pString);
+    } 
     nSize1 = nSamples / nIntervals1;
     if (nSize1 < 10)
     {
       printOutTS(PL_INFO, 
-         "Sample size per level for main effect d too small (%d < 10).\n",
-         nSize1);
+       "Sample size per level for main effect d too small (%d < 10).\n",
+       nSize1);
       nSize1 = 10;
       nIntervals1 = nSamples / nSize1;
       printOutTS(PL_INFO, 
-         "Default number of levels for main effect to %d\n",nIntervals1);
+       "Default number of levels for main effect to %d\n",nIntervals1);
     } 
   }
   int nsize = nIntervals * nIntervals;
@@ -1286,9 +1349,12 @@ int TwoParamAnalyzer::computeVCECrude(int nInputs, int nSamples,
   vecTags.setLength(nSamples);
   vecVce1.setLength(nInputs);
 
-  printEquals(PL_INFO, 0);
-  printOutTS(PL_INFO, "* Main effect sensitivity indices (normalized)\n");
-  printDashes(PL_INFO, 0);
+  if (psConfig_.InteractiveIsOn() && printLevel_ > 1)
+  {
+    printEquals(PL_INFO, 0);
+    printOutTS(PL_INFO,"* Main Effect Sensitivity Indices\n");
+    printDashes(PL_INFO, 0);
+  }
 
   VecMainEffects_.setLength(nInputs_);
   for (ii = 0; ii < nInputs; ii++)
@@ -1350,17 +1416,23 @@ int TwoParamAnalyzer::computeVCECrude(int nInputs, int nSamples,
                         (vecVceMean[ss] - aMean) * vecBins[ss]/totalCnt);
       }
     }
-    printOutTS(PL_INFO,
-         "* Main effect (Inputs %3d) = %10.3e (raw = %10.3e)\n",
+    if (psConfig_.InteractiveIsOn() && printLevel_ > 1)
+      printOutTS(PL_INFO,
+         "Input %3d: Sobol' index = %10.3e (unnormalized = %10.3e)\n",
          ii+1,vecVce1[ii]/aVariance,vecVce1[ii]);
 
     // save main effect
     VecMainEffects_[ii] = vecVce1[ii];
   }
-  printEquals(PL_INFO, 0);
-  printOutTS(PL_INFO, 
+  if (psConfig_.InteractiveIsOn()) 
+  {
+    printEquals(PL_INFO, 0);
+    printOutTS(PL_INFO, 
        "* Two-parameter sensitivity indices (normalized)\n");
-  printDashes(PL_INFO, 0);
+    printDashes(PL_INFO, 0);
+  }
+  printf("TwoParamEffect: nBins2D, nReps = %d %d\n",
+         nIntervals*nIntervals,nSamples/(nIntervals*nIntervals));
   for (ii = 0; ii < nInputs; ii++)
   {
     for (ii2 = 0; ii2 < ii+1; ii2++) vce[ii*nInputs+ii2] = 0;
@@ -1403,8 +1475,6 @@ int TwoParamAnalyzer::computeVCECrude(int nInputs, int nSamples,
           nFilled++;
         }
       }
-      printf("(2PARAM INFO) Inputs %4d %4d: %d out of %d boxes populated.\n",
-             ii+1, ii2+1,nFilled,nIntervals*nIntervals);
 
       for (ss = 0; ss < nSamples; ss++)
       {
@@ -1453,15 +1523,18 @@ int TwoParamAnalyzer::computeVCECrude(int nInputs, int nSamples,
     }
     vce[nInputs*nInputs+ii] = vecVce1[ii];
   }
-  printAsterisks(PL_INFO, 0);
-  for (ii = 0; ii < nInputs; ii++)
+  if (psConfig_.InteractiveIsOn() || psConfig_.DiagnosticsIsOn()) 
   {
-    for (ii2 = ii+1; ii2 < nInputs; ii2++)
-      printOutTS(PL_INFO, 
-         "* Sensitivity index ( Inputs %2d %2d ) = %10.3e (raw = %10.3e)\n",
+    printAsterisks(PL_INFO, 0);
+    for (ii = 0; ii < nInputs; ii++)
+    {
+      for (ii2 = ii+1; ii2 < nInputs; ii2++)
+        printOutTS(PL_INFO, 
+         "Inputs %2d %2d: Sobol' index = %10.3e (unnormalized = %9.2e)\n",
          ii+1,ii2+1,vce[ii*nInputs+ii2]/aVariance,vce[ii*nInputs+ii2]);
+    }
+    printAsterisks(PL_INFO, 0);
   }
-  printAsterisks(PL_INFO, 0);
   return 0;
 }
 

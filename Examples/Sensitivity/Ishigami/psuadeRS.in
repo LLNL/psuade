@@ -1,0 +1,28 @@
+PSUADE
+INPUT
+   dimension = 3
+   variable 1 X1 =  -3.1416 3.1416
+   variable 2 X2 =  -3.1416 3.1416
+   variable 3 X3 =  -3.1416 3.1416
+END
+OUTPUT
+   dimension = 1
+   variable 1 Y
+END
+METHOD
+   sampling = LPTAU
+   num_samples = 10000
+END
+APPLICATION
+   ensemble_driver = ./ensemble_simulator
+   ensemble_run_mode
+   max_parallel_jobs = 1000
+END
+ANALYSIS
+   analyzer output_id  = 1
+   analyzer rstype  = MARS
+   analyzer threshold  = 0.00001
+   printlevel 2
+   io_expert on
+END
+END

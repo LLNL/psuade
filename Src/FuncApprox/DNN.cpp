@@ -93,18 +93,18 @@ DNN::DNN(int nInputs, int nSamples) : FuncApprox(nInputs, nSamples)
     char pString[1000];
     snprintf(pString,100,"How many hidden layers? (1 - 4) ");
     nLevels_ = getInt(1,4,pString) + 1;
-    snprintf(pString,100,"DNN_nlevels = %d", nLevels_);
+    snprintf(pString,100,"RS_DNN_nlevels = %d", nLevels_);
     psConfig_.putParameter(pString);
 
     snprintf(pString,100,"Number of nodes in each hidden layer? (3 - 100) ");
     numNodes = getInt(3,100,pString);
-    snprintf(pString,100,"DNN_nnodes = %d", numNodes);
+    snprintf(pString,100,"RS_DNN_nnodes = %d", numNodes);
     psConfig_.putParameter(pString);
 
     snprintf(pString,100,
       "Optimization scheme (0: LBFGS, 1: Gradient descent) ? (0 - 1) ");
     optScheme_ = getInt(0,1,pString);
-    snprintf(pString,100,"DNN_optscheme = %d", optScheme_);
+    snprintf(pString,100,"RS_DNN_optscheme = %d", optScheme_);
     psConfig_.putParameter(pString);
 
     if (optScheme_ == 1)
@@ -112,14 +112,14 @@ DNN::DNN(int nInputs, int nSamples) : FuncApprox(nInputs, nSamples)
       snprintf(pString,100,
            "Learning rate (default = 0.1, suggested: [0.01,0.5]) ? ");
       alpha_ = getDouble(pString);
-      snprintf(pString,100,"DNN_alpha = %e", alpha_);
+      snprintf(pString,100,"RS_DNN_alpha = %e", alpha_);
       psConfig_.putParameter(pString);
     }
 
     snprintf(pString,100,
       "Maximum iteration for optimization (100 - 10000) : ");
     maxIter_ = getInt(100,10000,pString);
-    snprintf(pString,100,"DNN_maxiter = %d", maxIter_);
+    snprintf(pString,100,"RS_DNN_maxiter = %d", maxIter_);
     psConfig_.putParameter(pString);
   }
 
@@ -127,75 +127,74 @@ DNN::DNN(int nInputs, int nSamples) : FuncApprox(nInputs, nSamples)
   else
   {
     char winput1[1000], winput2[1000];
-    char *cString = psConfig_.getParameter("DNN_nlevels");
+    char *cString = psConfig_.getParameter("RS_DNN_nlevels");
     if (cString != NULL)
     {
       sscanf(cString, "%s %s %d", winput1, winput2, &nLevels_);
       if (nLevels_ < 1 || nLevels_ > 4)
       {
-        printOutTS(PL_INFO,"NN nlevels %d invalid - reset to 1\n",nLevels_);
+        printOutTS(PL_INFO,
+             "DNN WARNING: Invalid nlevels %d - reset to 1\n",nLevels_);
         nLevels_ = 1;
       }
-      else if (psConfig_.InteractiveIsOn())
-        printOutTS(PL_INFO,"NN nLevels set to %d\n",nLevels_);
+      printOutTS(PL_INFO,"DNN INFO: nLevels set to %d\n",nLevels_);
     }
-    cString = psConfig_.getParameter("DNN_nnodes");
+    cString = psConfig_.getParameter("RS_DNN_nnodes");
     if (cString != NULL)
     {
       sscanf(cString, "%s %s %d", winput1, winput2, &numNodes);
       if (numNodes < 3 || numNodes > 100)
       {
-        printOutTS(PL_INFO,"NN numNodes/level %d invalid - reset to 10\n",
-                   numNodes);
+        printOutTS(PL_INFO,
+          "DNN WARNING: Invalid nNodes/level %d - reset to 10\n",
+          numNodes);
         numNodes = 10;
       }
-      else if (psConfig_.InteractiveIsOn())
-        printOutTS(PL_INFO,"NN numNodes set to %d\n",numNodes);
+      printOutTS(PL_INFO,"DNN INFO: numNodes set to %d\n",numNodes);
     }
-    cString = psConfig_.getParameter("DNN_optscheme");
+    cString = psConfig_.getParameter("RS_DNN_optscheme");
     if (cString != NULL)
     {
       sscanf(cString, "%s %s %d", winput1, winput2, &optScheme_);
       if (optScheme_ < 0 || optScheme_ > 1)
       {
-        printOutTS(PL_INFO,"NN Opt scheme invalid - reset to LBFGS\n");
+        printOutTS(PL_INFO,
+           "DNN WARNING: Invalid Opt scheme - reset to LBFGS\n");
         optScheme_ = 0;
       }
-      else if (psConfig_.InteractiveIsOn())
-      {
-        if (optScheme_ == 0)
-          printOutTS(PL_INFO,"NN Opt scheme set to LBFGS\n");
-        else
-          printOutTS(PL_INFO,"NN Opt scheme set to Gradient descent\n");
-      }
+      if (optScheme_ == 0)
+        printOutTS(PL_INFO,"DNN INFO: Opt scheme set to LBFGS\n");
+      else
+        printOutTS(PL_INFO,
+            "DNN INFO: Opt scheme set to Gradient descent\n");
     }
     if (optScheme_ == 1)
     {
-      cString = psConfig_.getParameter("DNN_alpha");
+      cString = psConfig_.getParameter("RS_DNN_alpha");
       if (cString != NULL)
       {
         sscanf(cString, "%s %s %lg", winput1, winput2, &alpha_);
         if (alpha_ < 0.01 || alpha_ > 0.5)
         {
           printOutTS(PL_INFO,
-               "NN Opt learning rate invalid - reset to 0.1\n");
+            "DNN WARNING: Invalid Opt learning rate - reset to 0.1\n");
           alpha_ = 0.1;
         }
-        else if (psConfig_.InteractiveIsOn())
-          printOutTS(PL_INFO,"NN Opt learning rate set to %e\n",alpha_);
+        printOutTS(PL_INFO,
+            "DNN INFO: Opt learning rate set to %e\n",alpha_);
       }
     }
-    cString = psConfig_.getParameter("DNN_maxiter");
+    cString = psConfig_.getParameter("RS_DNN_maxiter");
     if (cString != NULL)
     {
       sscanf(cString, "%s %s %d", winput1, winput2, &maxIter_);
       if (maxIter_ < 100 || maxIter_ > 10000)
       {
-        printOutTS(PL_INFO,"NN Opt max iter invalid - reset to 1000\n");
+        printOutTS(PL_INFO,
+             "DNN WARNING: Invalid Opt max iter - reset to 1000\n");
         maxIter_ = 1000;
       }
-      else if (psConfig_.InteractiveIsOn())
-        printOutTS(PL_INFO,"NN Opt max iter set to %d\n",maxIter_);
+      printOutTS(PL_INFO,"DNN INFO: Opt max iter set to %d\n",maxIter_);
     }
   }
 
@@ -722,15 +721,23 @@ int DNN::optimizeGradDescent(psVector vecXIn, psVector vecYIn)
 //*************************************************************************
 int DNN::optimizeLBFGS(psVector vecXIn, psVector vecYIn)
 {
+#ifdef HAVE_LBFGS
   int     ii, jj, kk, ll, nn, ss, length, its, nLHS=3, minIndex;
   integer nInps, iprint=0, itask, *task=&itask, lsave[4], isave[44];
   integer *iwork, nCorr=5, *nbds, csave[60], maxIter=2000;
   double  factr, pgtol, dsave[29], normGrad, FValue, *YT, dZero=0, dOne=1;
   double  lb, ub, ddata;
+#endif
+
+#ifndef HAVE_LBFGS
+  printf("DNN ERROR: DNN is not available because LBFGS is not installed.\n");
+  exit(1);
+#endif
 
   //**/ ----------------------------------------------------------------
   //**/ count the number of parameters, generate initial guess
   //**/ ----------------------------------------------------------------
+#ifdef HAVE_LBFGS
   if (psConfig_.InteractiveIsOn() && outputLevel_ > 0) 
     printf("NN LBFGS optimization begins ...\n");
   MatWs_[1]->setDim(VecNumNodes_[1], nInputs_);
@@ -977,6 +984,7 @@ int DNN::optimizeLBFGS(psVector vecXIn, psVector vecYIn)
       (*VecBs_[ii])[jj] = vecBestP[length++]; 
     }
   }
+#endif
   return 0;
 }
 

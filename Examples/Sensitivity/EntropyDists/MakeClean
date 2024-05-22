@@ -1,0 +1,3 @@
+clean:
+	rm -f *.m *.sci sample1D psuadeData 
+

@@ -67,7 +67,7 @@ MOATSampling::MOATSampling(const MOATSampling & ms) : Sampling()
   nInputs_ = ms.nInputs_;
   vecInpSubset_ = ms.vecInpSubset_;
 
-  //**/MetisSampling inherits from Sampling so include the parent class 
+  //**/MOATSampling inherits from Sampling so include the parent class 
   //**/data members
   printLevel_ = ms.printLevel_;
   samplingID_ = ms.samplingID_;
@@ -1895,7 +1895,7 @@ MOATSampling& MOATSampling::operator=(const MOATSampling & ms)
   nInputs_ = ms.nInputs_;
   vecInpSubset_ = ms.vecInpSubset_;
 
-  //**/MetisSampling inherits from Sampling so include the parent class 
+  //**/MOATSampling inherits from Sampling so include the parent class 
   //**/data members
   printLevel_ = ms.printLevel_;
   samplingID_ = ms.samplingID_;

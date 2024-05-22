@@ -20,10 +20,11 @@ METHOD
    random_seed = 41491431
 END
 APPLICATION
-   driver = NONE
+   driver = simdata
 END
 ANALYSIS
    analyzer output_id  = 1
+   analyzer rstype = MARS
    printlevel 1
    io_expert
 END

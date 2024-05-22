@@ -77,13 +77,12 @@ void MomentAnalyzer::analyze(int nInps, int nSamp, double *lbs,
 double MomentAnalyzer::analyze(aData &adata)
 {
   int    nInputs, nOutputs, nSamples, outputID, nSubSamples, status, nValid;
-  int    nGroups, groupID, whichOutput, ss, printLevel, nConstr, cnt, outID;
+  int    nGroups, groupID, whichOutput, ss, printLevel, cnt, outID;
   int    errFlag, ii;
   double mean, variance, skewness, kurtosis, *XX;
   double *YY, *YT=NULL, variance2;
   char   winput[500], filename[500], pString[500];
   FILE   *fp=NULL;
-  RSConstraints *constrPtr;
   PsuadeData    *ioPtr;
   pData         pPtr;
   psVector vecGMeans, vecGVars, vecYT;
@@ -179,9 +178,9 @@ double MomentAnalyzer::analyze(aData &adata)
   if (errFlag == 0) YT = YY;
   else
   {
-    printOutTS(PL_INFO,"MomentAnalyzer INFO: Some outputs are undefined,\n");
-    printOutTS(PL_INFO,
-         "               which are purged before processing.\n");
+    printOutTS(PL_INFO,"MomentAnalyzer INFO: Some outputs ");
+    printOutTS(PL_INFO,"are UNDEFINED, which are to be purged\n");
+    printOutTS(PL_INFO,"               before processing.\n");
     vecYT.setLength(nSamples*nOutputs);
     YT = vecYT.getDVector();
 
@@ -199,12 +198,12 @@ double MomentAnalyzer::analyze(aData &adata)
     }
     if (nSubSamples == nSamples) nSubSamples = cnt;
     if (psConfig_.InteractiveIsOn())
-      printOutTS(PL_INFO,"MomentAnalyzer INFO: original sample size = %d\n",
-                 nSamples);
+      printOutTS(PL_INFO,
+        "MomentAnalyzer INFO: Original sample size = %d\n",nSamples);
     nSamples = cnt;
     if (psConfig_.InteractiveIsOn())
-      printOutTS(PL_INFO,"MomentAnalyzer INFO: purged   sample size = %d\n",
-                 nSamples);
+      printOutTS(PL_INFO,
+        "MomentAnalyzer INFO: Purged   sample size = %d\n",nSamples);
   }
   if (nSamples <= 0) 
   {
@@ -216,21 +215,26 @@ double MomentAnalyzer::analyze(aData &adata)
   //**/ get response surface filter information, if any
   //**/ process differently if there are filters
   //**/ ---------------------------------------------------------------
-  nConstr = 0;
-  constrPtr = NULL;
+  RSConstraints *constrPtr = NULL;
   if (ioPtr != NULL)
   {
     constrPtr = new RSConstraints();
     constrPtr->genConstraints(ioPtr);
-    nConstr = constrPtr->genConstraints(ioPtr);
+    int nConstr = constrPtr->genConstraints(ioPtr);
+    if (nConstr == 0)
+    {
+      delete constrPtr;
+      constrPtr = NULL;
+    }
   }
-  if (nConstr > 0)
+  if (constrPtr != NULL)
   {
     if (outputID < 0 || outputID >= nOutputs)
     {
       printOutTS(PL_INFO,
            "MomentAnalyzer: Generate output distribution plot\n");
-      snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs);
+      snprintf(pString,100,
+               "Enter output number (1 - %d) : ", nOutputs);
       outID = getInt(1, nOutputs, pString);
       outID--;
     }
@@ -239,14 +243,15 @@ double MomentAnalyzer::analyze(aData &adata)
     else              strcpy(filename, "matlabua.m");
     fp = fopen(filename, "w");
     if (fp == NULL)
-      printOutTS(PL_ERROR, "ERROR: cannot open file %s.\n", filename);
+      printOutTS(PL_ERROR,"ERROR: Cannot open file %s.\n",filename);
     psVector vecY2;
     vecY2.setLength(nSamples);
     nValid = 0;
     if (fp != NULL) fprintf(fp, "Y = [\n");
     for (ss = 0; ss < nSamples; ss++)
     {
-      constrPtr->evaluate(&XX[ss*nInputs],YT[ss*nOutputs+outputID],status);
+      constrPtr->evaluate(&XX[ss*nInputs],YT[ss*nOutputs+outputID],
+                            status);
       if (status == 1)
       {
         vecY2[nValid++] = YT[ss*nOutputs+outputID];
@@ -255,7 +260,8 @@ double MomentAnalyzer::analyze(aData &adata)
     }
     if (nValid == 0)
     {
-      printOutTS(PL_INFO,"MomentAnalyzer INFO: no valid data points.\n");
+      printOutTS(PL_INFO,
+                 "MomentAnalyzer INFO: No valid data points.\n");
       delete constrPtr;
       if (fp != NULL) fclose(fp);
       return 0.0;
@@ -309,11 +315,11 @@ double MomentAnalyzer::analyze(aData &adata)
     computeMeanVariance(nInputs,1,nValid,vecY2.getDVector(),&mean,
                         &variance,0);
     printAsterisks(PL_INFO, 0);
-    printOutTS(PL_INFO, "*       Sample mean          = %12.4e\n",mean);
-    printOutTS(PL_INFO, "*       Sample std dev       = %12.4e\n",
+    printOutTS(PL_INFO,"*       Sample mean       = %12.4e\n",mean);
+    printOutTS(PL_INFO,"*       Sample std dev    = %12.4e\n",
                sqrt(variance));
-    printOutTS(PL_INFO, "*       Based on nSamples    = %d\n",nValid);
-    printOutTS(PL_INFO, "*       Output number        = %d\n", outID+1);
+    printOutTS(PL_INFO,"*       Based on nSamples = %d\n",nValid);
+    printOutTS(PL_INFO,"*       Output number     = %d\n", outID+1);
     delete constrPtr;
     return sqrt(variance/nValid);
   }
@@ -351,9 +357,9 @@ double MomentAnalyzer::analyze(aData &adata)
              vecGMeans.getDVector(),vecGVars.getDVector(),ss);
       if (psConfig_.InteractiveIsOn())
       {
-        printOutTS(PL_INFO, "*       Sample mean          = %12.4e\n",
+        printOutTS(PL_INFO,"*       Sample mean          = %12.4e\n",
                    vecGMeans[0]);
-        printOutTS(PL_INFO, "*       Sample std dev       = %12.4e\n",
+        printOutTS(PL_INFO,"*       Sample std dev       = %12.4e\n",
                    sqrt(vecGVars[0]));
       }
       if (vecGVars[0] > 0)
@@ -362,17 +368,17 @@ double MomentAnalyzer::analyze(aData &adata)
                      sqrt(vecGVars[0]), &skewness,&kurtosis,ss);
         if (psConfig_.InteractiveIsOn())
         {
-          printOutTS(PL_INFO,"*       Sample skewness      = %12.4e\n", 
-                     skewness);
-          printOutTS(PL_INFO,"*       Sample kurtosis      = %12.4e\n", 
-                  kurtosis);
+          printOutTS(PL_INFO,
+             "*       Sample skewness      = %12.4e\n",skewness);
+          printOutTS(PL_INFO,
+             "*       Sample kurtosis      = %12.4e\n",kurtosis);
         }
       }
       else
       {
         if (psConfig_.InteractiveIsOn())
           printOutTS(PL_INFO,
-               "*       Std dev=0, skeweness/kurtosis set to 0.\n");
+             "*       Std dev=0, skeweness/kurtosis set to 0.\n");
         skewness = kurtosis = 0.0;
       }
       if (psConfig_.InteractiveIsOn() && ss < nOutputs-1 && 
@@ -522,7 +528,6 @@ double MomentAnalyzer::analyze(aData &adata)
                 sqrt(variance2/(double) nSamples));
         printAsterisks(PL_INFO, 0);
       }
-      delete constrPtr;
       return sqrt(variance2/(double) nSamples);
     }
     double *dptr1 = vecGMeans.getDVector();
@@ -548,9 +553,10 @@ double MomentAnalyzer::analyze(aData &adata)
 
     if (psConfig_.InteractiveIsOn())
     {
-      printOutTS(PL_INFO, "*       Mean of group variances = %16.8e\n",mean);
-      printOutTS(PL_INFO, "*       Std error of variance   = %16.8e\n",
-                 variance2);
+      printOutTS(PL_INFO,
+           "*       Mean of group variances = %16.8e\n",mean);
+      printOutTS(PL_INFO, 
+           "*       Std error of variance   = %16.8e\n",variance2);
     }
     mean = 0.0;
     for (groupID = 0; groupID < nGroups; groupID++)
@@ -563,9 +569,10 @@ double MomentAnalyzer::analyze(aData &adata)
     variance2 = variance2 / (double) nGroups;
     if (psConfig_.InteractiveIsOn())
     {
-      printOutTS(PL_INFO, "*       Mean of group means     = %16.8e\n",mean);
-      printOutTS(PL_INFO, "*       Std error of mean       = %16.8e\n", 
-                 variance2);
+      printOutTS(PL_INFO,
+          "*       Mean of group means     = %16.8e\n",mean);
+      printOutTS(PL_INFO,
+          "*       Std error of mean       = %16.8e\n",variance2);
       printAsterisks(PL_INFO, 0);
     }
   }
@@ -574,12 +581,11 @@ double MomentAnalyzer::analyze(aData &adata)
   //**/ collective analysis
   //**/ ---------------------------------------------------------------
   if (psConfig_.InteractiveIsOn() && printLevel > 1 && outputID >= 0)
-     analyzeMore(nInputs, nOutputs, nSamples, nSubSamples, YT, outputID);
+     analyzeMore(nInputs,nOutputs,nSamples,nSubSamples,YT,outputID);
 
   //**/ ---------------------------------------------------------------
   //**/ cleaning up
   //**/ ---------------------------------------------------------------
-  delete constrPtr;
   return sqrt(variance/nValid);
 }
 
@@ -647,7 +653,7 @@ int MomentAnalyzer::computeSkewnessKurtosis(int nInputs, int nOutputs,
 // perform more analysis
 // ------------------------------------------------------------------------
 int MomentAnalyzer::analyzeMore(int nInputs, int nOutputs, int nSamples,
-                              int nSubSamples, double *Y, int outputID)
+                                int nSubSamples, double *Y, int outputID)
 {
   int    nGroups, groupID, myNSubSamples, nLevels=10, level, multiple;
   double mean, variance;
@@ -688,9 +694,12 @@ int MomentAnalyzer::analyzeMore(int nInputs, int nOutputs, int nSamples,
                    (vecGMeans[groupID] - mean));
     variance = variance / (double) nGroups;
     printEquals(PL_INFO, 0);
-    printOutTS(PL_INFO,"*       Agglomerate %d groups into 1 \n",multiple);
-    printOutTS(PL_INFO,"*       Mean of group means     = %16.8e\n",mean);
-    printOutTS(PL_INFO,"*       Std error of mean       = %16.8e\n",variance);
+    printOutTS(PL_INFO,
+         "*       Agglomerate %d groups into 1 \n",multiple);
+    printOutTS(PL_INFO,
+         "*       Mean of group means     = %16.8e\n",mean);
+    printOutTS(PL_INFO,
+         "*       Std error of mean       = %16.8e\n",variance);
     printEquals(PL_INFO, 0);
   }
   return 0;
@@ -741,8 +750,8 @@ int MomentAnalyzer::genPlot(char *fname, int nInputs, int nOutputs,
       fprintf(fp, "if (twoPlots == 1)\n");
       fprintf(fp, "subplot(1,2,1)\n");
       fprintf(fp, "end;\n");
-      if (nSamples > 500) fprintf(fp, "[nk,xk]=hist(Y(:,1),20);\n");
-      else                fprintf(fp, "[nk,xk]=hist(Y(:,1),10);\n");
+      if (nSamples > 500) fprintf(fp,"[nk,xk]=hist(Y(:,1),20);\n");
+      else                fprintf(fp,"[nk,xk]=hist(Y(:,1),10);\n");
       fprintf(fp, "bar(xk,nk/%d,1.0)\n",nSamples);
       fwritePlotAxes(fp);
       fwritePlotTitle(fp, "Probability Distribution");
@@ -764,12 +773,13 @@ int MomentAnalyzer::genPlot(char *fname, int nInputs, int nOutputs,
       fwritePlotYLabel(fp, "Probabilities");
       fprintf(fp, "end;\n");
     }
-    printOutTS(PL_INFO,"Output distribution plot is now in %s.\n",fname);
+    printOutTS(PL_INFO,
+         "Output distribution plot is now in %s.\n",fname);
     fclose(fp);
   }
   else 
   {
-    printOutTS(PL_ERROR,"ERROR: cannot open file %s.\n", fname);
+    printOutTS(PL_ERROR,"ERROR: Cannot open file %s.\n", fname);
     return -1;
   }
   return 0;

@@ -307,7 +307,7 @@ double ***psMatrix3D::takeMatrix3D()
 }
 
 // ************************************************************************
-// collapse matrix in 2D 
+// collapse matrix in 2D along a given dimension
 // ------------------------------------------------------------------------
 void psMatrix3D::collapse2D(int ind, psMatrix &matOut)
 {

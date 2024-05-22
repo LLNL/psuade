@@ -25,12 +25,15 @@ To run with SM/MM optimizers:
 cc -o smmm_coarse_sim smmm_coarse_sim.c -lm
 cc -o smmm_fine_sim smmm_fine_sim.c -lm
 
-1. MM
+1. MM : run MM with 2 executables
    - need to provide aux_opt_driver : smmm_coarse_sim
-     need to set targetFile (the true solution at the
+
+   - need to set targetFile (the true solution at the
      selected mesh points)
 
      Run: psuade psuadeSMMM.in
+
+2. MM : run MM with 1 executable and 1 data file
 
    - both opt_driver and aux_opt_driver can be data files
      e.g. to set aux_opt_driver as a psuade sample file
@@ -41,7 +44,7 @@ cc -o smmm_fine_sim smmm_fine_sim.c -lm
       * set aux_opt_driver in psuadeSMMM2.in as auxData
       * run: psuade psuadeSMMM2.in
 
-3. MM_adaptive
+2. MM_adaptive
    - need to provide aux_opt_driver as data file
    - this file will be enlarged as more fine model 
      evaluations are performed and added 

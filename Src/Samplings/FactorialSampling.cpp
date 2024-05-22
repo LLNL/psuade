@@ -59,12 +59,12 @@ int FactorialSampling::initialize(int initLevel)
   //**/ ----------------------------------------------------------------
   if (nSamples_ == 0)
   {
-    printf("FactorialSampling::initialize ERROR - nSamples = 0.\n");
-    exit(1);
+    printf("FactorialSampling initialize WARNING - nSamples = 0.\n");
+    printf("NOTE: If no symbols are detected, an error will be flagged.\n");
   }
   if (nInputs_ == 0)
   {
-    printf("FactorialSampling::initialize ERROR - input not set up.\n");
+    printf("FactorialSampling initialize ERROR - input not set up.\n");
     exit(1);
   }
 
@@ -74,9 +74,9 @@ int FactorialSampling::initialize(int initLevel)
   if (vecInpSettings_ != NULL)
   {
     if (printLevel_ > 4)
-       printf("FactorialSampling::initialize: inputSettings used.\n");
+       printf("FactorialSampling initialize: inputSettings used.\n");
     if (printLevel_ > 4 && vecSymTable_.length() > 0)
-       printf("FactorialSampling::initialize: symbol table overwritten.\n");
+       printf("FactorialSampling initialize: symbol table overwritten.\n");
     maxNumSettings_ = 0;
     for (inputID = 0; inputID < nInputs_; inputID++) 
       if (vecInpNumSettings_[inputID] > maxNumSettings_)
@@ -97,6 +97,11 @@ int FactorialSampling::initialize(int initLevel)
   } 
   else if (vecSymTable_.length() != nInputs_)
   {
+    if (nSamples_ <= 0)
+    {
+      printf("FactorialSampling initialize ERROR: nSamples = 0.\n");
+      exit(1);
+    }
     ddata  = (double) nSamples_;
     dpower = 1.0 / (double) nInputs_;
     ddata  = pow(ddata, dpower+1.0E-12);
@@ -115,12 +120,12 @@ int FactorialSampling::initialize(int initLevel)
   //**/ ----------------------------------------------------------------
   if (printLevel_ > 4)
   {
-    printf("FactorialSampling::initialize: nSamples = %d\n", nSamples_);
-    printf("FactorialSampling::initialize: nInputs  = %d\n", nInputs_);
-    printf("FactorialSampling::initialize: nOutputs = %d\n", nOutputs_);
+    printf("FactorialSampling initialize: nSamples = %d\n", nSamples_);
+    printf("FactorialSampling initialize: nInputs  = %d\n", nInputs_);
+    printf("FactorialSampling initialize: nOutputs = %d\n", nOutputs_);
     if (randomize_ != 0)
-         printf("FactorialSampling::initialize: randomize on\n");
-    else printf("FactorialSampling::initialize: randomize off\n");
+         printf("FactorialSampling initialize: randomize on\n");
+    else printf("FactorialSampling initialize: randomize off\n");
     for (inputID = 0; inputID < nInputs_; inputID++)
       printf("    FactorialSampling input %3d = [%e %e]\n", inputID+1,
              vecLBs_[inputID], vecUBs_[inputID]);
@@ -232,7 +237,7 @@ int FactorialSampling::refine(int refineRatio, int randomize, double thresh,
   nLevels = refineRatio;
   if (nLevels != 2)
   {
-    printf("FactorialSampling::refine WARNING - nLevels set to 2.\n");
+    printf("FactorialSampling refine WARNING - nLevels set to 2.\n");
     nLevels = 2;
   }
 
@@ -349,13 +354,13 @@ int FactorialSampling::refine(int refineRatio, int randomize, double thresh,
       {
         if (randomize_ != 0)
         {
-          stepSize = vecRanges[inputID] / ((double) (vecSymTable_[inputID]));
+          stepSize = vecRanges[inputID]/((double) (vecSymTable_[inputID]));
           vecSamInps_[sampleID*nInputs_+inputID] = vecLBs_[inputID] +
                                 (curSymbol + PSUADE_drand()) * stepSize;
         }
         else
         {
-          stepSize = vecRanges[inputID] / ((double) (vecSymTable_[inputID]-1));
+          stepSize = vecRanges[inputID]/((double) (vecSymTable_[inputID]-1));
           vecSamInps_[sampleID*nInputs_+inputID] = 
                            curSymbol * stepSize + vecLBs_[inputID];
         }
@@ -369,12 +374,12 @@ int FactorialSampling::refine(int refineRatio, int randomize, double thresh,
   //**/ ----------------------------------------------------------------
   if (printLevel_ > 4)
   {
-    printf("FactorialSampling::refine: nSamples = %d\n", nSamples_);
-    printf("FactorialSampling::refine: nInputs  = %d\n", nInputs_);
-    printf("FactorialSampling::refine: nOutputs = %d\n", nOutputs_);
+    printf("FactorialSampling refine: nSamples = %d\n", nSamples_);
+    printf("FactorialSampling refine: nInputs  = %d\n", nInputs_);
+    printf("FactorialSampling refine: nOutputs = %d\n", nOutputs_);
     if (randomize_ != 0)
-         printf("FactorialSampling::refine: randomize on\n");
-    else printf("FactorialSampling::refine: randomize off\n");
+         printf("FactorialSampling refine: randomize on\n");
+    else printf("FactorialSampling refine: randomize off\n");
     for (inputID = 0; inputID < nInputs_; inputID++)
       printf("    FactorialSampling input %3d = [%e %e]\n", inputID+1,
              vecLBs_[inputID], vecUBs_[inputID]);
@@ -396,7 +401,7 @@ int FactorialSampling::setInputParams(int nInputs, int *counts,
 
   if (nInputs_ != 0 && nInputs != nInputs_)
   {
-    printf("FactorialSampling::setInputParams - nInputs mismatch.\n");
+    printf("FactorialSampling setInputParams ERROR: nInputs mismatch.\n");
     exit(1);
   }
   nInputs_ = nInputs;

@@ -12,15 +12,15 @@ ua
 ca
 1
 # perform RS-based sensitivity analysis (GP)
-rssobol1
+rsvce1_sobol
 y
 1
 10
-rssobol2
+rsvce2_sobol
 y
 1
 10
-rssoboltsi
+rstsi_sobol
 y
 1
 10

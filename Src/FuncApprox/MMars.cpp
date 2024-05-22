@@ -87,9 +87,9 @@ MMars::MMars(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
     printf("The default is 1000 (will have more if there is overlap).\n");
     snprintf(pString,100,"Enter the partition sample size (1000 - 10000) : ");
     partSize_ = getInt(200, 20000, pString);
-    snprintf(pString,100,"MMARS_max_samples_per_group = %d", partSize_);
+    snprintf(pString,100,"RS_MMARS_max_sam_per_group = %d", partSize_);
     psConfig_.putParameter(pString);
-    snprintf(pString,100,"MMARS_overlap = %e", ddata);
+    snprintf(pString,100,"RS_MMARS_overlap = %e", ddata);
     psConfig_.putParameter(pString);
   }
 
@@ -98,7 +98,7 @@ MMars::MMars(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
   //**/ =======================================================
   else
   {
-    strPtr = psConfig_.getParameter("MMARS_max_samples_per_group");
+    strPtr = psConfig_.getParameter("RS_MMARS_max_sam_per_group");
     if (strPtr != NULL)
     {
       sscanf(strPtr, "%s %s %d", winput, equal, &idata);
@@ -110,7 +110,7 @@ MMars::MMars(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
         printf("            max_samples_per_group should be >= 1000.\n");
       }
     }
-    strPtr = psConfig_.getParameter("MMARS_overlap");
+    strPtr = psConfig_.getParameter("RS_MMARS_overlap");
     if (strPtr != NULL)
     {
       sscanf(strPtr, "%s %s %lg", winput, equal, &ddata);

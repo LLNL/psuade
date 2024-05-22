@@ -215,7 +215,7 @@ int SelectiveRegression::initialize(double *X, double *Y)
   printf("* Selective Regression Analysis\n");
   printEquals(PL_INFO, 0);
   VecX2.setLength(nSamples_ * nInputs_);
-  if (psConfig_.MasterModeIsOn())
+  if (psConfig_.InteractiveIsOn() && psConfig_.MasterModeIsOn())
   {
     printf("* SelectiveRegression INFO: scaling turned off.\n");
     printf("*                  To turn scaling on in master mode,\n");
@@ -696,29 +696,34 @@ int SelectiveRegression::analyze(psVector VecX, psVector VecY)
   for (nn = 0; nn < N; nn++) if (VecS[nn] < 0) mm++;
   if (mm > 0)
   {
-    printf("* SelectiveRegression WARNING: some of the singular values\n");
-    printf("*            are < 0. May spell trouble but will\n");
-    printf("*            proceed anyway (%d).\n", mm);
+    printf("SelectiveRegression WARNING: Some singular values are <= 0\n");
+    printf("*                   May spell trouble but will proceed.\n");
   }
   if (VecS[0] == 0.0) NRevised = 0;
   else
   {
     NRevised = N;
     for (nn = 1; nn < N; nn++)
-      if (VecS[nn-1] > 0 && VecS[nn]/VecS[nn-1] < 1.0e-8) NRevised--;
+      if (VecS[nn-1] > 0 && VecS[nn]/VecS[nn-1] < 1.0e-8) break;
+    NRevised = nn;
   }
   if (NRevised < N)
   {
-    printf("* SelectiveRegression ERROR: sample rank = %d (need %d)\n",
+    printf("SelectiveRegression WARNING: True matrix rank = %d (N = %d)\n",
            NRevised, N);
-    return -1;
+    if (psConfig_.InteractiveIsOn() && outputLevel_ > 1)
+    {
+      printf("INFO: This can be due to the quality of the sample.\n");
+      for (nn = 0; nn < N; nn++)
+        printf("Singular value %5d = %e\n",nn+1,VecS[nn]);
+    }
   }
-  if (psConfig_.MasterModeIsOn())
+  if (psConfig_.InteractiveIsOn() && psConfig_.MasterModeIsOn())
   {
-    printf("SelectiveRegression: matrix singular values \n");
-    printf("The VERY small ones may cause poor numerical accuracy,\n");
-    printf("but not keeping them may ruin the approximation power.\n");
-    printf("So, select them judiciously.\n");
+    printf("SelectiveRegression: For the matrix singular values \n");
+    printf(" - The VERY small ones may cause poor numerical accuracy\n");
+    printf(" - But not keeping them may ruin the approximation power\n");
+    printf(" - So, select them judiciously\n");
     for (nn = 0; nn < N; nn++)
       printf("Singular value %5d = %e\n", nn+1, VecS[nn]);
     snprintf(pString,100,"How many to keep (1 - %d, 0 - all) ? ", N);
@@ -728,18 +733,11 @@ int SelectiveRegression::analyze(psVector VecX, psVector VecY)
   }
   else
   {
-    NRevised = N;
-    for (nn = 1; nn < N; nn++)
-    {
-      if (VecS[nn-1] > 0.0 && VecS[nn]/VecS[nn-1] < 1.0e-8)
-      {
-        VecS[nn] = 0.0;
-        NRevised--;
-      }
-    }
+    for (nn = NRevised; nn < N; nn++) VecS[nn] = 0.0;
+    if (NRevised < N)
+      printf("SelectiveRegression INFO: %d singular values removed\n",
+             N-NRevised);
   }
-  if (NRevised < N)
-    printf("Number of singular values deleted = %d\n",N-NRevised);
 
   //**/ ===============================================================
   //**/ compute B 
@@ -773,7 +771,7 @@ int SelectiveRegression::analyze(psVector VecX, psVector VecY)
   //**/ ===============================================================
   //**/ compute residual
   //**/ ===============================================================
-  if (psConfig_.MasterModeIsOn())
+  if (psConfig_.InteractiveIsOn() && psConfig_.MasterModeIsOn())
   {
     fp = fopen("selective_regression_error.m", "w");
     if(fp == NULL)
@@ -1223,7 +1221,7 @@ int SelectiveRegression::printRC(psVector VecB, psVector VecBstd,
   //**/ ---------------------------------------------------------------
   //**/ print to file
   //**/ ---------------------------------------------------------------
-  if (psConfig_.MasterModeIsOn())
+  if (psConfig_.InteractiveIsOn() && psConfig_.MasterModeIsOn())
   {
     fp = fopen(fname, "w");
     if(fp == NULL)

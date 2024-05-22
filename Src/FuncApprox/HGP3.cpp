@@ -60,12 +60,15 @@ extern "C" {
 // ------------------------------------------------------------------------
 HGP3::HGP3(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
 {
-  char pString[101], winput1[1000], winput2[1000], *cString=NULL;
+  int  ii;
+  double dtmp;
+  char pString[101],winput[1000],winput2[1000],*cString=NULL, equal[100];
+  char configCmd[1000];
 
   faID_ = PSUADE_RS_HGP3;
   haveQuantiles_ = 0;
   expPower_ = 2;
-  noChecking_ = 1;
+  optimizeFlag_ = 1;
   if (psConfig_.InteractiveIsOn())
   {
     printAsterisks(PL_INFO, 0);
@@ -78,39 +81,110 @@ HGP3::HGP3(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
   {
     printOutTS(PL_INFO,"* Default exponential degree = %e\n",expPower_);
     snprintf(pString,100,"Set the exponential degree to? [1.5,2.0] ");
+    expPower_ = 1;
     while (expPower_ < 1.5 || expPower_ > 2)
       expPower_ = getDouble(pString);
-    printf("Exponential degree = %e\n", expPower_);
-    snprintf(pString,100,"GP_power = %e", expPower_);
+    printf("HGP3 INFO: New exponential degree = %e\n", expPower_);
+    snprintf(pString,100,"RS_HGP3_power = %e", expPower_);
     psConfig_.putParameter(pString);
-    snprintf(pString,100,
-            "Is the last input variable quantile variable? (y or n) ");
-    getString(pString, winput1);
-    if (winput1[0] == 'y') 
+    printf("* If the sample is from a stochastic (meaning ");
+    printf("repeated runs with same\n");
+    printf("* input values may give different output value ");
+    printf("due to stochasticity)\n");
+    printf("* model, you may want to use quantile method ");
+    printf("(You do not have to).\n");
+    printf("* In order to be eligible for the quantile method, ");
+    printf("the sample has to:\n");
+    printf("* 1. Have block structure whereby each block has ");
+    printf("the same block size\n");
+    printf("*    and the first %d inputs in each sample point ",
+           nInputs_-1);
+    printf("in each block have\n");
+    printf("*    the same values, and\n");
+    printf("* 2. The last input is the quantile variable, ");
+    printf("which has the same value\n");
+    printf("*    at the k-th position of each block.\n");
+    snprintf(pString,100, "Use quantile method? (y or n) ");
+    getString(pString, winput);
+    if (winput[0] == 'y') 
     {
       haveQuantiles_ = 1;
-      snprintf(pString,100,"HGP3_haveQuantiles");
+      snprintf(pString,100,"RS_HGP3_haveQuantiles");
       psConfig_.putParameter(pString);
+      printf("HGP3 INFO: Use quantile method (but its ");
+      printf("viability will be checked).\n");
     }
   }
   else
   {
-    cString = psConfig_.getParameter("GP_power");
+    cString = psConfig_.getParameter("RS_HGP3_power");
     if (cString != NULL)
     {
-      sscanf(cString, "%s %s %lg", winput1, winput2, &expPower_);
+      sscanf(cString, "%s %s %lg", winput, winput2, &expPower_);
       if (expPower_ < 1.5 || expPower_ > 2)
       {
         printOutTS(PL_INFO,
-             "HGP3 exponential (%d) invalid - reset to 2\n",expPower_);
+           "HGP3 WARNING: Invalid exponential degree - reset to 2\n");
         expPower_ = 2.0;
       }
-      else if (psConfig_.InteractiveIsOn())
-        printOutTS(PL_INFO,
-                   "HGP3 exponential degree set to %e\n",expPower_);
+      printOutTS(PL_INFO,
+           "HGP3 INFO: exponential degree set to %e\n",expPower_);
     }
-    cString = psConfig_.getParameter("HGP3_haveQuantiles");
-    if (cString != NULL) haveQuantiles_ = 1;
+    cString = psConfig_.getParameter("RS_HGP3_haveQuantiles");
+    if (cString != NULL) 
+    {
+      haveQuantiles_ = 1;
+      printOutTS(PL_INFO,
+           "HGP3 INFO: Quantile method has been selected (config)\n");
+    }
+  }
+
+  //**/ ask about hyperparameters
+  int nhypers = 5;
+  if (haveQuantiles_) nhypers++;
+  VecHypers_.setLength(nhypers);
+
+  //**/ ask users to provide hyperparameters
+  if (psConfig_.RSExpertModeIsOn() && psConfig_.InteractiveIsOn())
+  {
+    snprintf(pString,100,"Use user-provided hyperparameters? (y or n) ");
+    getString(pString, winput);
+    if (winput[0] == 'y')
+    {
+      printf("Hyperparameter 1: input scale\n");
+      printf("Hyperparameter 2: output scale\n");
+      printf("Hyperparameter 3: added to all entries in C\n");
+      printf("Hyperparameter 4: Ymean (constant)\n");
+      printf("Hyperparameter 5: added to diagonal of C\n");
+      if (haveQuantiles_)
+        printf("Hyperparameter 6: quantile variable\n");
+      for (ii = 0; ii < VecHypers_.length(); ii++)
+      {
+        snprintf(pString,100,"Enter hyperparameter %d : ",ii+1);
+        VecHypers_[ii] = getDouble(pString);
+      }
+      optimizeFlag_ = 0;
+    }
+  }
+  else
+  {
+    for (ii = 0; ii < nhypers; ii++)
+    {
+      snprintf(configCmd,100,"RS_HGP3_Hyperparam%d", ii+1);
+      cString = psConfig_.getParameter(configCmd);
+      if (cString == NULL) break;
+      else
+      {
+        sscanf(cString,"%s %s %lg", winput, equal, &dtmp);
+        VecHypers_[ii] = dtmp;
+      }
+    }
+    if (ii == nhypers) 
+    {
+      optimizeFlag_ = 0;
+      printf("HGP3 INFO: got hyperparameters from configure object.\n");
+      optimizeFlag_ = 0;
+    }
   }
 }
 
@@ -126,6 +200,11 @@ HGP3::~HGP3()
 // ------------------------------------------------------------------------
 int HGP3::initialize(double *XIn, double *YIn)
 {
+#ifdef HAVE_LBFGS
+  printf("HGP3 ERROR: LBFGS has not been installed.\n");
+  exit(1);
+#endif
+
   //**/ ----------------------------------------------------------------
   //**/ normalize sample values
   //**/ ----------------------------------------------------------------
@@ -134,6 +213,74 @@ int HGP3::initialize(double *XIn, double *YIn)
   VecYDataN_.setLength(nSamples_);
   initOutputScaling(YIn, VecYDataN_.getDVector());
    
+  //**/ ----------------------------------------------------------------
+  //**/ if quantile method is used, the input values of the last input
+  //**/ must be the same in each block
+  //**/ ----------------------------------------------------------------
+  int blkSize, ss, ss2, ii;
+  if (haveQuantiles_ == 1)
+  {
+    //**/ see if we can find block size (first occurrence of same 
+    //**/ quantile value)
+    for (ss = 1; ss < nSamples_; ss++)
+      if (XIn[(ss+1)*nInputs_-1] == XIn[nInputs_-1])
+        break;
+    blkSize = ss;
+    if (blkSize == 1 || (nSamples_ / blkSize * blkSize != nSamples_))
+    {
+      printf("HGP3 ERROR: For quantile to work, the sample ");
+      printf("size must be a multiple\n");
+      printf("            of block size ==> disable quantile method.\n");
+      printf("            Sample size = %d\n",nSamples_);
+      printf("            Block size detected = %d\n",blkSize);
+      haveQuantiles_ = 0;
+    }
+    //**/ now block size is good, check last input of each block
+    //**/ (they must be the same set for each block)
+    for (ss = blkSize; ss < nSamples_; ss+=blkSize)
+    {
+      for (ss2 = 0; ss2 < blkSize; ss2++)
+      {
+        if (XIn[(ss+ss2+1)*nInputs_-1] != XIn[(ss2+1)*nInputs_-1])
+          break;
+      }
+      if (ss2 != blkSize) break;
+    }
+    if ((ss != nSamples_) || (ss2 != blkSize))
+    {
+      printf("HGP3 ERROR: For quantile to work, the last inputs ");
+      printf("must be CONSISTENT\n");
+      printf("            ==> disable quantile method.\n");
+      printf("NOTE: Consistency means each block must have the ");
+      printf("same set of quantile\n");
+      printf("      values (E.g. one that is created by kde2 ");
+      printf("or rm_dup).\n");
+      haveQuantiles_ = 0;
+    }
+    //**/ Finally, each block must have the same set of inputs
+    for (ss = 0; ss < nSamples_; ss+=blkSize)
+    {
+      for (ss2 = 1; ss2 < blkSize; ss2++)
+      {
+        for (ii = 0; ii < nInputs_-1; ii++)
+        {
+          if (XIn[(ss+ss2)*nInputs_+ii] != XIn[ss*nInputs_+ii])
+            break;
+        }
+        if (ii != nInputs_-1) break;
+      }
+      if (ss2 != blkSize) break;
+    }
+    if (ss != nSamples_)
+    {
+      printf("HGP3 ERROR: For quantile to work, each block must ");
+      printf("have the same set of\n");
+      printf("     inputs (except the quantile input) ==> ");
+      printf("disable quantile method.\n");
+      haveQuantiles_ = 0;
+    }
+  }
+
   //**/ ----------------------------------------------------------------
   //**/ generate the Gaussian hyperparameters
   //**/ ----------------------------------------------------------------
@@ -530,113 +677,9 @@ double HGP3::evaluatePointFuzzy(int npts,double *X, double *Y,
 int HGP3::train()
 {
   //**/ ----------------------------------------------------------
-  //**/ check whether it should be quantile method
-  //**/ ----------------------------------------------------------
-  int status = 0, ii, kk;
-  char pString[1000], winput[1000];
-  for (ii = 1; ii < nInputs_; ii++)
-  {
-    if (VecLBs_[ii] != VecLBs_[ii-1]) status += ii;
-    if (VecUBs_[ii] != VecUBs_[ii-1]) status += ii;
-  }
-  if (status == 2*(nInputs_-1))
-  {
-    printf("HGP3 INFO: use quantile method on the last input.\n");
-    haveQuantiles_ = 1;
-  }
-  else if (status != 0)
-  {
-    if (noChecking_)
-    {
-      if (psConfig_.InteractiveIsOn())
-      {
-        printf("HGP3 INFO: no homogeneity checking\n");
-        printf("     Homogeneity is assumed for the first %d inputs\n",
-               nInputs_-1);
-        if (psConfig_.MasterModeIsOn())
-        {
-          snprintf(pString,100,"Is the last input a quantile variable? ");
-          getString(pString, winput);
-          if (winput[0] == 'y') haveQuantiles_ = 1;
-        }
-      }
-      else 
-      {
-        haveQuantiles_ = 0;
-        printf("HGP3 INFO: Not all inputs have same ranges.\n");
-        printf("           Will assume homogeneity.\n");
-      }
-    }
-    else
-    {
-      if (psConfig_.InteractiveIsOn())
-        for (ii = 0; ii < nInputs_; ii++)
-          printf("Input %4d: bounds = %12.4e %12.4e\n", ii+1, 
-                 VecLBs_[ii], VecUBs_[ii]);
-      printf("HGP3 INFO: Not all inputs have same ranges.\n");
-      printf("           Will assume homogeneity.\n");
-      haveQuantiles_ = 0;
-    } 
-  } 
-
-  //**/ ----------------------------------------------------------
-  //**/ allocate and initialize length scales
-  //**/ theta1, theta2, theta3
-  //**/ If available from configure object, turn off optimization
-  //**/ ----------------------------------------------------------
-  int    nhypers = 5, optimizeFlag = 1;
-  double dtmp;
-  char   configCmd[101], *cString;
-  if (haveQuantiles_) nhypers++;
-  VecHypers_.setLength(nhypers);
-
-  //**/ ask users to provide hyperparameters
-  if (psConfig_.RSExpertModeIsOn() && psConfig_.InteractiveIsOn())
-  {
-    snprintf(pString,100,"Use user-provided hyperparameters? (y or n) ");
-    getString(pString, winput);
-    if (winput[0] == 'y')
-    {
-      printf("Hyperparameter 1: input scale\n");
-      printf("Hyperparameter 2: output scale\n");
-      printf("Hyperparameter 3: added to all entries in C\n");
-      printf("Hyperparameter 4: Ymean (constant)\n");
-      printf("Hyperparameter 5: added to diagonal of C\n");
-      if (haveQuantiles_)
-        printf("Hyperparameter 6: quantile variable\n");
-      for (ii = 0; ii < VecHypers_.length(); ii++)
-      {
-        snprintf(pString,100,"Enter hyperparameter %d : ",ii+1);
-        VecHypers_[ii] = getDouble(pString);
-      }
-      optimizeFlag = 0;
-    }
-  }
-  //**/ if not user inputs, search the configure object
-  if (optimizeFlag == 1)
-  {
-    for (ii = 0; ii < nhypers; ii++)
-    {
-      snprintf(configCmd,100,"HGP_Hyperparam%d", ii+1);
-      cString = psConfig_.getParameter(configCmd);
-      if (cString == NULL) break;
-      else
-      {
-        sscanf(cString,"%s %lg", winput, &dtmp);
-        VecHypers_[ii] = dtmp;
-      }
-    }
-    if (ii == nhypers) 
-    {
-      optimizeFlag = 0;
-      printf("HGP3 INFO: got hyperparameters from configure object.\n");
-    }
-  }
-
-  //**/ ----------------------------------------------------------
   //**/ compute pairwise distance
   //**/ ----------------------------------------------------------
-  status = computeDistances();
+  int status = computeDistances();
   if (status != 0)
   {
     printf("HGP3 ERROR: there are repeated sample points.\n");
@@ -647,9 +690,11 @@ int HGP3::train()
   //**/ if optimization is to be performed
   //**/ first set initial value for input scale parameter
   //**/ ----------------------------------------------------------
+  int    ii, kk, nhypers = VecHypers_.length();
   double dmax = -PSUADE_UNDEFINED;
-  double dmin =  PSUADE_UNDEFINED;
-  if (optimizeFlag == 1)
+  double dmin =  PSUADE_UNDEFINED, dtmp;
+  char   configCmd[101];
+  if (optimizeFlag_ == 1)
   {
     for (kk = 0; kk < nSamples_; kk++)
     {
@@ -760,6 +805,7 @@ int HGP3::train()
     for (ii = 0; ii < nhypers; ii++) VecXS[ii] = VecHypers_[ii];
  
     //**/ set up for LBFGS
+#ifdef HAVE_LBFGS
     integer nInps, iprint=0, itask, *task=&itask, lsave[4], isave[44];
     integer *iwork, nCorr=5, *nbds, csave[60];
     double  factr, pgtol, dsave[29];
@@ -904,6 +950,7 @@ int HGP3::train()
     }
     delete [] iwork;
     delete [] nbds;
+#endif
 
     if (psConfig_.InteractiveIsOn() && outputLevel_ > 3) 
     {
@@ -914,7 +961,8 @@ int HGP3::train()
     }
     for (ii = 0; ii < VecHypers_.length(); ii++)
     {
-      snprintf(configCmd,100,"HGP_Hyperparam%d %e",ii+1,VecHypers_[ii]);
+      snprintf(configCmd,100,"RS_HGP3_Hyperparam%d = %e",ii+1,
+               VecHypers_[ii]);
       psConfig_.putParameter(configCmd);
     }
   }
@@ -948,7 +996,7 @@ int HGP3::train()
     printf("*** Final Cmatrix given in Cmat.m\n");
   }
   if (psConfig_.InteractiveIsOn() && outputLevel_ > 3 && 
-      optimizeFlag == 1)
+      optimizeFlag_ == 1)
   {
     printf("Optimization summary: \n");
     for (ii = 0; ii < 5; ii++) 
@@ -1421,18 +1469,6 @@ void HGP3::getHyperparameters(psVector &inhyper)
 }
 
 // ************************************************************************
-// set parameters
-// ------------------------------------------------------------------------
-double HGP3::setParams(int targc, char **targv)
-{
-  if (targc > 0)
-  {
-    if (!strcmp(targv[0], "no_checking")) noChecking_ = 1;
-  }
-  return 0;
-}
-
-// ************************************************************************
 // save context 
 // ------------------------------------------------------------------------
 void HGP3::saveFA()
@@ -1465,7 +1501,6 @@ void HGP3::saveFA()
     fprintf(fp, "%d\n", CMatrix_.pivots_[jj]);
   fprintf(fp, "%24.16e\n", expPower_);
   fprintf(fp, "%d\n", haveQuantiles_);
-  fprintf(fp, "%d\n", noChecking_);
   fclose(fp);
 }
 
@@ -1534,6 +1569,5 @@ void HGP3::retrieveFA()
   }
   fscanf(fp, "%lg", &expPower_);
   fscanf(fp, "%d", &haveQuantiles_);
-  fscanf(fp, "%d", &noChecking_);
   fclose(fp);
 }

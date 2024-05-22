@@ -1,0 +1,10 @@
+clean:
+	rm -f *.m *.sci simulator psuadeData .psuade_* psuade_print psuade_stop simdata* simulator1a simulator1b 
+
+simulator:
+	cc -o simulator simulator.c -lm
+simulator1a:
+	cc -o simulator1a simulator1a.c -lm
+simulator1b:
+	cc -o simulator1b simulator1b.c -lm
+

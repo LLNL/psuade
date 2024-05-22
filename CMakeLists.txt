@@ -7,8 +7,8 @@ enable_testing ()
 
 set (PROJECT_NAME psuade)
 # The version number.
-set (psuade_VERSION_MAJOR 2)
-set (psuade_VERSION_MINOR 2)
+set (psuade_VERSION_MAJOR 3)
+set (psuade_VERSION_MINOR 0)
 set (psuade_VERSION_PATCH 0)
 
 set (PROJECT_INCLUDE_DIR "${PROJECT_BINARY_DIR}/include")
@@ -165,7 +165,7 @@ set( PDF_SRC
   "Src/PDFLib/PDFF.cpp"
   "Src/PDFLib/PDFUser.cpp"
   "Src/PDFLib/PDFManager.cpp"
-# "Src/PDFLib/pdfData.cpp"
+  "Src/PDFLib/pdfData.cpp"
   "Src/PDFLib/KSDensity.cpp"
 )
 
@@ -182,7 +182,7 @@ file(GLOB psuade_SRC
   "Src/Comm/*.cpp"
   "Src/Optimizers/*.cpp"
   "Src/DA/*.cpp"
-  "Src/DA/*.f"
+  "Src/DA/genSnapshot.f"
 )
 
 file(GLOB psuade_HDRS
@@ -265,9 +265,11 @@ endif (PARALLEL_BUILD)
 ###############################################
 
 # add Bose
-include_directories ("${PROJECT_SOURCE_DIR}/External/Bose")
-add_subdirectory (External/Bose) 
-set (EXTRA_LIBS ${EXTRA_LIBS} bose)
+if(EXISTS "${PROJECT_SOURCE_DIR}/External/Bose")
+   include_directories ("${PROJECT_SOURCE_DIR}/External/Bose")
+   add_subdirectory (External/Bose) 
+   set (EXTRA_LIBS ${EXTRA_LIBS} bose)
+endif() 
 
 #APPSPACK IGNORED, IT IS OBSOLETE
 
@@ -377,8 +379,8 @@ if(EXISTS "${PROJECT_SOURCE_DIR}/External/MARS")
 else ()
   add_definitions(-DPSUADE_NO_MARS)
 endif() 
+enable_language(Fortran)
 if (USE_MARS)
-  enable_language(Fortran)
   include_directories ("${PROJECT_SOURCE_DIR}/External/MARS")
   add_subdirectory (External/MARS) 
   set (EXTRA_LIBS ${EXTRA_LIBS} mars)

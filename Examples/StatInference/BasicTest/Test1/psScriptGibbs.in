@@ -6,7 +6,6 @@ ana_expert
 rsmcmc
 y
 1
-
 mcmcFile
 n
 0
@@ -14,10 +13,7 @@ n
 0
 0
 1000000
-20
--1
 n
-100
 3
 1.05
 n

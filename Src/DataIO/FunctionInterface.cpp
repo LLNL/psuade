@@ -41,6 +41,7 @@
 #include "pData.h"
 #include "PDFBase.h"
 #include "PsuadeData.h"
+#include "PsuadeConfig.h"
 #include "Psuade.h"
 #include "ProbMatrix.h"
 #include "MCMCAnalyzer.h"
@@ -489,11 +490,11 @@ int FunctionInterface::setDriver(int which)
         //**/ if there is an index file in the RS data file
         if (strcmp(pPtr.strArray_[0], "NONE"))
         {
-          printf("FuncIO INFO: rs_index_file name found in the RS driver file.\n");
+          printf("FuncIO INFO: rs_index_file found in RS driver file.\n");
           fp = fopen(pPtr.strArray_[0], "r");
           if (fp == NULL)
           {
-            printf("ERROR: missing rs_index_file %s in current folder.\n",
+            printf("ERROR: Missing rs_index_file %s in current folder.\n",
                    pPtr.strArray_[0]);
             printf("Where: file %s line %d, exiting\n", __FILE__, __LINE__);
             exit(1);
@@ -718,7 +719,7 @@ int FunctionInterface::evaluate(int sampleID,int nInputs,double *inputs,
   if ((useRSModel_ == 1) && 
       (nInputs_ != nInputs || nOutputs_ != nOutputs))
   {
-    printf("ERROR: nInputs/nOutputs mismatch.\n");
+    printf("FuncIO::evaluate ERROR: nInputs/nOutputs mismatch.\n");
     printf("   nInputs  = %d versus %d (local)\n", nInputs, nInputs_);
     printf("   nOutputs = %d versus %d (local)\n", nOutputs, nOutputs_);
     printf("Where: file %s line %d, exiting\n", __FILE__, __LINE__);
@@ -757,7 +758,8 @@ int FunctionInterface::evaluate(int sampleID,int nInputs,double *inputs,
       length = strlen(appInputTemplate_);
       for (ii = length-1; ii >= 0; ii--)
         if (appInputTemplate_[ii] == '/') break; 
-      snprintf(infile,500,"%s.%d", &(appInputTemplate_[ii+1]), sampleID+1);
+      snprintf(infile,500,
+               "%s.%d", &(appInputTemplate_[ii+1]), sampleID+1);
     }
     else snprintf(infile,500,"psuadeOpt.in.%d", sampleID+1);
 
@@ -769,7 +771,8 @@ int FunctionInterface::evaluate(int sampleID,int nInputs,double *inputs,
       length = strlen(appOutputTemplate_);
       for (ii = length-1; ii >= 0; ii--)
         if (appOutputTemplate_[ii] == '/') break; 
-      snprintf(outfile,500, "%s.%d",&(appOutputTemplate_[ii+1]),sampleID+1);
+      snprintf(outfile,500, 
+               "%s.%d",&(appOutputTemplate_[ii+1]),sampleID+1);
     }
     else snprintf(outfile,500,"psuadeOpt.out.%d", sampleID+1);
 
@@ -790,8 +793,8 @@ int FunctionInterface::evaluate(int sampleID,int nInputs,double *inputs,
       fOut = fopen(infile, "w");
       if (fOut == NULL)
       {
-         printf("FuncIO ERROR: cannot open %s file\n",infile);
-         exit(1);
+        printf("FuncIO ERROR: Cannot open %s file\n",infile);
+        exit(1);
       }
       fprintf(fOut, "%d\n", nInputs);
       for (ii = 0; ii < nInputs; ii++)
@@ -809,7 +812,8 @@ int FunctionInterface::evaluate(int sampleID,int nInputs,double *inputs,
           cString = psConfig_.getParameter(winput1);
           if (cString != NULL)
           {
-            sscanf(cString, "%s %s %s %lg",winput1,winput2,equal,&value);
+            sscanf(cString,"%s %s %s %lg",
+                   winput1,winput2,equal,&value);
             fprintf(fOut,"fixed %d %s = %24.16e\n",ii,winput2,value);
           }
         }
@@ -824,7 +828,7 @@ int FunctionInterface::evaluate(int sampleID,int nInputs,double *inputs,
       //**/ -----------------------------------------------------------
       if (appOptFlag_ == 0)
       {
-        if ((!strcmp(appDriver_, "NONE") || !strcmp(appDriver_, "true"))) 
+        if ((!strcmp(appDriver_,"NONE") || !strcmp(appDriver_,"true"))) 
         {
           printf("FuncIO ERROR: app driver not found.\n");
           exit(1);
@@ -832,7 +836,7 @@ int FunctionInterface::evaluate(int sampleID,int nInputs,double *inputs,
       }
       if (appOptFlag_ == 1)
       {
-        if ((!strcmp(optDriver_, "NONE") || !strcmp(optDriver_, "true")))
+        if ((!strcmp(optDriver_,"NONE") || !strcmp(optDriver_,"true")))
         {
           printf("FuncIO ERROR: opt driver not found.\n");
           exit(1);
@@ -855,11 +859,11 @@ int FunctionInterface::evaluate(int sampleID,int nInputs,double *inputs,
       {
         //**/ executionMode_ == 1 ==> asynchronous mode
         if (executionMode_ == 1)
-          snprintf(command,1000,"\"%s\" %s %s %d %d %d&",appDriver_,infile,
-                   outfile, sampleID, flag, printLevel_);
+          snprintf(command,1000,"\"%s\" %s %s %d %d %d&",appDriver_,
+                   infile, outfile, sampleID, flag, printLevel_);
         else
-          snprintf(command,1000,"\"%s\" %s %s %d %d %d", appDriver_,infile,
-                   outfile, sampleID, flag, printLevel_);
+          snprintf(command,1000,"\"%s\" %s %s %d %d %d", appDriver_,
+                   infile, outfile, sampleID, flag, printLevel_);
         if (strstr((const char*) appDriver_, "rm ") != NULL ||
             strstr((const char*) appDriver_, "mv ") != NULL ||
             strstr((const char*) appDriver_, " -f ") != NULL ||
@@ -873,11 +877,11 @@ int FunctionInterface::evaluate(int sampleID,int nInputs,double *inputs,
       else if (appOptFlag_ == 1)
       {
         if (executionMode_ == 1)
-          snprintf(command,1000,"%s %s %s %d %d %d&",optDriver_,infile,outfile,
-                   sampleID+1, flag, printLevel_);
+          snprintf(command,1000,"%s %s %s %d %d %d&",optDriver_,infile,
+                   outfile, sampleID+1, flag, printLevel_);
         else
-          snprintf(command,1000,"%s %s %s %d %d %d",optDriver_,infile,outfile,
-                   sampleID+1, flag, printLevel_);
+          snprintf(command,1000,"%s %s %s %d %d %d",optDriver_,infile,
+                   outfile, sampleID+1, flag, printLevel_);
         if (strstr((const char*) optDriver_, "rm ") != NULL ||
             strstr((const char*) optDriver_, "mv ") != NULL ||
             strstr((const char*) optDriver_, " -f ") != NULL ||
@@ -890,7 +894,7 @@ int FunctionInterface::evaluate(int sampleID,int nInputs,double *inputs,
       }
       else if (appOptFlag_ == 2)
       {
-        snprintf(command,1000,"%s %s %s %d %d %d", auxOptDriver_, infile, 
+        snprintf(command,1000,"%s %s %s %d %d %d",auxOptDriver_,infile, 
                  outfile, sampleID+1, flag, printLevel_);
         if (strstr((const char*) auxOptDriver_, "rm ") != NULL ||
             strstr((const char*) auxOptDriver_, "mv ") != NULL ||
@@ -902,15 +906,19 @@ int FunctionInterface::evaluate(int sampleID,int nInputs,double *inputs,
           exit(1);
         }
       }
+      if (psConfig_.PDFDiagnosticsIsOn())
+        printf("Launching simulation: %s\n",command);
       status = system(command);   
+      if (psConfig_.PDFDiagnosticsIsOn())
+        printf("Simulation completed.\n");
       if (status != 0)
       {
         printf("FuncIO evaluate ERROR: system call returns %d.\n",
                status);
-        printf("  INFO: Command = %s\n", command);
-        printf("  INFO: system call return status should be 0.\n");
-        printf("  INFO: Check your simulation driver for correctiness.\n");
-        printf("  DO: CHECK YOUR DRIVER PROGRAM BY RUNNING THIS COMMAND:\n");
+        printf("INFO: Command = %s\n", command);
+        printf("      System call return status should be 0.\n");
+        printf("      Check your simulation driver for correctiness.\n");
+        printf("DO: CHECK YOUR DRIVER PROGRAM BY RUNNING THIS COMMAND:\n");
         printf("      %s\n", command);
         exit(1);
       }
@@ -926,9 +934,10 @@ int FunctionInterface::evaluate(int sampleID,int nInputs,double *inputs,
     }
     else if (flag == 0)
     {
-      printf("WARNING: Output file %s exists before it is run.\n",outfile);
-      printf("WARNING: PSUADE will use this output file.\n");
-      printf("WARNING: If this is a mistake, stop PSUADE and clean up.\n");
+      printf("WARNING: Output file %s exists before it is run.\n",
+             outfile);
+      printf("         PSUADE will use this output file.\n");
+      printf("         If this is a mistake, stop PSUADE and clean up.\n");
       fclose(fIn);
     }
     else fclose(fIn);
@@ -1108,11 +1117,12 @@ int FunctionInterface::ensembleEvaluate(int nSamp,int nInputs,
   if (nInputs_ != nInputs || nOutputs_ != nOutputs)
   {
     printf("FuncIO ERROR: nInputs/nOutputs mismatch.\n");
-    printf("   nInputs  = %d versus %d (local)\n", nInputs, nInputs_);
-    printf("   nOutputs = %d versus %d (local)\n", nOutputs, nOutputs_);
-    printf("NOTE: ensembleEvaluate expects driver is an actual simulator");
-    printf(" and not RS data file.\n");
-    printf("      Therefore, it does not take a rs_index_file.\n");
+    printf("   nInputs  = %d versus %d (local)\n",nInputs,nInputs_);
+    printf("   nOutputs = %d versus %d (local)\n",nOutputs,nOutputs_);
+    printf("NOTE: ensembleEvaluate expects driver is an ");
+    printf("actual simulator and not\n");
+    printf("      RS data file. Therefore, it does not ");
+    printf("take a rs_index_file.\n");
     exit(1);
   }
 
@@ -1153,7 +1163,7 @@ int FunctionInterface::ensembleEvaluate(int nSamp,int nInputs,
     fOut = fopen(infile, "w");
     if (fOut == NULL)
     {
-      printf("FuncIO ERROR: cannot open %s file\n",infile);
+      printf("FuncIO ERROR: Cannot open %s file\n",infile);
       exit(1);
     }
     fprintf(fOut, "%d %d\n", nSamp, nInputs);
@@ -1175,15 +1185,16 @@ int FunctionInterface::ensembleEvaluate(int nSamp,int nInputs,
         cString = psConfig_.getParameter(winput1);
         if (cString != NULL)
         {
-          sscanf(cString, "%s %s %s %lg", winput1,winput2,winput3,&value);
-          fprintf(fOut,"fixed %d %s = %24.16e\n", ii, winput2, value);
+          sscanf(cString, 
+                 "%s %s %s %lg", winput1,winput2,winput3,&value);
+          fprintf(fOut,"fixed %d %s = %24.16e\n",ii,winput2,value);
           ss++;
         }
         else printf("FuncInterface ERROR: %s not found.\n",winput1);
       }
       if (ss != nfixed)
       {
-        printf("FuncInterface ERROR: no fixed variables in config.\n");
+        printf("FuncInterface ERROR: No fixed variables in config.\n");
         psConfig_.print();
         exit(1);
       }
@@ -1235,28 +1246,33 @@ int FunctionInterface::ensembleEvaluate(int nSamp,int nInputs,
     //**/ -----------------------------------------------------------
     //**/ execute driver
     //**/ -----------------------------------------------------------
+    if (psConfig_.PDFDiagnosticsIsOn())
+      printf("Launching ensemble simulations: %s\n",command);
     status = system(command);   
+    if (psConfig_.PDFDiagnosticsIsOn())
+      printf("Ensemble simulations completed\n");
     if (status != 0)
     {
       printf("FuncIO INFO: system call returns status = %d.\n",
              status);
-      printf("  INFO: system call return status should be 0.\n");
-      printf("  INFO: check your simulation driver for correctiness.\n");
+      printf("       System call return status should be 0.\n");
+      printf("       Check your simulation driver for correctiness.\n");
       exit(1);
     }
   }
   else 
   {
     printf("WARNING: Output file %s exists before it is run.\n",outfile);
-    printf("WARNING: PSUADE will use this output file.\n");
-    printf("WARNING: If this is a mistake, stop PSUADE and clean up.\n");
+    printf("         PSUADE will use this output file.\n");
+    printf("         If this is a mistake, stop PSUADE and clean up.\n");
     fclose(fIn);
   }
 
   //**/ -------------------------------------------------------------
   //**/ check output file
   //**/ -------------------------------------------------------------
-  while ((fIn=fopen(outfile, "r")) == NULL)
+  fIn = fopen(outfile, "r");
+  while (fIn == NULL)
   {
     if (printLevel_ > 2)
       printf("FuncIO INFO: waiting for Job %d to complete.\n",ID);
@@ -1265,12 +1281,12 @@ int FunctionInterface::ensembleEvaluate(int nSamp,int nInputs,
 #else
     sleep(launchInterval_);
 #endif
+    fIn = fopen(outfile, "r");
   }
 
   //**/ -------------------------------------------------------------
   //**/ outfile ready, read outputs 
   //**/ -------------------------------------------------------------
-  fIn = fopen(outfile, "r");
   if (fIn == NULL)
   {
     printf("FuncIO ERROR: output file %s not found.\n",outfile);
@@ -1292,11 +1308,10 @@ int FunctionInterface::ensembleEvaluate(int nSamp,int nInputs,
   //**/ -------------------------------------------------------------
   if (outputCount != nSamp) 
   {
-    printf("FuncIO ERROR: output file %s found but with\n",
-           outfile);
-    printf("                         insufficient data.\n");
-    printf("Advice: Check the output format of your aux opt driver.\n");
-    printf("        It should have %d lines each with %d output data.\n",
+    printf("FuncIO ERROR: output file %s found but ",outfile);
+    printf("with insufficient data.\n");
+    printf("Advice: Check output format of your ensemble driver.\n");
+    printf("        It should have %d lines each with %d outputs.\n",
            nSamp, nOutputs_);
     exit(1);
   }
@@ -1627,7 +1642,8 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
         printf("IMPORTANT: THE PRIOR SAMPLE MUST BE A SUBSET OF ");
         printf("THE UNIFORM\n");
         printf("           SAMPLE, OR THIS ALGORITHM WILL FAIL.\n");
-        snprintf(pString,100,"Enter the file name of your uniform sample : ");
+        snprintf(pString,100,
+             "Enter the file name of your uniform sample : ");
         getString(pString, fname);
         kk = strlen(fname);
         fname[kk-1] = '\0';
@@ -1652,13 +1668,15 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       //**/       first m1 columns corresponds to uncertain inputs in
       //**/       ascending order; last nOuts*2 columns are simulation
       //**/       output means and std devs
-      printf("Next, provide a candidate set from which the final design\n");
-      printf("is to be selected. The format of this file should be:\n");
+      printf("Next, provide a candidate set from which ");
+      printf("the final design is to be\n");
+      printf("selected. The format of this file should be:\n");
       printf("Line 1: <number of candidates> <number of columns>\n");
       printf("Line 2: 1 <design inputs> <expected outputs and std dev>\n");
       printf("Line 3: 2 <design inputs> <expected outputs and std dev>\n");
       printf("...\n");
-      snprintf(pString,100,"Enter the file name of your candidate set : ");
+      snprintf(pString,100,
+         "Enter the file name of your candidate set : ");
       getString(pString, fname);
       fname[strlen(fname)-1] = '\0';
       status = readIReadDataFile(fname, matCandidates);
@@ -1672,11 +1690,21 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       printf("Size of Candidate set = %d\n", nCandidates);
       if (matCandidates.ncols() != 2*nOuts+nInps-vecUInputs.length())
       {
-        printf("FuncIO ERROR: candidate file must have %d columns.\n",
+        printf("FuncIO ERROR: Candidate file must have %d columns.\n",
                2*nOuts+nInps-vecUInputs.length());
-        printf("Suggestion: use odoeu_rseval to append your ");
-        printf("candidate set with output\n");
-        printf("            means and weights.\n");
+        printf("              Only %d columns are found.\n",
+               matCandidates.ncols());
+        printf("INFO: The reason for this error may be because ");
+        printf("you need for each\n");
+        printf("      candidate in your candidate set file also ");
+        printf("estimates of output\n");
+        printf("      mean and standard deviation. To do so, use ");
+        printf("odoeu_rseval (after\n");
+        printf("      loading training sample, provide your ");
+        printf("candidate set and also a\n");
+        printf("      prior sample for the uncertain inputs) to ");
+        printf("append your candidate\n");
+        printf("      set with output means and standard deviations.\n");
         exit(1);
       }
       for (ii = 0; ii < nOuts; ii++)
@@ -1686,13 +1714,13 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
           ddata = matCandidates.getEntry(jj,nInps-nUInps+2*ii);
           if (ddata <= 0)
           {
-            printf("funcIO WARNING: candidate %d output %d <= 0\n",
+            printf("funcIO WARNING: Candidate %d output %d <= 0\n",
                    jj+1, ii+1);
           }
           ddata = matCandidates.getEntry(jj,nInps-nUInps+2*ii+1);
           //if (ddata < 0.1 || ddata > 1)
           //{
-          //  printf("funcIO WARNING: candidate %d weight not in [0.1,1]\n",
+          //  printf("funcIO WARNING: Candidate %d weight not in [0.1,1]\n",
           //         jj+1);
           //  printf("INFO: reset output %d weight to 1.\n",ii+1);
           //  matCandidates.setEntry(jj,nInps-nUInps+2*ii+1,1.0);
@@ -1768,6 +1796,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       }
       delete psuadeIO;
 
+//**/ THIS SEGMENT IS NOT USED CURRENTLY
 //#define USE_FAST
 #ifdef USE_FAST
       //**/ evaluate the uniform sample on the response surface
@@ -2097,7 +2126,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       if (count == nInputs)
       {
         outputs[0] = matHistory.getEntry(jj,nInputs);
-        if (printLevel_ >= 0) 
+        if (printLevel_ > 0) 
           printf(" ===> output = %11.4e (revisit)\n", outputs[0]);
         return 0; 
       }
@@ -2405,8 +2434,13 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       outputs[0] = EMetric;
     if (outputs[0] < optimalVal) optimalVal = outputs[0];
     if (printLevel_ >= 0) 
-      printf(" ===> output = %11.4e (BEST SO FAR = %11.4e)\n",
+    {
+      printf(" ===> output = %11.4e (BEST SO FAR = %11.4e) : ",
              outputs[0], optimalVal);
+      for (kk = 0; kk < nInputs; kk++)
+        printf("%d ", (int) inputs[kk]);
+      printf("\n");
+    }
 
     //**/ -----------------------------------------------------------
     //**/ update history to speed up re-visits
@@ -2491,6 +2525,14 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       nInps = pdata.intData_;
       psuadeIO->getParameter("output_noutputs", pdata);
       nOuts = pdata.intData_;
+      if (nOuts != 1)
+      {
+        printf("FuncIO ERROR: This method only works with ");
+        printf("nOutputs=1 in the training\n");
+        printf("              sample.\n");
+        printf("Suggestion: Delete all but one output and re-run.\n");
+        exit(1);
+      }
 
       //**/ --- user selects uncertain inputs ==> vecUInputs
       vecUInputs.setLength(nInps);
@@ -2555,21 +2597,27 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       //**/ --- is requesting using selected designs for analysis
       if (nInputs == 0 && nOutputs != 0)
       {
-        printf("Next please provide your selected design points.\n");
-        printf("The file should be in the following format:\n");
+        printf("Next please provide a SELECTED candidate ");
+        printf("subset to be evaluated as a\n");
+        printf("whole (that is, not individually). The file ");
+        printf("should be in the following\n");
+        printf("format: (output mean and std dev may be computed by odoeu_rseval)\n");
         printf("Line 1: <nSamples> <nInputs>\n");
-        printf("Line 2: <design 1 values>\n");
-        printf("Line 3: <design 2 values>\n");
+        printf("Line 2: <design 1 values> <output mean> <std dev>\n");
+        printf("Line 3: <design 2 values> <output mean> <std dev>\n");
         printf("Line 4: ...\n");
-        snprintf(pString,100,"Enter the file name of your selected designs : ");
+        snprintf(pString,100,
+          "Enter the file name of your selected designs : ");
       }
       else
       {
-        printf("Next please provide a candidate set for selection.\n");
-        printf("The file should be in the following format:\n");
+        printf("Next please provide a candidate set. The file must ");
+        printf("be in the following\n");
+        printf("format: (output mean and std dev may be computed ");
+        printf("by odoeu_rseval)\n");
         printf("Line 1: <nSamples> <nInputs>\n");
-        printf("Line 2: <design 1 values>\n");
-        printf("Line 3: <design 2 values>\n");
+        printf("Line 2: <design 1 values> <output mean> <std dev>\n");
+        printf("Line 3: <design 2 values> <output mean> <std dev>\n");
         printf("Line 4: ...\n");
         snprintf(pString,100,"Enter the file name of your candidate set : ");
       }
@@ -2591,11 +2639,21 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       //**/ check that the candidate set has right information
       if (matCandidates.ncols() != 2*nOuts+nInps-nUInps)
       {
-        printf("FuncIO ERROR: candidate file must have %d columns.\n",
+        printf("FuncIO ERROR: Candidate file must have %d columns.\n",
                2*nOuts+nInps-nUInps);
-        printf("Suggestion: use odoeu_rseval to append your ");
-        printf("candidate set with output\n");
-        printf("            means and weights.\n");
+        printf("              Only %d columns are found.\n",
+               matCandidates.ncols());
+        printf("INFO: The reason for this error may be because ");
+        printf("you need for each\n");
+        printf("      candidate in your candidate set file also ");
+        printf("estimates of output\n");
+        printf("      mean and standard deviation. To do so, use ");
+        printf("odoeu_rseval (after\n");
+        printf("      loading training sample, provide your ");
+        printf("candidate set and also a\n");
+        printf("      prior sample for the uncertain inputs) to ");
+        printf("append your candidate\n");
+        printf("      set with output means and standard deviations.\n");
         exit(1);
       }
 
@@ -2604,8 +2662,13 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       {
         printf("An evaluation sample is needed to ");
         printf("compute the optimality metrics.\n");
-        printf("This can be the same as the candidate set (but");
-        printf(" not recommended).\n");
+        printf("This can be the same as the candidate set (but ");
+        printf("not recommended). The\n");
+        printf("evaluation set file must be in the following format :\n");
+        printf("Line 1: <nSamples> <nInputs>\n");
+        printf("Line 2: <design 1 values>\n");
+        printf("Line 3: <design 2 values>\n");
+        printf("Line 4: ...\n");
         snprintf(pString,100,
                 "Enter the file name of your evaluation set : ");
         getString(pString, fname);
@@ -2752,83 +2815,91 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
 
         //**/ get posterior sample and evaluate G- and I-metric
         postSample = mobj14.MatPostSample_.getMatrix2D();
-        vecYT.setLength(mobj14.MatPostSample_.nrows());
-        for (ii = 0; ii < matEvalSet.nrows(); ii++)
+        if (mobj14.MatPostSample_.nrows() > 0)
         {
-          lcnt = 0;
-          for (jj = 0; jj < nInps; jj++)
+          vecYT.setLength(mobj14.MatPostSample_.nrows());
+          for (ii = 0; ii < matEvalSet.nrows(); ii++)
           {
-            if (vecIT[jj] == 0)
+            lcnt = 0;
+            for (jj = 0; jj < nInps; jj++)
             {
-              vecXT[jj] = matEvalSet.getEntry(ii,lcnt);
-              lcnt++;
-            }
-          }
-          aggrVar = 0;
-          for (jj = 0; jj < nOuts; jj++)
-          {
-            for (kk = 0; kk < mobj14.MatPostSample_.nrows(); kk++)
-            {
-              for (ll = 0; ll < vecUInputs.length(); ll++)
+              if (vecIT[jj] == 0)
               {
-                ind = vecUInputs[ll];
-                vecXT[ind] = postSample[kk][ll];
+                vecXT[jj] = matEvalSet.getEntry(ii,lcnt);
+                lcnt++;
               }
-              ddata = rsPtrs[jj]->evaluatePoint(vecXT.getDVector());
-              vecYT[kk] = ddata;
             }
-            dmean = dvar = 0;
-            for (kk = 0; kk < mobj14.MatPostSample_.nrows(); kk++)
-              dmean += vecYT[kk];
-            dmean /= (double) mobj14.MatPostSample_.nrows();
-            for (kk = 0; kk < mobj14.MatPostSample_.nrows(); kk++)
-              dvar += pow(vecYT[kk]-dmean,2);
-            dvar = dvar / (double) mobj14.MatPostSample_.nrows();
-            aggrVar += dvar  ;
+            aggrVar = 0;
+            for (jj = 0; jj < nOuts; jj++)
+            {
+              for (kk = 0; kk < mobj14.MatPostSample_.nrows(); kk++)
+              {
+                for (ll = 0; ll < vecUInputs.length(); ll++)
+                {
+                  ind = vecUInputs[ll];
+                  vecXT[ind] = postSample[kk][ll];
+                }
+                ddata = rsPtrs[jj]->evaluatePoint(vecXT.getDVector());
+                vecYT[kk] = ddata;
+              }
+              dmean = dvar = 0;
+              for (kk = 0; kk < mobj14.MatPostSample_.nrows(); kk++)
+                dmean += vecYT[kk];
+              dmean /= (double) mobj14.MatPostSample_.nrows();
+              for (kk = 0; kk < mobj14.MatPostSample_.nrows(); kk++)
+                dvar += pow(vecYT[kk]-dmean,2);
+              dvar = dvar / (double) mobj14.MatPostSample_.nrows();
+              aggrVar += dvar;
+            }
+            aggrVar /= nOuts;
+            if (aggrVar > GMetric) GMetric = aggrVar;
+            IMetric += aggrVar;
           }
-          aggrVar /= nOuts;
-          if (aggrVar > GMetric) GMetric = aggrVar;
-          IMetric += aggrVar;
+          IMetric /= (double) matEvalSet.nrows();
         }
-        IMetric /= (double) matEvalSet.nrows();
+        else GMetric = IMetric = PSUADE_UNDEFINED;
 
         // D-, A-, and E-metrics
-        matCov.setDim(vecUInputs.length(),vecUInputs.length());
-        for (jj = 0; jj < vecUInputs.length(); jj++)
+        if (mobj14.MatPostSample_.nrows() > 0)
         {
-          dmean = dvar = 0.0;
-          for (kk = 0; kk < mobj14.MatPostSample_.nrows(); kk++)
-            dmean += postSample[kk][jj];
-          dmean /= (double) mobj14.MatPostSample_.nrows();
-          for (kk = 0; kk < mobj14.MatPostSample_.nrows(); kk++)
-            dvar += pow(postSample[kk][jj]-dmean,2.0);
-          dvar /= (double) mobj14.MatPostSample_.nrows();
-          dvar = dvar / (double) count;
-          matCov.setEntry(jj,jj,dvar);
-          AMetric += dvar;
-          for (ll = jj+1; ll < vecUInputs.length(); ll++)
+          matCov.setDim(vecUInputs.length(),vecUInputs.length());
+          for (jj = 0; jj < vecUInputs.length(); jj++)
           {
-            dmean2 = 0;
+            dmean = dvar = 0.0;
             for (kk = 0; kk < mobj14.MatPostSample_.nrows(); kk++)
-              dmean2 += postSample[kk][ll];
-            dmean2 /= (double) mobj14.MatPostSample_.nrows();
-            dcov = 0;
+              dmean += postSample[kk][jj];
+            dmean /= (double) mobj14.MatPostSample_.nrows();
             for (kk = 0; kk < mobj14.MatPostSample_.nrows(); kk++)
-              dcov += (postSample[kk][jj]-dmean)*
-                      (postSample[kk][ll]-dmean2);
-            dcov /= (double) mobj14.MatPostSample_.nrows();
-            matCov.setEntry(jj,ll,dcov);
-            matCov.setEntry(ll,jj,dcov);
+              dvar += pow(postSample[kk][jj]-dmean,2.0);
+            dvar /= (double) mobj14.MatPostSample_.nrows();
+            dvar = dvar / (double) mobj14.MatPostSample_.nrows();
+            matCov.setEntry(jj,jj,dvar);
+            AMetric += dvar;
+            for (ll = jj+1; ll < vecUInputs.length(); ll++)
+            {
+              dmean2 = 0;
+              for (kk = 0; kk < mobj14.MatPostSample_.nrows(); kk++)
+                dmean2 += postSample[kk][ll];
+              dmean2 /= (double) mobj14.MatPostSample_.nrows();
+              dcov = 0;
+              for (kk = 0; kk < mobj14.MatPostSample_.nrows(); kk++)
+                dcov += (postSample[kk][jj]-dmean)*
+                        (postSample[kk][ll]-dmean2);
+              dcov /= (double) mobj14.MatPostSample_.nrows();
+              matCov.setEntry(jj,ll,dcov);
+              matCov.setEntry(ll,jj,dcov);
+            }
+          }
+          matCov.eigenSolve(matEig, vecEigs, 1);
+          for (jj = 0; jj < vecUInputs.length(); jj++)
+          {
+            DMetric *= vecEigs[jj];
+            if (vecEigs[jj] > EMetric) EMetric = vecEigs[jj];
           }
         }
-        matCov.eigenSolve(matEig, vecEigs, 1);
-        for (jj = 0; jj < vecUInputs.length(); jj++)
-        {
-          DMetric *= vecEigs[jj];
-          if (vecEigs[jj] > EMetric) EMetric = vecEigs[jj];
-        }
-        printf("%5d \t%12.4e\t%12.4e\t%12.4e\t%12.4e\t%12.4e\n",cc+1,GMetric,
-               IMetric,DMetric,AMetric,EMetric);      
+        else DMetric = AMetric = EMetric = PSUADE_UNDEFINED;
+        printf("%5d \t%12.4e\t%12.4e\t%12.4e\t%12.4e\t%12.4e\n",cc+1,
+               GMetric,IMetric,DMetric,AMetric,EMetric);      
       }
       return 0;
     }
@@ -2910,6 +2981,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       }
       if (nInputsIn > 0 && printLevel_ >= 0) printf("%5d ", ind);
     }
+    if (nInputsIn > 0 && printLevel_ >= 0) printf("\n");
 
     //**/ -----------------------------------------------------------
     //**/ check history to see whether this has been evaluated before
@@ -2930,7 +3002,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
         if (count == nInputs)
         {
           outputs[0] = matHistory.getEntry(jj,nInputs);
-          if (printLevel_ >= 0) 
+          if (printLevel_ > 0) 
             printf(" ===> output = %11.4e (revisit)\n", outputs[0]);
           return 0; 
         }
@@ -3016,45 +3088,49 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       //**/ slow (2020)
       //**/ #########################################################
       vecXT.setLength(nInps);
-      vecYT.setLength(mobj14.MatPostSample_.nrows());
-      for (ii = 0; ii < matEvalSet.nrows(); ii++)
+      if (mobj14.MatPostSample_.nrows() > 0)
       {
-        lcnt = 0;
-        for (jj = 0; jj < nInps; jj++)
+        vecYT.setLength(mobj14.MatPostSample_.nrows());
+        for (ii = 0; ii < matEvalSet.nrows(); ii++)
         {
-          if (vecIT[jj] == 0)
+          lcnt = 0;
+          for (jj = 0; jj < nInps; jj++)
           {
-            vecXT[jj] = matEvalSet.getEntry(ii,lcnt);
-            lcnt++;
-          }
-        }
-        aggrVar = 0;
-        for (jj = 0; jj < nOuts; jj++)
-        {
-          for (kk = 0; kk < mobj14.MatPostSample_.nrows(); kk++)
-          {
-            for (ll = 0; ll < vecUInputs.length(); ll++)
+            if (vecIT[jj] == 0)
             {
-              ind = vecUInputs[ll];
-              vecXT[ind] = postSample[kk][ll];
+              vecXT[jj] = matEvalSet.getEntry(ii,lcnt);
+              lcnt++;
             }
-            ddata = rsPtrs[jj]->evaluatePoint(vecXT.getDVector());
-            vecYT[kk] = ddata;
           }
-          dmean = dvar = 0;
-          for (kk = 0; kk < mobj14.MatPostSample_.nrows(); kk++)
-            dmean += vecYT[kk];
-          dmean /= (double) mobj14.MatPostSample_.nrows();
-          for (kk = 0; kk < mobj14.MatPostSample_.nrows(); kk++)
-            dvar += pow(vecYT[kk]-dmean,2);
-          dvar = dvar / (double) mobj14.MatPostSample_.nrows();
-          aggrVar += dvar;
+          aggrVar = 0;
+          for (jj = 0; jj < nOuts; jj++)
+          {
+            for (kk = 0; kk < mobj14.MatPostSample_.nrows(); kk++)
+            {
+              for (ll = 0; ll < vecUInputs.length(); ll++)
+              {
+                ind = vecUInputs[ll];
+                vecXT[ind] = postSample[kk][ll];
+              }
+              ddata = rsPtrs[jj]->evaluatePoint(vecXT.getDVector());
+              vecYT[kk] = ddata;
+            }
+            dmean = dvar = 0;
+            for (kk = 0; kk < mobj14.MatPostSample_.nrows(); kk++)
+              dmean += vecYT[kk];
+            dmean /= (double) mobj14.MatPostSample_.nrows();
+            for (kk = 0; kk < mobj14.MatPostSample_.nrows(); kk++)
+              dvar += pow(vecYT[kk]-dmean,2);
+            dvar = dvar / (double) mobj14.MatPostSample_.nrows();
+            aggrVar += dvar;
+          }
+          aggrVar /= nOuts;
+          if (aggrVar > GMetric) GMetric = aggrVar;
+          IMetric += aggrVar;
         }
-        aggrVar /= nOuts;
-        if (aggrVar > GMetric) GMetric = aggrVar;
-        IMetric += aggrVar;
+        IMetric /= (double) matEvalSet.nrows();
       }
-      IMetric /= (double) matEvalSet.nrows();
+      else IMetric = GMetric = PSUADE_UNDEFINED;
     }
     //**/ -----------------------------------------------------------
     //**/ D-, A-, and E-optimal metrics need the following
@@ -3065,41 +3141,45 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
     psVector vecEigs;
     matCov.setDim(vecUInputs.length(),vecUInputs.length());
     double dmean2, dcov;
-    AMetric = 0.0;
-    for (jj = 0; jj < vecUInputs.length(); jj++)
+    if (mobj14.MatPostSample_.nrows() > 0)
     {
-      dmean = 0.0;
-      for (kk = 0; kk < mobj14.MatPostSample_.nrows(); kk++)
-        dmean += postSample[kk][jj];
-      dmean /= (double) mobj14.MatPostSample_.nrows();
-      for (kk = 0; kk < mobj14.MatPostSample_.nrows(); kk++)
-        dvar += pow(postSample[kk][jj]-dmean,2.0);
-      dvar /= (double) mobj14.MatPostSample_.nrows();
-      matCov.setEntry(jj,jj,dvar);
-      AMetric += dvar;
-      for (ll = jj+1; ll < vecUInputs.length(); ll++)
+      AMetric = 0.0;
+      for (jj = 0; jj < vecUInputs.length(); jj++)
       {
-        dmean2 = 0;
+        dmean = 0.0;
         for (kk = 0; kk < mobj14.MatPostSample_.nrows(); kk++)
-          dmean2 += postSample[kk][ll];
-        dmean2 /= (double) mobj14.MatPostSample_.nrows();
-        dcov = 0;
+          dmean += postSample[kk][jj];
+        dmean /= (double) mobj14.MatPostSample_.nrows();
         for (kk = 0; kk < mobj14.MatPostSample_.nrows(); kk++)
-          dcov += (postSample[kk][jj]-dmean)*
-                  (postSample[kk][ll]-dmean2);
-        dcov /= (double) mobj14.MatPostSample_.nrows();
-        matCov.setEntry(jj,ll,dcov);
-        matCov.setEntry(ll,jj,dcov);
+          dvar += pow(postSample[kk][jj]-dmean,2.0);
+        dvar /= (double) mobj14.MatPostSample_.nrows();
+        matCov.setEntry(jj,jj,dvar);
+        AMetric += dvar;
+        for (ll = jj+1; ll < vecUInputs.length(); ll++)
+        {
+          dmean2 = 0;
+          for (kk = 0; kk < mobj14.MatPostSample_.nrows(); kk++)
+            dmean2 += postSample[kk][ll];
+          dmean2 /= (double) mobj14.MatPostSample_.nrows();
+          dcov = 0;
+          for (kk = 0; kk < mobj14.MatPostSample_.nrows(); kk++)
+            dcov += (postSample[kk][jj]-dmean)*
+                    (postSample[kk][ll]-dmean2);
+          dcov /= (double) mobj14.MatPostSample_.nrows();
+          matCov.setEntry(jj,ll,dcov);
+          matCov.setEntry(ll,jj,dcov);
+        }
+      }
+      matCov.eigenSolve(matEig, vecEigs, 1);
+      DMetric = 1.0;
+      EMetric = 0;
+      for (jj = 0; jj < vecUInputs.length(); jj++)
+      {
+        DMetric *= vecEigs[jj];
+        if (vecEigs[jj] > EMetric) EMetric = vecEigs[jj];
       }
     }
-    matCov.eigenSolve(matEig, vecEigs, 1);
-    DMetric = 1.0;
-    EMetric = 0;
-    for (jj = 0; jj < vecUInputs.length(); jj++)
-    {
-      DMetric *= vecEigs[jj];
-      if (vecEigs[jj] > EMetric) EMetric = vecEigs[jj];
-    }
+    else AMetric = DMetric = EMetric = PSUADE_UNDEFINED;
 
     //**/ -----------------------------------------------------------
     //**/ return the metric information
@@ -3139,8 +3219,15 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       if (outputs[0] < optimalVal) optimalVal = outputs[0];
       if (nInputsIn > 0 && printLevel_ >= 0) 
       {
-        printf(" ===> output = %11.4e (best so far = %11.4e)\n",
+        printf(" ===> output = %11.4e (best so far = %11.4e",
                outputs[0], optimalVal);
+        if (outputs[0] == optimalVal) 
+        {
+          printf(" :");
+          for (kk = 0; kk < nInputs; kk++)
+            printf(" %d", (int) inputs[kk]);
+        }
+        printf(")\n");
       }
     }
 
@@ -3186,7 +3273,12 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       //**/ that odoeu_boptnbf is calling this function
       if (nOutputs == 5 && whichLocalFunction_ != 25)
       {
-        printf("FuncIO ERROR: nOutputs has to be = 1 (unless code=20)\n");
+        printf("FuncIO ERROR: nOutputs has to be = 1 (unless code=25)\n");
+        exit(1);
+      }
+      else if (nOutputs == 3 && whichLocalFunction_ != 25)
+      {
+        printf("FuncIO ERROR: nOutputs has to be = 1 (unless code=25)\n");
         exit(1);
       }
       //**/ otherwise, if nInputsIn > 0 and nOutputs != 1, there
@@ -3217,7 +3309,8 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       printf("- A training sample to compute the Fisher matrix\n");
       printf("  (and identify design and uncertain parameters)\n");
       printf("- A prior distribution for the uncertain parameters\n");
-      printf("- A candidate set (or a design set) of experimental designs\n");
+      printf("- A candidate set (or a selected subset) of ");
+      printf("experimental designs\n");
 
       //**/ get the training sample
       snprintf(pString,100,
@@ -3241,18 +3334,21 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       nOuts = pdata.intData_;
       if (nOuts > 1)
       {
-        printf("FuncIO ERROR: this method only works with nOutputs=1\n");
-        printf("Suggestion: delete all but one output and re-run.\n");
+        printf("FuncIO ERROR: This method only works with nOutputs=1 ");
+        printf("for training the\n");
+        printf("              sample\n");
+        printf("Suggestion: Delete all but one output and re-run.\n");
         exit(1);
       }
 
       //**/ --- user selects uncertain inputs ==> vecUInputs
-      printf("Out of the %d inputs, some should be design parameters ",
+      printDashes(PL_INFO,0);
+      printf("Out of the %d inputs, some must be design parameters ",
              nInputs_);
-      printf("and some are\n");
+      printf("and some must be\n");
       printf("uncertain parameters. In the following, please specify ");
       printf("which inputs\n");
-      printf("are uncertain (and the rest are design parameters).\n");
+      printf("are uncertain (and the rest will be design parameters).\n");
       vecUInputs.setLength(nInps);
       snprintf(pString,100,
          "Enter uncertain input number (1 - %d, 0 to terminate) : ",nInps);
@@ -3260,7 +3356,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       while (1)
       {
         kk = getInt(0, nInps, pString);
-        if (kk == 0 || kk > nInps) break;
+        if ((kk == 0 || kk > nInps) && ii > 0) break;
         vecUInputs[ii] = kk - 1;
         ii++;
       }
@@ -3271,9 +3367,10 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       //**/ following condition has to be met.
       if (nInputsIn != 0 && nInputsIn < nUInps)
       {
-        printf("ERROR: design set must be larger than ");
-        printf("uncertain parameter size.\n");
-        printf("- design set has %d members\n",nInputsIn);
+        printf("ERROR: Selected candidate subset must be larger ");
+        printf("than the number of\n");
+        printf("       uncertain parameters.\n");
+        printf("- candidate set has %d members\n",nInputsIn);
         printf("- number of uncertain parameters = %d\n",nUInps);
         exit(1);
       }
@@ -3289,6 +3386,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       }
 
       //**/ --- read prior sample ==> matPriorSample
+      printDashes(PL_INFO,0);
       printf("Uncertain parameters need a prior sample. The sample ");
       printf("file should\n");
       printf("have the following format:\n");
@@ -3311,7 +3409,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       }
       if (matPriorSample.ncols() != vecUInputs.length())
       {
-        printf("FuncIO ERROR: prior sample nInputs=%d is not correct.\n",
+        printf("FuncIO ERROR: Prior sample nInputs=%d is not correct.\n",
                matPriorSample.ncols());
         printf("       Should be equal to %d.\n",vecUInputs.length());
         exit(1);
@@ -3321,17 +3419,18 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       //**/ asked if this is called by odoeu_eval)
       if (nInputsIn > 0 && (matPriorSample.nrows() > 10))
       {
-        printf("Fisher-based methods are computationally expensive, so ");
-        printf("you may want\n");
-        printf("to reduce the cost by collapsing the prior sample into ");
-        printf("fewer sample\n");
-        printf("points (prior sample size = %d).\n",matPriorSample.nrows());
+        printf("* Fisher-based methods are computationally ");
+        printf("expensive, so you may want\n");
+        printf("  to reduce the cost by collapsing the ");
+        printf("prior sample into fewer sample\n");
+        printf("  points (prior sample size = %d).\n",
+               matPriorSample.nrows());
         snprintf(pString,100,
-           "Collapse prior sample into smaller sample ? (y or n) \n"); 
+           "Collapse prior sample into smaller sample ? (y or n) "); 
         getString(pString, lineIn);
         if (lineIn[0] == 'y')
         {
-          printf("The size of the prior sample is %d.\n",
+          printf("The current size of the prior sample is %d.\n",
                  matPriorSample.nrows());
           snprintf(pString,100,
             "Use (1) the sample mean only or (2) a random sub-sample ? ");
@@ -3410,19 +3509,23 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       //**/ --- to this function
       if (nInputs == 0 && nOutputs != 0)
       {
-        printf("Next please provide provide a selected design set.\n");
-        printf("The file should be in the following format:\n");
+        printf("* Next please provide a SELECTED candidate ");
+        printf("subset to be evaluated as a\n");
+        printf("  whole (that is, not individually). The ");
+        printf("file must be in the following\n");
+        printf("  format:\n");
         printf("Line 1: <nSamples> <nInputs>\n");
         printf("Line 2: <selected design point 1 values>\n");
         printf("Line 3: <selected design point 2 values>\n");
         printf("Line 4: ...\n");
         snprintf(pString,100,
-                "Enter the file name of the selected set of designs : ");
+         "Enter the file name of the SELECTED candidate subset : ");
       }
       else
       {
-        printf("Next please provide a candidate design list.\n");
-        printf("The file should be in the following format:\n");
+        printf("* Next please provide a candidate set. The ");
+        printf("file should be in the\n");
+        printf("  following format:\n");
         printf("Line 1: <nSamples> <nInputs>\n");
         printf("Line 2: <candidate design 1 values>\n");
         printf("Line 3: <candidate design 2 values>\n");
@@ -3447,7 +3550,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
         printf("Size of the selected design set = %d\n", nCandidates);
         if (nCandidates < nUInps)
         {
-          printf("ERROR: selected design set should have > %d members.\n",
+          printf("ERROR: Selected design set should have > %d members.\n",
                  nUInps);
           exit(1);
         }
@@ -3455,7 +3558,8 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       else printf("Size of the candidate set = %d\n", nCandidates);
 
       //**/ --- read evaluation set (for G and I) ==> matEvalSet
-      if (whichLocalFunction_ == 25 || whichLocalFunction_ == 26)
+      if ((whichLocalFunction_ == 25 || whichLocalFunction_ == 26) &&
+          !(nInputsIn == 0 && nOutputs == 0))
       {
         printf("An evaluation sample is needed to ");
         printf("compute the optimality metrics.\n");
@@ -3482,7 +3586,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
         if (matEvalSet.ncols() != 2*nOuts+nInps-nUInps &&
             matEvalSet.ncols() != nInps-nUInps)
         {
-          printf("FuncIO ERROR: evaluation data must have %d or %d columns.\n",
+          printf("FuncIO ERROR: Evaluation set must have %d or %d columns.\n",
                  2*nOuts+nInps-nUInps,nInps-nUInps);
           exit(1);
         }
@@ -3517,6 +3621,124 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       optimalVal = PSUADE_UNDEFINED;
       if (printLevel_ > 0)
         printf("ODOE_(X)OPTIMAL (Fisher) Initialization complete.\n");
+    }
+
+    //**/ -----------------------------------------------------------
+    //**/ if inputs = NULL and outputs == NULL, evaluate each point
+    //**/ in the set individually (support odoeu_feval)
+    //**/ -----------------------------------------------------------
+    if (nInputsIn == 0 && nOutputs == 0)
+    {
+      int cc, nCandidates = matCandidates.nrows(), iOne=1, lcnt;
+      int nUInps = vecUInputs.length();
+      int priorNR = matPriorSample.nrows();
+      double DMetric, AMetric, EMetric;
+      psMatrix matCov, matCovInv, matGrad, matGradT;
+
+      vecXT.setLength(nInps);
+      vecYT.setLength(iOne);
+      matGrad.setDim(nUInps, iOne);
+
+      //**/ compute metric for each candidate`
+      printf("Candidate D-metric\t   A-metric\t   E-metric\n");
+      for (cc = 0; cc < nCandidates; cc++)
+      {
+        AMetric = EMetric = 0;
+        DMetric = 1;
+
+        //**/ stuff candidate coordinate in vecXT
+        //**/ (from candidate matrix)
+        lcnt = 0;
+        for (jj = 0; jj < nInps; jj++)
+        {
+          if (vecIT[jj] < 1) /* vecIT[jj] = 0 for design input jj */
+          {
+            vecXT[jj] = matCandidates.getEntry(cc,lcnt);
+            lcnt++;
+          }
+        }
+        //**/ now stuff vecXT with each sample in the prior sample
+        //**/ evaluate function and derivatives and add to matGrad
+        for (ss = 0; ss < priorNR; ss++)
+        {
+          //**/ --- first stuff the prior sample into vecXT
+          for (jj = 0; jj < nInps; jj++)
+          {
+            //**/ if parameter is uncertain, use prior sample
+            if (vecIT[jj] >= 1)
+            {
+              ind = vecIT[jj] - 1;
+              vecXT[jj] = matPriorSample.getEntry(ss,ind);
+            }
+          }
+          //**/ --- evaluate function and compute derivatives too
+          rsPtrs[0]->evaluatePoint(iOne,vecXT.getDVector(),&ddata);
+          vecYT[0] = ddata;
+
+          //**/ compute partial y(theta) /partial theta_j
+          for (jj = 0; jj < nInps; jj++)
+          {
+            //**/ if parameter is uncertain, perturb and evaluate
+            if (vecIT[jj] >= 1)
+            {
+              ind = vecIT[jj] - 1;
+              dtmp = vecXT[jj];
+              vecXT[jj] *= (1.0 + 1e-6);
+              rsPtrs[0]->evaluatePoint(iOne,vecXT.getDVector(),&ddata);
+              //**/ finite difference delta Y_kk wrt theta_jj
+              ddata = (ddata - vecYT[0]) / (vecXT[jj] - dtmp);
+              vecXT[jj] = dtmp;
+              dtmp = matGrad.getEntry(ind, 0);
+              ddata += dtmp;
+              matGrad.setEntry(ind, 0, ddata);
+            }
+          }
+        } /* ss for priorNR */
+        //**/ take the mean for col cc in matGrad so afterward
+        //**/ now matGrad is a m x c matrix consisting of
+        //**/ [mean(df(x1)/dtheta_1) .. mean(df(xc)/dtheta_1)]
+        //**/ ...
+        //**/ [mean(df(x1)/dtheta_m) .. mean(df(x2)/dtheta_j)]
+        for (jj = 0; jj < nUInps; jj++)
+        {
+          ddata = matGrad.getEntry(jj, 0);
+          ddata /= (double) priorNR;
+          matGrad.setEntry(jj, 0, ddata);
+        }
+        //**/ --- now compute information matrix (Grad * Grad^T)
+        //**/ --- covariance matrix ~ inv(Grad * Grad^T)
+        matGradT = matGrad;
+        matGradT.transpose();
+        matGrad.matmult(matGradT, matCovInv);
+        ddata = matCovInv.computeDeterminant();
+        if (PABS(ddata) < 1e-16)
+        {
+          printf("\nINFO: Fisher matrix is singular ==> skip.\n");
+          DMetric = PSUADE_UNDEFINED;
+          AMetric = PSUADE_UNDEFINED;
+          EMetric = PSUADE_UNDEFINED;
+          GMetric = PSUADE_UNDEFINED;
+          IMetric = PSUADE_UNDEFINED;
+        }
+        else
+        {
+          //**/ --- accumulate 1/determinant for inverse covariance
+          //**/     (since Fisher^{-1} approximates covariance)
+          DMetric = 1.0 / ddata;
+
+          //**/ --- now get back the covariance matrix by inversion
+          matCovInv.computeInverse(matCov);
+
+          //**/ Since this is for individual, the matrix is 1 x 1
+          AMetric = matCov.getEntry(0, 0);
+
+          //**/ eigenvalue is matrix at (0,0)
+          EMetric = matCov.getEntry(0, 0);
+        }
+        printf("%5d \t%12.4e\t%12.4e\t%12.4e\n",cc+1,
+               DMetric,AMetric,EMetric);
+      }
+      return 0;
     }
 
     //**/ -----------------------------------------------------------
@@ -3556,7 +3778,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
     }
     //**/ -----------------------------------------------------------
     //**/ if the inputs is from the candidate set (that is, the whole
-    //**/ set is to be evaluated, and it has duplicates, compress it
+    //**/ set is to be evaluated, and it has duplicates, compress it)
     //**/ -----------------------------------------------------------
     if (count > 0 && nInputsIn == 0)
     {
@@ -3592,7 +3814,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
     //**/ -----------------------------------------------------------
     //**/ error checking (whether inputs are valid) and display
     //**/ -----------------------------------------------------------
-    if (nInputsIn > 0 && printLevel_ > 0) 
+    if (nInputsIn > 0 && printLevel_ >= 0) 
     {
       if (whichLocalFunction_ == 25)
       {
@@ -3625,8 +3847,9 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
                matCandidates.nrows());
         exit(1);
       }
-      if (nInputsIn > 0 && printLevel_ > 0) printf("%5d ", ind);
+      if (nInputsIn > 0 && printLevel_ >= 0) printf("%5d ", ind);
     }
+    if (nInputsIn > 0 && printLevel_ >= 0) printf("\n");
 
     //**/ -----------------------------------------------------------
     //**/ search history to see if this has been evaluated before
@@ -3646,7 +3869,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
         if (count == nInputs)
         {
           outputs[0] = matHistory.getEntry(jj,nInputs);
-          if (printLevel_ >= 0) 
+          if (printLevel_ > 0) 
             printf(" ===> output = %11.4e (revisit)\n", outputs[0]);
           return 0; 
         }
@@ -3658,6 +3881,8 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
     //**/ this function to evaluate the GIDAE metrics for all the
     //**/ candidate points in the candidate set.
     //**/ vecInps (double) has the candidate indices (1-based)
+    //**/ This code is also called by odoeu_foptn to evaluate a
+    //**/ given subset of candidates
     //**/ -----------------------------------------------------------
     vecXT.setLength(nInps); /* nInps = nInputs in training sample */
     vecYT.setLength(nOuts); /* nOuts = 1 */
@@ -4020,7 +4245,9 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
     EMetric2 /= (double) priorNR;
 #endif
 
-    //**/ if it is called by odoeu_feval, display information
+#if 0
+    //**/ if it is called by odoeu_fevaln, let it
+    //**/ display the result (so not to be done here)
     if (nInputsIn == 0)
     {
       printAsterisks(PL_INFO,0);
@@ -4039,9 +4266,16 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       if (nOutputs >= 5) outputs[4] = EMetric2;
       return 0;
     }
+#endif
 
     //**/ --- return the proper metric
-    if (whichLocalFunction_ == 25 && nOutputs == 5) 
+    if (whichLocalFunction_ == 25 && nOutputs == 3) 
+    {
+       outputs[0] = DMetric2;
+       outputs[1] = AMetric2;
+       outputs[2] = EMetric2;
+    }
+    else if (whichLocalFunction_ == 25 && nOutputs == 5) 
     {
        outputs[0] = GMetric2;
        outputs[1] = IMetric2;
@@ -4059,8 +4293,15 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       if (outputs[0] < optimalVal) optimalVal = outputs[0];
       if (printLevel_ >= 0) 
       {
-        printf(" ===> output = %11.4e (best so far = %11.4e)\n",
+        printf(" ===> output = %11.4e (best so far = %11.4e",
                outputs[0], optimalVal);
+        if (outputs[0] == optimalVal && inputs != NULL) 
+        {
+          printf(" :");
+          for (kk = 0; kk < nInputs; kk++)
+            printf(" %d", (int) inputs[kk]);
+        }
+        printf(")\n");
       }
     }
 
@@ -4160,6 +4401,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       }
       if (nInputsIn > 0 && printLevel_ >= 0) printf("%5d ", ind);
     }
+    if (nInputsIn > 0 && printLevel_ >= 0) printf("\n");
 
     //**/ -----------------------------------------------------------
     //**/ check history to see whether this has been evaluated before
@@ -4178,7 +4420,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       if (count == nInputs)
       {
         outputs[0] = matHistory.getEntry(jj,nInputs);
-        if (printLevel_ >= 0) 
+        if (printLevel_ > 0) 
           printf(" ===> output = %11.4e (revisit)\n", outputs[0]);
         return 0; 
       }
@@ -4402,8 +4644,15 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
     if (outputs[0] < optimalVal) optimalVal = outputs[0];
     if (nInputsIn > 0 && printLevel_ >= 0) 
     {
-      printf(" ===> output = %11.4e (best so far = %11.4e)\n",
+      printf(" ===> output = %11.4e (best so far = %11.4e",
              outputs[0], optimalVal);
+      if (outputs[0] == optimalVal) 
+      {
+        printf(" :");
+        for (kk = 0; kk < nInputs; kk++)
+          printf(" %d", (int) inputs[kk]);
+      }
+      printf(")\n");
     }
     //**/ if nInputsIn = 0, it means this function is called
     //**/ from the interpreter to evaluate the metrics (i.e.
@@ -4917,6 +5166,11 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
           status = rsPtrs[0]->initialize(pInps.dbleArray_,
                                          vecYT.getDVector());
         }
+        else
+        {
+          printf("INFO: The evaluation set will be ");
+          printf("evaluated by the simulator.\n");
+        }
       }
       if (psuadeIO == NULL)
       {
@@ -4924,7 +5178,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
         printf("Please provide an PSUADE input file for ");
         printf("extracting user information:\n"); 
         printf("1. input dimension and input bounds\n");
-        printf("2. simulation driver name\n");
+        printf("2. simulation driver name (make sure 'driver' is set)\n");
         snprintf(pString,100,"Enter PSUADE input file name : ");
         getString(pString, fname);
         fname[strlen(fname)-1] = '\0';
@@ -5088,30 +5342,32 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       //**/ --- is requesting using selected designs for analysis
       if (nInputs == 0)
       {
-        printf("Next you are asked to provide your selected designs.\n");
+        printf("Next provide the file name of your selected designs.\n");
         printf("The file should be in the following format:\n");
         printf("Line 1: <nSamples> <nInputs>\n");
         printf("Line 2: <design 1 values>\n");
         printf("Line 3: <design 2 values>\n");
         printf("Line 4: ...\n");
-        snprintf(pString,100,"Enter the file name of your selected designs : ");
+        snprintf(pString,100,
+          "Enter the file name of your selected candidatesubset : ");
       }
       else
       {
-        printf("Next you are asked to provide your candidate design set.\n");
+        printf("Next provide the file name of your candidate design set.\n");
         printf("The file should be in the following format:\n");
         printf("Line 1: <nSamples> <nInputs>\n");
         printf("Line 2: <design 1 values>\n");
         printf("Line 3: <design 2 values>\n");
         printf("Line 4: ...\n");
-        snprintf(pString,100,"Enter the file name of your candidate design set : ");
+        snprintf(pString,100,
+                 "Enter the file name of your candidate design set : ");
       }
       getString(pString, fname);
       fname[strlen(fname)-1] = '\0';
       status = readIReadDataFile(fname, matCandidates);
       if (status != 0)
       {
-        printf("FuncIO ERROR: when reading candidate or selected set\n");
+        printf("FuncIO ERROR: When reading candidate or selected set\n");
         printf("       Maybe this file is in wrong format?\n");
         exit(1);
       }
@@ -5147,6 +5403,8 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
                  nInps-nUInps);
           exit(1);
         }
+        if (matPriorSample.nrows()*matEvalSet.nrows() > 10000)
+          printf("WARNING: Prior and/or evaluation sample too large ==> time consuming.\n");
       }
       //**/ --- get input bounds and driver --- 
       pData pAppFiles;
@@ -5249,6 +5507,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       }
       if (nInputsIn > 0 && printLevel_ >= 0) printf("%5d ", ind);
     }
+    if (nInputsIn > 0 && printLevel_ >= 0) printf("\n");
 
     //**/ -----------------------------------------------------------
     //**/ check history to see whether this has been evaluated before
@@ -5267,7 +5526,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
       if (count == nInputs)
       {
         outputs[0] = matHistory.getEntry(jj,nInputs);
-        if (printLevel_ >= 0) 
+        if (printLevel_ > 0) 
           printf(" ===> output = %11.4e (revisit)\n", outputs[0]);
         return 0; 
       }
@@ -5337,6 +5596,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
           ddata += matFisherSimStore.getEntry(ind*priorNR+ss,jj);
         if (ddata == 0) doSim = 1;
 
+        //**/ if RS is not to be used, use simulator directly
         if (doSim == 1)
         {
           if (whichLocalFunction_ >= 45 && whichLocalFunction_ <= 46)
@@ -5350,6 +5610,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
         }
         else
         {
+          //**/ otherwise, use RS pre-evaluated data
           for (jj = 0; jj < nInps+1; jj++)
             vecYT[jj] = matFisherSimStore.getEntry(ind*priorNR+ss,jj); 
         }
@@ -5498,7 +5759,7 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
                 }
               }
               for (jj = 0; jj < nInps+1; jj++)
-                 matFisherEvalStore.setEntry(kk*priorNR+ss,jj,vecYT[jj]);
+                matFisherEvalStore.setEntry(kk*priorNR+ss,jj,vecYT[jj]);
             }
 
             //**/ add partial y(theta, eta_i) /partial theta_j
@@ -5547,9 +5808,17 @@ int FunctionInterface::psLocalFunction(int nInputsIn, double *inputsIn,
     if (outputs[0] < optimalVal) optimalVal = outputs[0];
     if (nInputsIn > 0 && printLevel_ >= 0) 
     {
-      printf(" ===> output = %11.4e (best so far = %11.4e)\n",
+      printf(" ===> output = %11.4e (best so far = %11.4e",
              outputs[0], optimalVal);
+      if (outputs[0] == optimalVal) 
+      {
+        printf(" :");
+        for (kk = 0; kk < nInputs; kk++)
+          printf(" %d", (int) inputs[kk]);
+      }
+      printf(")");
     }
+    printf("\n");
     //**/ if nInputsIn = 0, it means this function is called
     //**/ from the interpreter to evaluate the metrics (i.e.
     //**/ odoeu_eval), and to expedite things, one call with

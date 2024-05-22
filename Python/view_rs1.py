@@ -23,8 +23,8 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 
 # USA
 # *******************************************************************
-# This file contains Python codes that read matlabrs1.m created by
-# PSUADE and display the 1D response surface plot using matplotlib
+# This file contains Python codes that read matlabrsplot1.m created 
+# by PSUADE and display the 1D response surface plot using matplotlib
 # *******************************************************************
 import os
 import sys
@@ -37,16 +37,16 @@ except ImportError:
    MATPLOTLIB = False
    sys.exit(0)
 
-# get matlabrs1.m-like file
+# get matlabrsplot1.m-like file
 print('************************************************************')
-print('This function extracts plot information from the matlabrs1.m')
+print('This function extracts information from the matlabrsplot1.m')
 print('file (or same but renamed file) and creates a 2D (1-input,')
 print('1-output) response surface plot.')
 print('------------------------------------------------------------')
 if sys.version_info[0] < 3:
-   rsfile = raw_input('Enter name of the matlabrs1.m-like file : ')
+   rsfile = raw_input('Enter name of the matlabrsplot1.m-like file : ')
 else:
-   rsfile = input('Enter name of the matlabrs1.m-like file : ')
+   rsfile = input('Enter name of the matlabrsplot1.m-like file : ')
 
 # first search for dimensions in X and A
 try:

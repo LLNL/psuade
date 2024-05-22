@@ -5,12 +5,11 @@ PSUADE - A Problem Solving environment for
          Uncertainty Analysis and Design Exploration (2.1.0)
 (for help, enter <help>)
 ======================================================================
-psuade> # setting things up
-psuade> 
-psuade> 
-New random seed = 121297753
-psuade> 
-Sampling INFO: Creating a sample assuming all uncertain parameters are
+psuade> # This example shows how to perform uncertainty analysis
+psuade> # using sampling and running simulations in ensemble mode.  
+psuade> # First, set things up
+psuade> psuade> New random seed = 121297753
+psuade> Sampling INFO: Creating a sample assuming all uncertain parameters are
                uniformly distributed.
 **********************************************************************
 INFO: You have turned on ensemble_run_mode. In this mode, the
@@ -34,10 +33,9 @@ PSUADE run: running sample, nSamples = 300
 PSUADE ensemble run begins (parallelism = 10)
 PSUADE ensemble run completed.
 ======================================================================
-psuade> # perform uncertainty analysis
+psuade> # then, perform uncertainty analysis
 psuade> New random seed = 31971311
-psuade> 
-**********************************************************************
+psuade> **********************************************************************
 INFO: You are loading a file with the same name as the default output
       file psuadeData, which is periodically overwritten during some
       of PSUADE's internal operations. As such, you are advised to
@@ -47,14 +45,11 @@ INFO: You are loading a file with the same name as the default output
 load complete : nSamples = 300
                 nInputs  = 3
                 nOutputs = 1
-psuade> 
-**********************************************************************
+psuade> **********************************************************************
 This command computes the basic statistics (mean, standard deviation,
 skewness, and kurtosis) of a selected output in the loaded sample.
 ----------------------------------------------------------------------
-Proceed ? (y or n to abort) 
-Enter output number (1 - 1) : 
-No transformation (e.g. log) on sample inputs or outputs.
+Proceed ? (y or n to abort) Enter output number (1 - 1) : No transformation (e.g. log) on sample inputs or outputs.
 
 **********************************************************************
 *             Basic Output Statistics
@@ -65,15 +60,15 @@ No transformation (e.g. log) on sample inputs or outputs.
 * nOutputs =          1
 ----------------------------------------------------------------------
 * outputID =          1
-*       Sample mean          =   1.7957e+01
-*       Sample std dev       =   8.6932e+00
-*       Sample skewness      =  -2.2206e-01
+*       Sample mean          =   1.7958e+01
+*       Sample std dev       =   8.6939e+00
+*       Sample skewness      =  -2.2113e-01
 *       Sample kurtosis      =   2.4823e+00
 ----------------------------------------------------------------------
 **********************************************************************
 Output distribution plot is now in matlabua.m.
 **********************************************************************
-*       std error of mean       =   5.01903019e-01
+*       std error of mean       =   5.01941299e-01
 **********************************************************************
-psuade> # clean up
-
+psuade> # Finally, clean up
+psuade> psuade> psuade terminates ...

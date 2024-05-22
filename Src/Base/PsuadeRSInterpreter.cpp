@@ -52,6 +52,13 @@
 #include "ProbMatrix.h"
 #include "MainEffectAnalyzer.h"
 #include "TwoParamAnalyzer.h"
+#include "RSMEntropy1Analyzer.h"
+#include "RSMEntropy2Analyzer.h"
+#include "RSMEntropyGAnalyzer.h"
+#include "RSMSobol1Analyzer.h"
+#include "RSMSobol2Analyzer.h"
+#include "RSMSobolGAnalyzer.h"
+#include "RSMSobolTSIAnalyzer.h"
 #include "ShapleyAnalyzer.h"
 
 // ------------------------------------------------------------------------
@@ -125,27 +132,23 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     {
       printf("rsua: uncertainty analysis on response surface\n");
       printf("Syntax: rsua (no argument needed)\n");
-      printf("This command perform uncertainty analysis on ");
-      printf("the response surface\n");
-      printf("built from the LOADED sample. Uncertainty analysis ");
-      printf("is performed\n");
-      printf("using a user-provided sample created beforehand ");
-      printf("in PSUADE data\n");
-      printf("format or a PSUADE-generated sample. If a stochastic ");
-      printf("response surface\n");
-      printf("(e.g. Kriging, MARSB, or polynomial regression) is ");
-      printf("selected, its\n");
-      printf("response surface uncertainty will also be shown in ");
-      printf("the PDF and CDF\n");
-      printf("plots produced by this command.\n");
-      printf("NOTE: Turn on master mode to select between average ");
-      printf("case and worst\n");
-      printf("      case analysis.\n");
+      printf("This command performs uncertainty analysis ");
+      printf("using the response surface\n");
+      printf("constructed from the LOADED sample. The ");
+      printf("sample for forward propagation\n");
+      printf("of uncertainties can be either a user-provided ");
+      printf("sample in PSUADE data\n");
+      printf("format or a PSUADE-generated sample. If a ");
+      printf("stochastic response surface\n");
+      printf("(e.g. Kriging, MARSB, or regression) is selected, ");
+      printf("the RS uncertainties\n");
+      printf("will also be shown in the PDF and CDF plots ");
+      printf("produced by this command.\n");
       return 0;
     }
     if (psuadeIO == NULL || sampleOutputs == NULL)
     {
-      printf("ERROR: no data (load sample first).\n");
+      printf("ERROR: Sample not loaded yet.\n");
       return 1;
     }
 
@@ -157,9 +160,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     printf("* surface such as polynomial regression, MARSB, Kriging, ");
     printf(".. (specified\n");
     printf("* in your loaded data file).\n");
-    printf("* This command computes worst case RS uncertainties. Turn ");
-    printf("on MASTER\n");
-    printf("* mode to select average case RS uncertainties.\n");
+    printf("* Option: compute average or worst case RS uncertainties.\n");
     printDashes(PL_INFO, 0);
     printf("Proceed ? (y or n to abort) ");
     scanf("%s", lineIn2);
@@ -242,7 +243,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       status = sampleIO->readPsuadeFile(uaFileName);
       if (status != 0)
       {
-        printf("ERROR: cannot read sample file.\n");
+        printf("ERROR: Cannot read sample file.\n");
         delete sampleIO;
         return 1;
       }
@@ -250,9 +251,9 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       kk = pPtr.intData_;
       if (kk != nInputs)
       {
-        printf("ERROR: sample nInputs mismatch.\n");
-        printf(":      input size in workspace     = %d.\n",nInputs);
-        printf(":      input size from your sample = %d.\n",kk);
+        printf("ERROR: Sample nInputs mismatch.\n");
+        printf(":      Input size in workspace     = %d.\n",nInputs);
+        printf(":      Input size from your sample = %d.\n",kk);
         delete sampleIO;
         return 1;
       }
@@ -292,7 +293,8 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     printf("it creates a\n");
     printf("   probability distribution enveloped by the max/min ");
     printf("distributions.\n");
-    snprintf(pString,100,"Enter 1 (average case) or 2 (worst case) analysis : ");
+    snprintf(pString,100,
+             "Enter 1 (average case) or 2 (worst case) analysis : ");
     int uaMethod = getInt(1,2,pString);
     uaMethod--;
 
@@ -307,7 +309,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     // stochastic RS with average case analysis
     //**/ ----------------------------------------------
     FuncApprox *faPtrUA=NULL;
-    psConfig_.InteractiveSaveAndReset();
+    //psConfig_.InteractiveSaveAndReset();
     if (uaMethod == 0)
     {
       //**/ create response surface
@@ -315,7 +317,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       faPtrUA = genFA(-1, nInputs, -1, nSamples);
       if (faPtrUA == NULL)
       {
-        printf("ERROR: cannot create response surface.\n");
+        printf("ERROR: Cannot create response surface.\n");
         return 1;
       }
       faPtrUA->setBounds(iLowerB, iUpperB);
@@ -327,11 +329,12 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       status = faPtrUA->initialize(sampleInputs,vecYOut.getDVector());
       if (status != 0)
       {
-        printf("ERROR: cannot initialize response surface.\n");
+        printf("ERROR: Cannot initialize response surface.\n");
         if (faPtrUA != NULL) delete faPtrUA;
         return 1;
       }
       //**/ evaluate response surface
+      printf("** EVALUATING RESPONSE SURFACE (fuzzy)\n");
       faPtrUA->evaluatePointFuzzy(uaNSams,vecUAInps.getDVector(),
                                   vecUAOuts.getDVector(),
                                   vecUAStds.getDVector());
@@ -459,7 +462,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       else              fp = fopen("scilabrsua.sci", "w");
       if (fp == NULL)
       {
-        printf("INFO: cannot write the PDFs/CDFs to matlab file.\n");
+        printf("INFO: Cannot write the PDFs/CDFs to matlab file.\n");
       }
       else
       {
@@ -569,9 +572,9 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         fwritePlotYLabel(fp, "Probabilities");
         fclose(fp);
         if (plotMatlab())
-          printf("Output distribution plots are in matlabrsua.m.\n");
+          printf("Output distribution plots file = matlabrsua.m.\n");
         else
-          printf("Output distribution plots are in scilabrsua.sci.\n");
+          printf("Output distribution plots file = scilabrsua.sci.\n");
       }
       for (ii = 0; ii <= ntimes; ii++) delete [] Fcounts[ii];
       delete [] Fcounts;
@@ -587,7 +590,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       faPtrUA = genFA(-1, nInputs, -1, nSamples);
       if (faPtrUA == NULL)
       {
-        printf("ERROR: cannot generate response surface.\n");
+        printf("ERROR: Cannot generate response surface.\n");
         return 1;
       }
       faPtrUA->setBounds(iLowerB, iUpperB);
@@ -599,7 +602,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       status = faPtrUA->initialize(sampleInputs,vecYOut.getDVector());
       if (status != 0)
       {
-        printf("ERROR: cannot initialize response surface.\n");
+        printf("ERROR: Cannot initialize response surface.\n");
         if (faPtrUA != NULL) delete faPtrUA;
         return 1;
       }
@@ -689,7 +692,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       else              fp = fopen("scilabrsua.sci", "w");
       if (fp == NULL)
       {
-        printf("INFO: cannot write the PDFs/CDFs to matlab/scilab file.\n");
+        printf("INFO: Cannot write the PDFs/CDFs to matlab/scilab file.\n");
       }
       else
       {
@@ -773,15 +776,16 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         fwritePlotYLabel(fp, "Probabilities");
         fclose(fp);
         if (plotMatlab()) 
-          printf("Output distribution plots is now in matlabrsua.m\n");
+          printf("Output distribution plot file = matlabrsua.m\n");
         else
-          printf("Output distribution plots is now in scilabrsua.sci\n");
+          printf("Output distribution plot file = scilabrsua.sci\n");
         for (ii = 0; ii < ntimes; ii++) delete [] Fcounts[ii];
         delete [] Fcounts;
       }
     }
     if (faPtrUA != NULL) delete faPtrUA;
-    psConfig_.InteractiveRestore();
+    //psConfig_.InteractiveRestore();
+    return 0;
   }
 
   //**/ -------------------------------------------------------------
@@ -819,7 +823,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
 
     if (psuadeIO == NULL || sampleOutputs == NULL)
     {
-      printf("ERROR: no data (load sample first).\n");
+      printf("ERROR: Sample not loaded yet.\n");
       return 1;
     }
 
@@ -902,7 +906,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       status = sampleIO->readPsuadeFile(uaFileName);
       if (status != 0)
       {
-        printf("ERROR: cannot read sample file.\n");
+        printf("ERROR: Cannot read sample file.\n");
         delete sampleIO;
         return 1;
       }
@@ -910,9 +914,9 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       kk = pPtr.intData_;
       if (kk != nInputs)
       {
-        printf("ERROR: sample nInputs mismatch.\n");
-        printf(":      input size in workspace     = %d.\n",nInputs);
-        printf(":      input size from your sample = %d.\n",kk);
+        printf("ERROR: Sample nInputs mismatch.\n");
+        printf(":      Input size in workspace     = %d.\n",nInputs);
+        printf(":      Input size from your sample = %d.\n",kk);
         delete sampleIO;
         return 1;
       }
@@ -966,7 +970,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     FuncApprox *faPtrUAB = genFA(-1, nInputs, -1, nSamples);
     if (faPtrUAB == NULL)
     {
-      printf("ERROR: cannot generate response surface.\n");
+      printf("ERROR: Cannot generate response surface.\n");
       return 1;
     }
     int rsMethod = faPtrUAB->getID(); 
@@ -1015,7 +1019,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
                                     vecBsSamOuts.getDVector());
       if (status != 0)
       {
-        printf("ERROR: in initializing response surface (1).\n");
+        printf("ERROR: In initializing response surface (1).\n");
         if (faPtrUAB != NULL) delete faPtrUAB;
         return 1;
       } 
@@ -1122,27 +1126,44 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       fwritePlotXLabel(fp, "Output Value");
       fwritePlotYLabel(fp, "Probabilities");
       fclose(fp);
-      printf("Output distribution plots has been created in matlabrsuab.m.\n");
+      printf("Output distribution plot file = matlabrsuab.m.\n");
     }
+    return 0;
   }
 
+  //**/ 12/2023------------------------------------------------------
   //**/ -------------------------------------------------------------
-  // +++ rssobol1 
+  // +++ rssobol1 (rsvce1_ni) + rsvce1_sobol 
   //**/ Sobol main effect
+  //**/ These commands will replace rssobol1 and rssobol1b
   //**/ -------------------------------------------------------------
-  else if (!strcmp(command, "rssobol1"))
+  else if (!strcmp(command, "rssobol1") || 
+           !strcmp(command, "rsvce1_ni") || 
+           !strcmp(command, "rsvce1_sobol"))
   {
     sscanf(lineIn,"%s %s",command,winput);
     if (!strcmp(winput, "-h"))
     {
-      printf("rssobol1: compute RS-based Sobol' first-order indices\n");
-      printf("Syntax: rssobol1 (no argument needed)\n");
-      printf("NOTE: to compute error bars for indices, use rssobol1b\n");
-      return 1;
+      if (!strcmp(command, "rsvce1_ni")) 
+      {
+        printf("rsvce1_ni: compute RS-based Sobol' first-order indices\n");
+        printf("Syntax: rsvce1_ni (no argument needed)\n");
+      }
+      if (!strcmp(command, "rsvce1_sobol")) 
+      {
+        printf("rsvce1_sobol: compute RS-based Sobol' first-order indices\n");
+        printf("Syntax: rsvce1_sobol (no argument needed)\n");
+      }
+      return 0;
     }
     if (psuadeIO == NULL || sampleOutputs == NULL)
     {
-      printf("ERROR: no data (load sample first).\n");
+      printf("ERROR: Sample not loaded yet.\n");
+      return 1;
+    }
+    if (nInputs < 2)
+    {
+      printf("INFO: No point doing this for nInputs < 2.\n");
       return 1;
     }
 
@@ -1150,16 +1171,70 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     printf("This command computes first-order sensitivity ");
     printf("indices using the\n");
     printf("response surface constructed from the loaded sample.\n");
-    printDashes(PL_INFO, 0);
+    if (!strcmp(command, "rsvce1_ni")) 
+    {
+      printf("* rsvce1_ni uses numerical integration\n");
+      printf("* rsvce1_ni supports 'non'-uniform input ");
+      printf("distributions with no input\n");
+      printf("  correlations (rsvce1_bin handles ");
+      printf("all input distributions and\n");
+      printf("  constraints).\n");
+      printf("* rsvce1_ni supports input constraints.\n");
+    }
+    if (!strcmp(command, "rsvce1_sobol")) 
+    {
+      printf("* rsvce1_sobol uses the Sobol' method\n");
+      printf("* rsvce1_sobol supports 'non'-uniform ");
+      printf("input distributions with no\n");
+      printf("  input correlations (rsvce1_bin handles ");
+      printf("all input distributions and\n");
+      printf("  constraints).\n");
+      printf("* rsvce1_sobol supports input constraints.\n");
+    }
+    printf("NOTE: Turn on ana_expert mode for bootstrapped analysis.\n");
+    printAsterisks(PL_INFO, 0);
+
+    //**/ make recommendation if inputs have other than 
+    //**/ uniform distributions ==> check distributions
+    int hasCorr = 0;
+    if (inputCMat_ != NULL)
+    {
+      for (ii = 0; ii < nInputs_; ii++)
+        for (jj = 0; jj < ii; jj++)
+          if (inputCMat_->getEntry(ii,jj) != 0) hasCorr = 1;
+    }
+    int hasPDF = VecInpPDFs_.sum();
+    if (hasCorr != 0)
+    {
+      printf("NOTE: Since inputs have correlations, we ");
+      printf("recommend using rsvce1_bin\n");
+      printf("      instead (both rsvce1_ni and rsvce1_sobol ");
+      printf("cannot handle input\n");
+      printf("      correlations except those induced by ");
+      printf("inequality constraints).\n");
+      printDashes(PL_INFO, 0);
+    }
+    else if (hasPDF == 1 and !strcmp(command, "rsvce1_ni")) 
+    {
+      printf("* NOTE: Since inputs have other than uniform ");
+      printf("distributions, rsvce1_ni\n");
+      printf("        requires large samples to give higher ");
+      printf("accuracy. Hence, we \n");
+      printf("        recommend using rsvce1_sobol.\n"); 
+      printDashes(PL_INFO, 0);
+    }
     printf("Proceed ? (y or n to abort) ");
     scanf("%s", lineIn2);
     fgets(winput,5000,stdin);
     if (lineIn2[0] != 'y') return 0;
 
-    snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs);
+    //**/ ask user to select which output
+    snprintf(pString,100,"Enter output number (1 - %d) : ", 
+             nOutputs);
     outputID = getInt(1, nOutputs, pString);
     outputID--;
 
+    //**/ ask user to select response surface
     faType = -1;
     snprintf(pString,100,"Enter your response surface choice ? ");
     while (faType < 0 || faType > PSUADE_NUM_RS)
@@ -1169,240 +1244,488 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
     if (faType < 0) 
     {
-      printf("ERROR: response surface type not currently available.\n");
-      return 1.0;
+      printf("ERROR: Wrong response surface type (%d).\n",faType);
+      return 1;
     }
 
-    int analysisMethod = PSUADE_ANA_RSSOBOL1;
-    AnalysisManager *anaManager = new AnalysisManager();
-    anaManager->setup(analysisMethod, 0);
-    psuadeIO->getParameter("ana_diagnostics",pPtr);
-    int saveDiag = pPtr.intData_;
-    psuadeIO->getParameter("ana_rstype", pPtr);
-    int saveRS = pPtr.intData_;
-    psuadeIO->updateAnalysisSection(-1,-1,faType,outputLevel_,-1,-1);
-    anaManager->analyze(psuadeIO, 0, NULL, outputID);
-    psuadeIO->updateAnalysisSection(-1,-1,saveRS,saveDiag,-1,-1);
-    //**/ get the statistics
-    pData *pdata = psuadeIO->getAuxData();
-    if (pdata->nDbles_ >= nInputs)
+    //**/ number of bootstrapped runs (in ana_expert mode only)
+    int numBS=1;
+    if (psConfig_.AnaExpertModeIsOn())
     {
-      if (pdata->dbleData_ > 0)
+      printf("INFO: You may use bootstrapping to estimate ");
+      printf("errors in this analysis\n");
+      printf("      (computing multiple sets of metrics ");
+      printf("on multiple response\n");
+      printf("      surfaces built from bootstrapped samples).\n");
+      snprintf(pString,100,"Number of bootstrapped runs (1 - 50) : ");
+      numBS = getInt(1, 50, pString);
+    }
+
+    //**/ select numerical integration or Sobol'
+    RSMSobol1Analyzer *sobol1 = new RSMSobol1Analyzer();
+    if (!strcmp(command, "rsvce1_ni"))
+    {
+      snprintf(pString, 16, "ana_rssobol1_ni");
+      char *targv[1];
+      targv[0] = (char *) pString;
+      sobol1->setParam(1, targv); 
+    }
+    else if (!strcmp(command, "rsvce1_sobol") || !strcmp(command, "rssobol1"))
+    {
+      snprintf(pString, 19, "ana_rssobol1_sobol");
+      char *targv[1];
+      targv[0] = (char *) pString;
+      sobol1->setParam(1, targv); 
+    }
+
+    //**/ prepare aData object to pass parameters to analyzer
+    aData aPtr;
+    aPtr.nSamples_ = nSamples_;
+    aPtr.nInputs_ = nInputs_;
+    aPtr.nOutputs_ = 1;
+    aPtr.outputID_ = 0;
+    aPtr.iLowerB_ = iLowerB;
+    aPtr.iUpperB_ = iUpperB;
+    aPtr.sampleInputs_ = sampleInputs;
+    aPtr.sampleOutputs_ = sampleOutputs;
+    aPtr.sampleStates_ = sampleStates;
+    aPtr.printLevel_ = outputLevel_;
+    aPtr.ioPtr_ = psuadeIO;
+    aPtr.inputPDFs_ = VecInpPDFs_.getIVector();
+    aPtr.inputMeans_ = VecInpMeans_.getDVector();
+    aPtr.inputStdevs_ = VecInpStds_.getDVector();
+    aPtr.faType_ = faType;
+
+    //**/ run multiple times
+    int ind, nSamples2;
+    double totVar=0;
+    pData *pdata = NULL;
+    psVector  vecXT, vecYT, vecVCES;
+    psIVector vecST, vecIT;
+    vecVCES.setLength(numBS*nInputs);
+    vecXT.setLength(nSamples*nInputs);
+    vecYT.setLength(nSamples);
+    vecST.setLength(nSamples);
+    vecIT.setLength(nSamples);
+    for (kk = 0; kk < numBS; kk++)
+    {
+      if (numBS > 1) 
+        printf("* Performing analysis on bootstrap %d (of %d)\n",
+               kk+1,numBS);
+      //**/ random draw (at least 80%)
+      if (numBS == 1)
       {
-#if 0
-        printEquals(PL_INFO, 0);
-        printf("Main Effect Statistics: \n");
-        for (ii = 0; ii < nInputs; ii++)
+        for (ss = 0; ss < nSamples*nInputs; ss++)
+          vecXT[ss] = sampleInputs[ss];
+        for (ss = 0; ss < nSamples; ss++)
         {
-          printf("Input %4d: Sobol' main effect = %12.4e",
-                 ii+1,pdata->dbleArray_[ii]);
-          if (pdata->nDbles_ == 3*nInputs)
-               printf(", bounds = [%12.4e, %12.4e]\n",
-                      pdata->dbleArray_[ii+nInputs],
-                      pdata->dbleArray_[ii+2*nInputs]);
-          else printf(" (unnormalized)\n");
+          vecYT[ss] = sampleOutputs[ss];
+          vecST[ss] = sampleStates[ss];
         } 
-#endif
-        if (plotScilab())
-             fp = fopen("scilabrssobol1.sci", "w");
-        else fp = fopen("matlabrssobol1.m", "w");
-        if (fp == NULL) 
-          printf("rssobol1 ERROR: cannot open file to save data\n");
-        else
+        nSamples2 = nSamples;
+      }
+      else
+      {
+        for (jj = 0; jj < nSamples; jj++) vecIT[jj] = 0;
+        ss = nSamples2 = 0;
+        while (nSamples2 < nSamples*0.8)
         {
-          if (plotScilab())
+          ind = PSUADE_rand() % nSamples;
+          if (vecIT[ind] == 0)
           {
-            fprintf(fp,"// This file contains Sobol' indices\n");
-            fprintf(fp,"// set sortFlag = 1 and set nn to be the number\n");
-            fprintf(fp,"// of inputs to display.\n");
+            for (ii = 0; ii < nInputs; ii++)
+              vecXT[nSamples2*nInputs+ii] = sampleInputs[ind*nInputs+ii];
+            vecYT[nSamples2] = sampleOutputs[ind*nOutputs+outputID];
+            vecST[nSamples2] = sampleStates[ind];
+            vecIT[ind] = 1;
+            nSamples2++;
           }
-          else
+          ss++;
+        }
+      }
+
+      //**/ update bootstrapped sample
+      aPtr.nSamples_ = nSamples2;
+      aPtr.sampleInputs_ = vecXT.getDVector();
+      aPtr.sampleOutputs_ = vecYT.getDVector();
+      aPtr.sampleStates_ = vecST.getIVector();
+
+      //**/ compute measure
+      if (!psConfig_.AnaExpertModeIsOn() || numBS > 1)
+        psConfig_.InteractiveSaveAndReset();
+      sobol1->analyze(aPtr);
+      if (!psConfig_.AnaExpertModeIsOn() || numBS > 1)
+        psConfig_.InteractiveRestore();
+
+      //**/ fetch the result
+      pdata = psuadeIO->getAuxData();
+      if (pdata->nDbles_ >= nInputs)
+      {
+        if (pdata->dbleData_ > 0)
+        {
+          for (ii = 0; ii < nInputs; ii++)
           {
-            fprintf(fp,"%% This file contains Sobol' indices\n");
-            fprintf(fp,"%% set sortFlag = 1 and set nn to be the number\n");
-            fprintf(fp,"%% of inputs to display.\n");
+            //**/ normalize
+            ddata = pdata->dbleArray_[ii] / pdata->dbleData_;
+            vecVCES[kk*nInputs+ii] = ddata;
           }
-          fprintf(fp, "sortFlag = 0;\n");
-          fprintf(fp, "nn = %d;\n", nInputs);
-          fprintf(fp, "Mids = [\n");
-          for (ii = 0; ii < nInputs; ii++) 
-            fprintf(fp,"%24.16e\n", pdata->dbleArray_[ii]/pdata->dbleData_);
-          fprintf(fp, "];\n");
-          if (pdata->nDbles_ == 3*nInputs)
-          {
-            fprintf(fp, "Mins = [\n");
-            for (ii = 0; ii < nInputs; ii++) 
-              fprintf(fp,"%24.16e\n", 
-                       pdata->dbleArray_[nInputs+ii]/pdata->dbleData_);
-            fprintf(fp, "];\n");
-            fprintf(fp, "Maxs = [\n");
-            for (ii = 0; ii < nInputs; ii++) 
-              fprintf(fp,"%24.16e\n", 
-                       pdata->dbleArray_[2*nInputs+ii]/pdata->dbleData_);
-            fprintf(fp, "];\n");
-          }
-          if (inputNames == NULL)
-          {
-            if (plotScilab()) fprintf(fp, "  Str = [");
-            else              fprintf(fp, "  Str = {");
-            for (ii = 0; ii < nInputs-1; ii++) fprintf(fp,"'X%d',",ii+1);
-            if (plotScilab()) fprintf(fp,"'X%d'];\n",nInputs);
-            else              fprintf(fp,"'X%d'};\n",nInputs);
-          }
-          else
-          {
-            if (plotScilab()) fprintf(fp, "  Str = [");
-            else              fprintf(fp, "  Str = {");
-            for (ii = 0; ii < nInputs-1; ii++)
-            {
-              if (inputNames[ii] != NULL) 
-                   fprintf(fp,"'%s',",inputNames[ii]);
-              else fprintf(fp,"'X%d',",ii+1);
-            }
-            if (plotScilab()) 
-            {
-              if (inputNames[nInputs-1] != NULL)
-                   fprintf(fp,"'%s'];\n",inputNames[nInputs-1]);
-              else fprintf(fp,"'X%d'];\n",nInputs);
-            }
-            else
-            {
-              if (inputNames[nInputs-1] != NULL)
-                   fprintf(fp,"'%s'};\n",inputNames[nInputs-1]);
-              else fprintf(fp,"'X%d'};\n",nInputs);
-            }
-          }
-          fwriteHold(fp, 0);
-          fprintf(fp, "if (sortFlag == 1)\n");
-          if (plotScilab())
-               fprintf(fp, "  [Mids, I2] = gsort(Mids);\n");
-          else fprintf(fp, "  [Mids, I2] = sort(Mids,'descend');\n");
-          if (pdata->nDbles_ == 3*nInputs)
-          {
-            fprintf(fp, "  Maxs = Maxs(I2);\n");
-            fprintf(fp, "  Mins = Mins(I2);\n");
-          }
-          fprintf(fp, "  Str  = Str(I2);\n");
-          fprintf(fp, "  I2 = I2(1:nn);\n");
-          fprintf(fp, "  Mids = Mids(1:nn);\n");
-          if (pdata->nDbles_ == 3*nInputs)
-          {
-            fprintf(fp, "  Maxs = Maxs(1:nn);\n");
-            fprintf(fp, "  Mins = Mins(1:nn);\n");
-          }
-          fprintf(fp, "  Str  = Str(1:nn);\n");
-          fprintf(fp, "end\n");
-          if (pdata->nDbles_ == 3*nInputs)
-          {
-            fprintf(fp, "ymin = min(Mins);\n");
-            fprintf(fp, "ymax = max(Maxs);\n");
-          }
-          else
-          {
-            fprintf(fp, "ymin = min(Mids);\n");
-            fprintf(fp, "ymax = max(Mids);\n");
-          }
-          fprintf(fp, "h2 = 0.05 * (ymax - ymin);\n");
-          if (plotScilab()) fprintf(fp, "drawlater\n");
-          fprintf(fp, "bar(Mids,0.8);\n");
-          if (pdata->nDbles_ == 3*nInputs)
-          {
-            fprintf(fp,"for ii = 1:nn\n");
-            if (plotScilab())
-               fprintf(fp,
-                  "// h = plot(ii,Means(ii),'r*','MarkerSize',13);\n");
-            else 
-               fprintf(fp,
-                  "%% h = plot(ii,Means(ii),'r*','MarkerSize',13);\n");
-            fprintf(fp,"   if (ii == 1)\n");
-            fwriteHold(fp, 1);
-            fprintf(fp,"   end;\n");
-            fprintf(fp,"   XX = [ii ii];\n");
-            fprintf(fp,"   YY = [Mins(ii) Maxs(ii)];\n");
-            fprintf(fp,
-               "   plot(XX,YY,'-ko','LineWidth',3.0,'MarkerEdgeColor',");
-            fprintf(fp,"'k','MarkerFaceColor','g','MarkerSize',13)\n");
-            fprintf(fp,"end;\n");
-          }
-          fwritePlotAxes(fp);
-          fprintf(fp,"ymin=0;\n");
-          if (plotScilab())
-          {
-            fprintf(fp, "a=gca();\n");
-            fprintf(fp, "a.data_bounds=[0, ymin; nn+1, ymax];\n");
-            fprintf(fp, "newtick = a.x_ticks;\n");
-            fprintf(fp, "newtick(2) = [1:nn]';\n");
-            fprintf(fp, "newtick(3) = Str';\n");
-            fprintf(fp, "a.x_ticks = newtick;\n");
-            fprintf(fp, "a.x_label.font_size = 3;\n");
-            fprintf(fp, "a.x_label.font_style = 4;\n");
-          }
-          else
-          {
-            fprintf(fp,"axis([0 nn+1 ymin ymax])\n");
-            fprintf(fp,"set(gca,'XTickLabel',[]);\n");
-            fprintf(fp,
-              "th=text(1:nn, repmat(ymin-0.07*(ymax-ymin),nn,1),Str,");
-            fprintf(fp,"'HorizontalAlignment','left','rotation',90);\n");
-            fprintf(fp,"set(th, 'fontsize', 12)\n");
-            fprintf(fp,"set(th, 'fontweight', 'bold')\n");
-          }
-          fwritePlotTitle(fp,"Sobol First Order Indices");
-          fwritePlotYLabel(fp, "Sobol Indices");
-          fwriteHold(fp, 0);
-          if (plotScilab())
-          {
-            fprintf(fp, "drawnow\n");
-            printf("rssobol1 plot file = scilabrssobol1.sci\n");
-          }
-          else printf("rssobol1 plot file = matlabrssobol1.m\n");
-          fclose(fp);
+          totVar += pdata->dbleData_;
+        }
+        if (outputLevel_ > 1)
+        {
+          for (ii = 0; ii < nInputs; ii++)
+            printOutTS(PL_INFO,
+              "VCE(%d) = %10.3e\n",ii+1,vecVCES[kk*nInputs+ii]);
         }
       }
       else
       {
-        printf("Total variance = 0. Hence, no main effect plot.\n");
+        printf("ERROR: Cannot fetch results (Consult developers).\n");
       }
-      pdata->clean();
     }
-    delete anaManager;
+
+    //**/ clean up
+    delete sobol1;
+    aPtr.inputPDFs_ = NULL;
+    aPtr.inputMeans_ = NULL;
+    aPtr.inputStdevs_ = NULL;
+    aPtr.iLowerB_ = NULL;
+    aPtr.iUpperB_ = NULL;
+    aPtr.sampleInputs_ = NULL;
+    aPtr.sampleOutputs_ = NULL;
+    aPtr.sampleStates_ = NULL;
+    aPtr.ioPtr_ = NULL;
+
+    //**/ compute statistics
+    psVector vecMeans, vecStdvs, vecMaxs, vecMins;
+    vecMeans.setLength(nInputs);
+    vecStdvs.setLength(nInputs);
+    vecMins.setLength(nInputs);
+    vecMaxs.setLength(nInputs);
+    for (ii = 0; ii < nInputs; ii++)
+    {
+      ddata = 0;
+      for (kk = 0; kk < numBS; kk++) ddata += vecVCES[kk*nInputs+ii];
+      ddata /= (double) numBS;
+      vecMeans[ii] = ddata;
+      vecMins[ii] = PSUADE_UNDEFINED;
+      vecMaxs[ii] = -PSUADE_UNDEFINED;
+    }
+    if (numBS > 1)
+    {
+      for (ii = 0; ii < nInputs; ii++)
+      {
+        ddata = 0;
+        for (kk = 0; kk < numBS; kk++) 
+        {
+          ddata += pow(vecVCES[kk*nInputs+ii]-vecMeans[ii],2.0);
+          if (vecVCES[kk*nInputs+ii] < vecMins[ii])
+            vecMins[ii] = vecVCES[kk*nInputs+ii];
+          if (vecVCES[kk*nInputs+ii] > vecMaxs[ii])
+            vecMaxs[ii] = vecVCES[kk*nInputs+ii];
+        }
+        ddata /= (double) numBS;
+        vecStdvs[ii] = ddata;
+      }
+    }
+    totVar /= (double) numBS;
+    if (totVar > 0)
+    {
+      printAsterisks(PL_INFO, 0);
+      if (!strcmp(command, "rsvce1_ni"))
+        printf("Sobol' 1st-order indices (normalized, 'num. int.'):\n");
+      if (!strcmp(command, "rsvce1_sobol"))
+        printf("Sobol' 1st-order indices (normalized, 'sobol'):\n");
+      for (ii = 0; ii < nInputs; ii++)
+      {
+        if (numBS > 1)
+          printOutTS(PL_INFO,
+            "VCE for input %3d = %10.3e, s.d. = %10.3e\n",
+            ii+1, vecMeans[ii], vecStdvs[ii]);
+        else
+          printOutTS(PL_INFO,
+            "VCE for input %3d = %10.3e\n",ii+1,vecMeans[ii]);
+      }
+      printf("Total variance = %e\n", totVar);
+      printAsterisks(PL_INFO, 0);
+    }
+    else
+    {
+      printf("Total variance = %e ==> Cannot compute VCEs\n",totVar);
+      return 1;
+    }
+ 
+    //**/ create matlab or scilab plots
+    if (!strcmp(command, "rsvce1_ni") || 
+        !strcmp(command, "rssobol1"))
+    {
+      if (plotScilab())
+           fp = fopen("scilabrsvce1_ni.sci", "w");
+      else fp = fopen("matlabrsvce1_ni.m", "w");
+    }
+    if (!strcmp(command, "rsvce1_sobol"))
+    {
+      if (plotScilab())
+           fp = fopen("scilabrsvce1_sobol.sci", "w");
+      else fp = fopen("matlabrsvce1_sobol.m", "w");
+    }
+    if (fp == NULL) 
+      printf("RSTSI ERROR: Cannot open file to save data\n");
+    else
+    {
+      strcpy(pString,"This file contains Sobol' indices");
+      fwriteComment(fp, pString);
+      strcpy(pString,"set sortFlag = 1 and set nn to be the number");
+      fwriteComment(fp, pString);
+      strcpy(pString,"of inputs to display.");
+      fwriteComment(fp, pString);
+
+      fprintf(fp, "sortFlag = 0;\n");
+      fprintf(fp, "nn = %d;\n", nInputs);
+      fprintf(fp, "Mids = [\n");
+      for (ii = 0; ii < nInputs; ii++) 
+        fprintf(fp,"%24.16e\n", vecMeans[ii]*totVar);
+      fprintf(fp, "];\n");
+      if (numBS > 1)
+      {
+        fprintf(fp, "Mins = [\n");
+        for (ii = 0; ii < nInputs; ii++) 
+          fprintf(fp,"%24.16e\n",vecMins[ii]*totVar);
+        fprintf(fp, "];\n");
+        fprintf(fp, "Maxs = [\n");
+        for (ii = 0; ii < nInputs; ii++) 
+          fprintf(fp,"%24.16e\n",vecMaxs[ii]*totVar);
+        fprintf(fp, "];\n");
+      }
+      if (inputNames == NULL)
+      {
+        if (plotScilab()) fprintf(fp, "  Str = [");
+        else              fprintf(fp, "  Str = {");
+        for (ii = 0; ii < nInputs-1; ii++) fprintf(fp,"'X%d',",ii+1);
+        if (plotScilab()) fprintf(fp,"'X%d'];\n",nInputs);
+        else              fprintf(fp,"'X%d'};\n",nInputs);
+      }
+      else
+      {
+        if (plotScilab()) fprintf(fp, "  Str = [");
+        else              fprintf(fp, "  Str = {");
+        for (ii = 0; ii < nInputs-1; ii++)
+        {
+          if (inputNames[ii] != NULL) 
+               fprintf(fp,"'%s',",inputNames[ii]);
+          else fprintf(fp,"'X%d',",ii+1);
+        }
+        if (plotScilab()) 
+        {
+          if (inputNames[nInputs-1] != NULL)
+               fprintf(fp,"'%s'];\n",inputNames[nInputs-1]);
+          else fprintf(fp,"'X%d'];\n",nInputs);
+        }
+        else
+        {
+          if (inputNames[nInputs-1] != NULL)
+               fprintf(fp,"'%s'};\n",inputNames[nInputs-1]);
+          else fprintf(fp,"'X%d'};\n",nInputs);
+        }
+      }
+      fwriteHold(fp, 0);
+      fprintf(fp, "if (sortFlag == 1)\n");
+      if (plotScilab())
+           fprintf(fp, "  [Mids, I2] = gsort(Mids);\n");
+      else fprintf(fp, "  [Mids, I2] = sort(Mids,'descend');\n");
+      if (numBS > 1)
+      {
+        fprintf(fp, "  Maxs = Maxs(I2);\n");
+        fprintf(fp, "  Mins = Mins(I2);\n");
+      }
+      fprintf(fp, "  Str  = Str(I2);\n");
+      fprintf(fp, "  I2 = I2(1:nn);\n");
+      fprintf(fp, "  Mids = Mids(1:nn);\n");
+      if (numBS > 1)
+      {
+        fprintf(fp, "  Maxs = Maxs(1:nn);\n");
+        fprintf(fp, "  Mins = Mins(1:nn);\n");
+      }
+      fprintf(fp, "  Str  = Str(1:nn);\n");
+      fprintf(fp, "end\n");
+      if (numBS > 1)
+      {
+        fprintf(fp, "ymin = min(Mins);\n");
+        fprintf(fp, "ymax = max(Maxs);\n");
+      }
+      else
+      {
+        fprintf(fp, "ymin = min(Mids);\n");
+        fprintf(fp, "ymax = max(Mids);\n");
+      }
+      fprintf(fp, "h2 = 0.05 * (ymax - ymin);\n");
+      if (plotScilab()) fprintf(fp, "drawlater\n");
+      fprintf(fp, "bar(Mids,0.8);\n");
+      if (numBS > 1)
+      {
+        fprintf(fp,"for ii = 1:nn\n");
+        if (plotScilab())
+          fprintf(fp,
+              "// h = plot(ii,Means(ii),'r*','MarkerSize',13);\n");
+        else 
+          fprintf(fp,
+              "%% h = plot(ii,Means(ii),'r*','MarkerSize',13);\n");
+        fprintf(fp,"   if (ii == 1)\n");
+        fwriteHold(fp, 1);
+        fprintf(fp,"   end;\n");
+        fprintf(fp,"   XX = [ii ii];\n");
+        fprintf(fp,"   YY = [Mins(ii) Maxs(ii)];\n");
+        fprintf(fp,
+           "   plot(XX,YY,'-ko','LineWidth',3.0,'MarkerEdgeColor',");
+        fprintf(fp,"'k','MarkerFaceColor','g','MarkerSize',13)\n");
+        fprintf(fp,"end;\n");
+      }
+      fwritePlotAxes(fp);
+      fprintf(fp,"ymin=0;\n");
+      if (plotScilab())
+      {
+        fprintf(fp, "a=gca();\n");
+        fprintf(fp, "a.data_bounds=[0, ymin; nn+1, ymax];\n");
+        fprintf(fp, "newtick = a.x_ticks;\n");
+        fprintf(fp, "newtick(2) = [1:nn]';\n");
+        fprintf(fp, "newtick(3) = Str';\n");
+        fprintf(fp, "a.x_ticks = newtick;\n");
+        fprintf(fp, "a.x_label.font_size = 3;\n");
+        fprintf(fp, "a.x_label.font_style = 4;\n");
+      }
+      else
+      {
+        fprintf(fp,"axis([0 nn+1 ymin ymax])\n");
+        fprintf(fp,"set(gca,'XTickLabel',[]);\n");
+        fprintf(fp,
+          "th=text(1:nn, repmat(ymin-0.07*(ymax-ymin),nn,1),Str,");
+        fprintf(fp,"'HorizontalAlignment','left','rotation',90);\n");
+        fprintf(fp,"set(th, 'fontsize', 12)\n");
+        fprintf(fp,"set(th, 'fontweight', 'bold')\n");
+      }
+      fwritePlotTitle(fp,"Sobol First Order Indices");
+      fwritePlotYLabel(fp, "Sobol Indices");
+      fwriteHold(fp, 0);
+      if (plotScilab())
+      {
+        fprintf(fp, "drawnow\n");
+        if (!strcmp(command, "rsvce1_ni"))
+          printf("RSMVCE1 plot file = scilabrsvce1_ni.sci\n");
+        else
+          printf("RSMVCE1 plot file = scilabrsvce1_sobol.sci\n");
+      }
+      else 
+      {
+        if (!strcmp(command, "rsvce1_ni"))
+          printf("RSMVCE1 plot file = matlabrsvce1_ni.m\n");
+        else
+          printf("RSMVCE1 plot file = matlabrsvce1_sobol.m\n");
+      }
+      fclose(fp);
+    }
+    return 0;
   }
 
+  //**/ 12/2023------------------------------------------------------
   //**/ -------------------------------------------------------------
-  // +++ rssobol2 
+  // +++ rssobol2 (rsvce2_ni) + rsvce2_sobol
   //**/ Sobol interaction effect
   //**/ -------------------------------------------------------------
-  else if (!strcmp(command, "rssobol2"))
+  else if (!strcmp(command, "rssobol2") || 
+           !strcmp(command, "rsvce2_ni") ||  
+           !strcmp(command, "rsvce2_sobol"))
   {
     sscanf(lineIn,"%s %s",command,winput);
     if (!strcmp(winput, "-h"))
     {
-      printf("rssobol2: compute RS-based Sobol' second-order indices\n");
-      printf("Syntax: rssobol2 (no argument needed)\n");
-      printf("NOTE: to compute error bars for indices, use rssobol2b\n");
+      if (!strcmp(command, "rsvce2_ni"))
+      {
+        printf("rsvce2_ni: compute RS-based Sobol' second-order indices\n");
+        printf("Syntax: rsvce2_ni (no argument needed)\n");
+      }
+      if (!strcmp(command, "rsvce2_sobol"))
+      {
+        printf("rsvce2_sobol: compute RS-based Sobol' second-order indices\n");
+        printf("Syntax: rsvce2_sobol (no argument needed)\n");
+      }
       return 0;
     }
     if (psuadeIO == NULL || sampleOutputs == NULL)
     {
-      printf("ERROR: no data (load sample first).\n");
+      printf("ERROR: Sample not loaded yet.\n");
       return 1;
     }
     if (nInputs <= 2)
     {
-      printf("INFO: no point doing this for nInputs <= 2.\n");
+      printf("INFO: No point doing this for nInputs <= 2.\n");
       return 1;
     }
+
     printAsterisks(PL_INFO, 0);
-    printf("This command computes input-pair sensitivity ");
-    printf("indices using the\n");
-    printf("response surface constructed from the loaded sample.\n");
-    printDashes(PL_INFO, 0);
+    printf("This command computes second-order sensitivity ");
+    printf("indices (input pairs)\n");
+    printf("using a response surface constructed from the ");
+    printf("loaded sample.\n");
+    if (!strcmp(command, "rsvce2_ni"))
+    {
+      printf("* rsvce2_ni uses numerical integration\n");
+      printf("* rsvce2_ni supports 'non'-uniform input ");
+      printf("distributions with no input\n");
+      printf("  correlations (rsvce2_bin handles ");
+      printf("all input distributions and\n");
+      printf("  constraints).\n");
+      printf("* rsvce2_ni supports input constraints.\n");
+    }
+    if (!strcmp(command, "rsvce2_sobol"))
+    {
+      printf("* rsvce2_sobol uses the Sobol' method\n");
+      printf("* rsvce2_sobol supports 'non'-uniform ");
+      printf("input distributions with no\n");
+      printf("  input correlations (rsvce2_bin handles ");
+      printf("all input distributions and\n");
+      printf("  constraints).\n");
+      printf("* rsvce2_sobol supports input constraints.\n");
+    }
+    printf("NOTE: Turn on ana_expert mode for bootstrapped analysis.\n");
+    printAsterisks(PL_INFO, 0);
+
+    //**/ make recommendation if inputs have other than
+    //**/ uniform distributions ==> check distributions
+    int hasCorr = 0;
+    if (inputCMat_ != NULL)
+    {
+      for (ii = 0; ii < nInputs_; ii++)
+        for (jj = 0; jj < ii; jj++)
+          if (inputCMat_->getEntry(ii,jj) != 0) hasCorr = 1;
+    }
+    int hasPDF = VecInpPDFs_.sum();
+    if (hasCorr != 0)
+    {
+      printf("NOTE: Since inputs have correlations, we ");
+      printf("recommend using rsvce2_bin\n");
+      printf("      instead (both rsvce2_ni and rsvce2_sobol ");
+      printf("cannot handle input\n");
+      printf("      correlations except those induced by ");
+      printf("inequality constraints).\n");
+      printDashes(PL_INFO, 0);
+    }
+    else if (hasPDF == 1 and !strcmp(command, "rsvce2_ni"))
+    {
+      printf("* NOTE: Since inputs have other than uniform ");
+      printf("distributions, rsvce2_ni\n");
+      printf("        requires large samples to give higher ");
+      printf("accuracy. Hence, we \n");
+      printf("        recommend using rsvce2_sobol.\n");
+      printDashes(PL_INFO, 0);
+    }
     printf("Proceed ? (y or n to abort) ");
     scanf("%s", lineIn2);
     fgets(winput,5000,stdin);
     if (lineIn2[0] != 'y') return 0;
 
-    snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs);
+    //**/ ask user to select which output
+    snprintf(pString,100,"Enter output number (1 - %d) : ", 
+             nOutputs);
     outputID = getInt(1, nOutputs, pString);
     outputID--;
 
@@ -1416,194 +1739,402 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
     if (faType < 0) 
     {
-      printf("ERROR: response surface type not currently available.\n");
-      return 1.0;
+      printf("ERROR: Wrong response surface type (%d).\n",faType);
+      return 1;
     }
 
-    //**/ set up for analysis
-    int analysisMethod = PSUADE_ANA_RSSOBOL2;
-    AnalysisManager *anaManager = new AnalysisManager();
-    anaManager->setup(analysisMethod, 0);
-    psuadeIO->getParameter("ana_diagnostics",pPtr);
-    int saveDiag = pPtr.intData_;
-    psuadeIO->getParameter("ana_rstype", pPtr);
-    int saveRS = pPtr.intData_;
-    psuadeIO->updateAnalysisSection(-1,-1,faType,outputLevel_,-1,-1);
-    anaManager->analyze(psuadeIO, 0, NULL, outputID);
-    psuadeIO->updateAnalysisSection(-1,-1,saveRS,saveDiag,-1,-1);
-
-    //**/ get the statistics
-    pData *pdata = psuadeIO->getAuxData();
-    if (pdata->nDbles_ >= nInputs)
+    //**/ number of bootstrapped runs (in ana_expert mode only)
+    int numBS=1;
+    if (psConfig_.AnaExpertModeIsOn())
     {
-      if (pdata->dbleData_ > 0)
-      {
-#if 0
-        printEquals(PL_INFO, 0);
-        printf("Two-way Interaction Effect Statistics (variance = %e): \n",
-               pdata->dbleData_);
-        for (ii = 0; ii < nInputs; ii++)
-        {
-          for (jj = ii+1; jj < nInputs; jj++)
-          {
-            printf("Inputs %4d %4d: Sobol' interaction effect = ",
-                   ii+1,jj+1);
-            printf("%12.4e (normalized)\n",
-                   pdata->dbleArray_[ii*nInputs+jj]/pdata->dbleData_);
-          }
-        }
-#endif
-        if (plotScilab())
-        {
-          fp = fopen("scilabrssobol2.sci", "w");
-          if (fp == NULL)
-            printf("ERROR : cannot open file scilabrssobol2.sci\n");
-        }
-        else
-        {
-          fp = fopen("matlabrssobol2.m", "w");
-          if (fp == NULL)
-            printf("ERROR : cannot open file matlabrssobol2.m\n");
-        }
-        if (fp != NULL)
-        {
-          strcpy(pString,"This file contains Sobol' 2nd order indices");
-          fwriteComment(fp, pString);
-          strcpy(pString,"set sortFlag = 1 and set nn to be the number");
-          fwriteComment(fp, pString);
-          strcpy(pString,"of inputs to display.");
-          fwriteComment(fp, pString);
+      printf("You may estimate the error of the results ");
+      printf("using bootstrapped runs\n");
+      printf("(generate multiple bootstrapped samples for ");
+      printf("building response surface)\n");
+      snprintf(pString,100,"Number of bootstrapped runs (1 - 50) : ");
+      numBS = getInt(1, 50, pString);
+    }
 
-          fprintf(fp, "sortFlag = 0;\n");
-          fprintf(fp, "nn = %d;\n", nInputs);
-          fprintf(fp, "Mids = [\n");
-          for (ii = 0; ii < nInputs; ii++) 
+    //**/ select numerical integration or Sobol'
+    RSMSobol2Analyzer *sobol2 = new RSMSobol2Analyzer();
+    if (!strcmp(command, "rsvce2_ni"))
+    {
+      snprintf(pString, 16, "ana_rssobol2_ni");
+      char *targv[1];
+      targv[0] = (char *) pString;
+      sobol2->setParam(1, targv);
+    }
+    else if (!strcmp(command, "rsvce2_sobol") || !strcmp(command, "rssobol2"))
+    {
+      snprintf(pString, 19, "ana_rssobol2_sobol");
+      char *targv[1];
+      targv[0] = (char *) pString;
+      sobol2->setParam(1, targv);
+    }
+
+    //**/ prepare aData object to pass parameters to analyzer
+    aData aPtr;
+    aPtr.nSamples_ = nSamples_;
+    aPtr.nInputs_ = nInputs_;
+    aPtr.nOutputs_ = 1;
+    aPtr.outputID_ = 0;
+    aPtr.iLowerB_ = iLowerB;
+    aPtr.iUpperB_ = iUpperB;
+    aPtr.sampleInputs_ = sampleInputs;
+    aPtr.sampleOutputs_ = sampleOutputs;
+    aPtr.sampleStates_ = sampleStates;
+    aPtr.printLevel_ = outputLevel_;
+    aPtr.ioPtr_ = psuadeIO;
+    aPtr.inputPDFs_ = VecInpPDFs_.getIVector();
+    aPtr.inputMeans_ = VecInpMeans_.getDVector();
+    aPtr.inputStdevs_ = VecInpStds_.getDVector();
+    aPtr.faType_ = faType;
+
+    //**/ run multiple times
+    int ind, nSamples2;
+    double totVar=0;
+    pData *pdata = NULL;
+    psVector  vecXT, vecYT, vecVCES2;
+    psIVector vecST, vecIT;
+    vecVCES2.setLength(numBS*nInputs*nInputs);
+    vecXT.setLength(nSamples*nInputs);
+    vecYT.setLength(nSamples);
+    vecST.setLength(nSamples);
+    vecIT.setLength(nSamples);
+
+    for (kk = 0; kk < numBS; kk++)
+    {
+      if (numBS > 1) 
+        printf("* Performing analysis on bootstrap %d (of %d)\n",
+               kk+1,numBS);
+      //**/ random draw (at least 80%)
+      if (numBS == 1)
+      {
+        for (ss = 0; ss < nSamples*nInputs; ss++)
+          vecXT[ss] = sampleInputs[ss];
+        for (ss = 0; ss < nSamples; ss++)
+        {
+          vecYT[ss] = sampleOutputs[ss];
+          vecST[ss] = sampleStates[ss];
+        } 
+        nSamples2 = nSamples;
+      }
+      else
+      {
+        for (jj = 0; jj < nSamples; jj++) vecIT[jj] = 0;
+        ss = nSamples2 = 0;
+        while (nSamples2 < nSamples*0.8)
+        {
+          ind = PSUADE_rand() % nSamples;
+          if (vecIT[ind] == 0)
           {
-            for (jj = 0; jj <= ii; jj++) fprintf(fp,"0.0\n");
-            for (jj = ii+1; jj < nInputs; jj++) 
-              fprintf(fp,"%24.16e\n",
-                   pdata->dbleArray_[ii*nInputs+jj]/pdata->dbleData_);
+            for (ii = 0; ii < nInputs; ii++)
+              vecXT[nSamples2*nInputs+ii] = sampleInputs[ind*nInputs+ii];
+            vecYT[nSamples2] = sampleOutputs[ind*nOutputs+outputID];
+            vecST[nSamples2] = sampleStates[ind];
+            vecIT[ind] = 1;
+            nSamples2++;
           }
-          fprintf(fp, "];\n");
-          fprintf(fp, "Mids = Mids';\n");
-          if (inputNames == NULL)
+          ss++;
+        }
+      }
+
+      //**/ update bootstrapped sample
+      aPtr.nSamples_ = nSamples2;
+      aPtr.sampleInputs_ = vecXT.getDVector();
+      aPtr.sampleOutputs_ = vecYT.getDVector();
+      aPtr.sampleStates_ = vecST.getIVector();
+
+      //**/ compute measure
+      if (!psConfig_.AnaExpertModeIsOn() || numBS > 1)
+        psConfig_.InteractiveSaveAndReset();
+      sobol2->analyze(aPtr);
+      if (!psConfig_.AnaExpertModeIsOn() || numBS > 1)
+        psConfig_.InteractiveRestore();
+
+      //**/ fetch the result
+      pdata = psuadeIO->getAuxData();
+      if (pdata->nDbles_ >= nInputs*nInputs)
+      {
+        if (pdata->dbleData_ > 0)
+        {
+          for (ii = 0; ii < nInputs*nInputs; ii++)
           {
-            if (plotScilab()) fprintf(fp, "Str = [");
-            else              fprintf(fp, "Str = {");
-            for (ii = 0; ii < nInputs-1; ii++) 
-              fprintf(fp,"'X%d',",ii+1);
-            if (plotScilab()) fprintf(fp,"'X%d'];\n",nInputs);
-            else              fprintf(fp,"'X%d'};\n",nInputs);
+            //**/ normalize
+            ddata = pdata->dbleArray_[ii] / pdata->dbleData_;
+            vecVCES2[kk*nInputs*nInputs+ii] = ddata;
           }
-          else
+          totVar += pdata->dbleData_;
+          if (outputLevel_ > 1)
           {
-            if (plotScilab()) fprintf(fp, "Str = [");
-            else              fprintf(fp, "Str = {");
-            for (ii = 0; ii < nInputs-1; ii++)
-            {
-              if (inputNames[ii] != NULL) 
-                   fprintf(fp,"'%s',",inputNames[ii]);
-              else fprintf(fp,"'X%d',",ii+1);
-            }
-            if (plotScilab()) 
-            {
-              if (inputNames[nInputs-1] != NULL)
-                   fprintf(fp,"'%s'];\n",inputNames[nInputs-1]);
-              else fprintf(fp,"'X%d'];\n",nInputs);
-            }
-            else
-            {
-              if (inputNames[nInputs-1] != NULL)
-                   fprintf(fp,"'%s'};\n",inputNames[nInputs-1]);
-              else fprintf(fp,"'X%d'};\n",nInputs);
-            }
+            for (ii = 0; ii < nInputs; ii++)
+              for (jj = ii+1; jj < nInputs; jj++)
+                printOutTS(PL_INFO,
+                  "(1st+2nd) VCE(%d,%d) = %10.3e\n",ii+1,jj+1,
+                  vecVCES2[kk*nInputs*nInputs+ii*nInputs+jj]);
           }
-          fwriteHold(fp, 0);
-          fprintf(fp, "ymin = min(Mids);\n");
-          fprintf(fp, "ymax = max(Mids);\n");
-          fprintf(fp, "h2 = 0.05 * (ymax - ymin);\n");
-          if (plotScilab())
-          {
-            fprintf(fp, "Mids = matrix(Mids, %d, %d);\n",
-                    nInputs,nInputs);
-            fprintf(fp, "Mids = Mids';\n");
-            fprintf(fp, "drawlater\n");
-            fprintf(fp, "hist3d(Mids);\n");
-            fprintf(fp, "a=gca();\n");
-            fprintf(fp, "a.data_bounds=[0, 0, 0; %d+1, %d+1, ymax];\n",
-                    nInputs,nInputs);
-            fprintf(fp, "newtick = a.x_ticks;\n");
-            fprintf(fp, "newtick(2) = [1:%d]';\n",nInputs);
-            fprintf(fp, "newtick(3) = Str';\n");
-            fprintf(fp, "a.x_ticks = newtick;\n");
-            fprintf(fp, "a.x_label.font_size = 3;\n");
-            fprintf(fp, "a.x_label.font_style = 4;\n");
-            fprintf(fp, "a.y_ticks = newtick;\n");
-            fprintf(fp, "a.y_label.font_size = 3;\n");
-            fprintf(fp, "a.y_label.font_style = 4;\n");
-            fprintf(fp, "a.rotation_angles = [5 -70];\n");
-            fprintf(fp, "drawnow\n");
-          }
-          else
-          {
-            fprintf(fp, "Mids = reshape(Mids, %d, %d);\n",nInputs,nInputs);
-            fprintf(fp, "Mids = Mids';\n");
-            fprintf(fp, "ymin = min(min(Mids));\n");
-            fprintf(fp, "ymax = max(max(Mids));\n");
-            fprintf(fp, "h2 = 0.05 * (ymax - ymin);\n");
-            fprintf(fp, "hh = bar3(Mids,0.8);\n");
-            fprintf(fp, "alpha = 0.2;\n");
-            fprintf(fp, "set(hh,'FaceColor','b','facea',alpha);\n");
-            fprintf(fp, "axis([0.5 %d+0.5 0.5 %d+0.5 0 ymax])\n",
-                    nInputs,nInputs);
-            //fprintf(fp, "bar3(Mids,0.8);\n");
-            //fprintf(fp, "axis([0 %d+1 0 %d+1 0 ymax])\n",nInputs,nInputs);
-            fprintf(fp, "set(gca,'XTickLabel',Str);\n");
-            fprintf(fp, "set(gca,'YTickLabel',Str);\n");
-            fwritePlotAxesNoGrid(fp);
-          }
-          fwritePlotAxes(fp);
-          fwritePlotTitle(fp,"Sobol Second Order Indices (+first order)");
-          fwritePlotZLabel(fp, "Sobol Indices");
-          fwritePlotXLabel(fp, "Inputs");
-          fwritePlotYLabel(fp, "Inputs");
-          fclose(fp);
-          if (plotScilab())
-               printf("rssobol2 plot file = scilabrssobol2.sci\n");
-          else printf("rssobol2 plot file = matlabrssobol2.m\n");
         }
       }
       else
       {
-        printf("Total variance = 0. Hence, no interaction effect plot.\n");
+        printf("ERROR: Cannot fetch results (Consult developers).\n");
       }
-      pdata->clean();
     }
-    delete anaManager;
+
+    //**/ clean up
+    delete sobol2;
+    aPtr.inputPDFs_ = NULL;
+    aPtr.inputMeans_ = NULL;
+    aPtr.inputStdevs_ = NULL;
+    aPtr.iLowerB_ = NULL;
+    aPtr.iUpperB_ = NULL;
+    aPtr.sampleInputs_ = NULL;
+    aPtr.sampleOutputs_ = NULL;
+    aPtr.sampleStates_ = NULL;
+    aPtr.ioPtr_ = NULL;
+
+    //**/ compute statistics
+    printAsterisks(PL_INFO, 0);
+    psVector vecMeans2, vecStdvs2, vecMaxs2, vecMins2;
+    vecMeans2.setLength(nInputs*nInputs);
+    vecStdvs2.setLength(nInputs*nInputs);
+    vecMins2.setLength(nInputs*nInputs);
+    vecMaxs2.setLength(nInputs*nInputs);
+    for (ii = 0; ii < nInputs*nInputs; ii++)
+    {
+      ddata = 0;
+      for (kk = 0; kk < numBS; kk++) 
+        ddata += vecVCES2[kk*nInputs*nInputs+ii];
+      ddata /= (double) numBS;
+      vecMeans2[ii] = ddata;
+      vecMins2[ii] = PSUADE_UNDEFINED;
+      vecMaxs2[ii] = -PSUADE_UNDEFINED;
+    }
+    if (numBS > 1)
+    {
+      for (ii = 0; ii < nInputs*nInputs; ii++)
+      {
+        ddata = 0;
+        for (kk = 0; kk < numBS; kk++)
+        {
+          ddata += pow(vecVCES2[kk*nInputs*nInputs+ii]-
+                       vecMeans2[ii],2.0);
+          if (vecVCES2[kk*nInputs*nInputs+ii] < vecMins2[ii])
+            vecMins2[ii] = vecVCES2[kk*nInputs*nInputs+ii];
+          if (vecVCES2[kk*nInputs*nInputs+ii] > vecMaxs2[ii])
+            vecMaxs2[ii] = vecVCES2[kk*nInputs*nInputs+ii];
+        }
+        ddata /= (double) numBS;
+        vecStdvs2[ii] = sqrt(ddata);
+      }
+    }
+    totVar /= (double) numBS;
+    if (totVar > 0)
+    {
+      if (!strcmp(command, "rsvce2_ni") ||
+          !strcmp(command, "rssobol2"))
+        printf("Sobol' input-pair indices (normalized):ni\n");
+      else
+        printf("Sobol' input-pair indices (normalized):sobol\n");
+      for (ii = 0; ii < nInputs; ii++)
+      {
+        for (jj = ii+1; jj < nInputs; jj++)
+        {
+          if (numBS > 1)
+            printOutTS(PL_INFO,
+             "VCE (1st+2nd) for input %3d,%3d = %10.3e, s.d. = %10.3e\n",
+             ii+1,jj+1,vecMeans2[ii*nInputs+jj],vecStdvs2[ii*nInputs+jj]);
+          else
+            printOutTS(PL_INFO,
+             "VCE (1st+2nd) for input %3d,%3d = %10.3e\n",ii+1,jj+1,
+             vecMeans2[ii*nInputs+jj]);
+        }
+      }
+      printf("Total variance = %e\n", totVar);
+    }
+    else
+    {
+      printf("Total variance = %e ==> Cannot compute VCEs\n", totVar);
+      return 1;
+    }
+    printAsterisks(PL_INFO, 0);
+
+    //**/ create matlab or scilab plots
+    if (!strcmp(command, "rsvce2_ni") ||
+        !strcmp(command, "rssobol2"))
+    {
+      if (plotScilab())
+           fp = fopen("scilabrsvce2_ni.sci", "w");
+      else fp = fopen("matlabrsvce2_ni.m", "w");
+    }
+    else if (!strcmp(command, "rsvce2_sobol"))
+    {
+      if (plotScilab())
+           fp = fopen("scilabrsvce2_sobol.sci", "w");
+      else fp = fopen("matlabrsvce2_sobol.m", "w");
+    }
+
+    if (fp == NULL)
+      printf("RSVCE2 ERROR : Cannot open file to save data.\n");
+    else
+    {
+      strcpy(pString,"This file contains Sobol' indices (unnormalized)");
+      fwriteComment(fp, pString);
+      strcpy(pString,"set sortFlag = 1 and set nn to be the number");
+      fwriteComment(fp, pString);
+      strcpy(pString,"of inputs to display.");
+      fwriteComment(fp, pString);
+
+      fprintf(fp, "sortFlag = 0;\n");
+      fprintf(fp, "nn = %d;\n", nInputs);
+      fprintf(fp, "Mids = [\n");
+      for (ii = 0; ii < nInputs; ii++) 
+      {
+        for (jj = 0; jj <= ii; jj++) fprintf(fp,"0.0\n");
+        for (jj = ii+1; jj < nInputs; jj++) 
+          fprintf(fp,"%24.16e\n",vecMeans2[ii*nInputs+jj]*totVar);
+        fprintf(fp, "];\n");
+        fprintf(fp, "Mids = Mids';\n");
+        if (inputNames == NULL)
+        {
+          if (plotScilab()) fprintf(fp, "Str = [");
+          else              fprintf(fp, "Str = {");
+          for (ii = 0; ii < nInputs-1; ii++) 
+            fprintf(fp,"'X%d',",ii+1);
+          if (plotScilab()) fprintf(fp,"'X%d'];\n",nInputs);
+          else              fprintf(fp,"'X%d'};\n",nInputs);
+        }
+        else
+        {
+          if (plotScilab()) fprintf(fp, "Str = [");
+          else              fprintf(fp, "Str = {");
+          for (ii = 0; ii < nInputs-1; ii++)
+          {
+            if (inputNames[ii] != NULL) 
+                 fprintf(fp,"'%s',",inputNames[ii]);
+            else fprintf(fp,"'X%d',",ii+1);
+          }
+          if (plotScilab()) 
+          {
+            if (inputNames[nInputs-1] != NULL)
+                 fprintf(fp,"'%s'];\n",inputNames[nInputs-1]);
+            else fprintf(fp,"'X%d'];\n",nInputs);
+          }
+          else
+          {
+            if (inputNames[nInputs-1] != NULL)
+                 fprintf(fp,"'%s'};\n",inputNames[nInputs-1]);
+            else fprintf(fp,"'X%d'};\n",nInputs);
+          }
+        }
+        fwriteHold(fp, 0);
+        fprintf(fp, "ymin = min(Mids);\n");
+        fprintf(fp, "ymax = max(Mids);\n");
+        fprintf(fp, "h2 = 0.05 * (ymax - ymin);\n");
+        if (plotScilab())
+        {
+          fprintf(fp, "Mids = matrix(Mids, %d, %d);\n",
+                  nInputs,nInputs);
+          fprintf(fp, "Mids = Mids';\n");
+          fprintf(fp, "drawlater\n");
+          fprintf(fp, "hist3d(Mids);\n");
+          fprintf(fp, "a=gca();\n");
+          fprintf(fp, "a.data_bounds=[0, 0, 0; %d+1, %d+1, ymax];\n",
+                  nInputs,nInputs);
+          fprintf(fp, "newtick = a.x_ticks;\n");
+          fprintf(fp, "newtick(2) = [1:%d]';\n",nInputs);
+          fprintf(fp, "newtick(3) = Str';\n");
+          fprintf(fp, "a.x_ticks = newtick;\n");
+          fprintf(fp, "a.x_label.font_size = 3;\n");
+          fprintf(fp, "a.x_label.font_style = 4;\n");
+          fprintf(fp, "a.y_ticks = newtick;\n");
+          fprintf(fp, "a.y_label.font_size = 3;\n");
+          fprintf(fp, "a.y_label.font_style = 4;\n");
+          fprintf(fp, "a.rotation_angles = [5 -70];\n");
+          fprintf(fp, "drawnow\n");
+        }
+        else
+        {
+          fprintf(fp, "Mids = reshape(Mids, %d, %d);\n",nInputs,nInputs);
+          fprintf(fp, "Mids = Mids';\n");
+          fprintf(fp, "ymin = min(min(Mids));\n");
+          fprintf(fp, "ymax = max(max(Mids));\n");
+          fprintf(fp, "h2 = 0.05 * (ymax - ymin);\n");
+          fprintf(fp, "hh = bar3(Mids,0.8);\n");
+          fprintf(fp, "alpha = 0.2;\n");
+          fprintf(fp, "set(hh,'FaceColor','b','facea',alpha);\n");
+          fprintf(fp, "axis([0.5 %d+0.5 0.5 %d+0.5 0 ymax])\n",
+                  nInputs,nInputs);
+          //fprintf(fp, "bar3(Mids,0.8);\n");
+          //fprintf(fp, "axis([0 %d+1 0 %d+1 0 ymax])\n",nInputs,nInputs);
+          fprintf(fp, "set(gca,'XTickLabel',Str);\n");
+          fprintf(fp, "set(gca,'YTickLabel',Str);\n");
+          fwritePlotAxesNoGrid(fp);
+        }
+        fwritePlotAxes(fp);
+        fwritePlotTitle(fp,"Sobol Second Order Indices (+first order)");
+        fwritePlotZLabel(fp, "Sobol Indices");
+        fwritePlotXLabel(fp, "Inputs");
+        fwritePlotYLabel(fp, "Inputs");
+        fclose(fp);
+        if (plotScilab())
+        {
+          if (!strcmp(command, "rsvce2_ni"))
+            printf("RSMVCE2 plot file = scilabrsvce2_ni.sci\n");
+          else
+            printf("RSMVCE2 plot file = scilabrsvce2_sobol.sci\n");
+        }
+        else 
+        {
+          if (!strcmp(command, "rsvce2_ni"))
+            printf("RSMVCE2 plot file = matlabrsvce2_ni.m\n");
+          else
+            printf("RSMVCE2 plot file = matlabrsvce2_sobol.m\n");
+
+        }
+      }
+    }
+    return 0;
   }
 
   //**/ -------------------------------------------------------------
-  // +++ rssoboltsi 
+  // +++ rssoboltsi (or rstsi_ni) and rstsi_sobol
   //**/ Sobol total sensitivity effect
   //**/ -------------------------------------------------------------
-  else if (!strcmp(command, "rssoboltsi"))
+  else if (!strcmp(command, "rssoboltsi") ||
+           !strcmp(command, "rstsi_ni") ||
+           !strcmp(command, "rstsi_bin") ||
+           !strcmp(command, "rstsi_sobol"))
+
   {
     sscanf(lineIn,"%s %s",command,winput);
     if (!strcmp(winput, "-h"))
     {
-      printf("rssoboltsi: compute RS-based Sobol' total-order indices\n");
-      printf("Syntax: rssoboltsi (no argument needed)\n");
-      printf("NOTE: to compute error bars for indices, use rssoboltsib\n");
+      if (!strcmp(command, "rstsi_ni") || !strcmp(command, "rssoboltsi"))
+      {
+        printf("rstsi_ni: compute RS-based Sobol' total-order indices\n");
+        printf("Syntax: rstsi_ni (no argument needed)\n");
+      }
+      if (!strcmp(command, "rstsi_sobol"))
+      {
+        printf("rstsi_sobol: compute RS-based Sobol' total-order indices\n");
+        printf("Syntax: rstsi_sobol (no argument needed)\n");
+      }
+      if (!strcmp(command, "rstsi_bin"))
+      {
+        printf("rstsi_bin: compute RS-based Sobol' total-order indices\n");
+        printf("Syntax: rstsi_bin (no argument needed)\n");
+      }
       return 0;
     }
     if (psuadeIO == NULL || sampleOutputs == NULL)
     {
-      printf("ERROR: no data (load sample first).\n");
+      printf("ERROR: Sample not loaded yet.\n");
       return 1;
     }
     if (nInputs < 2)
     {
-      printf("INFO: no point doing this for nInputs < 2.\n");
+      printf("INFO: No point doing this for nInputs < 2.\n");
       return 1;
     }
 
@@ -1611,13 +2142,77 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     printf("This command computes total-order sensitivity ");
     printf("indices using the\n");
     printf("response surface constructed from the loaded sample.\n");
-    printDashes(PL_INFO, 0);
+    if (!strcmp(command, "rstsi_ni") || 
+        !strcmp(command, "rssoboltsi"))
+    {
+      printf("* rstsi_ni uses numerical integration\n");
+      printf("* rstsi_ni supports 'non'-uniform input ");
+      printf("distributions with no input\n");
+      printf("  correlations (rstsi_bin handles all ");
+      printf("input distributions and\n");
+      printf("  constraints).\n");
+      printf("* rstsi_ni supports input constraints.\n");
+    }
+    if (!strcmp(command, "rstsi_sobol"))
+    {
+      printf("* rstsi_sobol uses the Sobol' method\n");
+      printf("* rstsi_sobol supports 'non'-uniform ");
+      printf("input distributions with no\n");
+      printf("  input correlations (rstsi_bin handles ");
+      printf("all input distributions and\n");
+      printf("  constraints).\n");
+      printf("* rstsi_sobol supports input constraints.\n");
+    }
+    if (!strcmp(command, "rstsi_bin"))
+    {
+      printf("* rstsi_bin uses the binning method\n");
+      printf("* rstsi_bin supports all types of input distributions.\n");
+      printf("* rstsi_bin supports input constraints.\n");
+      printf("* rstsi_bin does not work for nInputs > 21.\n");
+    }
+    printf("NOTE: Turn on ana_expert mode for bootstrapped analysis.\n");
+    printAsterisks(PL_INFO, 0);
+
+    //**/ make recommendation if inputs have other than
+    //**/ uniform distributions ==> check distributions
+    int hasCorr = 0;
+    if (inputCMat_ != NULL)
+    {
+      for (ii = 0; ii < nInputs_; ii++)
+        for (jj = 0; jj < ii; jj++)
+          if (inputCMat_->getEntry(ii,jj) != 0) hasCorr = 1;
+    }
+    int hasPDF = VecInpPDFs_.sum();
+    if (hasCorr != 0 && (!strcmp(command, "rssoboltsi") || 
+                         !strcmp(command, "rstsi_ni") || 
+                         !strcmp(command, "rstsi_sobol")))
+    {
+      printf("NOTE: Since inputs have correlations, we ");
+      printf("recommend using rstsi_bin\n");
+      printf("      instead (both rstsi_ni and rstsi_sobol ");
+      printf("cannot handle input\n");
+      printf("      correlations except those induced by ");
+      printf("inequality constraints).\n");
+      printDashes(PL_INFO, 0);
+    }
+    else if (hasPDF == 1 && hasCorr == 0 && 
+             (!strcmp(command, "rssoboltsi") ||
+              !strcmp(command, "rstsi_ni")))
+    {
+      printf("* NOTE: Since inputs have other than uniform ");
+      printf("distributions, rstsi_ni\n");
+      printf("        requires large samples to give higher ");
+      printf("accuracy. Hence, we \n");
+      printf("        recommend using rstsi_sobol.\n");
+      printDashes(PL_INFO, 0);
+    }
     printf("Proceed ? (y or n to abort) ");
     scanf("%s", lineIn2);
     fgets(winput,5000,stdin);
     if (lineIn2[0] != 'y') return 0;
 
-    snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs);
+    snprintf(pString,100,"Enter output number (1 - %d) : ", 
+             nOutputs);
     outputID = getInt(1, nOutputs, pString);
     outputID--;
 
@@ -1630,21 +2225,742 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
     if (faType < 0) 
     {
-      printf("ERROR: response surface type not currently available.\n");
-      return 1.0;
+      printf("ERROR: Wrong response surface type (%d).\n",faType);
+      return 1;
     }
 
-    int analysisMethod = PSUADE_ANA_RSSOBOLTSI;
-    AnalysisManager *anaManager = new AnalysisManager();
-    anaManager->setup(analysisMethod, 0);
-    psuadeIO->getParameter("ana_diagnostics",pPtr);
-    int saveDiag = pPtr.intData_;
-    psuadeIO->getParameter("ana_rstype",pPtr);
-    int saveRS = pPtr.intData_;
-    psuadeIO->updateAnalysisSection(-1,-1,faType,outputLevel_,-1,-1);
-    anaManager->analyze(psuadeIO, 0, NULL, outputID);
-    psuadeIO->updateAnalysisSection(-1,-1,saveRS,saveDiag,-1,-1);
-    delete anaManager;
+    //**/ number of bootstrapped runs (in ana_expert mode only)
+    int numBS=1;
+    if (psConfig_.AnaExpertModeIsOn())
+    {
+      printf("INFO: You may use bootstrapping to estimate ");
+      printf("errors in this analysis\n");
+      printf("      (computing multiple sets of metrics ");
+      printf("on multiple response\n");
+      printf("      surfaces built from bootstrapped samples).\n");
+      snprintf(pString,100,"Number of bootstrapped runs (1 - 50) : ");
+      numBS = getInt(1, 50, pString);
+    }
+
+    //**/ select numerical integration or Sobol'
+    RSMSobolTSIAnalyzer *soboltsi = new RSMSobolTSIAnalyzer();
+    if (!strcmp(command, "rstsi_ni"))
+    {
+      snprintf(pString, 18, "ana_rssoboltsi_ni");
+      char *targv[1];
+      targv[0] = (char *) pString;
+      soboltsi->setParam(1, targv);
+    }
+    else if (!strcmp(command, "rstsi_bin"))
+    {
+      snprintf(pString, 19, "ana_rssoboltsi_bin");
+      char *targv[1];
+      targv[0] = (char *) pString;
+      soboltsi->setParam(1, targv);
+    }
+    else if (!strcmp(command, "rstsi_sobol") || !strcmp(command, "rssoboltsi"))
+    {
+      snprintf(pString, 21, "ana_rssoboltsi_sobol");
+      char *targv[1];
+      targv[0] = (char *) pString;
+      soboltsi->setParam(1, targv);
+    }
+
+    //**/ prepare aData object to pass parameters to analyzer
+    aData aPtr;
+    aPtr.nSamples_ = nSamples_;
+    aPtr.nInputs_ = nInputs_;
+    aPtr.nOutputs_ = 1;
+    aPtr.outputID_ = 0;
+    aPtr.iLowerB_ = iLowerB;
+    aPtr.iUpperB_ = iUpperB;
+    aPtr.sampleInputs_ = sampleInputs;
+    aPtr.sampleOutputs_ = sampleOutputs;
+    aPtr.sampleStates_ = sampleStates;
+    aPtr.printLevel_ = outputLevel_;
+    aPtr.ioPtr_ = psuadeIO;
+    aPtr.inputPDFs_ = VecInpPDFs_.getIVector();
+    aPtr.inputMeans_ = VecInpMeans_.getDVector();
+    aPtr.inputStdevs_ = VecInpStds_.getDVector();
+    aPtr.faType_ = faType;
+
+    //**/ run multiple times
+    int ind, nSamples2;
+    double totVar=0;
+    pData *pdata = NULL;
+    psVector  vecXT, vecYT, vecTSIs;
+    psIVector vecST, vecIT;
+    vecTSIs.setLength(numBS*nInputs);
+    vecXT.setLength(nSamples*nInputs);
+    vecYT.setLength(nSamples);
+    vecST.setLength(nSamples);
+    vecIT.setLength(nSamples);
+
+    for (kk = 0; kk < numBS; kk++)
+    {
+      if (numBS > 1)
+        printf("* Performing analysis on bootstrap %d (of %d)\n",
+               kk+1,numBS);
+      //**/ random draw (at least 80%)
+      if (numBS == 1)
+      {
+        for (ss = 0; ss < nSamples*nInputs; ss++)
+          vecXT[ss] = sampleInputs[ss];
+        for (ss = 0; ss < nSamples; ss++)
+        {
+          vecYT[ss] = sampleOutputs[ss];
+          vecST[ss] = sampleStates[ss];
+        }
+        nSamples2 = nSamples;
+      }
+      else
+      {
+        for (jj = 0; jj < nSamples; jj++) vecIT[jj] = 0;
+        ss = nSamples2 = 0;
+        while (nSamples2 < nSamples*0.8)
+        {
+          ind = PSUADE_rand() % nSamples;
+          if (vecIT[ind] == 0)
+          {
+            for (ii = 0; ii < nInputs; ii++)
+              vecXT[nSamples2*nInputs+ii] = sampleInputs[ind*nInputs+ii];
+            vecYT[nSamples2] = sampleOutputs[ind*nOutputs+outputID];
+            vecST[nSamples2] = sampleStates[ind];
+            vecIT[ind] = 1;
+            nSamples2++;
+          }
+          ss++;
+        }
+      }
+
+      //**/ update bootstrapped sample
+      aPtr.nSamples_ = nSamples2;
+      aPtr.sampleInputs_ = vecXT.getDVector();
+      aPtr.sampleOutputs_ = vecYT.getDVector();
+      aPtr.sampleStates_ = vecST.getIVector();
+
+      //**/ compute measure
+      if (!psConfig_.AnaExpertModeIsOn() || numBS > 1)
+        psConfig_.InteractiveSaveAndReset();
+      soboltsi->analyze(aPtr);
+      if (!psConfig_.AnaExpertModeIsOn() || numBS > 1)
+        psConfig_.InteractiveRestore();
+
+      //**/ fetch the results
+      pdata = psuadeIO->getAuxData();
+      if (pdata->nDbles_ >= nInputs)
+      {
+        if (pdata->dbleData_ > 0)
+        {
+          for (ii = 0; ii < nInputs; ii++)
+          {
+            ddata = pdata->dbleArray_[ii] / pdata->dbleData_;
+            vecTSIs[kk*nInputs+ii] = ddata;
+          }
+          totVar += pdata->dbleData_;
+          if (outputLevel_ > 1)
+          {
+            for (ii = 0; ii < nInputs; ii++)
+              printOutTS(PL_INFO,"TSI(%d) = %10.3e\n",ii+1,
+                  vecTSIs[kk*nInputs+ii]);
+          }
+        }
+      }
+      else
+      {
+        printf("ERROR: Cannot fetch results (Consult developers).\n");
+      }
+    }
+
+    //**/ clean up
+    delete soboltsi;
+    aPtr.inputPDFs_ = NULL;
+    aPtr.inputMeans_ = NULL;
+    aPtr.inputStdevs_ = NULL;
+    aPtr.iLowerB_ = NULL;
+    aPtr.iUpperB_ = NULL;
+    aPtr.sampleInputs_ = NULL;
+    aPtr.sampleOutputs_ = NULL;
+    aPtr.sampleStates_ = NULL;
+    aPtr.ioPtr_ = NULL;
+
+    //**/ compute statistics
+    printAsterisks(PL_INFO, 0);
+    psVector vecMeans, vecStdvs, vecMaxs, vecMins;
+    vecMeans.setLength(nInputs);
+    vecStdvs.setLength(nInputs);
+    vecMins.setLength(nInputs);
+    vecMaxs.setLength(nInputs);
+    for (ii = 0; ii < nInputs; ii++)
+    {
+      ddata = 0;
+      for (kk = 0; kk < numBS; kk++) 
+        ddata += vecTSIs[kk*nInputs+ii];
+      ddata /= (double) numBS;
+      vecMeans[ii] = ddata;
+      vecMins[ii] = PSUADE_UNDEFINED;
+      vecMaxs[ii] = -PSUADE_UNDEFINED;
+    }
+    if (numBS > 1)
+    {
+      for (ii = 0; ii < nInputs; ii++)
+      {
+        ddata = 0;
+        for (kk = 0; kk < numBS; kk++)
+        {
+          ddata += pow(vecTSIs[kk*nInputs+ii]-vecMeans[ii],2.0);
+          if (vecTSIs[kk*nInputs+ii] < vecMins[ii])
+            vecMins[ii] = vecTSIs[kk*nInputs+ii];
+          if (vecTSIs[kk*nInputs+ii] > vecMaxs[ii])
+            vecMaxs[ii] = vecTSIs[kk*nInputs+ii];
+        }
+        ddata /= (double) numBS;
+        vecStdvs[ii] = ddata;
+      }
+    }
+    totVar /= (double) numBS;
+    if (totVar > 0)
+    {
+      printAsterisks(PL_INFO, 0);
+      if (!strcmp(command, "rstsi_ni") || !strcmp(command, "rssoboltsi"))
+        printf("Sobol' total-order indices (normalized, 'num. int.'):\n");
+      if (!strcmp(command, "rstsi_sobol"))
+        printf("Sobol' total-order indices (normalized, 'sobol'):\n");
+      if (!strcmp(command, "rstsi_bin"))
+        printf("Sobol' total-order indices (normalized, 'bin'):\n");
+      for (ii = 0; ii < nInputs; ii++)
+      {
+        if (numBS > 1)
+          printOutTS(PL_INFO,
+            "TSI for input %3d = %10.3e, s.d. = %10.3e\n",
+            ii+1, vecMeans[ii], vecStdvs[ii]);
+        else
+          printOutTS(PL_INFO,
+            "TSI for input %3d = %10.3e\n",ii+1,vecMeans[ii]);
+      }
+      printf("Total variance = %e\n", totVar);
+      printAsterisks(PL_INFO, 0);
+    }
+    else
+    {
+      printf("Total variance = %e ==> cannot compute TSIs\n", totVar);
+    }
+    if (totVar == 0)
+    {
+      printf("INFO: Total variance = 0 ==> no plot.\n");
+      return 1;
+    }
+
+    //**/ create matlab or scilab plots
+    if (!strcmp(command, "rstsi_ni") ||
+        !strcmp(command, "rssoboltsi"))
+    {
+      if (plotScilab())
+           fp = fopen("scilabrstsi_ni.sci", "w");
+      else fp = fopen("matlabrstsi_ni.m", "w");
+    }
+    else if (!strcmp(command, "rstsi_sobol"))
+    {
+      if (plotScilab())
+           fp = fopen("scilabrstsi_sobol.sci", "w");
+      else fp = fopen("matlabrstsi_sobol.m", "w");
+    }
+    else if (!strcmp(command, "rstsi_bin"))
+    {
+      if (plotScilab())
+           fp = fopen("scilabrstsi_bin.sci", "w");
+      else fp = fopen("matlabrstsi_bin.m", "w");
+    }
+    if (fp == NULL)
+      printf("RSTSI ERROR: Cannot open file to save data\n");
+    else
+    {
+      strcpy(pString,"This file contains Sobol' indices");
+      fwriteComment(fp, pString);
+      strcpy(pString,"set sortFlag = 1 and set nn to be the number");
+      fwriteComment(fp, pString);
+      strcpy(pString,"of inputs to display.");
+      fwriteComment(fp, pString);
+
+      fprintf(fp, "sortFlag = 0;\n");
+      fprintf(fp, "nn = %d;\n", nInputs);
+      fprintf(fp, "Mids = [\n");
+      for (ii = 0; ii < nInputs; ii++)
+        fprintf(fp,"%24.16e\n", vecMeans[ii]*totVar);
+      fprintf(fp, "];\n");
+      if (numBS > 1)
+      {
+        fprintf(fp, "Mins = [\n");
+        for (ii = 0; ii < nInputs; ii++)
+          fprintf(fp,"%24.16e\n",vecMins[ii]*totVar);
+        fprintf(fp, "];\n");
+        fprintf(fp, "Maxs = [\n");
+        for (ii = 0; ii < nInputs; ii++)
+          fprintf(fp,"%24.16e\n",vecMaxs[ii]*totVar);
+        fprintf(fp, "];\n");
+      }
+      if (inputNames == NULL)
+      {
+        if (plotScilab()) fprintf(fp, "  Str = [");
+        else              fprintf(fp, "  Str = {");
+        for (ii = 0; ii < nInputs-1; ii++) fprintf(fp,"'X%d',",ii+1);
+        if (plotScilab()) fprintf(fp,"'X%d'];\n",nInputs);
+        else              fprintf(fp,"'X%d'};\n",nInputs);
+      }
+      else
+      {
+        if (plotScilab()) fprintf(fp, "  Str = [");
+        else              fprintf(fp, "  Str = {");
+        for (ii = 0; ii < nInputs-1; ii++)
+        {
+          if (inputNames[ii] != NULL)
+               fprintf(fp,"'%s',",inputNames[ii]);
+          else fprintf(fp,"'X%d',",ii+1);
+        }
+        if (plotScilab())
+        {
+          if (inputNames[nInputs-1] != NULL)
+               fprintf(fp,"'%s'];\n",inputNames[nInputs-1]);
+          else fprintf(fp,"'X%d'];\n",nInputs);
+        }
+        else
+        {
+          if (inputNames[nInputs-1] != NULL)
+               fprintf(fp,"'%s'};\n",inputNames[nInputs-1]);
+          else fprintf(fp,"'X%d'};\n",nInputs);
+        }
+      }
+      fwriteHold(fp, 0);
+      fprintf(fp, "if (sortFlag == 1)\n");
+      if (plotScilab())
+           fprintf(fp, "  [Mids, I2] = gsort(Mids);\n");
+      else fprintf(fp, "  [Mids, I2] = sort(Mids,'descend');\n");
+      if (numBS > 1)
+      {
+        fprintf(fp, "  Maxs = Maxs(I2);\n");
+        fprintf(fp, "  Mins = Mins(I2);\n");
+      }
+      fprintf(fp, "  Str  = Str(I2);\n");
+      fprintf(fp, "  I2 = I2(1:nn);\n");
+      fprintf(fp, "  Mids = Mids(1:nn);\n");
+      if (numBS > 1)
+      {
+        fprintf(fp, "  Maxs = Maxs(1:nn);\n");
+        fprintf(fp, "  Mins = Mins(1:nn);\n");
+      }
+      fprintf(fp, "  Str  = Str(1:nn);\n");
+      fprintf(fp, "end\n");
+      if (numBS > 1)
+      {
+        fprintf(fp, "ymin = min(Mins);\n");
+        fprintf(fp, "ymax = max(Maxs);\n");
+      }
+      else
+      {
+        fprintf(fp, "ymin = min(Mids);\n");
+        fprintf(fp, "ymax = max(Mids);\n");
+      }
+      fprintf(fp, "h2 = 0.05 * (ymax - ymin);\n");
+      if (plotScilab()) fprintf(fp, "drawlater\n");
+      fprintf(fp, "bar(Mids,0.8);\n");
+      if (numBS > 1)
+      {
+        fprintf(fp,"for ii = 1:nn\n");
+        if (plotScilab())
+          fprintf(fp,
+              "// h = plot(ii,Means(ii),'r*','MarkerSize',13);\n");
+        else
+          fprintf(fp,
+              "%% h = plot(ii,Means(ii),'r*','MarkerSize',13);\n");
+        fprintf(fp,"   if (ii == 1)\n");
+        fwriteHold(fp, 1);
+        fprintf(fp,"   end;\n");
+        fprintf(fp,"   XX = [ii ii];\n");
+        fprintf(fp,"   YY = [Mins(ii) Maxs(ii)];\n");
+        fprintf(fp,
+           "   plot(XX,YY,'-ko','LineWidth',3.0,'MarkerEdgeColor',");
+        fprintf(fp,"'k','MarkerFaceColor','g','MarkerSize',13)\n");
+        fprintf(fp,"end;\n");
+      }
+      fwritePlotAxes(fp);
+      fprintf(fp,"ymin=0;\n");
+      if (plotScilab())
+      {
+        fprintf(fp, "a=gca();\n");
+        fprintf(fp, "a.data_bounds=[0, ymin; nn+1, ymax];\n");
+        fprintf(fp, "newtick = a.x_ticks;\n");
+        fprintf(fp, "newtick(2) = [1:nn]';\n");
+        fprintf(fp, "newtick(3) = Str';\n");
+        fprintf(fp, "a.x_ticks = newtick;\n");
+        fprintf(fp, "a.x_label.font_size = 3;\n");
+        fprintf(fp, "a.x_label.font_style = 4;\n");
+      }
+      else
+      {
+        fprintf(fp,"axis([0 nn+1 ymin ymax])\n");
+        fprintf(fp,"set(gca,'XTickLabel',[]);\n");
+        fprintf(fp,
+          "th=text(1:nn, repmat(ymin-0.07*(ymax-ymin),nn,1),Str,");
+        fprintf(fp,"'HorizontalAlignment','left','rotation',90);\n");
+        fprintf(fp,"set(th, 'fontsize', 12)\n");
+        fprintf(fp,"set(th, 'fontweight', 'bold')\n");
+      }
+      fwritePlotTitle(fp,"Sobol Total Order Indices");
+      fwritePlotYLabel(fp, "Sobol Indices");
+      fwriteHold(fp, 0);
+      if (plotScilab())
+      {
+        fprintf(fp, "drawnow\n");
+        if (!strcmp(command, "rstsi_ni"))
+          printf("RSMTSI plot file = scilabrstsi_ni.sci\n");
+        else if (!strcmp(command, "rstsi_sobol"))
+          printf("RSMTSI plot file = scilabrstsi_sobol.sci\n");
+        else if (!strcmp(command, "rstsi_bin"))
+          printf("RSMTSI plot file = scilabrstsi_bin.sci\n");
+      }
+      else
+      {
+        if (!strcmp(command, "rstsi_ni"))
+          printf("RSMTSI plot file = matlabrstsi_ni.m\n");
+        else if (!strcmp(command, "rstsi_sobol"))
+          printf("RSMTSI plot file = matlabrstsi_sobol.m\n");
+        else if (!strcmp(command, "rstsi_bin"))
+          printf("RSMTSI plot file = matlabrstsi_bin.m\n");
+      }
+      fclose(fp);
+    }
+    return 0;
+  }
+
+  //**/ -------------------------------------------------------------
+  // +++ rsvceg_ni and rsvceg_sobol
+  //**/ Sobol group main effect
+  //**/ -------------------------------------------------------------
+  else if (!strcmp(command, "rsvceg_ni") || 
+           !strcmp(command, "rsvceg_sobol"))
+  {
+    sscanf(lineIn,"%s %s",command,winput);
+    if (!strcmp(winput, "-h"))
+    {
+      if (!strcmp(command, "rsvceg_ni")) 
+      {
+        printf("rsvceg_ni: RS-based Sobol' group-order indices\n");
+        printf("Syntax: rsvceg_ni (no argument needed)\n");
+      }
+      else if (!strcmp(command, "rsvceg_sobol")) 
+      {
+        printf("rsvceg_sobol: RS-based Sobol' group-order indices\n");
+        printf("Syntax: rsvceg_sobol (no argument needed)\n");
+      }
+      return 0;
+    }
+    if (psuadeIO == NULL || sampleOutputs == NULL)
+    {
+      printf("ERROR: Sample not loaded yet.\n");
+      return 1;
+    }
+
+    printAsterisks(PL_INFO, 0);
+    printf("This command computes group-order sensitivity ");
+    printf("indices using the\n");
+    printf("response surface constructed from the loaded sample.\n");
+    if (!strcmp(command, "rsvceg_ni"))
+    {
+      printf("* rsvceg_ni uses numerical integration\n");
+      printf("* rsvceg_ni supports 'non'-uniform input ");
+      printf("distributions with no input\n");
+      printf("  correlations.\n");
+      printf("* rsvceg_ni supports input constraints.\n");
+    }
+    if (!strcmp(command, "rsvceg_sobol"))
+    {
+      printf("* rsvceg_sobol uses the Sobol' method\n");
+      printf("* rsvceg_sobol supports 'non'-uniform ");
+      printf("input distributions with no\n");
+      printf("  input correlations.\n");
+      printf("* rsvceg_sobol supports input constraints.\n");
+    }
+    printf("NOTE: Turn on ana_expert mode for bootstrapped analysis.\n");
+    printDashes(PL_INFO, 0);
+
+    //**/ make recommendation if inputs have other than 
+    //**/ uniform distributions ==> check distributions
+    int hasCorr = 0;
+    if (inputCMat_ != NULL)
+    {
+      for (ii = 0; ii < nInputs_; ii++)
+        for (jj = 0; jj < ii; jj++) 
+          if (inputCMat_->getEntry(ii,jj) != 0) hasCorr = 1;
+    }
+    int hasPDF = VecInpPDFs_.sum();
+    if (hasCorr != 0)
+    {
+      printf("NOTE: Since inputs have correlations, we ");
+      printf("recommend using rsvceg_bin\n");
+      printf("      instead (both rsvceg_ni and rsvceg_sobol ");
+      printf("cannot handle input\n");
+      printf("      correlations except those induced by ");
+      printf("inequality constraints).\n");
+      printDashes(PL_INFO, 0);
+    }
+    else if (hasPDF == 1 and !strcmp(command, "rsvceg_ni"))
+    {
+      printf("* NOTE: Since inputs have other than uniform ");
+      printf("distributions, rsvceg_ni\n");
+      printf("        requires large samples to give higher ");
+      printf("accuracy. Hence, we \n");
+      printf("        recommend using rsvceg_sobol.\n");
+      printDashes(PL_INFO, 0);
+    }
+    printf("Proceed ? (y or n to abort) ");
+    scanf("%s", lineIn2);
+    fgets(winput,5000,stdin);
+    if (lineIn2[0] != 'y') return 0;
+
+    //**/ ask user to select response surface
+    snprintf(pString,100,"Enter output number (1 - %d) : ", 
+             nOutputs);
+    outputID = getInt(1, nOutputs, pString);
+    outputID--;
+
+    //**/ ask user to select response surface
+    faType = -1;
+    snprintf(pString,100,"Enter your response surface choice ? ");
+    while (faType < 0 || faType > PSUADE_NUM_RS)
+    {
+      writeFAInfo(outputLevel_);
+      faType = getFAType(pString);
+    }
+    if (faType < 0) 
+    {
+      printf("ERROR: Response surface type not currently available.\n");
+      return 1;
+    }
+
+    //**/ number of bootstrapped runs (in ana_expert mode only)
+    int numBS=1;
+    if (psConfig_.AnaExpertModeIsOn())
+    {
+      printf("INFO: You may use bootstrapping to estimate ");
+      printf("errors in this analysis\n");
+      printf("      (computing multiple sets of metrics ");
+      printf("on multiple response\n");
+      printf("      surfaces built from bootstrapped samples).\n");
+      snprintf(pString,100,"Number of bootstrapped runs (1 - 50) : ");
+      numBS = getInt(1, 50, pString);
+    }
+
+    printf("This group sensitivity analysis requires a file specifying\n");
+    printf("group information in the form of : \n");
+    printf("line 1: PSUADE_BEGIN\n");
+    printf("line 2: <d> specifying the number of groups\n");
+    printf("line 3 to line <d>+2: group number, size, input numbers\n");
+    printf("last line: PSUADE_END\n");
+    printf("Now enter the name of the group file : ");
+    scanf("%s", dataFile);
+    fgets(winput,5000,stdin);
+
+    //**/ select numerical integration or Sobol'
+    RSMSobolGAnalyzer *sobolg = new RSMSobolGAnalyzer();
+    if (!strcmp(command, "rsvceg_ni"))
+    {
+      snprintf(pString, 16, "ana_rssobolg_ni");
+      char *targv[1];
+      targv[0] = (char *) pString;
+      sobolg->setParam(1, targv);
+    }
+    else if (!strcmp(command, "rsvceg_sobol"))
+    {
+      snprintf(pString, 19, "ana_rssobolg_sobol");
+      char *targv[1];
+      targv[0] = (char *) pString;
+      sobolg->setParam(1, targv);
+    }
+
+    //**/ prepare aData object to pass parameters to analyzer
+    aData aPtr;
+    aPtr.nSamples_ = nSamples_;
+    aPtr.nInputs_ = nInputs_;
+    aPtr.nOutputs_ = 1;
+    aPtr.outputID_ = 0;
+    aPtr.iLowerB_ = iLowerB;
+    aPtr.iUpperB_ = iUpperB;
+    aPtr.sampleInputs_ = sampleInputs;
+    aPtr.sampleOutputs_ = sampleOutputs;
+    aPtr.sampleStates_ = sampleStates;
+    aPtr.printLevel_ = outputLevel_;
+    aPtr.ioPtr_ = psuadeIO;
+    aPtr.inputPDFs_ = VecInpPDFs_.getIVector();
+    aPtr.inputMeans_ = VecInpMeans_.getDVector();
+    aPtr.inputStdevs_ = VecInpStds_.getDVector();
+    aPtr.faType_ = faType;
+    kk = strlen(dataFile);
+    dataFile[strlen(dataFile)] = '\0';
+    strncpy(aPtr.grpFileName_, dataFile, kk+1);
+
+    //**/ run multiple times
+    int ind, nSamples2, nGroups;
+    double totVar=0;
+    pData *pdata = NULL;
+    psVector  vecXT, vecYT, vecVCEG;
+    psIVector vecST, vecIT;
+    vecVCEG.setLength(numBS*nInputs);
+    vecXT.setLength(nSamples*nInputs);
+    vecYT.setLength(nSamples);
+    vecST.setLength(nSamples);
+    vecIT.setLength(nSamples);
+    for (kk = 0; kk < numBS; kk++)
+    {
+      if (numBS > 1)
+        printf("* Performing analysis on bootstrap %d (of %d)\n",
+               kk+1,numBS);
+      //**/ random draw (at least 80%)
+      if (numBS == 1)
+      {
+        for (ss = 0; ss < nSamples*nInputs; ss++)
+          vecXT[ss] = sampleInputs[ss];
+        for (ss = 0; ss < nSamples; ss++)
+        {
+          vecYT[ss] = sampleOutputs[ss];
+          vecST[ss] = sampleStates[ss];
+        }
+        nSamples2 = nSamples;
+      }
+      else
+      {
+        for (jj = 0; jj < nSamples; jj++) vecIT[jj] = 0;
+        ss = nSamples2 = 0;
+        while (nSamples2 < nSamples*0.8)
+        {
+          ind = PSUADE_rand() % nSamples;
+          if (vecIT[ind] == 0)
+          {
+            for (ii = 0; ii < nInputs; ii++)
+              vecXT[nSamples2*nInputs+ii] = sampleInputs[ind*nInputs+ii];
+            vecYT[nSamples2] = sampleOutputs[ind*nOutputs+outputID];
+            vecST[nSamples2] = sampleStates[ind];
+            vecIT[ind] = 1;
+            nSamples2++;
+          }
+          ss++;
+        }
+      }
+
+      //**/ update bootstrapped sample
+      aPtr.nSamples_ = nSamples2;
+      aPtr.sampleInputs_ = vecXT.getDVector();
+      aPtr.sampleOutputs_ = vecYT.getDVector();
+      aPtr.sampleStates_ = vecST.getIVector();
+
+      //**/ compute measure
+      if (!psConfig_.AnaExpertModeIsOn() || numBS > 1)
+        psConfig_.InteractiveSaveAndReset();
+      sobolg->analyze(aPtr);
+      if (!psConfig_.AnaExpertModeIsOn() || numBS > 1)
+        psConfig_.InteractiveRestore();
+
+      //**/ fetch the result
+      pdata = psuadeIO->getAuxData();
+      nGroups = pdata->nDbles_;
+      //**/ need to revise this vector length as it is unknown
+      if (vecVCEG.length() < numBS*nGroups) 
+        vecVCEG.setLength(numBS*nGroups);
+      if (nGroups > 0)
+      {
+        if (pdata->dbleData_ > 0)
+        {
+          for (ii = 0; ii < nGroups; ii++)
+          {
+            //**/ normalize
+            ddata = pdata->dbleArray_[ii] / pdata->dbleData_;
+            vecVCEG[kk*nGroups+ii] = ddata;
+          }
+          totVar += pdata->dbleData_;
+        }
+        if (outputLevel_ > 1)
+        {
+          for (ii = 0; ii < nGroups; ii++)
+            printOutTS(PL_INFO,
+              "VCE(%d) = %10.3e\n",ii+1,vecVCEG[kk*nGroups+ii]);
+        }
+      }
+      else
+      {
+        printf("ERROR: Cannot fetch results (Consult developers).\n");
+      }
+    }
+    //**/ clean up
+    delete sobolg;
+    aPtr.inputPDFs_ = NULL;
+    aPtr.inputMeans_ = NULL;
+    aPtr.inputStdevs_ = NULL;
+    aPtr.iLowerB_ = NULL;
+    aPtr.iUpperB_ = NULL;
+    aPtr.sampleInputs_ = NULL;
+    aPtr.sampleOutputs_ = NULL;
+    aPtr.sampleStates_ = NULL;
+    aPtr.ioPtr_ = NULL;
+
+    //**/ compute statistics
+    psVector vecMeans, vecStdvs, vecMaxs, vecMins;
+    vecMeans.setLength(nGroups);
+    vecStdvs.setLength(nGroups);
+    vecMins.setLength(nGroups);
+    vecMaxs.setLength(nGroups);
+    for (ii = 0; ii < nGroups; ii++)
+    {
+      ddata = 0;
+      for (kk = 0; kk < numBS; kk++) ddata += vecVCEG[kk*nGroups+ii];
+      ddata /= (double) numBS;
+      vecMeans[ii] = ddata;
+      vecMins[ii] = PSUADE_UNDEFINED;
+      vecMaxs[ii] = -PSUADE_UNDEFINED;
+    }
+    if (numBS > 1)
+    {
+      for (ii = 0; ii < nGroups; ii++)
+      {
+        ddata = 0;
+        for (kk = 0; kk < numBS; kk++)
+        {
+          ddata += pow(vecVCEG[kk*nGroups+ii]-vecMeans[ii],2.0);
+          if (vecVCEG[kk*nGroups+ii] < vecMins[ii])
+            vecMins[ii] = vecVCEG[kk*nGroups+ii];
+          if (vecVCEG[kk*nGroups+ii] > vecMaxs[ii])
+            vecMaxs[ii] = vecVCEG[kk*nGroups+ii];
+        }
+        ddata /= (double) numBS;
+        vecStdvs[ii] = ddata;
+      }
+    }
+    totVar /= (double) numBS;
+    if (totVar > 0)
+    {
+      printAsterisks(PL_INFO, 0);
+      if (!strcmp(command, "rsvceg_ni"))
+        printf("Sobol' Group-order indices (normalized, 'num. int.'):\n");
+      if (!strcmp(command, "rsvceg_sobol"))
+        printf("Sobol' Group-order indices (normalized, 'sobol'):\n");
+      for (ii = 0; ii < nGroups; ii++)
+      {
+        if (numBS > 1)
+          printOutTS(PL_INFO,
+            "VCE for Group %3d = %10.3e, s.d. = %10.3e\n",
+            ii+1, vecMeans[ii], vecStdvs[ii]);
+        else
+          printOutTS(PL_INFO,
+            "VCE for Group %3d = %10.3e\n",ii+1,vecMeans[ii]);
+      }
+      printf("Total variance = %e\n", totVar);
+      printAsterisks(PL_INFO, 0);
+    }
+    else
+    {
+      printf("Total variance = %e ==> cannot compute VCEs\n", totVar);
+      printf("INFO: Total variance = 0 ==> no plot.\n");
+      return 1;
+    }
+    return 0;
   }
 
   //**/ -------------------------------------------------------------
@@ -1662,7 +2978,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
     if (psuadeIO == NULL || sampleOutputs == NULL)
     {
-      printf("ERROR: no data (load sample first).\n");
+      printf("ERROR: Sample not loaded yet.\n");
       return 1;
     }
 
@@ -1689,8 +3005,8 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
     if (faType < 0) 
     {
-      printf("ERROR: response surface type not currently available.\n");
-      return 1.0;
+      printf("ERROR: Response surface type not currently available.\n");
+      return 1;
     }
 
     int analysisMethod = PSUADE_ANA_RSSOBOLG;
@@ -1704,19 +3020,21 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     anaManager->analyze(psuadeIO, 0, NULL, outputID);
     psuadeIO->updateAnalysisSection(-1,-1,saveRS,saveDiag,-1,-1);
     delete anaManager;
+    return 0;
   }
 
   //**/ -------------------------------------------------------------
-  // +++ rssobol1b 
+  // +++ rssobol1b (rsvce1b_ni) -- OBSOLETE as of Dec 2023
   //**/ rssobol1 with bootstrap
   //**/ -------------------------------------------------------------
-  else if (!strcmp(command, "rssobol1b"))
+  else if (!strcmp(command, "rssobol1b") ||
+           !strcmp(command, "rsvce1b_ni"))
   {
     sscanf(lineIn,"%s %s",command,winput);
     if (!strcmp(winput, "-h"))
     {
-      printf("rssobol1b: compute RS-based Sobol' first-order indices\n");
-      printf("Syntax: rssobol1b (no argument needed)\n");
+      printf("rsvce1b_ni: compute RS-based Sobol' first-order indices\n");
+      printf("Syntax: rsvce1b_ni (no argument needed)\n");
       printf("NOTE: This command computes the first-order ");
       printf("Sobol' indices using\n");
       printf("      response surface constructed from the ");
@@ -1727,13 +3045,13 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
     if (psuadeIO == NULL || sampleOutputs == NULL)
     {
-      printf("ERROR: no data (load sample first).\n");
+      printf("ERROR: Sample not loaded yet.\n");
       return 1;
     }
-    if (nSamples < 5)
+    if (nSamples < nInputs+1)
     {
       printf("INFO: This command is not suitable for small samples.\n");
-      printf("      nSamples needs to be at least 5.\n");
+      printf("      nSamples needs to be at least %d.\n",1+nInputs);
       return 1;
     }
 
@@ -1786,13 +3104,13 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
     if (faType < 0) 
     {
-      printf("ERROR: response surface type not currently available.\n");
-      return 1.0;
+      printf("ERROR: Response surface type not currently available.\n");
+      return 1;
     }
     if (faType == PSUADE_RS_MARSB)
     {
-      printf("rssobol1b INFO: MarsBagg response surface selected but\n");
-      printf("                it is redundant - use MARS instead.\n");
+      printf("rsvce1b_ni INFO: MarsBagg response surface selected but\n");
+      printf("                 it is redundant - use MARS instead.\n");
       faType = PSUADE_RS_MARS;
     }
 
@@ -1851,7 +3169,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         }
         ss++;
       }
-      printf("rssobol1b: bootstrap %d begins (sample size = %d)\n",
+      printf("rsvce1b_ni: Bootstrap %d begins (sample size = %d)\n",
              kk+1,nSamples2);
       psuadeIO->getParameter("input_names", pNames);
       psuadeIO->getParameter("input_pdfs", pIpdfs);
@@ -1911,18 +3229,18 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       vecVT[ii] = sqrt(vecVT[ii]);
     }
     printAsterisks(PL_INFO, 0);
-    printf("RSSobol1 Statistics (based on %d replications): \n",numBS);
+    printf("rsvce1b_ni Statistics (based on %d replications): \n",numBS);
     printf("Quantities are normalized.\n");
     printEquals(PL_INFO, 0);
     for (ii = 0; ii < nInputs; ii++)
-      printf("RSSobol1 Input %4d: mean = %10.3e, std = %10.3e\n",ii+1,
+      printf("   Input %4d: mean = %10.3e, std = %10.3e\n",ii+1,
              vecMT[ii],vecVT[ii]);
     printAsterisks(PL_INFO, 0);
 
     //**/ generate matlab/scilab file
-    if (plotScilab()) fp = fopen("scilabrssobol1b.sci","w");
-    else              fp = fopen("matlabrssobol1b.m","w");
-    if (fp == NULL) printf("ERROR: cannot open plot file.\n");
+    if (plotScilab()) fp = fopen("scilabrsvce1b_ni.sci","w");
+    else              fp = fopen("matlabrsvce1b_ni.m","w");
+    if (fp == NULL) printf("ERROR: Cannot open plot file.\n");
     else
     {
       strcpy(pString," This file contains first order Sobol' indices");
@@ -2033,9 +3351,9 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       if (plotScilab())
       {
         fprintf(fp, "drawnow\n");
-        printf("rssobol1b plot file = scilabrssobol1b.sci\n");
+        printf("rsvce1b_ni plot file = scilabrsvce1b_ni.sci\n");
       }
-      else printf("rssobol1b plot file = matlabrssobol1b.m\n");
+      else printf("rsvce1b_ni plot file = matlabrsvce1b_ni.m\n");
       fclose(fp);
     }
 
@@ -2043,6 +3361,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     psConfig_.AnaExpertModeRestore();
     psConfig_.RSExpertModeRestore();
     psConfig_.InteractiveRestore();
+    return 0;
   }
 
   //**/ -------------------------------------------------------------
@@ -2066,12 +3385,12 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
     if (nInputs <= 0 || psuadeIO == NULL)
     {
-      printf("ERROR: data file not loaded.\n");
+      printf("ERROR: Sample not loaded yet.\n");
       return 1;
     }
     if (nInputs <= 2)
     {
-      printf("INFO: no point doing this for nInputs <= 2.\n");
+      printf("INFO: No point doing this for nInputs <= 2.\n");
       return 1;
     }
     if (nSamples < (nInputs+1)*5/3+1)
@@ -2131,8 +3450,8 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
     if (faType < 0) 
     {
-      printf("ERROR: response surface type not currently available.\n");
-      return 1.0;
+      printf("ERROR: Response surface type not currently available.\n");
+      return 1;
     }
     if (faType == PSUADE_RS_MARSB)
     {
@@ -2289,13 +3608,13 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     {
       fp = fopen("scilabrssobol2b.sci", "w");
       if (fp == NULL) 
-        printf("ERROR : cannot open file scilabrssobol2b.sci\n");
+        printf("ERROR: Cannot open file scilabrssobol2b.sci\n");
     }
     else
     {
       fp = fopen("matlabrssobol2b.m", "w");
       if (fp == NULL) 
-        printf("ERROR : cannot open file matlabrssobol2b.sci\n");
+        printf("ERROR: Cannot open file matlabrssobol2b.sci\n");
     }
     if (fp != NULL) 
     {
@@ -2305,8 +3624,8 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       fwriteComment(fp, pString);
       strcpy(pString," of inputs to display.");
       fwriteComment(fp, pString);
-      fprintf(fp, "sortFlag = 0;\n");
 
+      fprintf(fp, "sortFlag = 0;\n");
       fprintf(fp, "nn = %d;\n", nInputs);
       fprintf(fp, "Means = [\n");
       for (ii = 0; ii < nInputs*nInputs; ii++) 
@@ -2478,6 +3797,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     psConfig_.AnaExpertModeRestore();
     psConfig_.RSExpertModeRestore();
     psConfig_.InteractiveRestore();
+    return 0;
   }
 
   //**/ -------------------------------------------------------------
@@ -2501,17 +3821,17 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
     if (nInputs <= 0 || psuadeIO == NULL)
     {
-      printf("ERROR: data file not loaded.\n");
+      printf("ERROR: Sample not loaded yet.\n");
       return 1;
     }
     if (nInputs < 2)
     {
-      printf("INFO: no point doing this for nInputs < 2.\n");
+      printf("INFO: No point doing this for nInputs < 2.\n");
       return 1;
     }
     if (nSamples < 10)
     {
-      printf("WARNING: your sample size is quite small.\n");
+      printf("WARNING: Your sample size is quite small.\n");
       printf("         Bootstrapped samples will be smaller.\n");
       return 1;
     }
@@ -2565,8 +3885,8 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
     if (faType < 0)
     {
-      printf("ERROR: response surface type not currently available.\n");
-      return 1.0;
+      printf("ERROR: Response surface type not currently available.\n");
+      return 1;
     }
     if (faType == PSUADE_RS_MARSB)
     {
@@ -2629,7 +3949,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         }
         ss++;
       }
-      printf("rssoboltsib: bootstrap %d begins (sample size = %d)\n",
+      printf("rssoboltsib: Bootstrap %d begins (sample size = %d)\n",
              kk+1,nSamples2);
       psuadeIO->getParameter("input_names", pNames);
       psuadeIO->getParameter("input_pdfs", pIpdfs);
@@ -2701,7 +4021,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     {
       fp = fopen("scilabrssoboltsib.sci","w");
       if (fp == NULL) 
-        printf("ERROR : cannot open file scilabrssoboltsib.sci\n");
+        printf("ERROR: Cannot open file scilabrssoboltsib.sci\n");
       else
       {
         fprintf(fp,"// This file contains total order Sobol' indices\n");
@@ -2715,7 +4035,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     {
       fp = fopen("matlabrssoboltsib.m","w");
       if (fp == NULL) 
-        printf("ERROR : cannot open file matlabrssoboltsib.sci\n");
+        printf("ERROR: Cannot open file matlabrssoboltsib.sci\n");
       else
       {
         fprintf(fp,"%% This file contains total order Sobol' indices\n");
@@ -2834,6 +4154,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     psConfig_.AnaExpertModeRestore();
     psConfig_.RSExpertModeRestore();
     psConfig_.InteractiveRestore();
+    return 0;
   }
 
   //**/ -------------------------------------------------------------
@@ -2862,7 +4183,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
     if (psuadeIO == NULL || sampleOutputs == NULL)
     {
-      printf("ERROR: no data (load sample first).\n");
+      printf("ERROR: Sample not loaded yet.\n");
       return 1;
     }
      
@@ -3105,7 +4426,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       else                           fp = fopen("scilabrsua.sci", "w");
       if (fp == NULL)
       {
-        printf("rsua2 ERROR: cannot open scilab file.\n");
+        printf("rsua2 ERROR: Cannot open scilab file.\n");
         for (ii = 0; ii <= ntimes; ii++) delete [] Fcounts[ii];
         delete [] Fcounts;
         return 1;
@@ -3117,7 +4438,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       else                           fp = fopen("matlabrsua.m", "w");
       if (fp == NULL)
       {
-        printf("rsua2 ERROR: cannot open matlab file.\n");
+        printf("rsua2 ERROR: Cannot open matlab file.\n");
         for (ii = 0; ii <= ntimes; ii++) delete [] Fcounts[ii];
         delete [] Fcounts;
         return 1;
@@ -3231,11 +4552,12 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     else
     {
       if (plotScilab())
-           printf("Output distribution plots is in scilabrsua.sci.\n");
-      else printf("Output distribution plots is in matlabrsua.m.\n");
+           printf("Output distribution plot file = scilabrsua.sci.\n");
+      else printf("Output distribution plot file = matlabrsua.m.\n");
     }
     for (ii = 0; ii < ntimes; ii++) delete [] Fcounts[ii];
     delete [] Fcounts;
+    return 0;
   }
 
   //**/ -------------------------------------------------------------
@@ -3269,7 +4591,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
     if (psuadeIO == NULL || sampleOutputs == NULL)
     {
-      printf("ERROR: no data (load sample first).\n");
+      printf("ERROR: Sample not loaded yet.\n");
       return 1;
     }
     int   discFile=0, nInps, nOuts, dnInps;
@@ -3300,7 +4622,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       status = discIO->readPsuadeFile(discFileName);
       if (status != 0)
       {
-        printf("ERROR: cannot read discrepancy model file.\n");
+        printf("ERROR: Cannot read discrepancy model file.\n");
         delete [] faPtrsRsEval;
         delete discIO;
         return 1;
@@ -3403,7 +4725,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       status = sampleIO->readPsuadeFile(uaFileName);
       if (status != 0)
       {
-        printf("ERROR: cannot read sample file.\n");
+        printf("ERROR: Cannot read sample file.\n");
         delete sampleIO;
         if (faPtrsRsEval[1] == NULL) delete faPtrsRsEval[1];
         delete [] faPtrsRsEval;
@@ -3413,9 +4735,9 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       kk = pPtr.intData_;
       if (kk != nInputs)
       {
-        printf("ERROR: sample nInputs mismatch.\n");
-        printf(":      input size in workspace     = %d.\n",nInputs);
-        printf(":      input size from your sample = %d.\n",kk);
+        printf("ERROR: Sample nInputs mismatch.\n");
+        printf(":      Input size in workspace     = %d.\n",nInputs);
+        printf(":      Input size from your sample = %d.\n",kk);
         delete sampleIO;
         if (faPtrsRsEval[1] == NULL) delete faPtrsRsEval[1];
         delete [] faPtrsRsEval;
@@ -3478,7 +4800,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       faPtrsRsEval[0] = genFA(-1, nInputs, -1, nSamples);
       if (faPtrsRsEval[0] == NULL)
       {
-        printf("ERROR: cannot generate response surface.\n");
+        printf("ERROR: Cannot generate response surface.\n");
         if (faPtrsRsEval[1] != NULL) delete faPtrsRsEval[1];
         delete [] faPtrsRsEval;
         delete sampleIO;
@@ -3491,7 +4813,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       psConfig_.InteractiveRestore();
       if (status != 0)
       {
-        printf("ERROR: cannot initialize response surface.\n");
+        printf("ERROR: Cannot initialize response surface.\n");
         if (faPtrsRsEval[0] != NULL) delete faPtrsRsEval[0];
         if (faPtrsRsEval[1] != NULL) delete faPtrsRsEval[1];
         delete [] faPtrsRsEval;
@@ -3570,7 +4892,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       faPtrsRsEval[0] = genFA(-1, nInputs, -1, nSamples);
       if (faPtrsRsEval[0] == NULL)
       {
-        printf("ERROR: cannot generate primary response surface.\n");
+        printf("ERROR: Cannot generate primary response surface.\n");
         if (faPtrsRsEval[1] != NULL) delete faPtrsRsEval[1];
         delete [] faPtrsRsEval;
         delete sampleIO;
@@ -3621,7 +4943,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         psConfig_.InteractiveRestore();
         if (status != 0)
         {
-          printf("ERROR: in initializing response surface (1).\n");
+          printf("ERROR: In initializing response surface (1).\n");
           if (faPtrsRsEval[0] != NULL) delete faPtrsRsEval[0];
           if (faPtrsRsEval[1] != NULL) delete faPtrsRsEval[1];
           delete [] faPtrsRsEval;
@@ -3705,7 +5027,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         fwritePlotXLabel(fp, "Output Value");
         fwritePlotYLabel(fp, "Probabilities");
         fclose(fp);
-        printf("Output distribution plots are in matlabrsbua2.m.\n");
+        printf("Output distribution plot file = matlabrsbua2.m.\n");
       }
     }
      
@@ -3720,7 +5042,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       faPtrsRsEval[0] = genFA(-1, nInputs, -1, nSamples);
       if (faPtrsRsEval[0] == NULL)
       {
-        printf("ERROR: cannot generate response surface.\n");
+        printf("ERROR: Cannot generate response surface.\n");
         if (faPtrsRsEval[1] != NULL) delete faPtrsRsEval[1];
         delete [] faPtrsRsEval;
         delete sampleIO;
@@ -3732,7 +5054,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       psConfig_.InteractiveRestore();
       if (status != 0)
       {
-        printf("ERROR: cannot initialize response surface.\n");
+        printf("ERROR: Cannot initialize response surface.\n");
         if (faPtrsRsEval[1] != NULL) delete faPtrsRsEval[1];
         delete [] faPtrsRsEval;
         delete sampleIO;
@@ -3874,7 +5196,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       fp = fopen("matlabrsuab2.m", "w");
       if (fp == NULL)
       {
-        printf("INFO: cannot write the PDFs/CDFs to matlab file.\n");
+        printf("INFO: Cannot write the PDFs/CDFs to matlab file.\n");
       }
       else
       {
@@ -3960,7 +5282,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         fwritePlotXLabel(fp, "Output Value");
         fwritePlotYLabel(fp, "Probabilities");
         fclose(fp);
-        printf("Output distribution plots are in matlabrsbua.m.\n");
+        printf("Output distribution plot file = matlabrsbua.m.\n");
       }
       for (ii = 0; ii <= ntimes; ii++) delete [] Fcounts[ii];
       delete [] Fcounts;
@@ -3977,7 +5299,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       faPtrsRsEval[0] = genFA(-1, nInputs, -1, nSamples);
       if (faPtrsRsEval[0] == NULL)
       {
-        printf("ERROR: cannot generate response surface.\n");
+        printf("ERROR: Cannot generate response surface.\n");
         if (faPtrsRsEval[1] != NULL) delete faPtrsRsEval[1];
         delete [] faPtrsRsEval;
         delete sampleIO;
@@ -3989,7 +5311,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       psConfig_.InteractiveRestore();
       if (status != 0)
       {
-        printf("ERROR: cannot initialize response surface.\n");
+        printf("ERROR: Cannot initialize response surface.\n");
         if (faPtrsRsEval[1] != NULL) delete faPtrsRsEval[1];
         delete [] faPtrsRsEval;
         delete sampleIO;
@@ -4087,7 +5409,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       fp = fopen("matlabrsuab2.m", "w");
       if (fp == NULL)
       {
-        printf("INFO: cannot write the PDFs/CDFs to matlab file.\n");
+        printf("INFO: Cannot write the PDFs/CDFs to matlab file.\n");
       }
       else
       {
@@ -4131,7 +5453,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         fwritePlotXLabel(fp, "Output Value");
         fwritePlotYLabel(fp, "Probabilities");
         fclose(fp);
-        printf("Output distribution plots are in matlabrsuab2.m.\n");
+        printf("Output distribution plot file = matlabrsuab2.m.\n");
         for (ii = 0; ii < ntimes; ii++) delete [] Fcounts[ii];
         delete [] Fcounts;
       }
@@ -4140,6 +5462,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     if (faPtrsRsEval[1] != NULL) delete faPtrsRsEval[1];
     delete [] faPtrsRsEval;
     if (sampleIO != NULL) delete sampleIO;
+    return 0;
   }
 
   //**/ -------------------------------------------------------------
@@ -4170,7 +5493,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
     if (psuadeIO == NULL || sampleOutputs == NULL)
     {
-      printf("ERROR: no data (load sample first).\n");
+      printf("ERROR: Sample not loaded yet.\n");
       return 1;
     }
     //**/ fetch sample information
@@ -4347,7 +5670,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       fp = fopen("scilabrsua2.sci", "w");
       if (fp == NULL)
       {
-         printf("rs_ua2 ERROR: cannot open scilab file.\n");
+         printf("ERROR: Cannot open scilab file.\n");
          for (ii = 0; ii < ntimes; ii++) delete [] Fcounts[ii];
          delete [] Fcounts;
          return 1;
@@ -4358,7 +5681,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       fp = fopen("matlabrsua2.m", "w");
       if (fp == NULL)
       {
-        printf("rs_ua2 ERROR: cannot open matlab file.\n");
+        printf("ERROR: Cannot open matlab file.\n");
         for (ii = 0; ii < ntimes; ii++) delete [] Fcounts[ii];
         delete [] Fcounts;
         return 1;
@@ -4403,10 +5726,11 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     fwritePlotYLabel(fp, "Probabilities");
     fclose(fp);
     if (plotScilab())
-         printf("Output distribution plots is in scilabrsua2.sci.\n");
-    else printf("Output distribution plots is in matlabrsua2.m.\n");
+         printf("Output distribution plot file = scilabrsua2.sci.\n");
+    else printf("Output distribution plot file = matlabrsua2.m.\n");
     for (ii = 0; ii < ntimes; ii++) delete [] Fcounts[ii];
     delete [] Fcounts;
+    return 0;
   }
 
   //**/ -------------------------------------------------------------
@@ -4437,7 +5761,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
     if (psuadeIO == NULL || sampleOutputs == NULL)
     {
-      printf("ERROR: no data (load sample first).\n");
+      printf("ERROR: Sample not loaded yet.\n");
       return 1;
     }
     if (nOutputs > 1)
@@ -4496,7 +5820,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         }
         else
         {
-          printf("ERROR: in reading the discrepancy model file %s.\n",
+          printf("ERROR: In reading the discrepancy model file %s.\n",
                  winput);
           discFile = 0;
           delete [] faPtrsRsEval;
@@ -4514,7 +5838,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       fp = fopen(dataFile, "r");
       if (fp == NULL)
       {
-        printf("ERROR: sample data file %s not found.\n", dataFile);
+        printf("ERROR: Sample data file %s not found.\n", dataFile);
         if (discFile == 1) delete faPtrsRsEval[1];
         delete [] faPtrsRsEval;
         faPtrsRsEval = NULL;
@@ -4527,7 +5851,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         fscanf(fp, "%s", winput);
         if (strcmp(winput, "PSUADE_BEGIN"))
         {
-          printf("ERROR: file must begin with PSUADE_BEGIN\n");
+          printf("ERROR: File must begin with PSUADE_BEGIN\n");
           fclose(fp);
           printf("File format: \n");
           printf("PSUADE_BEGIN \n");
@@ -4547,7 +5871,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
           fscanf(fp, "%d %d", &dnSamp, &kk);
           if (dnSamp <= 0)
           {
-            printf("ERROR: invalid sample size\n");
+            printf("ERROR: Invalid sample size\n");
             fclose(fp);
             delete [] faPtrsRsEval;
             faPtrsRsEval = NULL;
@@ -4557,10 +5881,10 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
           }
           if (kk != nInputs)
           {
-            printf("ERROR: input size does not match nInputs.\n");
-            printf(":      input size in local memory = %d.\n", 
+            printf("ERROR: Input size does not match nInputs.\n");
+            printf("       Input size in local memory = %d.\n", 
                    nInputs);
-            printf(":      input size from file       = %d.\n",kk);
+            printf("       Input size from file       = %d.\n",kk);
             fclose(fp);
             delete [] faPtrsRsEval;
             if (localIO != NULL) delete localIO;
@@ -4576,9 +5900,9 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
             fscanf(fp, "%d", &ind);
             if (ind != (jj+1))
             {
-              printf("ERROR: input index mismatch (%d,%d)\n",jj+1,ind);
-              printf("       read     index = %d\n", ind);
-              printf("       expected index = %d\n", jj+1);
+              printf("ERROR: Input index mismatch (%d,%d)\n",jj+1,ind);
+              printf("       Read     index = %d\n", ind);
+              printf("       Expected index = %d\n", jj+1);
               printf("File format: \n");
               printf("PSUADE_BEGIN \n");
               printf("<nPts> <nInputs> \n");
@@ -4603,7 +5927,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
             if (strcmp(winput, "PSUADE_END"))
             {
               fclose(fp);
-              printf("ERROR: file must end with PSUADE_END\n");
+              printf("ERROR: File must end with PSUADE_END\n");
               delete [] faPtrsRsEval;
               if (localIO != NULL) delete localIO;
               faPtrsRsEval = NULL;
@@ -4626,7 +5950,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         {
           if (dnSamp > 50000)
           {
-            printf("INFO: sample size %d too large (>50000) for matlab\n",
+            printf("INFO: Sample size %d too large (>50000) for matlab\n",
                    dnSamp);
             printf("      plot. CDF plots not to be generated.\n");
           }
@@ -4638,7 +5962,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
               fp = fopen("scilabrsuab_cdf.sci", "w");
               if (fp == NULL)
               {
-                printf("ERROR: cannot open file.\n");
+                printf("ERROR: Cannot open file.\n");
                 flag = 0;
               }
               else
@@ -4652,7 +5976,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
               fp = fopen("matlabrsuab_cdf.m", "w");
               if (fp == NULL)
               {
-                printf("ERROR: cannot open file.\n");
+                printf("ERROR: Cannot open file.\n");
                 flag = 0;
               }
               else
@@ -4673,7 +5997,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         faPtrsRsEval[0] = genFA(-1, nInputs, -1, nSamples2);
         if (faPtrsRsEval[0] == NULL)
         {
-          printf("ERROR: cannot generate response surface.\n");
+          printf("ERROR: Cannot generate response surface.\n");
           delete [] faPtrsRsEval;
           faPtrsRsEval = NULL;
           if (localIO != NULL) delete localIO;
@@ -4803,6 +6127,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         }
       }
     }
+    return 0;
   }
 
   //**/ -------------------------------------------------------------
@@ -4826,7 +6151,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
     if (psuadeIO == NULL || sampleOutputs == NULL)
     {
-      printf("ERROR: no data (load sample first).\n");
+      printf("ERROR: Sample not loaded yet.\n");
       return 1;
     }
     if (nOutputs > 1)
@@ -4901,7 +6226,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       }
       else
       {
-        printf("ERROR: in reading the discrepancy model file %s.\n",
+        printf("ERROR: In reading the discrepancy model file %s.\n",
                winput);
         discFile = 0;
         delete localIO;
@@ -4923,7 +6248,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     fp = fopen(dataFile, "r");
     if (fp == NULL)
     {
-      printf("ERROR: sample data file %s not found.\n", dataFile);
+      printf("ERROR: Sample data file %s not found.\n", dataFile);
       if (faPtrsRsEval[0] != NULL) delete faPtrsRsEval[0];
       if (faPtrsRsEval[1] != NULL) delete faPtrsRsEval[1];
       delete [] faPtrsRsEval;
@@ -4950,7 +6275,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       fscanf(fp, "%d %d", &dnSamp, &dnInps);
       if (dnSamp <= 0)
       {
-        printf("ERROR: invalid sample size\n");
+        printf("ERROR: Invalid sample size\n");
         fclose(fp);
         if (faPtrsRsEval[0] != NULL) delete faPtrsRsEval[0];
         if (faPtrsRsEval[1] != NULL) delete faPtrsRsEval[1];
@@ -4960,9 +6285,9 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       printf("Sample size read = %d\n", dnSamp);
       if (dnInps != nInputs)
       {
-        printf("ERROR: input size does not match nInputs.\n");
-        printf(":      input size in local memory = %d.\n",nInputs);
-        printf(":      input size from file       = %d.\n",dnInps);
+        printf("ERROR: Input size does not match nInputs.\n");
+        printf("       Input size in local memory = %d.\n",nInputs);
+        printf("       Input size from file       = %d.\n",dnInps);
         fclose(fp);
         if (faPtrsRsEval[0] != NULL) delete faPtrsRsEval[0];
         if (faPtrsRsEval[1] != NULL) delete faPtrsRsEval[1];
@@ -4988,9 +6313,9 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         fscanf(fp, "%d", &ind);
         if (ind != (jj+1))
         {
-          printf("ERROR: input index mismatch (%d,%d)\n",jj+1,ind);
-          printf("       read     index = %d\n", ind);
-          printf("       expected index = %d\n", jj+1);
+          printf("ERROR: Input index mismatch (%d,%d)\n",jj+1,ind);
+          printf("       Read     index = %d\n", ind);
+          printf("       Expected index = %d\n", jj+1);
           if (faPtrsRsEval[0] != NULL) delete faPtrsRsEval[0];
           if (faPtrsRsEval[1] != NULL) delete faPtrsRsEval[1];
           delete [] faPtrsRsEval;
@@ -5027,13 +6352,13 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     {
       fp = fopen("scilabrsuap.sci", "w");
       if (fp == NULL)
-        printf("rsuap ERROR: cannot open scilabrsuap.sci file.\n");
+        printf("ERROR: Cannot open scilabrsuap.sci file.\n");
     }
     else
     {
       fp = fopen("matlabrsuap.m", "w");
       if (fp == NULL)
-        printf("rsuap ERROR: cannot open matlabrsuap.m file.\n");
+        printf("ERROR: Cannot open matlabrsuap.m file.\n");
     }
     if (fp != NULL)
     {
@@ -5061,8 +6386,8 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       fwritePlotYLabel(fp, "Probabilities");
       fclose(fp);
       if (plotScilab())
-           printf("rsuap: distribution in scilabrsuap.sci\n");
-      else printf("rsuap: distribution in matlabrsuap.m.\n");
+           printf("distribution plot file = scilabrsuap.sci\n");
+      else printf("distribution plot file = matlabrsuap.m.\n");
       printAsterisks(PL_INFO, 0);
       printf("**             Summary Statistics\n");
       printEquals(PL_INFO, 0);
@@ -5074,6 +6399,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       delete [] faPtrsRsEval;
       faPtrsRsEval = NULL;
     }
+    return 0;
   }
 
   //**/ -------------------------------------------------------------
@@ -5081,25 +6407,25 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
   //**/ -------------------------------------------------------------
   else if (!strcmp(command, "rs_qsa"))
   {
-    printf("This command has been replaced by rsmeb, rssobol1b and\n");
-    printf("rssoboltsib.\n");
+    printf("This command has been replaced by vce1_sobol and\n");
+    printf("tsi_sobol.\n");
     return 0;
     sscanf(lineIn,"%s %s",command,winput);
     if (!strcmp(winput, "-h"))
     {
       printf("rs_qsa: RS-based quantitative sensitivity analysis\n");
       printf("Syntax: rs_qsa (no argument needed)\n");
-      printf("Note: to facilitate processing, all expert modes have\n");
+      printf("NOTE: to facilitate processing, all expert modes have\n");
       printf("      been suppressed.\n");
-      printf("Note: This command differs from rssobol1, rssoboltsi,\n");
-      printf("      and the command 'me' in that it uses bootstrapped\n");
+      printf("NOTE: This command differs from vce1_sobol, tsi_sobol,\n");
+      printf("      and the command 'vce1_bin' in that it uses bootstrapped\n");
       printf("      samples multiple times to get the errors in Sobol'\n");
       printf("      indices due to response surface errors.\n");
       return 0;
     }
     if (psuadeIO == NULL || sampleOutputs == NULL)
     {
-      printf("ERROR: no data (load sample first).\n");
+      printf("ERROR: Sample not loaded yet.\n");
       return 1;
     }
 
@@ -5298,25 +6624,27 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     psuadeIO->updateMethodSection(saveMethod,nSamples,-1,-1,-1);
     psuadeIO->updateAnalysisSection(-1,-1,-1,saveDiag,-1,-1);
     psConfig_.AnaExpertModeRestore();
+    return 0;
   }
 
   //**/ -------------------------------------------------------------
-  // +++ rs1
+  // +++ rsplot1
   //**/ generate response surface of any one inputs and write the
   //**/ grid data to file for display with matlab
   //**/ -------------------------------------------------------------
-  else if (!strcmp(command, "rs1"))
+  else if (!strcmp(command, "rsplot1") ||
+           !strcmp(command, "rs1"))
   {
     sscanf(lineIn,"%s %s",command,winput);
     if (!strcmp(winput, "-h"))
     {
-      printf("rs1: response surface plot in one parameter\n");
-      printf("syntax: rs1 (no argument needed)\n");
+      printf("rsplot1: response surface plot in one parameter\n");
+      printf("syntax: rsplot1 (no argument needed)\n");
       return 1;
     }
     if (psuadeIO == NULL || sampleOutputs == NULL)
     {
-      printf("ERROR: no data to analyze (load sample first).\n");
+      printf("ERROR: Sample not loaded yet.\n");
       return 1;
     }
     printAsterisks(PL_INFO, 0);
@@ -5397,10 +6725,10 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     //**/ write to scilab file
     if (plotScilab())
     {
-      fp = fopen("scilabrs1.sci", "w");
+      fp = fopen("scilabrsplot1.sci", "w");
       if (fp == NULL)
       {
-        printf("ERROR: cannot open file scilabrs1.sci.\n");
+        printf("ERROR: Cannot open file scilabrsplot1.sci.\n");
         delete [] faXOut;
         delete [] faYOut;
         delete faPtr;
@@ -5440,15 +6768,15 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       snprintf(winput,100,"Plot for %s", outputNames[jplot]);
       fwritePlotTitle(fp, winput);
       fclose(fp);
-      printf("scilabrs1.sci is now available.\n");
+      printf("rsplot1 plot file = scilabrsplot1.sci\n");
     }
     else
     {
       //**/ write to matlab file
-      fp = fopen("matlabrs1.m", "w");
+      fp = fopen("matlabrsplot1.m", "w");
       if (fp == NULL)
       {
-        printf("ERROR: cannot open file matlabrs1.m.\n");
+        printf("ERROR: Cannot open file matlabrsplot1.m.\n");
         delete [] faXOut;
         delete [] faYOut;
         delete faPtr;
@@ -5517,36 +6845,38 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       snprintf(winput,100,"Plot for %s", outputNames[jplot]);
       fwritePlotTitle(fp, winput);
       fclose(fp);
-      printf("matlabrs1.m is now available.\n");
+      printf("rsplot1 plot file = matlabrsplot1.m\n");
     }
     delete [] faXOut;
     delete [] faYOut;
     delete faPtr;
+    return 0;
   }
 
   //**/ -------------------------------------------------------------
-  // +++ rs1s
+  // +++ rsplot1s
   //**/ generate response surface of any one inputs and write the
-  //**/ grid data to file for display with matlab (include uncertainties)
+  //**/ grid data to file for display with matlab (include 
+  //**/ uncertainties)
   //**/ -------------------------------------------------------------
-  else if (!strcmp(command, "rs1s"))
+  else if (!strcmp(command, "rsplot1s"))
   {
     sscanf(lineIn,"%s %s",command,winput);
     if (!strcmp(winput, "-h"))
     {
-      printf("rs1s: 1-parameter response surface (with uncertainty) plot\n");
-      printf("Syntax: rs1s (no argument needed)\n");
+      printf("rsplot1s: 1-parameter RS surface (with uncertainty) plot\n");
+      printf("Syntax: rsplot1s (no argument needed)\n");
       return 1;
     }
     if (psuadeIO == NULL || sampleOutputs == NULL)
     {
-      printf("ERROR: no data to analyze (load sample first).\n");
+      printf("ERROR: Sample not loaded yet.\n");
       return 1;
     }
     printAsterisks(PL_INFO, 0);
     if (plotMatlab())
-         printf("Create a Matlab plot (1 input + output with uncertainty).\n");
-    else printf("Create a Scilab plot (1 input + output with uncertainty).\n");
+         printf("Create a Matlab plot (with output uncertainty).\n");
+    else printf("Create a Scilab plot (with output uncertainty).\n");
     printEquals(PL_INFO, 0);
 
     //**/ set up the function approximator
@@ -5621,10 +6951,10 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     //**/ write to scilab file
     if (plotScilab())
     {
-      fp = fopen("scilabrs1s.sci", "w");
+      fp = fopen("scilabrsplot1s.sci", "w");
       if (fp == NULL)
       {
-        printf("ERROR: cannot open file scilabrs1s.sci.\n");
+        printf("ERROR: Cannot open file scilabrsplot1s.sci.\n");
         delete faPtr;
         return 1;
       }
@@ -5652,15 +6982,15 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       snprintf(winput,100,"Plot for %s", outputNames[jplot]);
       fwritePlotTitle(fp, winput);
       fclose(fp);
-      printf("scilabrs1s.sci is now available.\n");
+      printf("rsplot1s plot file = scilabrsplot1s.sci\n");
     }
     else
     {
       //**/ write to matlab file
-      fp = fopen("matlabrs1s.m", "w");
+      fp = fopen("matlabrsplot1s.m", "w");
       if (fp == NULL)
       {
-        printf("ERROR: cannot open file matlabrs1s.m.\n");
+        printf("ERROR: Cannot open file matlabrsplot1s.m.\n");
         delete faPtr;
         return 1;
       }
@@ -5718,33 +7048,35 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       snprintf(winput,100,"Plot for %s", outputNames[jplot]);
       fwritePlotTitle(fp, winput);
       fclose(fp);
-      printf("matlabrs1s.m is now available.\n");
+      printf("rsplot1s plot file = matlabrsplot1s.m\n");
     }
     delete faPtr;
+    return 0;
   }
 
   //**/ -------------------------------------------------------------
-  // +++ rs2
+  // +++ rs2 or rsplot2
   //**/ generate response surface of any two inputs and write the
   //**/ grid data to file for display with matlab
   //**/ -------------------------------------------------------------
-  else if (!strcmp(command, "rs2"))
+  else if (!strcmp(command, "rs2") ||
+           !strcmp(command, "rsplot2"))
   {
     sscanf(lineIn,"%s %s",command,winput);
     if (!strcmp(winput, "-h"))
     {
-      printf("rs2: response surface plot in two parameters\n");
-      printf("syntax: rs2 (no argument needed)\n");
+      printf("rsplot2: response surface plot in two parameters\n");
+      printf("syntax: rsplot2 (no argument needed)\n");
       return 0;
     }
     if (psuadeIO == NULL || sampleOutputs == NULL)
     {
-      printf("ERROR: no data to analyze (load sample first).\n");
+      printf("ERROR: Sample not loaded yet.\n");
       return 1;
     }
     if (nInputs < 2)
     {
-      printf("ERROR: rs2 requires 2 or more inputs.\n");
+      printf("ERROR: rsplot2 requires 2 or more inputs.\n");
       return 1;
     }
     printAsterisks(PL_INFO, 0);
@@ -5835,10 +7167,10 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     //**/ write to matlab/scilab file
     if (plotScilab())
     {
-      fp = fopen("scilabrs2.sci", "w");
+      fp = fopen("scilabrsplot2.sci", "w");
       if (fp == NULL)
       {
-        printf("ERROR: cannot open file scilabrs2.sci.\n");
+        printf("ERROR: Cannot open file scilabrsplot2.sci.\n");
         delete [] faXOut;
         delete [] faYOut;
         delete faPtr;
@@ -5909,15 +7241,14 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       fwritePlotTitle(fp, winput);
       fprintf(fp,"drawnow\n");
       fclose(fp);
-      printf("scilabrs2.sci is now available for response surface and ");
-      printf("contour plots\n");
+      printf("rsplot2 plot file = scilabrsplot2.sci\n");
     }
     else
     {
-      fp = fopen("matlabrs2.m", "w");
+      fp = fopen("matlabrsplot2.m", "w");
       if (fp == NULL)
       {
-        printf("ERROR: cannot open file matlabrs2.m.\n");
+        printf("ERROR: Cannot open file matlabrsplot2.m.\n");
         delete [] faXOut;
         delete [] faYOut;
         delete faPtr;
@@ -6028,41 +7359,42 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       snprintf(winput,100,"Contour Plot for %s", outputNames[jplot]);
       fwritePlotTitle(fp, winput);
       fclose(fp);
-      printf("matlabrs2.m is now available for response surface and ");
-      printf("contour plots\n");
+      printf("rsplot2 plot file = matlabrsplot2.m\n");
     }
     delete [] faXOut;
     delete [] faYOut;
     delete faPtr;
+    return 0;
   }
 
   //**/ -------------------------------------------------------------
-  // +++ rs3 
+  // +++ rs3 or rsplot3 
   //**/ generate response surface of any 3 inputs and write the
   //**/ grid data to file for display with matlab
   //**/ -------------------------------------------------------------
-  else if (!strcmp(command, "rs3"))
+  else if (!strcmp(command, "rs3") ||
+           !strcmp(command, "rsplot3"))
   {
     sscanf(lineIn,"%s %s",command,winput);
     if (!strcmp(winput, "-h"))
     {
-      printf("rs3: response surface plot in three parameters\n");
-      printf("syntax: rs3 (no argument needed)\n");
+      printf("rsplot3: response surface plot in three parameters\n");
+      printf("syntax: rsplot3 (no argument needed)\n");
       return 0;
     }
     if (psuadeIO == NULL || sampleOutputs == NULL)
     {
-      printf("ERROR: no data to analyze (load sample first).\n");
+      printf("ERROR: Sample not loaded yet.\n");
       return 1;
     }
     if (nInputs < 3)
     {
-      printf("ERROR: rs3 requires 3 or more inputs.\n");
+      printf("ERROR: rsplot3 requires 3 or more inputs.\n");
       return 1;
     }
     if (plotScilab())
     {
-      printf("INFO: rs3 is currently not available in scilab.\n");
+      printf("INFO: rsplot3 is currently not available in scilab.\n");
       return 1;
     }
     printAsterisks(PL_INFO, 0);
@@ -6173,7 +7505,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       if (threshL < GYmin)
       {
         threshL = GYmin;
-        printf("rs3 INFO: lower threshold set to %e.\n", threshL);
+        printf("rsplot3 INFO: Lower threshold set to %e.\n", threshL);
       }
     }
     int    ind;
@@ -6187,22 +7519,22 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       if (threshU > GYmax)
       {
         threshU = GYmax;
-        printf("rs3 INFO: upper threshold set to %e.\n", threshU);
+        printf("rsplot3 INFO: Upper threshold set to %e.\n", threshU);
       }
     }
     if (threshL >= threshU)
     {
-      printf("rs3 ERROR: lower threshold (%e) >= upper threshold (%e)\n",
+      printf("ERROR: Lower threshold (%e) >= Upper threshold (%e)\n",
              threshL, threshU);
       delete [] faXOut;
       delete [] faYOut;
       delete faPtr;
       return 1;
     }
-    fp = fopen("matlabrs3.m", "w");
+    fp = fopen("matlabrsplot3.m", "w");
     if (fp == NULL)
     {
-      printf("ERROR: cannot open file matlabrs3.m.\n");
+      printf("ERROR: Cannot open file matlabrsplot3.m.\n");
       delete [] faXOut;
       delete [] faYOut;
       delete faPtr;
@@ -6355,39 +7687,41 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     fprintf(fp,"end\n");
     fprintf(fp,"end\n");
     fclose(fp);
-    printf("\nmatlabrs3.m is now available.\n");
+    printf("rsplot3 plot file = matlabrsplot3.m\n");
     delete [] faXOut;
     delete [] faYOut;
     delete faPtr;
+    return 0;
   }
 
   //**/ -------------------------------------------------------------
-  // +++ rs3m 
+  // +++ rs3m or rsplot3m
   //**/ generate response surface of any 3 inputs and write the
   //**/ grid data to file for display with matlab (movie)
   //**/ -------------------------------------------------------------
-  else if (!strcmp(command, "rs3m"))
+  else if (!strcmp(command, "rs3m") ||
+           !strcmp(command, "rsplot3m"))
   {
     sscanf(lineIn,"%s %s",command,winput);
     if (!strcmp(winput, "-h"))
     {
-      printf("rs3m: response surface plot in 3 parameters using movie mode\n");
-      printf("syntax: rs3m (no argument needed)\n");
+      printf("rsplot3m: 3-input response surface in movie mode\n");
+      printf("syntax: rsplot3m (no argument needed)\n");
       return 0;
     }
     if (psuadeIO == NULL || sampleOutputs == NULL)
     {
-      printf("ERROR: no data to analyze (load sample first).\n");
+      printf("ERROR: Sample not loaded yet.\n");
       return 1;
     }
     if (nInputs < 3)
     {
-      printf("ERROR: rs3m requires 3 or more inputs.\n");
+      printf("ERROR: rsplot3m requires 3 or more inputs.\n");
       return 1;
     }
     if (plotScilab())
     {
-      printf("INFO: rs3m is currently not available in scilab.\n");
+      printf("INFO: rsplot3m is currently not available in scilab.\n");
       return 1;
     }
     printAsterisks(PL_INFO, 0);
@@ -6466,10 +7800,10 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       vecFaYIn[sInd] = sampleOutputs[sInd*nOutputs+jplot];
 
     //**/ begin generating 2D data
-    fp = fopen("matlabrs3m.m", "w");
+    fp = fopen("matlabrsplot3m.m", "w");
     if (fp == NULL)
     {
-      printf("ERROR: cannot open file matlabrs3m.m.\n");
+      printf("ERROR: Cannot open file matlabrsplot3m.m.\n");
       delete faPtr;
       return 1;
     }
@@ -6580,40 +7914,41 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
     fprintf(fp,"rotate3d on\n");
     fclose(fp);
-    printf("matlabrs3m.m is now available for response surface and ");
-    printf("contour plots\n");
+    printf("rsplot3m plot file = matlabrsplot3m.m\n");
     delete [] faXOut;
     delete [] faYOut;
     delete faPtr;
+    return 0;
   }
 
   //**/ -------------------------------------------------------------
-  // +++ rs4 
+  // +++ rs4 or rsplot4m
   //**/ generate response surface of any 4 inputs and write the
   //**/ grid data to file for display with matlab
   //**/ -------------------------------------------------------------
-  else if (!strcmp(command, "rs4"))
+  else if (!strcmp(command, "rs4") ||
+          !strcmp(command, "rsplot4m"))
   {
     sscanf(lineIn,"%s %s",command,winput);
     if (!strcmp(winput, "-h"))
     {
-      printf("rs4: response surface plot in 4 parameters\n");
-      printf("syntax: rs4 (no argument needed)\n");
+      printf("rsplot4m: 4-input-1-output response surface plot.\n");
+      printf("syntax: rsplot4 (no argument needed)\n");
       return 0;
     }
     if (nInputs <= 0 || psuadeIO == NULL)
     {
-      printf("ERROR: data not loaded yet.\n");
+      printf("ERROR: Sample not loaded yet.\n");
       return 1;
     }
     if (nInputs < 4)
     {
-      printf("ERROR: rs4 requires 4 or more inputs.\n");
+      printf("ERROR: rsplot4m requires 4 or more inputs.\n");
       return 1;
     }
     if (plotScilab())
     {
-      printf("INFO: rs4 is currently not available in scilab.\n");
+      printf("INFO: rsplot4m is currently not available in scilab.\n");
       return 1;
     }
     printAsterisks(PL_INFO, 0);
@@ -6738,10 +8073,10 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
 
     //**/ begin generating data
-    fp = fopen("matlabrs4.m", "w");
+    fp = fopen("matlabrsplot4m.m", "w");
     if (fp == NULL)
     {
-      printf("ERROR: cannot open file matlabrs4.m.\n");
+      printf("ERROR: Cannot open file matlabrsplot4m.m.\n");
       if (faXOut != NULL) delete [] faXOut;
       if (faYOut != NULL) delete [] faYOut;
       if (faPtr  != NULL) delete faPtr;
@@ -6928,40 +8263,45 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       fprintf(fp,"pause(1)\n");
     }
     fclose(fp);
-    printf("\nmatlabrs4.m is now available.\n");
     if (faXOut != NULL) delete [] faXOut;
     if (faYOut != NULL) delete [] faYOut;
     if (faPtr != NULL) delete faPtr;
+    printf("rsplot4m plot file = matlabrsplot4m.m\n");
+    return 0;
   }
 
   //**/ -------------------------------------------------------------
-  // +++ rssd 
+  // +++ rssd  or rsplot_sd
   //**/ generate standard deviation response surface and write the
   //**/ grid data to file for display with matlab
   //**/ -------------------------------------------------------------
-  else if (!strcmp(command, "rssd"))
+  else if (!strcmp(command, "rssd") ||
+           !strcmp(command, "rsplot_sd"))
   {
     sscanf(lineIn,"%s %s",command,winput);
     if (!strcmp(winput, "-h"))
     {
-      printf("rssd: response surface plots for the std. deviations.\n");
-      printf("INFO: rssd not available for >2 inputs for scilab.\n");
-      printf("syntax: rssd (no argument needed.\n");
+      printf("rsplot_sd: RS of prediction std. dev. (1D-4D).\n");
+      printf("INFO: rsplot_sd not available for >2 inputs for scilab.\n");
+      printf("syntax: rsplot_sd (no argument needed.\n");
       return 0;
     }
     if (psuadeIO == NULL || sampleOutputs == NULL)
     {
-      printf("ERROR: no data to analyze (load sample first).\n");
+      printf("ERROR: Sample not loaded yet.\n");
       return 1;
     }
     printAsterisks(PL_INFO, 0);
-    printf("This command creates a Matlab response surface plot for the ");
-    printf("prediction\n");
+    printf("This command creates a Matlab response surface plot ");
+    printf("for the prediction\n");
     printf("uncertainties in the selected input space.\n");
     printf("You can select up to 4 inputs.\n");
-    printf("The other inputs are set at their midpoints or user-specified.\n");
-    printf("You will be asked to select a response surface (RS) type.\n");
-    printf("The selected RS should give prediction uncertainty (e.g. GP).\n");
+    printf("The other inputs are set at their midpoints ");
+    printf("or user-specified.\n");
+    printf("You will be asked to select a response ");
+    printf("surface (RS) type.\n");
+    printf("The selected RS should give prediction ");
+    printf("uncertainty (e.g. GP).\n");
     printDashes(PL_INFO, 0);
     printf("Proceed ? (y or n to abort) ");
     scanf("%s", lineIn2);
@@ -6973,7 +8313,8 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     psVector vecInpSettings;
     vecInpSettings.setLength(nInputs);
     iplot1 = iplot2 = iplot3 = iplot4 = -1;
-    snprintf(pString,100,"Enter the input for x axis (1 - %d) : ", nInputs);
+    snprintf(pString,100,"Enter the input for x axis (1 - %d) : ", 
+             nInputs);
     iplot1 = getInt(1, nInputs, pString);
     iplot1--;
     count = 1;
@@ -6983,13 +8324,14 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       iplot2 = iplot1;
       while (iplot1 == iplot2)
       {
-        snprintf(pString,100,"Y-axis input ? (1-%d, 0 if not used, not %d) ",
-                nInputs, iplot1+1);
+        snprintf(pString,100,
+           "Y-axis input ? (1-%d, 0 if not used, not %d) ",
+           nInputs,iplot1+1);
         iplot2 = getInt(0, nInputs, pString);
         iplot2--;
         if (iplot2 == -1) break;
         if (iplot1 == iplot2)
-          printf("ERROR: duplicate input number %d.\n",iplot2+1);
+          printf("ERROR: Duplicate input number %d.\n",iplot2+1);
       }
     }
     if (iplot2 != -1) count++;
@@ -7008,7 +8350,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
           iplot3--;
           if (iplot3 == -1) break;
           if (iplot3 == iplot1 || iplot3 == iplot2)
-             printf("ERROR: duplicate input number %d.\n",iplot3+1);
+             printf("ERROR: Duplicate input number %d.\n",iplot3+1);
         }
       }
       if (iplot3 != -1) count++;
@@ -7023,7 +8365,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
           iplot4 = getInt(1, nInputs, pString);
           iplot4--;
           if (iplot4 == iplot1 || iplot4 == iplot2 || iplot4 == iplot3)
-             printf("ERROR: duplicate input number %d.\n",iplot4+1);
+             printf("ERROR: Duplicate input number %d.\n",iplot4+1);
         }
       } 
       if (iplot4 != -1) count++;
@@ -7098,7 +8440,8 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
 
     //**/ ask users to specify the three inputs and one output
     int jplot = 0;
-    snprintf(pString,100,"Enter the output number (1 - %d) : ",nOutputs);
+    snprintf(pString,100,
+             "Enter the output number (1 - %d) : ",nOutputs);
     jplot = getInt(1, nOutputs, pString);
     jplot--;
 
@@ -7151,10 +8494,10 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     //**/ begin generating data
     if (plotScilab())
     {
-      fp = fopen("scilabrssd.sci", "w");
+      fp = fopen("scilabrsplot_sd.sci", "w");
       if (fp == NULL)
       {
-        printf("ERROR: cannot open file scilabrssd.sci.\n");
+        printf("ERROR: Cannot open file scilabrsplot_sd.sci.\n");
         delete [] faXOut;
         delete [] faYOut;
         delete faPtr;
@@ -7163,10 +8506,10 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
     else
     {
-      fp = fopen("matlabrssd.m", "w");
+      fp = fopen("matlabrsplot_sd.m", "w");
       if (fp == NULL)
       {
-        printf("ERROR: cannot open file matlabrssd.m.\n");
+        printf("ERROR: Cannot open file matlabrsplot_sd.m.\n");
         delete [] faXOut;
         delete [] faYOut;
         delete faPtr;
@@ -7535,45 +8878,47 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
     fclose(fp);
     if (plotScilab())
-         printf("\nscilabrssd.sci is now available.\n");
-    else printf("\nmatlabrssd.m is now available.\n");
+         printf("rsplot_sd plot file = scilabrsplot_sd.sci\n");
+    else printf("rsplot_sd plot file = matlabrsplot_sd.m\n");
     delete [] faXOut;
     delete [] faYOut;
     delete faPtr;
+    return 0;
   }
 
   //**/ -------------------------------------------------------------
-  // +++ rsi2
+  // +++ rsi2 or rsplot2_int
   //**/ generate intersection surfaces for multiple outputs for 
   //**/ display with matlab
   //**/ -------------------------------------------------------------
-  else if (!strcmp(command, "rsi2"))
+  else if (!strcmp(command, "rsi2") ||
+           !strcmp(command, "rsplot2_int"))
   {
     sscanf(lineIn,"%s %s",command,winput);
     if (!strcmp(winput, "-h"))
     {
-      printf("rsi2: generate intersection surfaces for >1 outputs.\n");
-      printf("syntax: rsi2 (no argument needed).\n");
+      printf("rsplot2_int: create intersection surfaces for >1 outputs.\n");
+      printf("syntax: rsplot2_int (no argument needed).\n");
       return 0;
     }
     if (psuadeIO == NULL || sampleOutputs == NULL)
     {
-      printf("ERROR: no data to analyze (load sample first).\n");
+      printf("ERROR: Sample not loaded yet..\n");
       return 1;
     }
     if (nInputs < 2)
     {
-      printf("ERROR: rsi2 requires 2 or more inputs.\n");
+      printf("ERROR: rsplot2_int requires 2 or more inputs.\n");
       return 1;
     }
     if (nOutputs < 2)
     {
-      printf("ERROR: rsi2 requires 2 or more outputs.\n");
+      printf("ERROR: rsplot2_int requires 2 or more outputs.\n");
       return 1;
     }
     if (plotScilab())
     {
-      printf("INFO: rsi2 is currently not available for scilab.\n");
+      printf("INFO: rsplot2_int is currently not available for scilab.\n");
       return 1;
     }
 
@@ -7623,7 +8968,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       iplot2 = getInt(1, nInputs, pString);
       iplot2--;
       if (iplot1 == iplot2)
-        printf("ERROR: duplicate input number %d.\n", iplot2+1);
+        printf("ERROR: Duplicate input number %d.\n", iplot2+1);
     }
     snprintf(pString,100,"Set other inputs at their mid points ? (y or n) ");
     getString(pString, winput);
@@ -7655,10 +9000,10 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         else vecInpSettings[iInd1] = 1.0;
       }
     }
-    fp = fopen("matlabrsi2.m", "w");
+    fp = fopen("matlabrsplot2_int.m", "w");
     if (fp == NULL)
     {
-      printf("ERROR: cannot open file matlabrsi2.m.\n");
+      printf("ERROR: Cannot open file matlabrsplot2_int.m.\n");
       delete faPtr;
       return 1;
     }
@@ -7690,8 +9035,8 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
     if (rsiNOutputs > 5)
     {
-      printf("INFO: rsi2 only shows the constrained response surfaces\n");
-      printf("      for the first 5 outputs and then the aggregate.\n");
+      printf("INFO: rsplot2_int only shows the constrained RS for the\n");
+      printf("      first 5 outputs and then the aggregate.\n");
     }
      
     psVector vecFaYIn;
@@ -7856,45 +9201,47 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     fprintf(fp,"disp('On intersection plot, if a region has a color value");
     fprintf(fp," of 2, it means it is feasible for 2 outputs.')\n");
     fclose(fp);
-    printf("matlabrsi2.m is now available for plotting.\n");
+    printf("rsplot2_int plot file = matlabrsplot2_int.m\n");
 
     delete faPtr;
     for (ii = 0; ii < nPtsPerDim; ii++) delete [] rsiMatrix[ii];
       delete [] rsiMatrix;
+    return 0;
   }
 
   //**/ -------------------------------------------------------------
-  // +++ rsi3 
+  // +++ rsi3 or rsplot3_int 
   //**/ generate 3D response surface and write the grid data to file
   //**/ for display with matlab
   //**/ -------------------------------------------------------------
-  else if (!strcmp(command, "rsi3"))
+  else if (!strcmp(command, "rsi3") ||
+           !strcmp(command, "rsplot3_int"))
   {
     sscanf(lineIn,"%s %s",command,winput);
     if (!strcmp(winput, "-h"))
     {
-      printf("rsi3: generate intersection surfaces for >1 outputs\n");
-      printf("syntax: rsi3 (no argument needed).\n");
+      printf("rsplot3_int: create intersection surfaces for >1 outputs\n");
+      printf("syntax: rsplot3_int (no argument needed).\n");
       return 0;
     }
     if (psuadeIO == NULL || sampleOutputs == NULL)
     {
-      printf("ERROR: no data to analyze (load sample first).\n");
+      printf("ERROR: Sample not loaded yet.\n");
       return 1;
     }
     if (nInputs < 3)
     {
-      printf("ERROR: rsi3 requires 3 or more inputs.\n");
+      printf("ERROR: rsplot3_int requires 3 or more inputs.\n");
       return 1;
     }
     if (nOutputs < 2)
     {
-      printf("ERROR: rsi3 requires 2 or more outputs.\n");
+      printf("ERROR: rsplot3_int requires 2 or more outputs.\n");
       return 1;
     }
     if (plotScilab())
     {
-      printf("INFO: rsi3 is currently not available for scilab.\n");
+      printf("INFO: rsplot3_int is currently not available for scilab.\n");
       return 1;
     }
 
@@ -7944,7 +9291,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       iplot2 = getInt(1, nInputs, pString);
       iplot2--;
       if (iplot1 == iplot2)
-        printf("ERROR: duplicate input number %d.\n",iplot2+1);
+        printf("ERROR: Duplicate input number %d.\n",iplot2+1);
     }
     if (nInputs == 3) iplot3 = 3 - iplot1 - iplot2;
     while (iplot3 < 0 || iplot3 == iplot1 || iplot3 == iplot2)
@@ -7955,7 +9302,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       iplot3 = getInt(1, nInputs, pString);
       iplot3--;
       if (iplot3 == iplot1 || iplot3 == iplot2)
-        printf("ERROR: duplicate input number %d.\n",iplot3+1);
+        printf("ERROR: Duplicate input number %d.\n",iplot3+1);
     }
     snprintf(pString,100,"Set other inputs at their mid points ? (y or n) ");
     getString(pString, winput);
@@ -7985,10 +9332,10 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         else vecInpSettings[iInd1] = 1.0;
       }
     }
-    fp = fopen("matlabrsi3.m", "w");
+    fp = fopen("matlabrsplot3_int.m", "w");
     if (fp == NULL)
     {
-      printf("ERROR: cannot open file matlabrsi3.m.\n");
+      printf("ERROR: Cannot open file matlabrsplot3_int.m.\n");
       delete faPtr;
     }
     fwritePlotCLF(fp);
@@ -8222,66 +9569,67 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     fprintf(fp, "end\n");
     fprintf(fp, "end\n");
     fclose(fp);
-    printf("matlabrsi3.m is now available for response surface and ");
-    printf("contour plots\n");
+    printf("rsplot3_int plot file = matlabrsplot3_int.m\n");
 
     delete [] rsiSet;
     delete faPtr;
+    return 0;
   }
 
   //**/ -------------------------------------------------------------
-  // +++ rsi3m
+  // +++ rsi3m or rsplot3m_int
   //**/ generate 3D response surfaces and find their intersection
   //**/ for display with matlab (movie mode)
   //**/ -------------------------------------------------------------
-  else if (!strcmp(command, "rsi3m"))
+  else if (!strcmp(command, "rsi3m") ||
+           !strcmp(command, "rsplot3m_int"))
   {
     sscanf(lineIn,"%s %s",command,winput);
     if (!strcmp(winput, "-h"))
     {
-      printf("rsi3m: generate intersection surfaces for >1 outputs\n");
-      printf("syntax: rsi3m (no argument needed).\n");
+      printf("rsplot3m_int: create intersection surfaces for >1 outputs\n");
+      printf("syntax: rsplot3m_int (no argument needed).\n");
       return 0;
     }
     if (psuadeIO == NULL || sampleOutputs == NULL)
     {
-      printf("ERROR: no data to analyze (load sample first).\n");
+      printf("ERROR: Sample not loaded yet.\n");
       return 1;
     }
     if (nInputs < 3)
     {
-      printf("ERROR: rsi3m requires 3 or more inputs.\n");
+      printf("ERROR: rsplot3m_int requires 3 or more inputs.\n");
       return 1;
     }
     if (nOutputs < 2)
     {
-      printf("ERROR: rsi3m requires 2 or more outputs.\n");
+      printf("ERROR: rsplot3m_int requires 2 or more outputs.\n");
       return 1;
     }
     if (plotScilab())
     {
-      printf("INFO: rsi3m is currently not available for scilab.\n");
+      printf("INFO: rsplot3m_int is currently not available for scilab.\n");
       return 1;
     }
 
     printAsterisks(PL_INFO, 0);
-    printf("This command first creates 2 or more response surfaces for 3 ");
-    printf("selected\n");
-    printf("inputs. Regions in each RS surface falling inside some ");
-    printf("user-specified\n");
-    printf("interval are carved out, and the degree of overlap ");
-    printf("(intersection)\n");
-    printf("between them will be displayed with different colors ");
-    printf("(blank for no\n");
-    printf("overlap). The difference between rsi3m and rsi3 is that, ");
-    printf("instead of\n");
-    printf("using X,Y,Z axes for the 3 inputs, rsi3m uses X, Y axes for");
-    printf(" 2 inputs\n"); 
-    printf("and time axis for the third input so that it produces a movie ");
-    printf("of 2D\n");
-    printf("intersection plots.\n");
-    printf("If there are more than 3 inputs, the other inputs are set at ");
-    printf("their\n");
+    printf("This command first creates 2 or more response ");
+    printf("surfaces for 3 selected\n");
+    printf("inputs. Regions in each RS surface falling inside ");
+    printf("some user-specified\n");
+    printf("interval are carved out, and the degree of ");
+    printf("overlap (intersection)\n");
+    printf("between them will be displayed with different ");
+    printf("colors (blank for no\n");
+    printf("overlap). The difference between rsplot3m_int and ");
+    printf("rsplot3m is that, ");
+    printf("instead of using X,Y,Z axes for the 3 inputs, ");
+    printf("rsplot3m_int uses X, Y\n");
+    printf("axes for 2 inputs and time axis for a third input ");
+    printf("so that it produces\n");
+    printf("a movie of 2D intersection plots.\n");
+    printf("If there are more than 3 inputs, the other inputs ");
+    printf("are set at their\n");
     printf("midpoints or are user-specified.\n");
     printf("You will be asked to select a response surface (RS) type.\n");
     printDashes(PL_INFO, 0);
@@ -8316,7 +9664,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       iplot2 = getInt(1, nInputs, pString);
       iplot2--;
       if (iplot1 == iplot2)
-        printf("ERROR: duplicate input number %d.\n",iplot2+1);
+        printf("ERROR: Duplicate input number %d.\n",iplot2+1);
     }
     if (nInputs == 3) iplot3 = 3 - iplot1 - iplot2;
     while (iplot3 < 0 || iplot3 == iplot1 || iplot3 == iplot2)
@@ -8327,7 +9675,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       iplot3 = getInt(1, nInputs, pString);
       iplot3--;
       if (iplot3 == iplot1 || iplot3 == iplot2)
-        printf("ERROR: duplicate input number %d.\n",iplot3+1);
+        printf("ERROR: Duplicate input number %d.\n",iplot3+1);
     }
     snprintf(pString,100,"Set other inputs at their mid points ? (y or n) ");
     getString(pString, winput);
@@ -8357,10 +9705,10 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         else vecInpSettings[iInd1] = 1.0;
       }
     }
-    fp = fopen("matlabrsi3m.m", "w");
+    fp = fopen("matlabrsplot3m_int.m", "w");
     if (fp == NULL)
     {
-      printf("ERROR: cannot open file matlabrsi3m.m.\n");
+      printf("ERROR: Cannot open file matlabrsplot3m_int.m.\n");
       delete faPtr;
       return 1;
     }
@@ -8591,7 +9939,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       fprintf(fp, "colormap(jet)\n");
       fprintf(fp,"pause(1)\n");
     }
-    //**/ Sept 2010: not good enough, create rsi3m
+    //**/ Sept 2010: not good enough, create rsplot3m_int
     //**/fprintf(fp,"disp(\'Press enter to view 3D shape plot\')\n");
     //**/fprintf(fp,"pause\n");
     //**/fprintf(fp,"hold off\n");
@@ -8618,24 +9966,25 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     //**/}
     //**/fprintf(fp, "rotate3d on\n");
     fclose(fp);
-    printf("matlabrsi3m.m is now available for response surface and ");
-    printf("contour plots\n");
+    printf("rsplot3m_int plot file = matlabrsplot3m_int.m\n");
 
     delete [] rsiSet;
     delete faPtr;
+    return 0;
   }
 
   //**/ -------------------------------------------------------------
-  // +++ rssd_ua 
+  // +++ rssd_ua or rsua_sd_plot
   //**/ uncertainty analysis of standard deviations from RS fit 
   //**/ -------------------------------------------------------------
-  else if (!strcmp(command, "rssd_ua"))
+  else if (!strcmp(command, "rssd_ua") ||
+           !strcmp(command, "rsua_sd_plot"))
   {
     sscanf(lineIn,"%s %s",command,winput);
     if (!strcmp(winput, "-h"))
     {
-      printf("rssd_ua: generate pdf for std. deviations from RS fit\n");
-      printf("syntax: rssd_ua (no argument needed).\n");
+      printf("rsua_sd_plot: create pdf for RS std. dev.\n");
+      printf("syntax: rsua_sd_plot (no argument needed).\n");
       return 0;
     }
     if (psuadeIO == NULL || sampleOutputs == NULL)
@@ -8647,16 +9996,18 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     printAsterisks(PL_INFO, 0);
     printf("This command first creates a response surface for a ");
     printf("selected output.\n");
-    printf("It then creates a large sample from the input distributions and\n");
-    printf("propagates it through the response surface, collecting ");
-    printf("at each sample\n");
-    printf("point its prediction uncertainty (thus, this command requires ");
-    printf("the use\n");
-    printf("of a stochastic response surface such as regression, GP ");
-    printf("or Kriging),\n");
+    printf("It then creates a large sample from the input ");
+    printf("distributions and\n");
+    printf("propagates it through the response surface, ");
+    printf("collecting at each sample\n");
+    printf("point its prediction uncertainty (thus, this ");
+    printf("command requires the use\n");
+    printf("of a stochastic response surface such as regression, ");
+    printf("GP or Kriging),\n");
     printf("and finally creating a histogram of the prediction ");
     printf("uncertainties.\n");
-    printf("You will be asked to select a response surface (RS) type.\n");
+    printf("You will be asked to select a response surface ");
+    printf("(RS) type.\n");
     printDashes(PL_INFO, 0);
     printf("Proceed ? (y or n to abort) ");
     scanf("%s", lineIn2);
@@ -8664,7 +10015,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     if (lineIn2[0] != 'y') return 0;
 
     //**/ choose function approximator
-    printf("This command works with the following response surfaces:\n");
+    printf("This command works with the following RS types:\n");
     printf("1. Linear    regression\n");
     printf("2. Quadratic regression\n");
     printf("3. cubic     regression\n");
@@ -8709,7 +10060,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     jplot--;
 
     //**/ set up function approximator
-    printf("rssd_ua: setting up function approximator\n");
+    printf("rsua_sd_plot: setting up function approximator\n");
     int iOne=1, sInd;
     FuncApprox *faPtr = genFA(faType, nInputs, iOne, nSamples);
     if (faPtr == NULL) {printf("ERROR detected in RS.\n"); return 1;}
@@ -8722,8 +10073,9 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     faPtr->initialize(sampleInputs,vecFaYIn.getDVector());
 
     //**/ generate a quasi-Monte Carlo sample
-    printf("rssd_ua: creating a large sample for constructing PDF\n");
-    Sampling *sampPtr = (Sampling *) SamplingCreateFromID(PSUADE_SAMP_LPTAU);
+    printf("rsua_sd_plot: creating a large sample for building PDF\n");
+    Sampling *sampPtr = 
+         (Sampling *) SamplingCreateFromID(PSUADE_SAMP_LPTAU);
     sampPtr->setPrintLevel(0);
     sampPtr->setInputBounds(nInputs, iLowerB, iUpperB);
     sampPtr->setOutputParams(1);
@@ -8752,8 +10104,8 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
 
     //**/ plot the result 
     char fname[100];
-    if (plotScilab()) strcpy(fname, "scilabrssdua.sci");
-    else              strcpy(fname, "matlabrssdua.m");
+    if (plotScilab()) strcpy(fname, "scilabrsua_sd_plot.sci");
+    else              strcpy(fname, "matlabrsua_sd_plot.m");
     fp = fopen(fname, "w");
     if (fp != NULL)
     {
@@ -8810,7 +10162,6 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         fprintf(fp, "twoPlots = 0;\n");
         fprintf(fp, "if (twoPlots == 1)\n");
         fprintf(fp, "subplot(1,2,1)\n");
-        fprintf(fp, "end;\n");
         if (nSamples > 500) fprintf(fp, "[nk,xk]=hist(Y(:,1),20);\n");
         else                fprintf(fp, "[nk,xk]=hist(Y(:,1),10);\n");
         fprintf(fp, "bar(xk,nk/%d,1.0)\n",nSamples);
@@ -8841,64 +10192,65 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         fwritePlotYLabel(fp, "Probabilities");
         fprintf(fp, "end;\n");
       }
-      printOutTS(PL_INFO,"Output distribution plot is now in %s.\n",fname);
+      printf("rsua_sd_plot distribution plot file = %s\n",fname);
       fclose(fp);
     }
     else 
     {
-      printOutTS(PL_ERROR,"ERROR: cannot open file %s.\n", fname);
+      printOutTS(PL_ERROR,"ERROR: Cannot open file %s.\n", fname);
     }
 
     //**/ clean up
     delete sampPtr;
     delete faPtr;
+    return 0;
   }
 
   //**/ -------------------------------------------------------------
-  // +++ rsmeb 
+  // +++ rsmeb (or rsvce1b_bin)
   //**/ bootstrapped main effect analysis using replicated LH
   //**/ -------------------------------------------------------------
-  else if (!strcmp(command, "rsmeb"))
+  else if (!strcmp(command, "rsmeb") || 
+           !strcmp(command, "rsvce1_bin"))
   {
     sscanf(lineIn,"%s %s",command,winput);
     if (!strcmp(winput, "-h"))
     {
-      printf("rsmeb: main effect analysis on response surface\n");
-      printf("syntax: rsmeb (no argument needed)\n");
-      printf("This command perform main effect analysis on the response\n");
-      printf("surface built from the loaded sample.\n");
-      printf("NOTE: This analysis supports other than uniform ");
-      printf("distributions for the\n");
-      printf("      inputs. Simply prescribe the distributions ");
-      printf("in the data file and\n");
-      printf("      turn on use_input_pdfs in ANALYSIS.\n");
-      printf("NOTE: This analysis is equivalent to rssobol1b but using ");
-      printf("a different\n");
-      printf("      algorithm.\n");
+      printf("rsvce1_bin: Sobol' first-order analysis on ");
+      printf("response surface\n");
+      printf("Syntax: rsvce1_bin (no argument needed)\n");
       return 0;
     }
-    if (psuadeIO == NULL || sampleOutputs == NULL)
-    {
-      printf("ERROR: no data (load sample first).\n");
-      return 1;
-    }
-
-    //**/ header message
     printAsterisks(PL_INFO, 0);
-    printf("This analysis performs main effect analysis on the ");
-    printf("response surface\n");
-    printf("constructed from the loaded sample (with bootstrapping).\n");
-    printf("This is an alternative to rssobol1b (for cross-checking).\n");
+    printf("This command computes first-order Sobol' indices using ");
+    printf("the response\n");
+    printf("surface built from the loaded sample.\n");
+    printf("NOTE: This analysis supports all types of input ");
+    printf("distributions:\n");
+    printf("   - use rLHS for inputs with uniform distributions\n");
+    printf("   - use binning for inputs with other distributions\n");
+    printf("   - use binning if there are input constraints\n");
+    printf("NOTE: Turn on ana_expert mode to run bootstrapped analysis.\n");
+    printf("NOTE: Turn on ana_expert mode to change sample size.\n");
     printDashes(PL_INFO, 0);
     printf("Proceed ? (y or n to abort) ");
     scanf("%s", lineIn2);
     fgets(winput,5000,stdin);
     if (lineIn2[0] != 'y') return 0;
 
+    //**/ error checking
+    if (psuadeIO == NULL || sampleOutputs == NULL)
+    {
+      printf("ERROR: Sample not loaded yet.\n");
+      return 1;
+    }
+
+    //**/ select which output to analyze
     snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs);
     outputID = getInt(1, nOutputs, pString);
     outputID--;
 
+    //**/ select response surface
     faType = -1;
     snprintf(pString,100,"Enter your response surface choice ? ");
     while (faType < 0 || faType > PSUADE_NUM_RS)
@@ -8908,67 +10260,98 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
     if (faType < 0)
     {
-      printf("ERROR: response surface type not currently available.\n");
-      return 1.0;
+      printf("ERROR: Response surface type not currently available.\n");
+      return 1;
     }
     if (faType == PSUADE_RS_MARSB) faType = PSUADE_RS_MARS;
 
-    int nLHS=200000;
-    if (psConfig_.RSExpertModeIsOn())
+    //**/ ask user for sample size
+    int nLHS=2000000;
+    if (psConfig_.AnaExpertModeIsOn())
     {
       snprintf(pString,100,
-        "Sample size for generating distribution? (10000 - 500000) ");
-      nLHS = getInt(10000, 500000, pString);
+        "Sample size for generating distribution? (1M - 5M, default=2M) ");
+      nLHS = getInt(100000, 5000000, pString);
     }
-    snprintf(pString,100,"How many bootstrapped samples to use (10 - 300) : ");
-    int numBS = getInt(10, 300, pString);
 
-    //**/ create replicated LH sample => nLHS, LHSInputs, LHSOutputs
-    int      nReps=100, iOne=1, iZero=0;
-    Sampling *samPtr;
-    printEquals(PL_INFO, 0);
-    printf("Phase 1 of 2: create a replicated LH sample\n");
+    //**/ number of bootstrapped runs (in ana_expert mode only)
+    int numBS = 1;
+    if (psConfig_.AnaExpertModeIsOn())
+    {
+      printf("INFO: You may use bootstrapping to estimate ");
+      printf("errors in this analysis\n");
+      printf("      (computing multiple sets of metrics ");
+      printf("on multiple response\n");
+      printf("      surfaces built from bootstrapped samples).\n");
+      snprintf(pString,100,"Number of bootstrapped runs (1 - 50) : ");
+      numBS = getInt(1, 50, pString);
+    }
+
+    //**/ detect any non-normal input distributions
+    int hasPDF=0;
+    if (VecInpPDFs_.length() != 0)
+    {
+      for (ii = 0; ii < nInputs; ii++)
+        if (VecInpPDFs_[ii] != 0) hasPDF++; 
+    }
+    else
+    {
+      printf("NOTE: All input distributions are uniform. ");
+      printf("You may also use\n");
+      printf("      rsvce1_sobol or rsvce1_ni to compute ");
+      printf("first-order Sobol'\n");
+      printf("      indices (or for comparison purposes).\n");
+    }
+
+    //**/ if distributions are uniform, create replicated LH sample 
+    int nReps=1000, iOne=1, iZero=0;
     psVector  vecLHSInps, vecLHSOuts;
-    psIVector vecLHSStas;
+    if (hasPDF == 0)
+      printf("Phase 1: Create a replicated LH sample (%d,r=%d)\n",
+             nLHS,nReps);
+    else
+      printf("Phase 1: Create a large random sample (%d)\n",nLHS);
+    nLHS = nLHS / nReps * nReps;
     vecLHSInps.setLength(nLHS*nInputs);
     vecLHSOuts.setLength(nLHS);
-    vecLHSStas.setLength(nLHS);
-    samPtr = (Sampling *) SamplingCreateFromID(PSUADE_SAMP_LHS);
-    samPtr->setPrintLevel(0);
-    samPtr->setInputBounds(nInputs, iLowerB, iUpperB);
-    samPtr->setInputParams(nInputs, NULL, NULL, NULL);
-    samPtr->setOutputParams(iOne);
-    samPtr->setSamplingParams(nLHS, nReps, iZero);
-    psConfig_.SamExpertModeSaveAndReset();
-    samPtr->initialize(0);
-    psConfig_.SamExpertModeRestore();
-    samPtr->getSamples(nLHS, nInputs, iOne, vecLHSInps.getDVector(),
-                       vecLHSOuts.getDVector(),vecLHSStas.getIVector());
-    delete samPtr;
-
-    //**/ convert the sample to different PDF, if needed
-    PDFManager *pdfman;
-    psVector   vecTT, vecLower, vecUpper;
-    psuadeIO->getParameter("ana_use_input_pdfs", pPtr);
-    int usePDFs = pPtr.intData_;
-    if (usePDFs == 1)
+    printf("NOTE: Sample size to be used for analysis = %d (r=%d).\n",
+           nLHS,nReps);
+    if (hasPDF == 0)
     {
-      pdfman = new PDFManager();
-      psuadeIO->updateAnalysisSection(-1,-1,-1,0,-1, -1);
-      psuadeIO->updateMethodSection(PSUADE_SAMP_MC, -1, -1, -1, -1);
-      pdfman->initialize(psuadeIO);
-      vecTT.setLength(nLHS*nInputs);
-      vecUpper.load(nInputs, iUpperB);
-      vecLower.load(nInputs, iLowerB);
-      pdfman->invCDF(nLHS, vecLHSInps, vecTT, vecLower, vecUpper);
-      for (ii = 0; ii < nLHS*nInputs; ii++) vecLHSInps[ii] = vecTT[ii];
+      Sampling *samPtr;
+      psIVector vecLHSStas;
+      vecLHSStas.setLength(nLHS);
+      samPtr = (Sampling *) SamplingCreateFromID(PSUADE_SAMP_LHS);
+      samPtr->setPrintLevel(0);
+      samPtr->setInputBounds(nInputs, iLowerB, iUpperB);
+      samPtr->setInputParams(nInputs, NULL, NULL, NULL);
+      samPtr->setOutputParams(iOne);
+      samPtr->setSamplingParams(nLHS, nReps, iZero);
+      psConfig_.SamExpertModeSaveAndReset();
+      samPtr->initialize(0);
+      psConfig_.SamExpertModeRestore();
+      samPtr->getSamples(nLHS, nInputs, iOne, vecLHSInps.getDVector(),
+                         vecLHSOuts.getDVector(),vecLHSStas.getIVector());
+      delete samPtr;
+    }
+    //**/ if non-uniform, create random sample
+    else
+    {
+      PDFManager *pdfman = new PDFManager();
+      pdfman->initialize(nInputs,VecInpPDFs_.getIVector(),
+                    VecInpMeans_.getDVector(),VecInpStds_.getDVector(),
+                    *inputCMat_,SamPDFFiles_,
+                    VecSamPDFIndices_.getIVector());
+      psVector vecLs, vecUs;
+      vecUs.load(nInputs, iUpperB);
+      vecLs.load(nInputs, iLowerB);
+      pdfman->genSample(nLHS, vecLHSInps, vecLs, vecUs);
       delete pdfman;
     }
 
     //**/ create response surface ==> faPtr
-    FuncApprox *faPtr;
     printEquals(PL_INFO, 0);
-    printf("Phase 2 of 2: create response surfaces and run main effects\n");
+    printf("Phase 2: Create a response surface\n");
     psVector vecYT;
     if (nOutputs > 1)
     {
@@ -8978,6 +10361,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
     else vecYT.load(nSamples,sampleOutputs);
 
+    //**/ prepare to call MainEffectAnalyzer.cpp
     int ind, nSamples2;
     psIVector vecMebInds;
     psVector  vecTmpInps, vecTmpOuts, vecMeStore;
@@ -9002,25 +10386,46 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     psConfig_.AnaExpertModeSaveAndReset();
     psConfig_.RSExpertModeSaveAndReset();
 
+    printf("Phase 3: Compute first-order Sobol' indices\n");
+    FuncApprox *faPtr=NULL;
+    double totalVar = 0;
     for (kk = 0; kk < numBS; kk++)
     {
-      printf("rsmeb: ITERATION %d (of %d)\n", kk+1, numBS);
+      if (numBS > 1)
+        printf("* Performing analysis on bootstrap %d (of %d)\n", 
+               kk+1, numBS);
       //**/ random draw
-      for (ss = 0; ss < nSamples; ss++) vecMebInds[ss] = 0;
-      ss = nSamples2 = 0;
-      while (ss < nSamples)
+      if (numBS > 1)
       {
-        ind = PSUADE_rand() % nSamples;
-        if (vecMebInds[ind] == 0)
+        for (ss = 0; ss < nSamples; ss++) vecMebInds[ss] = 0;
+        ss = nSamples2 = 0;
+        while (ss < nSamples && nSamples2 < 0.8*nSamples)
         {
-          for (ii = 0; ii < nInputs; ii++)
-            vecTmpInps[nSamples2*nInputs+ii] = sampleInputs[ind*nInputs+ii];
-          vecTmpOuts[nSamples2] = vecYT[ind];
-          vecMebInds[ind] = 1;
-          nSamples2++;
+          ind = PSUADE_rand() % nSamples;
+          if (vecMebInds[ind] == 0)
+          {
+            for (ii = 0; ii < nInputs; ii++)
+              vecTmpInps[nSamples2*nInputs+ii] = 
+                            sampleInputs[ind*nInputs+ii];
+            vecTmpOuts[nSamples2] = vecYT[ind];
+            vecMebInds[ind] = 1;
+            nSamples2++;
+          }
+          ss++;
         }
-        ss++;
       }
+      else
+      {
+        nSamples2 = nSamples;
+        for (ss = 0; ss < nSamples; ss++) 
+        {
+          for (ii = 0; ii < nInputs; ii++) 
+            vecTmpInps[ss*nInputs+ii] = sampleInputs[ss*nInputs+ii];
+          vecTmpOuts[ss] = vecYT[ss];
+        }
+      }
+      if (!psConfig_.AnaExpertModeIsOn() || numBS > 1)
+        psConfig_.InteractiveSaveAndReset();
       faPtr = genFA(faType, nInputs, -1, nSamples2);
       faPtr->setNPtsPerDim(32);
       faPtr->setBounds(iLowerB, iUpperB);
@@ -9030,21 +10435,34 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
                            vecLHSOuts.getDVector());
       //**/ perform main effect analysis
       meAnalyzer->analyze(adata);
+      if (!psConfig_.AnaExpertModeIsOn() || numBS > 1)
+        psConfig_.InteractiveRestore();
+
       pd = psuadeIO->getAuxData();
+      totalVar += pd->dbleData_;
       for (ii = 0; ii < nInputs; ii++)
       {
         if (pd->dbleData_ > 0)
-             vecMeStore[kk*nInputs+ii] = pd->dbleArray_[ii]/pd->dbleData_;
+             vecMeStore[kk*nInputs+ii] = 
+                pd->dbleArray_[ii]/pd->dbleData_;
         else vecMeStore[kk*nInputs+ii] = pd->dbleArray_[ii];
+      }
+      if (outputLevel_ > 2 && numBS > 1)
+      {
+        printf("Bootstrap %d (of %d):\n",kk+1,numBS); 
+        for (ii = 0; ii < nInputs; ii++)
+          printf("   VCE(%d) = %10.3e\n",ii+1,
+                  vecMeStore[kk*nInputs+ii]);
       }
       pd->clean();
       delete faPtr;
     }
+    totalVar /= (double) numBS;
 
     //**/ compute main effects
     double mean, stdev;
     printAsterisks(PL_INFO, 0);
-    printf("rsmeb main effect analysis (normalized by total variance)\n");
+    printf("Sobol' 1st-order indices (normalized, 'bin')\n");
     printEquals(PL_INFO, 0);
     for (ii = 0; ii < nInputs; ii++)
     {
@@ -9053,22 +10471,30 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       mean /= numBS;
       vecMeStore[numBS*nInputs+ii] = mean;
       stdev = 0.0;
-      for (kk = 0; kk < numBS; kk++)
-         stdev += pow(vecMeStore[kk*nInputs+ii]-mean, 2.0);
-      stdev = sqrt(stdev/(numBS-1));
+      if (numBS > 1)
+      {
+        for (kk = 0; kk < numBS; kk++)
+          stdev += pow(vecMeStore[kk*nInputs+ii]-mean, 2.0);
+        stdev = sqrt(stdev/(numBS-1));
+      }
       vecMeStore[(numBS+1)*nInputs+ii] = stdev;
-      printf("Input %6d = %12.4e (stdev = %12.4e)\n",ii+1,mean,stdev);
+      if (numBS > 1)
+        printf("VCE for input %3d = %10.3e, s.d. = %10.3e\n",ii+1,
+               mean, stdev);
+      else
+        printf("VCE for input %3d = %10.3e\n",ii+1,mean);
     }
+    printf("Total variance = %10.3e\n",totalVar);
     printAsterisks(PL_INFO, 0);
 
     //**/ generate matlab/scilab file
     fp = NULL;
-    if (plotScilab()) fp = fopen("scilabrsmeb.sci","w");
-    else              fp = fopen("matlabrsmeb.m","w");
-    if (fp == NULL) printf("ERROR: cannot open plot file.\n");
+    if (plotScilab()) fp = fopen("scilabrsvce1_bin.sci","w");
+    else              fp = fopen("matlabrsvce1_bin.m","w");
+    if (fp == NULL) printf("ERROR: Cannot open plot file.\n");
     else
     {
-      strcpy(pString," This file contains main effect ");
+      strcpy(pString," This file contains first-order Sobol' effect ");
       fwriteComment(fp, pString);
       strcpy(pString," with error bars coming from bootstrapping.");
       fwriteComment(fp, pString);
@@ -9138,96 +10564,99 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       fprintf(fp, "for ii = 1:nn\n");
       fprintf(fp, "   if (ii == 1)\n");
       fwriteHold(fp, 1);
-      fprintf(fp, "   end;\n");
-      fprintf(fp, "   XX = [ii ii];\n");
-      fprintf(fp, "   d1 = Means(ii)-Stds(ii);\n");
-      fprintf(fp, "   d2 = Means(ii)+Stds(ii);\n");
-      fprintf(fp, "   if (d1 < 0)\n");
-      fprintf(fp, "      d1 = 0.0;\n");
-      fprintf(fp, "   end;\n");
-      fprintf(fp, "   YY = [d1 d2];\n");
-      fprintf(fp, "   plot(XX,YY,'-ko','LineWidth',3.0,'MarkerEdgeColor',");
-      fprintf(fp, "'k','MarkerFaceColor','g','MarkerSize',13)\n");
-      fprintf(fp, "end;\n");
+      fprintf(fp,"   end;\n");
+      fprintf(fp,"   XX = [ii ii];\n");
+      fprintf(fp,"   d1 = Means(ii)-Stds(ii);\n");
+      fprintf(fp,"   d2 = Means(ii)+Stds(ii);\n");
+      fprintf(fp,"   if (d1 < 0)\n");
+      fprintf(fp,"      d1 = 0.0;\n");
+      fprintf(fp,"   end;\n");
+      fprintf(fp,"   YY = [d1 d2];\n");
+      fprintf(fp,
+        "   plot(XX,YY,'-ko','LineWidth',3.0,'MarkerEdgeColor',");
+      fprintf(fp,"'k','MarkerFaceColor','g','MarkerSize',13)\n");
+      fprintf(fp,"end;\n");
       fwritePlotAxes(fp);
       if (plotScilab())
       {
-        fprintf(fp, "a=gca();\n");
-        fprintf(fp, "a.data_bounds=[0, ymin; nn+1, ymax];\n");
-        fprintf(fp, "newtick = a.x_ticks;\n");
-        fprintf(fp, "newtick(2) = [1:nn]';\n");
-        fprintf(fp, "newtick(3) = Str';\n");
-        fprintf(fp, "a.x_ticks = newtick;\n");
-        fprintf(fp, "a.x_label.font_size = 3;\n");
-        fprintf(fp, "a.x_label.font_style = 4;\n");
+        fprintf(fp,"a=gca();\n");
+        fprintf(fp,"a.data_bounds=[0, ymin; nn+1, ymax];\n");
+        fprintf(fp,"newtick = a.x_ticks;\n");
+        fprintf(fp,"newtick(2) = [1:nn]';\n");
+        fprintf(fp,"newtick(3) = Str';\n");
+        fprintf(fp,"a.x_ticks = newtick;\n");
+        fprintf(fp,"a.x_label.font_size = 3;\n");
+        fprintf(fp,"a.x_label.font_style = 4;\n");
       }
       else
       {
-        fprintf(fp, "axis([0  nn+1 ymin ymax])\n");
-        fprintf(fp, "set(gca,'XTickLabel',[]);\n");
-        fprintf(fp, "th=text(1:nn, repmat(ymin-0.05*(ymax-ymin),nn,1),Str,");
-        fprintf(fp, "'HorizontalAlignment','left','rotation',90);\n");
-        fprintf(fp, "set(th, 'fontsize', 12)\n");
-        fprintf(fp, "set(th, 'fontweight', 'bold')\n");
+        fprintf(fp,"axis([0  nn+1 ymin ymax])\n");
+        fprintf(fp,"set(gca,'XTickLabel',[]);\n");
+        fprintf(fp,"th=text(1:nn, repmat(ymin-0.05*(ymax-ymin),nn,1),Str,");
+        fprintf(fp,"'HorizontalAlignment','left','rotation',90);\n");
+        fprintf(fp,"set(th, 'fontsize', 12)\n");
+        fprintf(fp,"set(th, 'fontweight', 'bold')\n");
       }
-      fwritePlotTitle(fp,"Main Effects (with bootstrap)");
-      fwritePlotYLabel(fp, "Main Effects (Normalized)");
+      fwritePlotTitle(fp,"First-order Sobol'Indices (with bootstrap)");
+      fwritePlotYLabel(fp, "First-order Sobol'Indices (Normalized)");
       if (plotScilab())
       {
         fprintf(fp, "drawnow\n");
-        printf("Scilab plot for main effect is in scilabrsmebb.sci.\n");
+        printf("Scilab main effect plot file = scilabrsvce1_bin.sci\n");
       }
-      else printf("Matlab plot for main effect is in matlabrsmeb.m.\n");
+      else 
+      {
+        printf("Matlab main effect plot file = matlabrsvce1_bin.m\n");
+      }
       fclose(fp);
     }
     delete meAnalyzer;
     faPtr = NULL;
     psConfig_.AnaExpertModeRestore();
     psConfig_.RSExpertModeRestore();
+    return 0;
   }
 
   //**/ -------------------------------------------------------------
-  // +++ rsieb 
+  // +++ rsieb (or rsvce2_bin)
   //**/ bootstrapped pairwise effect analysis using replicated OA
   //**/ -------------------------------------------------------------
-  else if (!strcmp(command, "rsieb"))
+  else if (!strcmp(command, "rsieb") ||
+           !strcmp(command, "rsvce2_bin"))
   {
     sscanf(lineIn,"%s %s",command,winput);
     if (!strcmp(winput, "-h"))
     {
-      printf("rsieb: two-parameter effect analysis on response surface\n");
-      printf("syntax: rsieb (no argument needed)\n");
-      printf("This command perform two parameter effect analysis on the\n");
-      printf("response surface built from the loaded sample.\n");
-      printf("NOTE: This analysis supports different distributions\n");
-      printf("      for the inputs. Simply prescribe the distributions in\n");
-      printf("      the data file and turn on use_input_pdfs in ANALYSIS.\n");
-      printf("NOTE: This analysis is equivalent to rssobol2b but using\n");
-      printf("      a different algorithm.\n");
+      printf("rsvce2_bin: Sobol' second-order analysis on ");
+      printf("response surface\n");
+      printf("Syntax: rsvce2_bin (no argument needed)\n");
       return 0;
     }
-    if (psuadeIO == NULL || sampleOutputs == NULL)
-    {
-      printf("ERROR: no data (load sample first).\n");
-      return 1;
-    }
-    if (nInputs <= 2)
-    {
-      printf("INFO: nInputs <=2 -> no point of performing this analysis.\n");
-      return 1;
-    }
-
     printAsterisks(PL_INFO, 0);
-    printf("This command computes second-order sensitivity ");
-    printf("indices using the\n");
-    printf("response surface built from the loaded ");
-    printf("sample (with bootstrapping).\n");
-    printf("This is an alternative to rssobol2b (for cross-checking).\n");
+    printf("This command computes second-order Sobol' indices using ");
+    printf("the response\n");
+    printf("surface built from the loaded sample.\n");
+    printf("NOTE: This analysis supports all types of input ");
+    printf("distributions:\n");
+    printf("   - use rOA for inputs with uniform distributions\n");
+    printf("   - use binning for inputs with other distributions\n");
+    printf("NOTE: Turn on ana_expert mode to run bootstrapped analysis.\n");
     printDashes(PL_INFO, 0);
     printf("Proceed ? (y or n to abort) ");
     scanf("%s", lineIn2);
     fgets(winput,5000,stdin);
     if (lineIn2[0] != 'y') return 0;
+
+    if (psuadeIO == NULL || sampleOutputs == NULL)
+    {
+      printf("ERROR: Sample not loaded yet.\n");
+      return 1;
+    }
+    if (nInputs <= 2)
+    {
+      printf("INFO: nInputs <=2 -> no need to perform this analysis.\n");
+      return 1;
+    }
 
     //**/ query user for which output and which response surface type
     snprintf(pString,100,"Enter output number (1 - %d) : ", nOutputs);
@@ -9243,66 +10672,80 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
     if (faType < 0)
     {
-      printf("ERROR: response surface type not currently available.\n");
-      return 1.0;
+      printf("ERROR: Response surface type not currently available.\n");
+      return 1;
     }
     if (faType == PSUADE_RS_MARSB) faType = PSUADE_RS_MARS;
 
-    //**/ query user for sampling information
-    int nOA, nOA1;
-    snprintf(pString,100,"How many bootstrapped samples to use (1 - 100) : ");
-    int numBS = getInt(1, 100, pString);
-
-    //**/ create replicated OA sample => nOA, OAInputs, OAOutputs
-    int        iOne=1, iZero=0, nReps;
-    Sampling   *samPtr;
-    printEquals(PL_INFO, 0);
-    printf("Phase 1 of 2: create a replicated OA sample\n");
-    nOA1  = 293;
-    nOA   = nOA1 * nOA1;
-    nReps = 100;
-    nOA   = nOA * nReps;
-
-    psVector vecOAInps, vecOAOuts;
-    psIVector vecOAStas;
-    vecOAInps.setLength(nInputs*nOA);
-    vecOAOuts.setLength(nOA);
-    vecOAStas.setLength(nOA);
-    samPtr = (Sampling *) SamplingCreateFromID(PSUADE_SAMP_OA);
-    samPtr->setPrintLevel(outputLevel_);
-    samPtr->setInputBounds(nInputs, iLowerB, iUpperB);
-    samPtr->setInputParams(nInputs, NULL, NULL, NULL);
-    samPtr->setOutputParams(iOne);
-    samPtr->setSamplingParams(nOA, nReps, iZero);
-    samPtr->initialize(0);
-    samPtr->getSamples(nOA, nInputs, iOne, vecOAInps.getDVector(),
-                       vecOAOuts.getDVector(), vecOAStas.getIVector());
-    delete samPtr;
-
-    //**/ convert the sample to different PDF, if needed
-    PDFManager *pdfman;
-    psVector   vecIn, vecOut, vecLower, vecUpper;
-    psuadeIO->getParameter("ana_use_input_pdfs", pPtr);
-    int usePDFs = pPtr.intData_;
-    if (usePDFs == 1)
+    //**/ number of bootstrapped runs (in ana_expert mode only)
+    int numBS = 1;
+    if (psConfig_.AnaExpertModeIsOn())
     {
-      pdfman = new PDFManager();
-      psuadeIO->updateAnalysisSection(-1,-1,-1,0,-1, -1);
-      psuadeIO->updateMethodSection(PSUADE_SAMP_MC, -1, -1, -1, -1);
-      pdfman->initialize(psuadeIO);
-      vecIn = vecOAInps;
-      vecOut.setLength(nOA*nInputs);
-      vecUpper.load(nInputs, iUpperB);
-      vecLower.load(nInputs, iLowerB);
-      pdfman->invCDF(nOA, vecIn, vecOut, vecLower, vecUpper);
-      for (ii = 0; ii < nOA*nInputs; ii++) vecOAInps[ii] = vecOut[ii];
+      printf("INFO: You may use bootstrapping to estimate ");
+      printf("errors in this analysis\n");
+      printf("      (computing multiple sets of metrics ");
+      printf("on multiple response\n");
+      printf("      surfaces built from bootstrapped samples).\n");
+      snprintf(pString,100,"Number of bootstrapped runs (1 - 50) : ");
+      numBS = getInt(1, 50, pString);
+    }
+    printEquals(PL_INFO, 0);
+
+    //**/ detect any non-normal input distributions
+    int hasPDF=0;
+    if (VecInpPDFs_.length() != 0)
+    {
+      for (ii = 0; ii < nInputs; ii++)
+        if (VecInpPDFs_[ii] != 0) hasPDF++; 
+    }
+
+    //**/ create sample: distributions are uniform, create 
+    //**/ replicated OA sample. If not, use QMC 
+    if (hasPDF == 0)
+      printf("Phase 1: Create a replicated OA sample\n");
+    else
+      printf("Phase 1: Create a large random sample\n");
+    int nSamp, iOne=1, iZero=0, nReps=100, nOA, nOA1=317;
+    psVector vecOAInps, vecOAOuts;
+    nOA   = nOA1 * nOA1;
+    nSamp = nOA * nReps;
+    vecOAInps.setLength(nInputs*nSamp);
+    vecOAOuts.setLength(nSamp);
+    if (hasPDF == 0)
+    {
+      printf("NOTE: Sample size to be used for analysis = %d.\n",
+             nSamp);
+      Sampling *samPtr;
+      psIVector vecOAStas;
+      vecOAStas.setLength(nSamp);
+      samPtr = (Sampling *) SamplingCreateFromID(PSUADE_SAMP_OA);
+      samPtr->setPrintLevel(outputLevel_);
+      samPtr->setInputBounds(nInputs, iLowerB, iUpperB);
+      samPtr->setInputParams(nInputs, NULL, NULL, NULL);
+      samPtr->setOutputParams(iOne);
+      samPtr->setSamplingParams(nSamp, nReps, iZero);
+      samPtr->initialize(0);
+      samPtr->getSamples(nSamp,nInputs,iOne,vecOAInps.getDVector(),
+                 vecOAOuts.getDVector(), vecOAStas.getIVector());
+      delete samPtr;
+    }
+    else
+    {
+      PDFManager *pdfman = new PDFManager();
+      pdfman->initialize(nInputs,VecInpPDFs_.getIVector(),
+                VecInpMeans_.getDVector(),VecInpStds_.getDVector(),
+                *inputCMat_,NULL,NULL);
+      psVector vecLs, vecUs;
+      vecUs.load(nInputs, iUpperB);
+      vecLs.load(nInputs, iLowerB);
+      printf("NOTE: Sample size to be used for analysis = %d.\n",nSamp);
+      pdfman->genSample(nSamp, vecOAInps, vecLs, vecUs);
       delete pdfman;
     }
 
     //**/ acquire and prepare for response surface generation
-    FuncApprox *faPtr;
     printEquals(PL_INFO, 0);
-    printf("Phase 2 of 2: create response surfaces and run input-pair effect\n");
+    printf("Phase 2: Create response surface and compute metric\n");
     psVector vecYT;
     if (nOutputs > 1)
     {
@@ -9312,22 +10755,29 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     }
     else vecYT.load(nSamples,sampleOutputs);
 
-    //**/ generate ensemble statistics
-    int    ind, nSamples2, ii1, ii2, jj1, jj2, kk2, bin1, bin2;
-    double width1, width2, iemean, ievar, totVar=0;
-    psIVector vecIebInds, vecIeCount;
-    psVector  vecTmpInps, vecTmpOuts, vecIeMeans, vecIeVars, vecIeStore;
-    vecIebInds.setLength(nSamples);
-    vecIeCount.setLength(nOA1*nOA1);
+#if 0
+    //**/ set up storage space for analysis
+    int    ii1, ii2, jj1, jj2, kk2, bin1, bin2, ind, nSamples2;
+    double totVar=0, width1, width2, iemean, ievar, rsieMean;
+    psIVector vecIeCount, vecIebInds;
+    psVector  vecIeMeans, vecIeVars;
+    psVector  vecIeStore, vecTmpInps, vecTmpOuts;
     vecTmpInps.setLength(nSamples*nInputs);
     vecTmpOuts.setLength(nSamples);
+    vecIeStore.setLength((numBS+2)*nInputs*nInputs);
+    vecIebInds.setLength(nSamples);
+    vecIebInds.setLength(nSamples);
+    vecIeCount.setLength(nOA1*nOA1);
     vecIeMeans.setLength(nOA1*nOA1);
     vecIeVars.setLength(nOA1*nOA1);
-    vecIeStore.setLength((numBS+2)*nInputs*nInputs);
+    FuncApprox *faPtr=NULL;
+
+    //*/ create multiple bootstraps and evaluate and bin  
     for (kk = 0; kk < numBS; kk++)
     {
-      printf("rsieb: ITERATION %d (of %d)\n", kk+1, numBS);
-      //**/ random draw
+      if (numBS > 1)
+        printf("* ITERATION %d (of %d)\n", kk+1, numBS);
+      //**/ random draw for building RS (if numBS=1, use all)
       if (numBS > 1)
       {
         for (ss = 0; ss < nSamples; ss++) vecIebInds[ss] = 0;
@@ -9338,7 +10788,8 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
           if (vecIebInds[ind] == 0)
           {
             for (ii = 0; ii < nInputs; ii++)
-              vecTmpInps[nSamples2*nInputs+ii] = sampleInputs[ind*nInputs+ii];
+              vecTmpInps[nSamples2*nInputs+ii] = 
+                         sampleInputs[ind*nInputs+ii];
             vecTmpOuts[nSamples2] = vecYT[ind];
             vecIebInds[ind] = 1;
             nSamples2++;
@@ -9356,24 +10807,37 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
           vecTmpOuts[ss] = vecYT[ss];
         }
       }
+
       //**/ create response surface on bootstrap
+      psConfig_.InteractiveSaveAndReset();
       faPtr = genFA(faType, nInputs, -1, nSamples2);
       faPtr->setNPtsPerDim(32);
       faPtr->setBounds(iLowerB, iUpperB);
       faPtr->setOutputLevel(0);
-      faPtr->initialize(vecTmpInps.getDVector(),vecTmpOuts.getDVector());
-      faPtr->evaluatePoint(nOA,vecOAInps.getDVector(),
-                           vecOAOuts.getDVector());
-      double rsieMean = 0;
-      for (ii1 = 0; ii1 < nOA; ii1++) rsieMean += vecOAOuts[ii1]; 
-      rsieMean /= (double) nOA;
-      ddata = 0;
-      for (ii1 = 0; ii1 < nOA; ii1++) 
-        ddata += pow(vecOAOuts[ii1] - rsieMean, 2.0); 
-      ddata /= (nOA -1);
-      totVar += ddata; 
-      
+      faPtr->initialize(vecTmpInps.getDVector(),
+                        vecTmpOuts.getDVector());
+      faPtr->evaluatePoint(nSamp,vecSamInps.getDVector(),
+                           vecSamOuts.getDVector());
+      psConfig_.InteractiveRestore();
+      delete faPtr;
+
+      //**/ compute mean and variance
+      if (kk == 0)
+      {
+        rsieMean = 0;
+        for (ii1 = 0; ii1 < nSamp; ii1++) 
+          rsieMean += vecSamOuts[ii1]; 
+        rsieMean /= (double) nSamp;
+        ddata = 0;
+        for (ii1 = 0; ii1 < nSamp; ii1++) 
+          ddata += pow(vecSamOuts[ii1] - rsieMean, 2.0); 
+        ddata /= (nSamp -1);
+        totVar += ddata; 
+      }
+
       //**/ perform interaction effect analysis
+      //**/ this code could have been in TwoParameter.cpp, but
+      //**/ to refactor it will be too cumbersome so just leave it
       for (ii1 = 0; ii1 < nInputs; ii1++)
       {
         vecIeStore[kk*nInputs*nInputs+ii1*nInputs+ii1] = 0.0;
@@ -9387,25 +10851,25 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
             vecIeMeans[kk2] = 0.0;
             vecIeVars[kk2] = 0.0;
           }
-          for (kk2 = 0; kk2 < nOA; kk2++)
+          for (kk2 = 0; kk2 < nSamp; kk2++)
           {
-            bin1 = (int) ((vecOAInps[kk2*nInputs+ii1]-
+            bin1 = (int) ((vecSamInps[kk2*nInputs+ii1]-
                            iLowerB[ii1]+1.0e-12)/width1);
-            bin2 = (int) ((vecOAInps[kk2*nInputs+ii2]-
+            bin2 = (int) ((vecSamInps[kk2*nInputs+ii2]-
                            iLowerB[ii2]+1.0e-12)/width2);
-            vecIeMeans[bin1*nOA1+bin2] += vecOAOuts[kk2];
+            vecIeMeans[bin1*nOA1+bin2] += vecSamOuts[kk2];
             vecIeCount[bin1*nOA1+bin2]++;
           }
           for (kk2 = 0; kk2 < nOA1*nOA1; kk2++)
             if (vecIeCount[kk2] > 0) vecIeMeans[kk2] /= vecIeCount[kk2];
           for (kk2 = 0; kk2 < nOA; kk2++)
           {
-            bin1 = (int) ((vecOAInps[kk2*nInputs+ii1]-
+            bin1 = (int) ((vecSamInps[kk2*nInputs+ii1]-
                            iLowerB[ii1]+1.0e-12)/width1);
-            bin2 = (int) ((vecOAInps[kk2*nInputs+ii2]-
+            bin2 = (int) ((vecSamInps[kk2*nInputs+ii2]-
                            iLowerB[ii2]+1.0e-12)/width2);
             vecIeVars[bin1*nOA1+bin2] += 
-                    pow(vecOAOuts[kk2]-vecIeMeans[bin1*nOA1+bin2],2.0);
+                    pow(vecSamOuts[kk2]-vecIeMeans[bin1*nOA1+bin2],2.0);
           }
           for (kk2 = 0; kk2 < nOA1*nOA1; kk2++)
             if (vecIeCount[kk2] > 0) vecIeVars[kk2] /= vecIeCount[kk2];
@@ -9425,14 +10889,108 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
           vecIeStore[kk*nInputs*nInputs+ii2*nInputs+ii1] = ievar;
         }
       }
+    } /* kk < numBS */
+#else
+    int    ind, nSamples2;
+    double totVar=0;
+    FuncApprox *faPtr=NULL;
+    psIVector vecIebInds;
+    psVector  vecTmpInps, vecTmpOuts, vecIeStore;
+    vecTmpInps.setLength(nSamples*nInputs);
+    vecTmpOuts.setLength(nSamples);
+    vecIebInds.setLength(nSamples);
+    vecIeStore.setLength((numBS+2)*nInputs*nInputs);
+    TwoParamAnalyzer *ieAnalyzer = new TwoParamAnalyzer();
+    pData *pd = NULL;
+    aData adata;
+    adata.nInputs_ = nInputs;
+    adata.nOutputs_ = 1;
+    adata.nSamples_ = nSamp;
+    adata.outputID_ = 0;
+    adata.sampleInputs_ = vecOAInps.getDVector();
+    adata.sampleOutputs_ = vecOAOuts.getDVector();
+    adata.nSubSamples_ = nOA;
+    adata.iLowerB_ = iLowerB;
+    adata.iUpperB_ = iUpperB;
+    adata.printLevel_ = -1;
+    adata.ioPtr_ = psuadeIO;
+
+    //*/ create multiple bootstraps and evaluate and bin  
+    printf("Phase 3: Compute second-order Sobol' indices\n");
+    for (kk = 0; kk < numBS; kk++)
+    {
+      if (numBS > 1)
+        printf("* Performing analysis on bootstrap %d (of %d)\n", 
+               kk+1, numBS);
+      //**/ random draw for building RS (if numBS=1, use all)
+      if (numBS == 1)
+      {
+        nSamples2 = nSamples;
+        for (ss = 0; ss < nSamples; ss++) 
+        {
+          for (ii = 0; ii < nInputs; ii++) 
+            vecTmpInps[ss*nInputs+ii] = sampleInputs[ss*nInputs+ii];
+          vecTmpOuts[ss] = vecYT[ss];
+        }
+      }
+      else
+      {
+        for (ss = 0; ss < nSamples; ss++) vecIebInds[ss] = 0;
+        ss = nSamples2 = 0;
+        while (ss < nSamples && nSamples2 < 0.8*nSamples)
+        {
+          ind = PSUADE_rand() % nSamples;
+          if (vecIebInds[ind] == 0)
+          {
+            for (ii = 0; ii < nInputs; ii++)
+              vecTmpInps[nSamples2*nInputs+ii] = 
+                         sampleInputs[ind*nInputs+ii];
+            vecTmpOuts[nSamples2] = vecYT[ind];
+            vecIebInds[ind] = 1;
+            nSamples2++;
+          }
+          ss++;
+        }
+      }
+
+      //**/ create response surface on bootstrap
+      if (!psConfig_.AnaExpertModeIsOn() || numBS > 1)
+        psConfig_.InteractiveSaveAndReset();
+      faPtr = genFA(faType, nInputs, -1, nSamples2);
+      faPtr->setNPtsPerDim(32);
+      faPtr->setBounds(iLowerB, iUpperB);
+      faPtr->setOutputLevel(0);
+      faPtr->initialize(vecTmpInps.getDVector(),
+                        vecTmpOuts.getDVector());
+      faPtr->evaluatePoint(nSamp,vecOAInps.getDVector(),
+                           vecOAOuts.getDVector());
+      ieAnalyzer->analyze(adata);
+      if (!psConfig_.AnaExpertModeIsOn() || numBS > 1)
+        psConfig_.InteractiveRestore();
+      pd = psuadeIO->getAuxData();
+      for (ii = 0; ii < nInputs*nInputs; ii++)
+      {
+        if (pd->dbleData_ > 0)
+          vecIeStore[kk*nInputs*nInputs+ii] = 
+                pd->dbleArray_[ii]/pd->dbleData_;
+        else 
+          vecIeStore[kk*nInputs*nInputs+ii] = pd->dbleArray_[ii];
+      }
+      //for (ii = 0; ii < nInputs; ii++)
+      //  for (jj = ii+1; jj < nInputs; jj++)
+      //    printf("(1st+2nd) VCE(%d,%d) = %10.3e\n",ii+1,jj+1,
+      //           vecIeStore[kk*nInputs*nInputs+ii*nInputs+jj]);
+      totVar += pd->dbleData_;
+      pd->clean();
       delete faPtr;
     }
+#endif
  
     //**/ compute aggregate statistics
     double mean, stdev;
     totVar /= (double) numBS;
     printAsterisks(PL_INFO, 0);
-    printf("rsieb analysis (normalized by total variance = %e)\n",totVar);
+    printf("Sobol' second-order indices (normalized):bin\n");
     printEquals(PL_INFO, 0);
     for (ii = 0; ii < nInputs; ii++)
     {
@@ -9448,40 +11006,47 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         if (numBS > 1)
         {
           for (kk = 0; kk < numBS; kk++)
-            stdev += pow(vecIeStore[kk*nInputs*nInputs+ii*nInputs+jj]-mean,2.0);
+            stdev += pow(vecIeStore[kk*nInputs*nInputs+ii*nInputs+jj]-
+                     mean,2.0);
           stdev = sqrt(stdev/(numBS-1));
         }
         vecIeStore[(numBS+1)*nInputs*nInputs+ii*nInputs+jj] = stdev;
         vecIeStore[(numBS+1)*nInputs*nInputs+jj*nInputs+ii] = 0.0;
-        //printf("Input %6d %d = %10.2e (stdev = %10.2e)\n",ii+1,
-        //       jj+1,mean,stdev);
-        printf("Input %6d %d = %10.3e (stdev = %10.3e)\n",ii+1,
-               jj+1,mean/totVar,stdev/totVar);
+        if (numBS > 1)
+          printf("VCE (1st+2nd) for Input %3d,%3d = %10.3e (s.d. = %10.3e)\n",
+                 ii+1, jj+1,mean,stdev);
+        else
+          printf("(1st+2nd)VCE for Input %3d,%3d = %10.3e\n",ii+1,jj+1,mean);
       }
     }
+    printf("Total variance = %e\n",totVar);
     printAsterisks(PL_INFO, 0);
 
     //**/ generate graphics
     if (plotScilab())
     {
-      fp = fopen("scilabrsieb.sci", "w");
-      if (fp == NULL) printf("ERROR : cannot open file scilabrsieb.sci\n");
+      fp = fopen("scilabrsvce2_bin.sci", "w");
+      if (fp == NULL) 
+           printf("ERROR: Cannot open file scilabvce2b_bin.sci\n");
       else
       {
-        fprintf(fp,"// This file contains 2nd order sensitivity indices\n");
+        fprintf(fp,
+              "// This file contains 2nd order sensitivity indices\n");
         fprintf(fp,"// set sortFlag = 1 and set nn to be the number\n");
         fprintf(fp,"// of inputs to display.\n");
       }
     }
     else
     {
-      fp = fopen("matlabrsieb.m", "w");
-      if (fp == NULL) printf("ERROR : cannot open file matlabrsieb.sci\n");
+      fp = fopen("matlabrsvce2_bin.m", "w");
+      if (fp == NULL) 
+           printf("ERROR: Cannot open file matlabrsvce2_bin.sci\n");
       else
       {
-        fprintf(fp, "%% This file contains 2nd order sensitivity indices\n");
-        fprintf(fp, "%% set sortFlag = 1 and set nn to be the number\n");
-        fprintf(fp, "%% of inputs to display.\n");
+        fprintf(fp,
+              "%% This file contains 2nd order sensitivity indices\n");
+        fprintf(fp,"%% set sortFlag = 1 and set nn to be the number\n");
+        fprintf(fp,"%% of inputs to display.\n");
       }
     }
     if (fp != NULL) 
@@ -9494,7 +11059,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       fprintf(fp, "];\n");
       fprintf(fp, "Stds = [\n");
       for (ii = 0; ii < nInputs*nInputs; ii++) 
-        fprintf(fp,"%24.16e\n", vecIeStore[(numBS+1)*nInputs*nInputs+ii]);
+        fprintf(fp,"%24.16e\n",vecIeStore[(numBS+1)*nInputs*nInputs+ii]);
       fprintf(fp, "];\n");
       if (inputNames == NULL)
       {
@@ -9593,29 +11158,31 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         fprintf(fp, "set(gca, 'linewidth', 2)\n");
       }
       fwritePlotAxes(fp);
-      fwritePlotTitle(fp,"1st+2nd Order Sensitivity Indices (with bootstrap)");
-      fwritePlotZLabel(fp, "2nd Order Sensitivity Indices (Normalized)");
-      fwritePlotXLabel(fp, "Inputs");
-      fwritePlotYLabel(fp, "Inputs");
+      fwritePlotTitle(fp,
+            "1st+2nd Order Sensitivity Indices (with bootstrap)");
+      fwritePlotZLabel(fp,"2nd Order Sensitivity Indices (Normalized)");
+      fwritePlotXLabel(fp,"Inputs");
+      fwritePlotYLabel(fp,"Inputs");
       fclose(fp);
       if (plotScilab())
-           printf("rsieb plot file = scilabrsieb.sci\n");
-      else printf("rsieb plot file = matlabrsieb.m\n");
+           printf("rsvce2_bin plot file = scilabrsvce2_bin.sci\n");
+      else printf("rsvce2_bin plot file = matlabrsvce2_bin.m\n");
     }
     faPtr = NULL;
+    return 0;
   }
 
   //**/ -------------------------------------------------------------
-  // +++ rsaeua or aeua   
+  // +++ rsua_sa or aeua   
   //**/ UQ for aleatoric and epistemic UQ using inner-outer iteration
   //**/ -------------------------------------------------------------
-  else if ((!strcmp(command, "rsaeua")) || (!strcmp(command, "aeua")))
+  else if ((!strcmp(command, "rsua_ae")) || (!strcmp(command, "aeua")))
   {
     sscanf(lineIn,"%s %s",command,winput);
     if (!strcmp(winput, "-h"))
     {
-      printf("rsaeua: UQ for aleatoric-epistemic uncertainty analysis\n");
-      printf("Syntax: rsaeua (no argument needed).\n");
+      printf("rsua_ae: UQ for aleatoric-epistemic uncertainty analysis\n");
+      printf("Syntax: rsua_ae (no argument needed).\n");
       return 0;
     }
     printAsterisks(PL_INFO, 0);
@@ -9642,7 +11209,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
 
     if (nInputs_ <= 0 || psuadeIO_ == NULL || nSamples_ <= 0)
     {
-      printf("ERROR: sample data not loaded yet.\n");
+      printf("ERROR: Sample data have not been loaded.\n");
       return 1;
     }
     if (nInputs_ == 1)
@@ -9657,7 +11224,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     outputID--;
 
     //**/ select epistemic uncertain parameters
-    printf("Step 1: select aleatoric and epistemic parameters\n");
+    printf("Step 1: Select aleatoric and epistemic parameters\n");
     int nEpistemic=0;
     psIVector vecUTypes;
     vecUTypes.setLength(nInputs_);
@@ -9686,7 +11253,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     printf("You have specified %d epistemic parameters.\n",nEpistemic);
 
     //**/ set up the function approximator
-    printf("Step 2: construct response surface\n");
+    printf("Step 2: Construct response surface\n");
     psuadeIO_->getParameter("ana_outputid", pPtr);
     int iSave = pPtr.intData_;
     psuadeIO_->updateAnalysisSection(-1,-1,-1,-1,outputID,-1);
@@ -9694,7 +11261,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     FuncApprox *faPtr = genFA(faType,nInputs_,outputLevel_,nSamples_);
     if (faPtr == NULL) 
     {
-      printf("ERROR : cannot construct response surface.\n"); 
+      printf("ERROR: Cannot construct response surface.\n"); 
       return 0;
     }
     int nPtsPerDim = 64;
@@ -9708,7 +11275,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     status = faPtr->initialize(VecSamInputs_.getDVector(),vecYT.getDVector());
 
     //**/ generate a sample for outer iteration (uniform)
-    printf("Step 3: construct CDFs via outer-inner iterations\n");
+    printf("Step 3: Construct CDFs via outer-inner iterations\n");
     printf("   Outer iteration: iterate on the epistemic samples\n");
     printf("   Inner iteration: iterate on the aleatoric samples\n");
     printf("   Objective: iterate 1000 times in the outer loop and ");
@@ -9788,11 +11355,11 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     pdfman->genSample(nSams2, vecInps, vecLBs, vecUBs);
     delete pdfman;
 
-    if (plotScilab()) fp = fopen("scilabrsaeua.sci", "w");
-    else              fp = fopen("matlabrsaeua.m", "w");
+    if (plotScilab()) fp = fopen("scilabrsua_ae.sci", "w");
+    else              fp = fopen("matlabrsua_ae.m", "w");
     if (fp == NULL)
     {
-      printf("rsaeua ERROR: cannot open plot file.\n");
+      printf("rsua_ae ERROR: Cannot open plot file.\n");
       return 1;
     }
     fwritePlotCLF(fp);
@@ -9837,7 +11404,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
         for (ii = 0; ii < nAleatoric; ii++)
         {
           if (vecInps[kk*nAleatoric+ii] < veclbs[ii] ||
-            vecInps[kk*nAleatoric+ii] > vecubs[ii]) flag++;
+              vecInps[kk*nAleatoric+ii] > vecubs[ii]) flag++;
         }
         if (flag == 0)
         {
@@ -9890,7 +11457,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
       }
       if (count == 0)
       {
-        printf("ERROR: none of the sample points are within bounds.\n");
+        printf("ERROR: None of the sample points are within bounds.\n");
         return 1;
       }
       if (ss < 50) fprintf(fp, "];\n");
@@ -9958,36 +11525,37 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     fprintf(fp, "X = X' / %d;\n", count);
     fprintf(fp, "plot(YL,X,'r-','lineWidth',3)\n");
     fclose(fp);
-    printf("Plot file for aleatoric-epistemic analysis is now ");
-    if (plotScilab()) printf("in scilabrsaeua.sci.\n");
-    else              printf("in matlabrsaeua.m.\n");
+    printf("Plot file for aleatoric-epistemic analysis = ");
+    if (plotScilab()) printf("scilabrsua_ae.sci.\n");
+    else              printf("matlabrsua_ae.m.\n");
     psuadeIO_->updateAnalysisSection(-1,-1,-1,-1,iSave,-1);
     delete faPtr;
     faPtr = NULL;
+    return 0;
   }
 
   //**/ -------------------------------------------------------------
-  // +++ rsshapley 
+  // +++ rsentropy 
   //**/ -------------------------------------------------------------
-  else if (!strcmp(command, "rsshapley"))
+  else if (!strcmp(command, "rsentropy"))
   {
     sscanf(lineIn,"%s %s",command,winput);
     if (!strcmp(winput, "-h"))
     {
-      printf("rsshapley: Shapley value sensitivity analysis\n");
-      printf("Syntax: rsshapley (no argument needed).\n");
+      printf("rsentropy: compute total output entropy");
+      printf("Syntax: rsentropy (no argument needed).\n");
       return 0;
     }
     printAsterisks(PL_INFO, 0);
-    printf("This command computes Shapley values as sensitivity ");
-    printf("measures for each\n");
-    printf("input using the response surface constructed from ");
-    printf("the loaded sample.\n");
-    printf("You can choose between 2 different cost functions, ");
-    printf("namely, variance or\n");
-    printf("entropy. The default is variance. To select entropy, ");
-    printf("turn on analysis\n");
-    printf("expert mode before running this command.\n");
+    printf("This command computes total output entropy ");
+    printf("from the response surface\n");
+    printf("constructed from the loaded sample.\n");
+    if (nSamples_ > 0 && nSamples_ > 10000)
+    {
+      printf("The loaded sample has sample size > 10k, which ");
+      printf("may be computationally\n");
+      printf("prohibitive for most response surface methods. ");
+    }
     printDashes(PL_INFO, 0);
     printf("Proceed ? (y or n to abort) ");
     scanf("%s", lineIn2);
@@ -9996,7 +11564,630 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
 
     if (nInputs_ <= 0 || psuadeIO_ == NULL || nSamples_ <= 0)
     {
-      printf("ERROR: sample data not loaded yet.\n");
+      printf("ERROR: Sample data have not been loaded.\n");
+      return 1;
+    }
+
+    //**/ -----------------------------------------------------
+    //**/ select output
+    //**/ -----------------------------------------------------
+    snprintf(pString,100,
+             "Enter output number (1 - %d) : ",nOutputs_);
+    outputID = getInt(1, nOutputs_, pString);
+    outputID--;
+
+    psVector vecY;
+    vecY.setLength(nSamples_);
+    for (ss = 0; ss < nSamples_; ss++)
+      vecY[ss] = VecSamOutputs_[ss*nOutputs_+outputID];
+    aData adata;
+    adata.nInputs_  = nInputs_;
+    adata.nOutputs_ = 1;
+    adata.nSamples_ = nSamples_;
+    adata.iLowerB_  = VecILowerBs_.getDVector();
+    adata.iUpperB_  = VecIUpperBs_.getDVector(); 
+    adata.sampleInputs_  = VecSamInputs_.getDVector();
+    adata.sampleOutputs_ = vecY.getDVector();
+    adata.outputID_   = 0;
+    adata.printLevel_ = outputLevel_;
+    adata.ioPtr_ = psuadeIO_;
+    RSMEntropy1Analyzer analyzer;
+    snprintf(pString, 22, "ana_entropy1_tentropy");
+    char *targv[1];
+    targv[0] = (char *) pString;
+    analyzer.setParam(1, targv); 
+    analyzer.analyze(adata);
+    printf("rsentropy results:\n");
+    printDashes(PL_INFO, 0);
+    printf("Total output entropy  = %e\n",
+           analyzer.get_outputEntropy());
+    printEquals(PL_INFO, 0);
+    return 0;
+  }
+
+  //**/ -------------------------------------------------------------
+  // +++ rsentropy1 
+  //**/ -------------------------------------------------------------
+  else if (!strcmp(command, "rsentropy1"))
+  {
+    sscanf(lineIn,"%s %s",command,winput);
+    if (!strcmp(winput, "-h"))
+    {
+      printf("rsentropy1: entropy-based sensitivity analysis");
+      printf("Syntax: rsentropy1 (no argument needed).\n");
+      return 0;
+    }
+    printAsterisks(PL_INFO, 0);
+    printf("This command performs first-order sensitivity ");
+    printf("analysis using entropy.\n");
+    if (nSamples_ > 0 && nSamples_ > 10000)
+    {
+      printf("The loaded sample has sample size > 10k, which ");
+      printf("may be computationally\n");
+      printf("prohibitive for most response surface methods.\n");
+    }
+    printDashes(PL_INFO, 0);
+    printf("Proceed ? (y or n to abort) ");
+    scanf("%s", lineIn2);
+    fgets(winput,5000,stdin);
+    if (lineIn2[0] != 'y') return 0;
+
+    if (nInputs_ <= 0 || psuadeIO_ == NULL || nSamples_ <= 0)
+    {
+      printf("ERROR: Sample data have not been loaded.\n");
+      return 1;
+    }
+
+    //**/ -----------------------------------------------------
+    //**/ select output
+    //**/ -----------------------------------------------------
+    snprintf(pString,100,"Enter output number (1 - %d) : ",
+             nOutputs_);
+    outputID = getInt(1, nOutputs_, pString);
+    outputID--;
+
+    psVector vecY;
+    vecY.setLength(nSamples_);
+    for (ss = 0; ss < nSamples_; ss++)
+      vecY[ss] = VecSamOutputs_[ss*nOutputs_+outputID];
+    aData adata;
+    adata.nInputs_  = nInputs_;
+    adata.nOutputs_ = 1;
+    adata.nSamples_ = nSamples_;
+    adata.iLowerB_  = VecILowerBs_.getDVector();
+    adata.iUpperB_  = VecIUpperBs_.getDVector(); 
+    adata.sampleInputs_  = VecSamInputs_.getDVector();
+    adata.sampleOutputs_ = vecY.getDVector();
+    adata.outputID_   = 0;
+    adata.printLevel_ = outputLevel_;
+    adata.ioPtr_ = psuadeIO_;
+    RSMEntropy1Analyzer analyzer;
+    snprintf(pString, 21, "ana_entropy1_entropy");
+    char *targv[1];
+    targv[0] = (char *) pString;
+    analyzer.setParam(1, targv); 
+    analyzer.analyze(adata);
+    printf("rsentropy1 results:\n");
+    printDashes(PL_INFO, 0);
+    double totEnt = analyzer.get_outputEntropy();
+    for (ii = 0; ii < nInputs_; ii++)
+    {
+      ddata = analyzer.get_entropy1(ii);
+      if (ddata < 0) ddata = 0;
+      if (totEnt != 0)
+        printf("Input %3d sensitivity = %10.3e (scaled=%10.3e)\n",
+               ii+1,ddata,ddata/PABS(totEnt));
+      else
+        printf("Input %3d sensitivity = %10.3e\n",ii+1,ddata);
+    }
+    printf("Sensitivity measure = H(Y) - H(Y|X) (also = M.I.)\n"); 
+    printf("Scaled measure = 1 - H(Y|X)/H(Y) if H(Y) != 0\n"); 
+    printf("Total output entropy  = %e\n",totEnt);
+    printEquals(PL_INFO, 0);
+    return 0;
+  }
+
+  //**/ -------------------------------------------------------------
+  // +++ rsdelta1 
+  //**/ -------------------------------------------------------------
+  else if (!strcmp(command, "rsdelta1"))
+  {
+    sscanf(lineIn,"%s %s",command,winput);
+    if (!strcmp(winput, "-h"))
+    {
+      printf("rsdelta1: expected output variation induced by ");
+      printf("individual inputs\n");
+      printf("Syntax: rsdelta1 (no argument needed).\n");
+      return 0;
+    }
+    printAsterisks(PL_INFO, 0);
+    printf("This command computes average output ");
+    printf("variation when varying individual\n");
+    printf("inputs. As such, this measure may be useful when ");
+    printf("input distribution is\n");
+    printf("unknown, and thus non-informative distribution ");
+    printf("should be assumed. This\n");
+    printf("is done by, instead of using the distribution of the ");
+    printf("output Y, finding\n");
+    printf("the difference of the maximum and minimum of Y induced ");
+    printf("by an input\n");
+    printf("in the presence of variation in all other inputs. ");
+    printf("Mathematically, this\n");
+    printf("measure is Delta(E[Y|X]). Large measure for ");
+    printf("a given input means that\n");
+    printf("this input is important.\n"); 
+    printDashes(PL_INFO, 0);
+    if (nSamples_ >= 10000)
+    {
+      printf("\nWARNING: \n");
+      printf("The loaded sample has sample size >= 10k, which ");
+      printf("may be computationally\n");
+      printf("prohibitive for most response surface methods. ");
+    }
+
+    printf("Proceed ? (y or n to abort) ");
+    scanf("%s", lineIn2);
+    fgets(winput,5000,stdin);
+    if (lineIn2[0] != 'y') return 0;
+
+    if (nInputs_ <= 0 || psuadeIO_ == NULL || nSamples_ <= 0)
+    {
+      printf("ERROR: Sample data have not been loaded.\n");
+      return 1;
+    }
+    //**/ -----------------------------------------------------
+    //**/ select output
+    //**/ -----------------------------------------------------
+    snprintf(pString,100,
+             "Enter output number (1 - %d) : ",nOutputs_);
+    outputID = getInt(1, nOutputs_, pString);
+    outputID--;
+
+    psVector vecY;
+    vecY.setLength(nSamples_);
+    for (ss = 0; ss < nSamples_; ss++)
+      vecY[ss] = VecSamOutputs_[ss*nOutputs_+outputID];
+    aData adata;
+    adata.nInputs_  = nInputs_;
+    adata.nOutputs_ = 1;
+    adata.nSamples_ = nSamples_;
+    adata.iLowerB_  = VecILowerBs_.getDVector();
+    adata.iUpperB_  = VecIUpperBs_.getDVector(); 
+    adata.sampleInputs_  = VecSamInputs_.getDVector();
+    adata.sampleOutputs_ = vecY.getDVector();
+    adata.outputID_   = 0;
+    adata.printLevel_ = outputLevel_;
+    adata.ioPtr_ = psuadeIO_;
+    RSMEntropy1Analyzer analyzer;
+    snprintf(pString, 19, "ana_entropy1_delta");
+    char *targv[1];
+    targv[0] = (char *) pString;
+    analyzer.setParam(1, targv); 
+    analyzer.analyze(adata);
+    printf("rsdelta1 results: (D(E[Y|X]))\n"); 
+    printDashes(PL_INFO, 0);
+    for (ii = 0; ii < nInputs_; ii++)
+    {
+      ddata = analyzer.get_delta1(ii);
+      printf("Input %3d sensitivity = %9.3e\n",ii+1,ddata);
+    }
+    printf("Total output delta  = %e\n",
+           analyzer.get_outputDelta());
+    printEquals(PL_INFO, 0);
+    return 0;
+  }
+
+  //**/ -------------------------------------------------------------
+  // +++ rsentropy2 
+  //**/ -------------------------------------------------------------
+  else if (!strcmp(command, "rsentropy2"))
+  {
+    sscanf(lineIn,"%s %s",command,winput);
+    if (!strcmp(winput, "-h"))
+    {
+      printf("rsentropy2: 2nd-order sensitivity analysis using ");
+      printf("entropy measure\n");
+      printf("Syntax: rsentropy2 (no argument needed).\n");
+      return 0;
+    }
+    printAsterisks(PL_INFO, 0);
+    printf("This command performs input pair sensitivity ");
+    printf("analysis based on entropy\n");
+    if (nSamples_ < 20000)
+    {
+      printf("measure using the response surface ");
+      printf("constructed from the loaded sample.\n");
+    }
+    else
+    {
+      printf("measure operating directly on the loaded sample.\n");
+    }
+    printDashes(PL_INFO, 0);
+    printf("Proceed ? (y or n to abort) ");
+    scanf("%s", lineIn2);
+    fgets(winput,5000,stdin);
+    if (lineIn2[0] != 'y') return 0;
+
+    if (nInputs_ <= 0 || psuadeIO_ == NULL || nSamples_ <= 0)
+    {
+      printf("ERROR: Sample data have not been loaded.\n");
+      return 1;
+    }
+    if (nInputs_ <= 2)
+    {
+      printf("ERROR: This command is for nInputs > 2 only.\n");
+      return 1;
+    }
+
+    //**/ -----------------------------------------------------
+    //**/ select output
+    //**/ -----------------------------------------------------
+    snprintf(pString,100,
+             "Enter output number (1 - %d) : ", nOutputs_);
+    outputID = getInt(1, nOutputs_, pString);
+    outputID--;
+
+    psVector vecY;
+    vecY.setLength(nSamples_);
+    for (ss = 0; ss < nSamples_; ss++)
+      vecY[ss] = VecSamOutputs_[ss*nOutputs_+outputID];
+    aData adata;
+    adata.nInputs_  = nInputs_;
+    adata.nOutputs_ = 1;
+    adata.nSamples_ = nSamples_;
+    adata.iLowerB_  = VecILowerBs_.getDVector();
+    adata.iUpperB_  = VecIUpperBs_.getDVector(); 
+    adata.sampleInputs_  = VecSamInputs_.getDVector();
+    adata.sampleOutputs_ = vecY.getDVector();
+    adata.outputID_   = 0;
+    adata.printLevel_ = outputLevel_;
+    adata.ioPtr_ = psuadeIO_;
+    RSMEntropy2Analyzer analyzer;
+    snprintf(pString, 21, "ana_entropy2_entropy");
+    char *targv[1];
+    targv[0] = (char *) pString;
+    analyzer.setParam(1, targv); 
+    analyzer.analyze(adata);
+    printf("rsentropy2 results:\n");
+    printDashes(PL_INFO, 0);
+    double totEnt = analyzer.get_outputEntropy();
+    for (ii = 0; ii < nInputs_; ii++)
+    {
+      for (jj = ii+1; jj < nInputs_; jj++)
+      {
+        ddata = analyzer.get_entropy2(ii,jj);
+        if (ddata < 0) ddata = 0;
+        if (totEnt != 0)
+          printf("Input (%3d,%3d) sensitivity = %10.3e (scaled=%10.3e)\n",
+                 ii+1,jj+1,ddata,ddata/PABS(totEnt));
+        else
+          printf("Input (%3d,%3d) sensitivity = %10.3e\n",ii+1,
+                 jj+1,ddata);
+      }
+    }
+    printf("Sensitivity measure = H(Y) - H(Y|X) (also = M.I.)\n"); 
+    printf("Scaled measure = 1 - H(Y|X)/H(Y) if H(Y) != 0\n"); 
+    printf("Total output entropy = %e \n",
+           analyzer.get_outputEntropy());
+    printEquals(PL_INFO, 0);
+    return 0;
+  }
+
+  //**/ -------------------------------------------------------------
+  // +++ rsdelta2 
+  //**/ -------------------------------------------------------------
+  else if (!strcmp(command, "rsdelta2"))
+  {
+    sscanf(lineIn,"%s %s",command,winput);
+    if (!strcmp(winput, "-h"))
+    {
+      printf("rsdelta2: expected output variation induced by ");
+      printf("pairs of inputs\n");
+      printf("Syntax: rsdelta2 (no argument needed).\n");
+      return 0;
+    }
+    printAsterisks(PL_INFO, 0);
+    printf("This command computes average output ");
+    printf("variation when varying all pairs\n");
+    printf("of inputs.  As such, this measure is ");
+    printf("useful when input distributions\n");
+    printf("are unknown, and thus non-informative ");
+    printf("distribution is assumed. This\n");
+    printf("is done by, instead of using the ");
+    printf("distribution of the output Y, finding\n");
+    printf("the difference of the maximum and minimum ");
+    printf("of Y induced by inputs X1,X2\n");
+    printf("in the presence of variation in all other ");
+    printf("inputs. Mathematically, this\n");
+    printf("measure is Delta(E[Y|X]). Large measure ");
+    printf("for a given input means that\n");
+    printf("this input is important.\n"); 
+    printDashes(PL_INFO, 0);
+    if (nSamples_ >= 10000)
+    {
+      printf("\nWARNING: \n");
+      printf("The loaded sample has sample size >= 10k, which ");
+      printf("may be computationally\n");
+      printf("prohibitive for most response surface methods. ");
+    }
+
+    printf("Proceed ? (y or n to abort) ");
+    scanf("%s", lineIn2);
+    fgets(winput,5000,stdin);
+    if (lineIn2[0] != 'y') return 0;
+
+    if (nInputs_ <= 0 || psuadeIO_ == NULL || nSamples_ <= 0)
+    {
+      printf("ERROR: Sample data have not been loaded.\n");
+      return 1;
+    }
+    //**/ -----------------------------------------------------
+    //**/ select output
+    //**/ -----------------------------------------------------
+    snprintf(pString,100,
+             "Enter output number (1 - %d) : ",nOutputs_);
+    outputID = getInt(1, nOutputs_, pString);
+    outputID--;
+
+    psVector vecY;
+    vecY.setLength(nSamples_);
+    for (ss = 0; ss < nSamples_; ss++)
+      vecY[ss] = VecSamOutputs_[ss*nOutputs_+outputID];
+    aData adata;
+    adata.nInputs_  = nInputs_;
+    adata.nOutputs_ = 1;
+    adata.nSamples_ = nSamples_;
+    adata.iLowerB_  = VecILowerBs_.getDVector();
+    adata.iUpperB_  = VecIUpperBs_.getDVector(); 
+    adata.sampleInputs_  = VecSamInputs_.getDVector();
+    adata.sampleOutputs_ = vecY.getDVector();
+    adata.outputID_   = 0;
+    adata.printLevel_ = outputLevel_;
+    adata.ioPtr_ = psuadeIO_;
+    RSMEntropy2Analyzer analyzer;
+    snprintf(pString, 19, "ana_entropy2_delta");
+    char *targv[1];
+    targv[0] = (char *) pString;
+    analyzer.setParam(1, targv); 
+    analyzer.analyze(adata);
+    printf("rsdelta2 results: (D(E[Y|X]))\n"); 
+    printDashes(PL_INFO, 0);
+    for (ii = 0; ii < nInputs_; ii++)
+    {
+      for (jj = ii+1; jj < nInputs_; jj++)
+      {
+        printf("Input (%3d,%3d) sensitivity = %10.3e\n",
+               ii+1,jj+1,analyzer.get_delta2(ii,jj));
+      }
+    }
+    printf("Overall output Ymax-Ymin = %e\n",
+           analyzer.get_outputDelta());
+    printEquals(PL_INFO, 0);
+    return 0;
+  }
+
+  //**/ -------------------------------------------------------------
+  // +++ rsentropyg 
+  //**/ -------------------------------------------------------------
+  else if (!strcmp(command, "rsentropyg"))
+  {
+    sscanf(lineIn,"%s %s",command,winput);
+    if (!strcmp(winput, "-h"))
+    {
+      printf("rsentropyg: group-order sensitivity analysis using ");
+      printf("entropy measure\n");
+      printf("Syntax: rsentropyg (no argument needed).\n");
+      return 0;
+    }
+    printAsterisks(PL_INFO, 0);
+    printf("This command performs group-order sensitivity ");
+    printf("analysis based on entropy\n");
+    if (nSamples_ < 20000)
+    {
+      printf("measure using the response surface ");
+      printf("constructed from the loaded sample.\n");
+    }
+    else
+    {
+      printf("measure operating directly on the loaded sample.\n");
+    }
+    printDashes(PL_INFO, 0);
+    printf("Proceed ? (y or n to abort) ");
+    scanf("%s", lineIn2);
+    fgets(winput,5000,stdin);
+    if (lineIn2[0] != 'y') return 0;
+
+    if (nInputs_ <= 0 || psuadeIO_ == NULL || nSamples_ <= 0)
+    {
+      printf("ERROR: Sample data have not been loaded.\n");
+      return 1;
+    }
+
+    //**/ -----------------------------------------------------
+    //**/ select output
+    //**/ -----------------------------------------------------
+    snprintf(pString,100,
+             "Enter output number (1 - %d) : ", nOutputs_);
+    outputID = getInt(1, nOutputs_, pString);
+    outputID--;
+
+    psVector vecY;
+    vecY.setLength(nSamples_);
+    for (ss = 0; ss < nSamples_; ss++)
+      vecY[ss] = VecSamOutputs_[ss*nOutputs_+outputID];
+    aData adata;
+    adata.nInputs_  = nInputs_;
+    adata.nOutputs_ = 1;
+    adata.nSamples_ = nSamples_;
+    adata.iLowerB_  = VecILowerBs_.getDVector();
+    adata.iUpperB_  = VecIUpperBs_.getDVector(); 
+    adata.sampleInputs_  = VecSamInputs_.getDVector();
+    adata.sampleOutputs_ = vecY.getDVector();
+    adata.outputID_   = 0;
+    adata.printLevel_ = outputLevel_;
+    adata.ioPtr_ = psuadeIO_;
+    RSMEntropyGAnalyzer analyzer;
+    snprintf(pString, 21, "ana_entropyg_entropy");
+    char *targv[1];
+    targv[0] = (char *) pString;
+    analyzer.setParam(1, targv); 
+    analyzer.analyze(adata);
+    printf("rsentropyg results:\n"); 
+    printDashes(PL_INFO, 0);
+    double totEnt = analyzer.get_outputEntropy();
+    int nGroups = analyzer.get_ngroups();
+    for (ii = 0; ii < nGroups; ii++)
+    {
+      ddata = analyzer.get_entropyG(ii);
+      if (ddata < 0) ddata = 0;
+      if (totEnt != 0)
+        printf("Group %3d Sensitivity = %10.3e (scaled=%10.3e)\n",
+               ii+1,ddata,ddata/PABS(totEnt));
+      else
+        printf("Group %3d Sensitivity = %10.3e ",ii+1,ddata);
+    }
+    printf("Sensitivity measure = H(Y) - H(Y|X) (also = M.I.)\n"); 
+    printf("Scaled measure = 1 - H(Y|X)/H(Y) if H(Y) != 0\n"); 
+    printf("Total output entropy = %e \n",
+           analyzer.get_outputEntropy());
+    printEquals(PL_INFO, 0);
+    return 0;
+  }
+
+  //**/ -------------------------------------------------------------
+  // +++ rsdeltag 
+  //**/ -------------------------------------------------------------
+  else if (!strcmp(command, "rsdeltag"))
+  {
+    sscanf(lineIn,"%s %s",command,winput);
+    if (!strcmp(winput, "-h"))
+    {
+      printf("rsdeltag: group-order sensitivity analysis using ");
+      printf("delta measure\n");
+      printf("Syntax: rsdeltag (no argument needed).\n");
+      return 0;
+    }
+    printAsterisks(PL_INFO, 0);
+    printf("This command computes average output ");
+    printf("variation when varying groups of\n");
+    printf("inputs. As such, this measure may be useful when ");
+    printf("input distribution is\n");
+    printf("unknown, and thus non-informative distribution ");
+    printf("should be assumed. This\n");
+    printf("is done by, instead of using the distribution of the ");
+    printf("output Y, finding\n");
+    printf("the difference of the maximum and minimum of Y induced ");
+    printf("by a group\n");
+    printf("in the presence of variation in all other inputs. ");
+    printf("Mathematically, this\n");
+    printf("measure is Delta(E[Y|X]). Large measure for ");
+    printf("a given input means that\n");
+    printf("this input is important.\n"); 
+    printDashes(PL_INFO, 0);
+    if (nSamples_ >= 10000)
+    {
+      printf("\nWARNING: \n");
+      printf("The loaded sample has sample size >= 10k, which ");
+      printf("may be computationally\n");
+      printf("prohibitive for most response surface methods. ");
+    }
+    printf("Proceed ? (y or n to abort) ");
+    scanf("%s", lineIn2);
+    fgets(winput,5000,stdin);
+    if (lineIn2[0] != 'y') return 0;
+
+    if (nInputs_ <= 0 || psuadeIO_ == NULL || nSamples_ <= 0)
+    {
+      printf("ERROR: Sample data have not been loaded.\n");
+      return 1;
+    }
+
+    //**/ -----------------------------------------------------
+    //**/ select output
+    //**/ -----------------------------------------------------
+    snprintf(pString,100,
+             "Enter output number (1 - %d) : ", nOutputs_);
+    outputID = getInt(1, nOutputs_, pString);
+    outputID--;
+
+    psVector vecY;
+    vecY.setLength(nSamples_);
+    for (ss = 0; ss < nSamples_; ss++)
+      vecY[ss] = VecSamOutputs_[ss*nOutputs_+outputID];
+    aData adata;
+    adata.nInputs_  = nInputs_;
+    adata.nOutputs_ = 1;
+    adata.nSamples_ = nSamples_;
+    adata.iLowerB_  = VecILowerBs_.getDVector();
+    adata.iUpperB_  = VecIUpperBs_.getDVector(); 
+    adata.sampleInputs_  = VecSamInputs_.getDVector();
+    adata.sampleOutputs_ = vecY.getDVector();
+    adata.outputID_   = 0;
+    adata.printLevel_ = outputLevel_;
+    adata.ioPtr_ = psuadeIO_;
+    RSMEntropyGAnalyzer analyzer;
+    snprintf(pString, 21, "ana_entropyg_delta");
+    char *targv[1];
+    targv[0] = (char *) pString;
+    analyzer.setParam(1, targv); 
+    analyzer.analyze(adata);
+    printf("rsdeltag results: (D(E[Y|X]))\n"); 
+    printDashes(PL_INFO, 0);
+    int nGroups = analyzer.get_ngroups();
+    for (ii = 0; ii < nGroups; ii++)
+    {
+      ddata = analyzer.get_deltaG(ii);
+      printf("Group %3d sensitivity = %10.3e\n",ii+1,ddata);
+    }
+    printf("Overall output Ymax-Ymin = %e\n",
+           analyzer.get_outputDelta());
+    printEquals(PL_INFO, 0);
+    return 0;
+  }
+
+  //**/ -------------------------------------------------------------
+  // +++ rsshapley1 
+  //**/ -------------------------------------------------------------
+  else if (!strcmp(command, "rsshapley1"))
+  {
+    sscanf(lineIn,"%s %s",command,winput);
+    if (!strcmp(winput, "-h"))
+    {
+      printf("rsshapley1: Sensitivity analysis based on Shapley values\n");
+      printf("Syntax: rsshapley1 (no argument needed).\n");
+      return 0;
+    }
+    printAsterisks(PL_INFO, 0);
+    printf("This command computes Shapley values as sensitivity ");
+    printf("measures for each\n");
+    printf("input using the response surface constructed from ");
+    printf("the loaded sample.\n");
+    printf("You can choose between 3 different cost functions, ");
+    printf("namely,\n");
+    printf("1. Sobol'-based main effect (VCE),\n");
+    printf("2. Sobol'-based total effect (TSI), and\n");
+    printf("3. Entropy-based single-parameter effect (Ent).\n");
+    printf("The default is TSI-based method. To select others, ");
+    printf("turn on analysis\n");
+    printf("expert mode before running this command.\n");
+    printf("NOTE: An advantage of variance-based Shapley values ");
+    printf("as compared to\n");
+    printf("      Sobol' indices is that the sum of Shapley ");
+    printf("values for all inputs\n");
+    printf("      is equal to the total variance. This makes ");
+    printf("it easier to estimate\n");
+    printf("      the percentage of total variance that can ");
+    printf("be attributed to each\n");
+    printf("      input.\n");
+    printDashes(PL_INFO, 0);
+    printf("Proceed ? (y or n to abort) ");
+    scanf("%s", lineIn2);
+    fgets(winput,5000,stdin);
+    if (lineIn2[0] != 'y') return 0;
+
+    if (nInputs_ <= 0 || psuadeIO_ == NULL || nSamples_ <= 0)
+    {
+      printf("ERROR: Sample data have not been loaded.\n");
       return 1;
     }
     snprintf(pString,100,"Enter output number (1 - %d) : ",nOutputs_);
@@ -10021,8 +12212,7 @@ int PsuadeBase::RSBasedAnalysis(char *lineIn, PsuadeSession *session)
     adata.ioPtr_ = psuadeIO_;
     ShapleyAnalyzer analyzer;
     analyzer.analyze(adata);
-    //for (ii = 0; ii < nInputs_; ii++)
-    //  printf("Input %3d sensitivity = %e (M.I.)\n",ii+1,analyzer.get_mi1(ii));
+    return 0;
   }
   return 0;
 }

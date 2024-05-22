@@ -1,0 +1,22 @@
+EntropyDists - checking entropies for normal 
+               and lognormal distributions
+
+Bungee - study of local SA method and also
+         entropy-based methods (with and without
+         RS)
+
+Ishigama - extensive study of different SA
+           methods
+
+EntropyTest1 - a test problem where entropy
+               results are different from VCE
+               results
+
+EntropyTest2 - a test problem where entropy
+               results are different from VCE
+               results
+
+Note: entropy-based methods give importance
+      to distribution tails while variance-based
+      methods only quantify output variability
+

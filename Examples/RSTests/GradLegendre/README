@@ -1,11 +1,17 @@
 Derivate-based RS methods
 
-Test: simple sum of squares function
-   cc -o simulator simulator1.c -lm
-   psuade psuade1.in
-   mv psuadeData psdata
+The test problem is a quadratic function:
+    Y = X1 * X1 + X2 * X2 + X3 * X3
+
+The simulation model is simulator.c which
+computes Y as well as dY/dXi
+
+Steps:
+   cc -o simulator simulator.c -lm
+   psuade psuade.in
+   mv psuadeData simdata
    psuade
-   > load psdata
+   > load simdata
    > rscheck
      <choose output 1>
 

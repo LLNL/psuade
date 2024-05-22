@@ -1,0 +1,402 @@
+PSUADE_IO (Note : inputs not true inputs if pdf ~=U)
+3 4 6
+1 1
+  2.0000000000000000e+00
+ -3.9999999999999991e-01
+  4.0000000000000036e-01
+  4.3200000000000003e+00
+  4.0000000000000000e+00
+ -7.9999999999999982e-01
+  8.0000000000000071e-01
+2 1
+  4.0000000000000036e-01
+ -2.0000000000000000e+00
+ -3.9999999999999991e-01
+  4.3200000000000003e+00
+  8.0000000000000071e-01
+ -4.0000000000000000e+00
+ -7.9999999999999982e-01
+3 1
+ -1.2000000000000000e+00
+ -1.2000000000000000e+00
+ -2.0000000000000000e+00
+  6.8799999999999999e+00
+ -2.3999999999999999e+00
+ -2.3999999999999999e+00
+ -4.0000000000000000e+00
+4 1
+  1.2000000000000002e+00
+  2.0000000000000000e+00
+  1.2000000000000002e+00
+  6.8800000000000008e+00
+  2.4000000000000004e+00
+  4.0000000000000000e+00
+  2.4000000000000004e+00
+5 1
+ -3.9999999999999991e-01
+  1.2000000000000002e+00
+ -1.2000000000000000e+00
+  3.0400000000000000e+00
+ -7.9999999999999982e-01
+  2.4000000000000004e+00
+ -2.3999999999999999e+00
+6 1
+ -2.0000000000000000e+00
+  4.0000000000000036e-01
+  2.0000000000000000e+00
+  8.1600000000000001e+00
+ -4.0000000000000000e+00
+  8.0000000000000071e-01
+  4.0000000000000000e+00
+PSUADE_IO
+PSUADE
+INPUT
+   dimension = 3
+   variable 1 X1  =  -2.0000000000000000e+00   2.0000000000000000e+00
+   variable 2 X2  =  -2.0000000000000000e+00   2.0000000000000000e+00
+   variable 3 X3  =  -2.0000000000000000e+00   2.0000000000000000e+00
+#  PDF <inpNum> N  <mean> <std>
+#  PDF <inpNum> L  <logmean> <std>
+#  PDF <inpNum> T  <center> <halfbasewidth>
+#  PDF <inpNum> B  <alpha> <beta>
+#  PDF <inpNum> G  <alpha> <beta>
+#  PDF <inpNum> W  <lambda> <K>
+#  PDF <inpNum> IG <alpha> <beta>
+#  PDF <inpNum> C  <X0> <gamma>
+#  PDF <inpNum> E  <lambda>
+#  PDF <inpNum> F  <D1> <D2>
+#  PDF <inpNum> S  <filename> <index>
+#  NOTE: <filename> in iwrite format
+#  COR <inpNum> <inpNum> <value>
+#  num_fixed = <count>
+#  fixed <num> = <value>
+END
+OUTPUT
+   dimension = 4
+   variable 1 Y
+   variable 2 Y1
+   variable 3 Y2
+   variable 4 Y3
+END
+METHOD
+#  sampling = MC
+#  sampling = FACT
+   sampling = LH
+#  sampling = OA
+#  sampling = OALH
+#  sampling = MOAT
+#  sampling = SOBOL
+#  sampling = LPTAU
+#  sampling = METIS
+#  sampling = FAST
+#  sampling = BBD
+#  sampling = PBD
+#  sampling = FF4
+#  sampling = FF5
+#  sampling = CCI4
+#  sampling = CCI5
+#  sampling = CCIF
+#  sampling = CCF4
+#  sampling = CCF5
+#  sampling = CCFF
+#  sampling = CCC4
+#  sampling = CCC5
+#  sampling = CCCF
+#  sampling = SFAST
+#  sampling = UMETIS
+#  sampling = GMOAT
+#  sampling = GMETIS
+#  sampling = SPARSEGRID
+#  sampling = LSA
+#  sampling = RFF4
+#  sampling = RFF5
+   num_samples = 6
+   num_replications = 1
+   num_refinements = 0
+   refinement_size = 10000000
+   reference_num_refinements = 0
+#  refinement_type = adaptive
+#  randomize
+#  randomize_more
+#  an example of settings: input 1 with 3 settings
+#  input_settings 1 3
+#                 0.0
+#                 0.5
+#                 1.0
+#  random_seed = 2147483647
+END
+APPLICATION
+   driver = ./simulator
+   opt_driver = NONE
+   aux_opt_driver = NONE
+   ensemble_driver = NONE
+   ensemble_opt_driver = NONE
+#  max_parallel_jobs = 1
+#  min_job_wait_time = 1
+   max_job_wait_time = 1000000
+#  nondeterministic
+#  launch_only
+#  limited_launch_only
+#  gen_inputfile_only
+#  ensemble_run_mode
+#  launch_interval = 1
+#  save_frequency = 1000000
+END
+ANALYSIS
+##**********************************************
+## Moment - basic statistics
+#  analyzer method = Moment
+##==============================================
+## MainEffect - raw data main effect analysis
+#  analyzer method = MainEffect
+##==============================================
+## TwoParamEffect - raw data pairwise analysis
+#  analyzer method = TwoParamEffect
+##==============================================
+## ANOVA - analysis of variance
+#  analyzer method = ANOVA
+##==============================================
+## GLSA - gradient-based sensitivity analysis
+#  analyzer method = GLSA
+##==============================================
+## RSFA - response surface analysis
+#  analyzer method = RSFA
+##==============================================
+## MOAT - Morris screening analysis
+#  analyzer method = MOAT
+##==============================================
+## SOBOL - Sobol' analysis on Sobol' samples
+#  analyzer method = Sobol
+##==============================================
+## Correlation - classical correlation analysis
+#  analyzer method = Correlation
+##==============================================
+## Integration - find area under response surface
+#  analyzer method = Integration
+##==============================================
+## FAST - total sensitivity analysis using FAST samples
+#  analyzer method = FAST
+##==============================================
+## FF - screening using fractional factorial samples
+#  analyzer method = FF
+##==============================================
+## PCA - principal component analysis
+#  analyzer method = PCA
+##==============================================
+## RSMSobol1 - response surface based main effect
+#  analyzer method = RSMSobol1
+##==============================================
+## RSMSobol2 - response surface based pairwise effect
+#  analyzer method = RSMSobol2
+##==============================================
+## RSMSobolTSI - response surface based total effect
+#  analyzer method = RSMSobolTSI
+##==============================================
+## RSMSobolG - response surface based group effect
+#  analyzer method = RSMSobolG
+##==============================================
+## ARSM - adaptive NN-based response surface analysis
+#  analyzer method = ARSMNN
+##==============================================
+## ARSM - adaptive MARS-based response surface analysis
+#  analyzer method = ARSM
+##==============================================
+## REL - reliability analysis
+#  analyzer method = REL
+##==============================================
+## DELTA - Delta test for parameter screening
+#  analyzer method = DELTA
+##==============================================
+## LSA - local sensitivity analysis
+#  analyzer method = LSA
+##**********************************************
+   analyzer output_id  = 1
+##**********************************************
+##RS: MARS - multivariate adaptive regression
+   analyzer rstype = MARS
+##==============================================
+##RS: linear - linear regression
+#  analyzer rstype = linear
+##==============================================
+##RS: quadratic - quadratic regression
+#  analyzer rstype = quadratic
+##==============================================
+##RS: cubic - third-order polynomial
+#  analyzer rstype = cubic
+##==============================================
+##RS: quartic - fourth-order polynomial
+#  analyzer rstype = quartic
+##==============================================
+##RS: selective - selected polynomial order terms
+#  analyzer rstype = selective_regression
+##==============================================
+##RS: GP1 - Gaussian process by MacKay
+#  analyzer rstype = GP1
+##RS: GP3 - Gaussian process by Tong
+#  analyzer rstype = GP3
+##==============================================
+##RS: SVM - support vector machine
+#  analyzer rstype = SVM
+##==============================================
+##RS: PWL - piecewise linear approximation
+#  analyzer rstype = PWL
+##==============================================
+##RS: TGP - treed Gaussian process by Lee et al.
+#  analyzer rstype = TGP
+##==============================================
+##RS: MARSBag - MARS with bagging
+#  analyzer rstype = MARSBag
+##==============================================
+##RS: sum_of_trees based on repeated bisections
+#  analyzer rstype = sum_of_trees
+##==============================================
+##RS: Legendre - Legendre polynomial regression
+#  analyzer rstype = Legendre
+##==============================================
+##RS: user - user provides basis functions
+#  analyzer rstype = user_regression
+##==============================================
+##RS: sparse_grid - only with special quadrature pts 
+#  analyzer rstype = sparse_grid_regression
+##==============================================
+##RS: Krigining - using 2nd order correlation
+#  analyzer rstype = Kriging
+##==============================================
+##RS: splines - splines on 2D/3D grid samples
+#  analyzer rstype = splines
+##==============================================
+##RS: KNN - k-nearest neighbors
+#  analyzer rstype = KNN
+##==============================================
+##RS: RBF - radial basis function
+#  analyzer rstype = RBF
+##==============================================
+##RS: ACOSSO - Curt Storlie's ACOSSO
+#  analyzer rstype = Acosso
+##==============================================
+##RS: BSSANOVA - Curt Storlie's BSSANOVA
+#  analyzer rstype = Bssanova
+##==============================================
+##RS: psuade_regression - PSUADE's internal function
+#  analyzer rstype = psuade_regression
+##==============================================
+##RS: RBFBag - RBF with bootstraps
+#  analyzer rstype = RBFBag
+##==============================================
+##RS: PLS - partial least squares (correlated inputs)
+#  analyzer rstype = PLS
+##==============================================
+##RS: MRBF - multiple RBF
+#  analyzer rstype = MRBF
+##==============================================
+##RS: MGP3 - multiple GP3
+#  analyzer rstype = MGP3
+##==============================================
+##RS: MMARS - multiple MARS
+#  analyzer rstype = MMARS
+##==============================================
+##RS: MTGP - multiple TGP
+#  analyzer rstype = MTGP
+##==============================================
+##RS: MNN - multi-domain Neural Network
+#  analyzer rstype = MNN
+##==============================================
+#  analyzer rs_legendre_order = -1
+#  analyzer rs_mars_num_bases = -1
+#  analyzer rs_mars_interaction = -1
+#  analyzer rs_num_mars = -1
+#  analyzer rs_kriging_mode = -1
+#  analyzer rs_kriging_tol = -1
+#  analyzer opt_save_history
+#  analyzer opt_use_history
+#  analyzer regression_wgt_id = -1
+#  graphics
+#  sample_graphics
+   analyzer threshold = 1.000000e+00
+   rs_max_pts = 10000
+##==============================================
+## rs_constraint - for constrained UA/SA analysis
+#  analyzer rs_constraint = psData indexFile Lbnd Ubnd
+##==============================================
+## moat_constraint - for constrained MOAT analysis
+## analyzer moat_constraint = psData indexFile Lbnd Ubnd
+##==============================================
+## rs_index_file - use rs but fix some inputs
+#  analyzer rs_index_file = <indexFile>
+##==============================================
+## rs_index_sample_file - sample for some inputs
+#  analyzer rs_index_sample_file = <sampleFile>
+##==============================================
+## crude - optimize in raw data or rs spaces
+#  optimization method = crude
+##==============================================
+## minpack - optimize with user provided gradients
+#  optimization method = minpack
+##==============================================
+## sm - space mapping optimization
+#  optimization method = sm
+##==============================================
+## mm - manifold mapping optimization
+#  optimization method = mm
+##==============================================
+## mm - adaptive manifold mapping optimization
+#  optimization method = mm_adaptive
+##==============================================
+## cobyla: nonlinear inequality-constrained opt
+#  optimization method = cobyla
+##==============================================
+## bobyqa: bound-constrained optimization
+#  optimization method = bobyqa
+##==============================================
+## lincoa: linear inequality constrained opt
+#  optimization method = lincoa
+##==============================================
+## newuoa: unconstrained optimization
+#  optimization method = newuoa
+##==============================================
+## lbfgs - with derivatives
+#  optimization method = lbfgs
+##==============================================
+##  sce: genetic algorithm-type optimization
+#  optimization method = sce
+##==============================================
+## moo - multi-objective optimization
+#  optimization method = moo
+##==============================================
+## ouu - optimization under uncertainty
+#  optimization method = ouu
+##==============================================
+## ouu_unconstr - ouu with no constraints 
+#  optimization method = ouu_unconstr
+##==============================================
+## ouu_ineq_constr - ouu with inequality constraints 
+#  optimization method = ouu_ineq_constr
+##==============================================
+## ouu_lbfgs - ouu with derivatives
+#  optimization method = ouu_lbfgs
+##==============================================
+## nomad - mixed integer 
+#  optimization method = nomad
+##==============================================
+## ouu - mixed integer 
+#  optimization method = ouu_minlp
+##==============================================
+## pso - particle swarm 
+#  optimization method = pso
+#***********************************************
+#  optimization num_starts = 0
+#  optimization use_response_surface
+#  optimization print_level = 0
+#  optimization num_fmin = 0
+#  optimization output_id = 0
+#  optimization max_feval = 10000
+#  optimization deltax = 1.0e-6
+#  optimization fmin = not defined
+#  optimization cutoff = not defined
+#  optimization tolerance = not defined
+   printlevel  1
+#  file_write matlab
+#  use_input_pdfs
+#  constraint_op_and
+END
+END

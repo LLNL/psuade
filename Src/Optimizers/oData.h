@@ -52,6 +52,7 @@ public:
    double optimalY_;
    double tolerance_;
    double deltaX_;
+   double targetY_; /* expected fmin */
    int    maxFEval_;
    FunctionInterface *funcIO_;
    char targetFile_[200];

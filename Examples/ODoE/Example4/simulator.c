@@ -23,13 +23,6 @@ int main(int argc, char **argv)
               exp(-10*(X[1]-0.25)*(X[1]-0.25)) * X[2];  
    fOut = fopen(argv[2], "w");
    fprintf(fOut, " %24.16e\n", Y);
-   fprintf(fOut, " 0\n");
-   fprintf(fOut, " 0\n");
-   Y = 0.5 * exp(-10*(X[0]-0.75)*(X[0]-0.75)) * 
-             exp(-10*(X[1]-0.75)*(X[1]-0.75)) +  
-       0.25 * exp(-10*(X[0]-0.25)*(X[0]-0.25)) * 
-              exp(-10*(X[1]-0.25)*(X[1]-0.25));  
-   fprintf(fOut, " %24.16e\n", Y);
    fclose(fOut);   
 }
 

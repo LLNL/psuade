@@ -65,12 +65,12 @@ int RFractFactSampling::initialize(int initLevel)
   //**/ ----------------------------------------------------------------
   if (nSamples_ == 0)
   {
-    printf("RFractFactSampling::initialize ERROR - nSamples = 0.\n");
+    printf("RFractFactSampling initialize ERROR: nSamples = 0.\n");
     exit(1);
   }
   if (nInputs_ == 0)
   {
-    printf("RFractFactSampling::initialize ERROR - input not set up.\n");
+    printf("RFractFactSampling initialize ERROR: input not set up.\n");
     exit(1);
   }
 
@@ -112,11 +112,11 @@ int RFractFactSampling::initialize(int initLevel)
   }
   nSamples_ = (int) pow(2.0001, (double) nInputCnt);
   nReps = 1;
-  if (psConfig_.SamExpertModeIsOn())
-  {
-    snprintf(pString,100,"How many replications ? (1 - 10000) : ");
-    nReps = getInt(1, 10000, pString);
-  }
+  printf("Replicated FF INFO: nSamples for one replication = %d\n",
+         nSamples_);
+  snprintf(pString,100,"How many replications ? (1 - 10000) : ");
+  nReps = getInt(1, 10000, pString);
+
   nSamples_ *= nReps;
   allocSampleData();
 
@@ -125,9 +125,9 @@ int RFractFactSampling::initialize(int initLevel)
   //**/ ----------------------------------------------------------------
   if (printLevel_ > 3)
   {
-    printf("RFractFactSampling::initialize: nSamples = %d\n", nSamples_);
-    printf("RFractFactSampling::initialize: nInputs  = %d\n", nInputs_);
-    printf("RFractFactSampling::initialize: nOutputs = %d\n", nOutputs_);
+    printf("RFractFactSampling initialize: nSamples = %d\n",nSamples_);
+    printf("RFractFactSampling initialize: nInputs  = %d\n",nInputs_);
+    printf("RFractFactSampling initialize: nOutputs = %d\n",nOutputs_);
     if (printLevel_ > 4)
       for (ii = 0; ii < nInputs_; ii++)
         printf("    RFractFactSampling input %3d = [%e %e]\n", ii+1,
@@ -223,7 +223,7 @@ int RFractFactSampling::initialize(int initLevel)
 // ------------------------------------------------------------------------
 int RFractFactSampling::refine(int, int, double, int, double *)
 {
-  printf("RFractFactSampling::refine ERROR - not available.\n");
+  printf("RFractFactSampling refine ERROR: not available.\n");
   exit(1);
   return 0;
 }

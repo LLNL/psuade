@@ -280,7 +280,7 @@ int PsuadeBase::run()
   if (anaMethod == PSUADE_ANA_ARSMNN)
   {
     runAdaptiveNN();
-    printf("Advice: Use MARS response surface for the adaptive sample.\n");
+    printf("INFO: Use MARS response surface for the adaptive sample.\n");
   }
   //**/ use MARS with bagging (if initial sample not METIS)
   else if (anaMethod == PSUADE_ANA_ARSMMB) 
@@ -1332,12 +1332,12 @@ int PsuadeBase::runEnsemble()
     iteration = 0;
     while (jobsCompleted < nSamples)
     {
-      iteration++;
       printOutTS(PL_INFO,
                  "PSUADE ensemble run begins (parallelism = %d)\n",
                  maxParallelJobs);
       while (jobsCompleted < nSamples)
       {
+        iteration++;
         parallelJobCount = 0;
         for (sampleID = 0; sampleID < nSamples; sampleID++)
         {

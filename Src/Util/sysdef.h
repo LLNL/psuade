@@ -64,6 +64,8 @@
 #define PSUADE_SAMP_RFF4        30
 #define PSUADE_SAMP_RFF5        31
 #define PSUADE_SAMP_GP          32
+#define PSUADE_SAMP_SOBOL2      33
+#define PSUADE_SAMP_SOBOLG      34
 
 #define PSUADE_NUM_ANA          32
 #define PSUADE_ANA_MOMENT       1
@@ -103,7 +105,7 @@
    have been hardwired. 
    both MGP1 and PWL are not used
 */
-#define PSUADE_NUM_RS           36
+#define PSUADE_NUM_RS           37
 #define PSUADE_RS_MARS          0
 #define PSUADE_RS_REGR1         1
 #define PSUADE_RS_REGR2         2
@@ -140,9 +142,10 @@
 #define PSUADE_RS_QGP           33
 #define PSUADE_RS_LOCAL         34
 #define PSUADE_RS_MDNN          35
-#define PSUADE_RS_PWL           36
-#define PSUADE_RS_REGRLC        37
-#define PSUADE_RS_CSREG         38
+#define PSUADE_RS_PADE          36
+#define PSUADE_RS_PWL           37
+#define PSUADE_RS_REGRLC        38
+#define PSUADE_RS_CSREG         39
 
 #define PSUADE_GRAPHICS         1
 #define PSUADE_SAMPLE_GRAPHICS  2

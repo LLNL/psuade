@@ -63,6 +63,7 @@ public:
   int  RSCodeGen_;
   int  RSCodeGenSave_;
   int  RSConstraintSetOp_;
+  int  Diagnostics_;
   psMatrix MatCommonUse_;
   psVector VecCommonUse_;
   int  intCommonUse_;
@@ -97,6 +98,9 @@ public:
 
   // remove parameter 
   int removeParameter(const char *);
+
+  // remove parameter based on substring match
+  int removeParameter2(const char *);
 
   // write file
   // fname : configure file name
@@ -166,6 +170,11 @@ public:
   bool GMModeIsOn();
   void GMModeOn();
   void GMModeOff();
+
+  // diagnostics mode
+  bool DiagnosticsIsOn();
+  void DiagnosticsOn();
+  void DiagnosticsOff();
 
   // random seed
   void setRandomSeed(long);

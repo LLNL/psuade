@@ -1,0 +1,23 @@
+sys cc -o simulator simulator.c -lm
+# run simulations and rename output to sam200.psu
+run psuade.in
+rename psuadeData sam2000.psu
+# split sam2000.psu into 2 samples
+load sam2000.psu
+ssplit
+y
+200
+2
+# rename the 2 samples to sam200.psu and sam1800.psu
+rename psuadeSample1 sam200.psu
+rename psuadeSample2 sam1800.psu
+load sam200.psu
+# run hold-out test using sam200.psu to build RS
+rstest_hs
+sam1800.psu
+y
+1
+11
+n
+q
+

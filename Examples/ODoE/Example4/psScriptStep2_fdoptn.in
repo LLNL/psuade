@@ -1,0 +1,18 @@
+# use D-optimal
+setranseed 943421232321
+odoeu_fdoptn
+y
+3
+25
+4
+1000
+y
+10
+psuade.in
+3
+0
+PriorSample
+n
+CandidateSet0
+q
+

@@ -704,22 +704,26 @@ int GradLegendreRegression::analyze(psVector VecX, psVector VecY)
   {
     NRevised = N;
     for (nn = 1; nn < N; nn++)
-      if (VecS[nn-1] > 0 && VecS[nn]/VecS[nn-1] < 1.0e-8) NRevised--;
+      if (VecS[nn-1] > 0 && VecS[nn]/VecS[nn-1] < 1.0e-8) break;
+    NRevised = nn;
   }
   if (NRevised < N)
   {
-    printf("* GradLegendreRegression ERROR: true rank of sample = %d\n",
-           NRevised);
-    printf("*                               need %d\n", N);
-    printf("*                               Try lower order.\n");
-    return -1;
+    printf("GradLegendreRegression WARNING: True matrix rank = %d (N=%d)\n",
+           NRevised,N);
+    if (psConfig_.InteractiveIsOn() && outputLevel_ > 1)
+    {
+      printf("INFO: This can be due to the quality of the sample.\n");
+      for (nn = 0; nn < N; nn++)
+        printf("Singular value %5d = %e\n",nn+1,VecS[nn]);
+    }
   }
   if (psConfig_.RSExpertModeIsOn())
   {
-    printf("GradLegendreReg: singular values for the Vandermonde matrix\n");
-    printf("The VERY small ones may cause poor numerical accuracy,\n");
-    printf("but not keeping them may ruin the approximation power.\n");
-    printf("So, select them judiciously.\n");
+    printf("GradLegendreReg: Singular values for the Vandermonde matrix\n");
+    printf(" - The VERY small ones may cause poor numerical accuracy\n");
+    printf(" - but not keeping them may ruin the approximation power\n");
+    printf(" - So, select them judiciously\n");
     for (nn = 0; nn < N; nn++)
       printf("Singular value %5d = %e\n", nn+1, VecS[nn]);
     snprintf(pString,100,"How many to keep (1 - %d) ? ", N);
@@ -728,15 +732,10 @@ int GradLegendreRegression::analyze(psVector VecX, psVector VecY)
   }
   else
   {
-    NRevised = N;
-    for (nn = 1; nn < N; nn++)
-    {
-      if (VecS[nn-1] > 0 && VecS[nn]/VecS[nn-1] < 1.0e-8)
-      {
-        VecS[nn] = 0.0;
-        NRevised--;
-      }
-    }
+    for (nn = NRevised; nn < N; nn++) VecS[nn] = 0.0;
+    if (NRevised < N)
+      printf("GradLegendre INFO: Number of singular values removed = %d\n",
+             N-NRevised);
   }
 
   //**/ ==============================================================
@@ -770,7 +769,7 @@ int GradLegendreRegression::analyze(psVector VecX, psVector VecY)
   //**/ compute residual
   //**/ ==============================================================
   fp = NULL;
-  if (psConfig_.MasterModeIsOn())
+  if (psConfig_.MasterModeIsOn() && psConfig_.InteractiveIsOn())
   {
     fp = fopen("grad_legendre_regression_err_file.m", "w");
     if(fp == NULL)

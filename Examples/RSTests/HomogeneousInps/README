@@ -15,5 +15,5 @@ a few response surface methods are available:
 Homogeneous regression wins because the model is quadratic.
 
 - run psuade on psuade50.in or psuade100.in
-- run rscheck using homogeneous Legendre or GP
+- run rscheck using homogeneous Legendre (HLR) or GP (HGP)
 

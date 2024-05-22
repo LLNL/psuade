@@ -115,27 +115,27 @@ RBF::RBF(int nInputs,int nSamples) : FuncApprox(nInputs,nSamples)
     snprintf(pString,100,"Enter new threshold for SVD (> 0 but << 1) : ");
     svdThresh_ = getDouble(pString);
 
-    snprintf(pString,100,"RBF_kernel = %d", type_);
+    snprintf(pString,100,"RS_RBF_kernel = %d", type_);
     psConfig_.putParameter(pString);
-    snprintf(pString,100,"RBF_scale = %e", gaussScale_);
+    snprintf(pString,100,"RS_RBF_scale = %e", gaussScale_);
     psConfig_.putParameter(pString);
-    snprintf(pString,100,"RBF_thresh = %e", svdThresh_);
+    snprintf(pString,100,"RS_RBF_thresh = %e", svdThresh_);
     psConfig_.putParameter(pString);
   }
   else
   {
-    cString = psConfig_.getParameter("RBF_kernel");
+    cString = psConfig_.getParameter("RS_RBF_kernel");
     if (cString != NULL)
     {
       sscanf(cString, "%s %s %d", winput1, winput2, &type_);
       if (type_ < 0 || type_ > 3) type_ = 0;
     }
 
-    cString = psConfig_.getParameter("RBF_scale");
+    cString = psConfig_.getParameter("RS_RBF_scale");
     if (cString != NULL)
       sscanf(cString, "%s %s %lg", winput1, winput2, &gaussScale_);
 
-    cString = psConfig_.getParameter("RBF_thresh");
+    cString = psConfig_.getParameter("RS_RBF_thresh");
     if (cString != NULL)
       sscanf(cString, "%s %s %lg", winput1, winput2, &svdThresh_);
   }

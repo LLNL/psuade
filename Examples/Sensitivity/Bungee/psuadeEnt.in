@@ -1,0 +1,28 @@
+PSUADE
+INPUT
+   dimension = 3
+   variable   1 H   = 40  60
+   variable   2 M   = 67  74
+   variable   3 sig = 20  40
+END
+OUTPUT
+   dimension = 1
+   variable 1 Y1
+END
+METHOD
+   sampling = MC
+   num_samples = 1
+   randomize
+   random_seed = 41491431
+END
+APPLICATION
+#  the next 3 lines are for ensemble runs
+   ensemble_driver = ./ensemble_simulator
+   ensemble_run_mode
+   max_parallel_jobs = 5000
+END
+ANALYSIS
+   analyzer output_id  = 1
+   printlevel 1
+END
+END

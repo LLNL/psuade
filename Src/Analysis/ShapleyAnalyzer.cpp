@@ -5,16 +5,17 @@
 // All rights reserved.
 //
 // Please see the COPYRIGHT and LICENSE file for the copyright notice,
-// disclaimer, contact information and the GNU Lesser General Public License.
+// disclaimer, contact information and the GNU Lesser General Public 
+// License.
 //
-// PSUADE is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free 
-// Software Foundation) version 2.1 dated February 1999.
+// PSUADE is free software; you can redistribute it and/or modify it under 
+// the terms of the GNU Lesser General Public License (as published by the 
+// Free Software Foundation) version 2.1 dated February 1999.
 //
-// PSUADE is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the IMPLIED WARRANTY OF MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE.  See the terms and conditions of the GNU Lesser
-// General Public License for more details.
+// PSUADE is distributed in the hope that it will be useful, but WITHOUT 
+// ANY WARRANTY; without even the IMPLIED WARRANTY OF MERCHANTABILITY 
+// or FITNESS FOR A PARTICULAR PURPOSE.  See the terms and conditions of 
+// the GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program; if not, write to the Free Software Foundation,
@@ -23,8 +24,387 @@
 // Functions for the class ShapleyAnalyzer
 // AUTHOR : CHARLES TONG
 // DATE   : 2023
+// ************************************************************************
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "ShapleyAnalyzer.h"
+#include "SobolAnalyzer.h"
+#include "RSMEntropy1Analyzer.h"
+#include "Psuade.h"
+#include "sysdef.h"
+#include "PsuadeUtil.h"
+#include "PrintingTS.h"
+#include "PDFManager.h"
+#include "FuncApprox.h"
+#include "PDFManager.h"
+#include "ProbMatrix.h"
+#ifdef PSUADE_OMP
+#include <omp.h>
+#endif
+
+#define PABS(x) (((x) > 0.0) ? (x) : -(x))
+#define NSAM 1000
+
 // ------------------------------------------------------------------------
-// Algorithm based on that described in
+// Both uniform and adaptive seem to be stable for entropy-based method
+// although they give slightly different values
+// ------------------------------------------------------------------------
+#define _ADAPTIVE_
+// ------------------------------------------------------------------------
+
+// ************************************************************************
+// constructor 
+// ------------------------------------------------------------------------
+ShapleyAnalyzer::ShapleyAnalyzer() : Analyzer(), nInputs_(0)
+{
+  setName("Shapley");
+  sampleSize_ = 100000;
+  costFunction_ = 1;   /* 0: VCE-based, 1: TSI-based, 2: entropy-based */
+  MaxMapLength_=10000; /* for entropy-based method */
+}
+
+// ************************************************************************
+// destructor 
+// ------------------------------------------------------------------------
+ShapleyAnalyzer::~ShapleyAnalyzer()
+{
+}
+
+// ************************************************************************
+// perform analysis
+// ------------------------------------------------------------------------
+double ShapleyAnalyzer::analyze(aData &adata)
+{
+  printAsterisks(PL_INFO, 0);
+  printf("*             Shapley Sensitivity Analysis\n"); 
+  printDashes(PL_INFO, 0);
+  printOutTS(PL_INFO,
+       "* Turn on analysis expert mode to choose different method.\n");
+  printOutTS(PL_INFO,
+       "* Turn on higher print level to see more information.\n");
+  printEquals(PL_INFO, 0);
+
+  //**/ ---------------------------------------------------------------
+  //**/ extract data
+  //**/ ---------------------------------------------------------------
+  int nInputs  = adata.nInputs_;
+  nInputs_ = nInputs;
+  int nOutputs = adata.nOutputs_;
+  int nSamples = adata.nSamples_;
+
+  //**/ ---------------------------------------------------------------
+  //**/ error checking
+  //**/ ---------------------------------------------------------------
+  if (nInputs <= 0 || nSamples <= 0 || nOutputs <= 0) 
+  {
+    printOutTS(PL_ERROR,"ShapleyAnalyzer ERROR: invalid arguments.\n");
+    printOutTS(PL_ERROR,"    nInputs  = %d\n", nInputs);
+    printOutTS(PL_ERROR,"    nOutputs = %d\n", nOutputs);
+    printOutTS(PL_ERROR,"    nSamples = %d\n", nSamples);
+    return PSUADE_UNDEFINED;
+  } 
+
+  //**/ ---------------------------------------------------------------
+  //**/ check for valid samples
+  //**/ ---------------------------------------------------------------
+  int ss, errCnt=0, outputID = adata.outputID_;
+  for (ss = 0; ss < nSamples; ss++)
+    if (adata.sampleOutputs_[ss*nOutputs+outputID]>0.9*PSUADE_UNDEFINED)
+      errCnt++;
+  if (errCnt > 0)
+  {
+    printf("ShapleyAnalyzer ERROR: Found %d invalid sample points.\n",
+           errCnt);
+    exit(1);
+  }
+
+  //**/ ---------------------------------------------------------------
+  //**/ analyze using one of the 3 algorithms
+  //**/ ---------------------------------------------------------------
+  if (psConfig_.InteractiveIsOn())
+  {
+    char pString[1000];
+    printAsterisks(PL_INFO, 0);
+    printOutTS(PL_INFO,"You can select one of the 3 below : \n");
+    printOutTS(PL_INFO,"0. Sobol'-based method : main effect\n");
+    printOutTS(PL_INFO,"1. Sobol'-based method : total effect\n");
+    printOutTS(PL_INFO,"2. Entropy-based method : E[H(Y|X)]\n");
+    snprintf(pString,100,"Select 0, 1 or 2 : ");
+    costFunction_ = getInt(0, 2, pString);
+  }
+  if      (costFunction_ == 0) return analyzeVCE(adata);
+  else if (costFunction_ <= 1) return analyzeTSI(adata);
+  else                         return analyzeEntropy(adata);
+}
+ 
+// ************************************************************************
+// perform analysis using VCE as cost function
+// The VCE-based Algorithm uses
+// (1) Sobol' first-order sensitivity as the Shapley cost function, 
+// (2) Sobol' algorithm to compute the first-order sensitivity effect, 
+// (3) Monte-Carlo algorithm to compute approximate Shapley effect (instead
+//     of going through all permutations) 
+// phi(i) = sum_{u \in X\i} [1/m C(m-1,|u|)^{-1} (vce(u+i) - vce(u))]
+// where m = nInputs, X is the set of all m inputs
+//       1/m C(m-1,|u|)^{-1} = (m - 1 - |u|)! |u|! / m!
+//
+// Hence, if u is a subset of all the inputs X (let D(u,i)=vce(u+i)-vce(u))
+// phi(i) = sum_{u \in X\i} [1/m C(m-1,|u|)^{-1} D(u,i)
+//        = 1/m sum_{k=0}^{m-1} C(m-1,k)^-1 sum_{u \in X\i, |u|=k} D(u,i)
+// where
+// vce(u)   = int_x int_y F(x) F(x_u) p(x) p(y) dx dy
+// vce(u+i) = int_x int_y F(x) F(x_u+i) p(x) p(y) dx dy
+// 
+// Let sample size be N, S_n(k~i) is the subset of size k for sample n
+//     that does not contain input i
+// Let there be 2 random matrices M1 and M2 (N x nInputs)
+// Let F_n(M1(S_n(k~i))) = model output Y by taking subset S_n(k~i) from 
+//     the n-th sample point in M1 and the rest from the n-th sample
+//     point of M2 including input i (S_n(k~i) does not have i)
+// Let F_n(M1(S_n(k~i)+i)) = model output Y by taking subset S_n(k~i) 
+//     plue input i from the n-th sample point in M1 and the rest from 
+//     the n-th sample point of M2 
+// Let F_n(M1) = model output Y by taking all inputs from M1 sample n
+//
+// phi(i) = sum_n sum_i (F_n(M1) F_n(M1(S_n(k~i)+i)) - u^2) -
+//                      (F_n(M1) F_n(M1(S_n(k~i))) - u^2)
+//        = sum_n sum_i (F_n(M1) F_n(M1(S_n(k~i)+i))) -
+//                      (F_n(M1) F_n(M1(S_n(k~i)))) 
+//        = sum_n sum_i  F_n(M1) [F_n(M1(S_n(k~i)+i)) - F_n(M1(S_n(k~i)))] 
+// ------------------------------------------------------------------------
+double ShapleyAnalyzer::analyzeVCE(aData &adata)
+{
+  //**/ ---------------------------------------------------------------
+  //**/ extract data
+  //**/ ---------------------------------------------------------------
+  int nInputs  = adata.nInputs_;
+  int nOutputs = adata.nOutputs_;
+  int nSamples = adata.nSamples_;
+
+  //**/ ---------------------------------------------------------------
+  //**/ get sample size
+  //**/ ---------------------------------------------------------------
+  sampleSize_ = 100000;
+  if (psConfig_.InteractiveIsOn() && psConfig_.AnaExpertModeIsOn())
+  {
+    char pString[1000];
+    printAsterisks(PL_INFO, 0);
+    printOutTS(PL_INFO,"* SobolVCE-based Shapley uses a large sample ");
+    printOutTS(PL_INFO,"to compute sensitivity\n");
+    printOutTS(PL_INFO,"* indices. The default sample size M is %d.\n",
+               sampleSize_);
+    printOutTS(PL_INFO,"* You may, however, select a different M.\n");
+    printOutTS(PL_INFO,"* NOTE: Large M may take long time, but ");
+    printOutTS(PL_INFO,"gives more accurate results.\n");
+    printEquals(PL_INFO, 0);
+    snprintf(pString,100,"Enter M (suggestion: 10000-1000000) : ");
+    sampleSize_ = getInt(10000, 10000000, pString);
+  }
+
+  //**/ ---------------------------------------------------------------
+  //**/ create 2 random samples (vecXM1, vecXM2) 
+  //**/ It is going to march from M1 to M2 in random input order
+  //**/ ---------------------------------------------------------------
+  srand48(15485863);
+  psVector vecXM1, vecXM2;
+  create2RandomSamples(adata, vecXM1, vecXM2);
+
+  //**/ ---------------------------------------------------------------
+  //**/ create a random integer matrix (matRandInt)
+  //**/ (used to input order randomization)
+  //**/ ---------------------------------------------------------------
+  psIMatrix matRandInt;
+  createRandomIntMatrix(sampleSize_, nInputs, matRandInt);
+
+  //**/ ---------------------------------------------------------------
+  //**/ create response surface 
+  //**/ ---------------------------------------------------------------
+  FuncApprox *faPtr = createResponseSurface(adata);
+  if (faPtr == NULL) return -1;
+
+  //**/ ---------------------------------------------------------------
+  //**/ evaluate vecLargeX using response surface ==> vecLargeY 
+  //**/ ---------------------------------------------------------------
+  psVector vecYM1;
+  vecYM1.setLength(sampleSize_);
+  faPtr->evaluatePoint(sampleSize_,vecXM1.getDVector(),
+                       vecYM1.getDVector());
+     
+  //**/ ---------------------------------------------------------------
+  //**/ compute basic statistics
+  //**/ ---------------------------------------------------------------
+  double dmean, dVar;
+  int status = computeBasicStatistics(vecYM1, dmean, dVar);
+  dVar = dVar * dVar;
+  if (psConfig_.InteractiveIsOn())
+  {
+    printOutTS(PL_INFO,"Shapley: Sample mean     = %10.3e\n",dmean);
+    printOutTS(PL_INFO,"Shapley: Sample variance = %10.3e\n",dVar);
+  }
+  if (dVar == 0)
+  {
+    printf("Shapley INFO: Variance = 0 ==> No input sensitivities.\n");
+    VecShapleys_.setLength(nInputs_);
+    return 0;
+  }
+
+  //**/ ---------------------------------------------------------------
+  //**/ perform Shapley analysis (vecXM1, vecYM1 has M1)
+  //**/ ---------------------------------------------------------------
+  int    ii, ss, kk, ind, count;
+  double ddata;
+  VecShapleys_.setLength(nInputs_);
+  VecShapleyStds_.setLength(nInputs_);
+  //**/ XMM, YMM have S(k~i) from M1 and the rest from M2
+  psVector vecXMM, vecYMM;
+  vecXMM.setLength(sampleSize_*nInputs);
+  vecYMM.setLength(sampleSize_);
+  //**/ XMP, YMP have S(k~i)+{i} from M1 and the rest from M2
+  psVector vecXMP, vecYMP;
+  vecXMP.setLength(sampleSize_*nInputs);
+  vecYMP.setLength(sampleSize_);
+
+  for (ii = 0; ii < nInputs; ii++)
+  {
+    //**/ create a sample vecXMM which has random selection from M1
+    //**/ and the rest as well as the i-th input coming from M2
+    //**/ XMM ==> XMM = M2, XMM(S_n(k~i)) = M1
+    //**/ XMP ==> XMM = M2, XMM(S_n(k~i)+i) = M1
+    for (ss = 0; ss < sampleSize_; ss++)
+    {
+      //**/ for XMM, first fill the whole row with M2
+      for (kk = 0; kk < nInputs; kk++)
+        vecXMM[ss*nInputs+kk] = vecXM2[ss*nInputs+kk];
+      //**/ then fill with M1 until index ii is encountered
+      //**/ (excluding ii)
+      for (kk = 0; kk < nInputs; kk++)
+      {
+        ind = matRandInt.getEntry(ss, kk);
+        if (ind == ii) break;
+        vecXMM[ss*nInputs+ind] = vecXM1[ss*nInputs+ind];
+      }
+      //**/ for XMP, first fill the whole row with M2
+      for (kk = 0; kk < nInputs; kk++)
+        vecXMP[ss*nInputs+kk] = vecXM2[ss*nInputs+kk];
+      //**/ then fill with M1 until index ii is encountered
+      //**/ (including ii)
+      for (kk = 0; kk < nInputs; kk++)
+      {
+        ind = matRandInt.getEntry(ss, kk);
+        vecXMP[ss*nInputs+ind] = vecXM1[ss*nInputs+ind];
+        if (ind == ii) break;
+      }
+    }
+    
+    //**/ evaluate the modified sample without input ii 
+    faPtr->evaluatePoint(sampleSize_,vecXMM.getDVector(),
+                         vecYMM.getDVector());
+
+    //**/ evaluate the modified sample with input ii 
+    faPtr->evaluatePoint(sampleSize_,vecXMP.getDVector(),
+                         vecYMP.getDVector());
+
+    //**/ sum F_n(M1) [F_n(M2(S_n(k~i)+i)) - F_n(M2(S_n(k~i)))] 
+    for (ss = 0; ss < sampleSize_; ss++)
+    {
+      ddata = vecYM1[ss] * (vecYMP[ss] - vecYMM[ss]);
+      VecShapleys_[ind] += ddata; 
+      VecShapleyStds_[ind] += (ddata * ddata); 
+    }
+  }
+
+  //**/ take average of all sample points
+  for (ii = 0; ii < nInputs; ii++)
+  {
+    VecShapleys_[ii] /= sampleSize_;
+    VecShapleyStds_[ii] /= sampleSize_;
+  }
+
+  printOutTS(PL_INFO, "Shapley Values (VCE-based):\n");
+  double totalChk=0, lb, ub;
+  for (ii = 0; ii < nInputs; ii++)
+  {
+    VecShapleyStds_[ii] = 
+      (VecShapleyStds_[ii]-pow(VecShapleys_[ii],2.0))/(sampleSize_-1); 
+    lb = VecShapleys_[ii] - 1.96*VecShapleyStds_[ii];
+    ub = VecShapleys_[ii] + 1.96*VecShapleyStds_[ii];
+    if (VecShapleys_[ii] < 0) VecShapleys_[ii] = 0;
+    if (lb < 0) lb = 0;
+    if (ub < 0) ub = - ub;
+    printOutTS(PL_INFO,
+      "  Input %3d = %9.3e [%9.3e, %9.3e], Normalized = %9.3e\n",
+      ii+1,VecShapleys_[ii],lb,ub,VecShapleys_[ii]/dVar);
+    totalChk += VecShapleys_[ii];
+  }
+  printOutTS(PL_INFO,"Sum of Shapley values = %10.4e\n",totalChk);
+  printDashes(PL_INFO, 0);
+  printOutTS(PL_INFO,"Normalized Shapley Values (VCE-based):\n");
+  for (ii = 0; ii < nInputs_; ii++)
+    printOutTS(PL_INFO,"  Input %3d = %9.3e\n",ii+1,
+               VecShapleys_[ii]/dVar);
+  printAsterisks(PL_INFO, 0);
+  if (adata.printLevel_ > 2)
+  { 
+    //**/ perform Shapley based on MOAT modified gradients
+    psVector vecShapleyMOAT;
+    vecShapleyMOAT.setLength(nInputs);
+    psVector vecLargeSample;
+    vecLargeSample.setLength(sampleSize_*(nInputs+2)*nInputs);
+    count = 0;
+    for (ss = 0; ss < sampleSize_; ss++)
+    {
+      //**/ copy M1 times to vecLargeSample
+      for (ii = 0; ii < nInputs; ii++)
+        vecLargeSample[count*nInputs+ii] = vecXM1[ss*nInputs+ii];
+      count++;
+      //**/ evolve from M1 to M2
+      for (kk = 0; kk < nInputs; kk++)
+      {
+        //**/ first make a copy of previous sample
+        for (ii = 0; ii < nInputs; ii++)
+          vecLargeSample[count*nInputs+ii] = 
+            vecLargeSample[(count-1)*nInputs+ii]; 
+        //**/ modify one entry based on kk
+        vecLargeSample[count*nInputs+kk] = 
+                                   vecXM2[ss*nInputs+kk];
+        count++;
+      }
+      for (ii = 0; ii < nInputs; ii++)
+        vecLargeSample[count*nInputs+ii] = vecXM2[ss*nInputs+ii];
+      count++;
+    }
+ 
+    //**/ now we have a very large sample in vecLargeSample
+    //**/ size = sampleSize_*(nInputs+2)
+    //**/ evaluate the sample 
+    psVector vecLargeY;
+    vecLargeY.setLength(sampleSize_*(nInputs+2));
+    count = sampleSize_ * (nInputs + 2);
+    faPtr->evaluatePoint(count,vecLargeSample.getDVector(),
+                       vecLargeY.getDVector());
+
+    psVector vecMeans, vecModMeans, vecStds;
+    vecMeans.setLength(nInputs);
+    vecModMeans.setLength(nInputs);
+    vecStds.setLength(nInputs);
+    MOATAnalyze(nInputs,count,vecLargeSample.getDVector(),
+             vecLargeY.getDVector(),adata.iLowerB_,adata.iUpperB_,
+             vecMeans.getDVector(),vecModMeans.getDVector(),
+             vecStds.getDVector());
+    for (ii = 0; ii < nInputs; ii++)
+      printf("MOAT modified mean for input %4d = %e\n",ii+1,
+             vecModMeans[ii]);
+  }
+  printAsterisks(PL_INFO, 0);
+  delete faPtr;
+  return 0.0;
+}
+
+// ************************************************************************
+// perform analysis using TSI as cost function
+// The TSI-based Algorithm based on that described in
 // 'A Simple Algorithm for global sensitivity analysis with Shapley Effect'
 // by T. Goda. Three of the main ingredients of the algorithms are:
 // (1) use Sobol' total sensitivity effect as the Shapley value function, 
@@ -65,122 +445,8 @@
 // where
 // C_n(i) = F_n(M1) - 1/2 F_n(M2(S(k~i)+i)) - 1/2 F_n(M2(S_n(k~i)}))
 // D_n(i) = F_n(M2(S(k~i))) - F_n(M2(S_n(k~i)+i))
-// ************************************************************************
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "ShapleyAnalyzer.h"
-#include "SobolAnalyzer.h"
-#include "Psuade.h"
-#include "sysdef.h"
-#include "PsuadeUtil.h"
-#include "PrintingTS.h"
-#include "PDFManager.h"
-#include "FuncApprox.h"
-#include "PDFManager.h"
-#include "ProbMatrix.h"
-#ifdef PSUADE_OMP
-#include <omp.h>
-#endif
-
-#define PABS(x) (((x) > 0.0) ? (x) : -(x))
-
 // ------------------------------------------------------------------------
-// Both uniform and adaptive seem to be stable for entropy-based method
-// although they give slightly different values
-// ------------------------------------------------------------------------
-//#define _ADAPTIVE_
-// ------------------------------------------------------------------------
-
-// ************************************************************************
-// constructor 
-// ------------------------------------------------------------------------
-ShapleyAnalyzer::ShapleyAnalyzer() : Analyzer(), nInputs_(0)
-{
-  setName("SOBOL");
-  sampleSize_ = 100000;
-  costFunction_ = 1; /* 1: VCE-based, 2: entropy-based */
-  MaxMapLength_=10000;
-}
-
-// ************************************************************************
-// destructor 
-// ------------------------------------------------------------------------
-ShapleyAnalyzer::~ShapleyAnalyzer()
-{
-}
-
-// ************************************************************************
-// perform analysis
-// ------------------------------------------------------------------------
-double ShapleyAnalyzer::analyze(aData &adata)
-{
-  printAsterisks(PL_INFO, 0);
-  printf("*             Shapley Sensitivity Analysis\n"); 
-  printDashes(PL_INFO, 0);
-  printOutTS(PL_INFO,
-       "* Turn on analysis expert mode to choose different method.\n");
-  printOutTS(PL_INFO,
-       "* Turn on higher print level to see more information.\n");
-  printEquals(PL_INFO, 0);
-
-  //**/ ---------------------------------------------------------------
-  //**/ extract data
-  //**/ ---------------------------------------------------------------
-  int nInputs  = adata.nInputs_;
-  nInputs_ = nInputs;
-  int nOutputs = adata.nOutputs_;
-  int nSamples = adata.nSamples_;
-
-  //**/ ---------------------------------------------------------------
-  //**/ error checking
-  //**/ ---------------------------------------------------------------
-  if (nInputs <= 0 || nSamples <= 0 || nOutputs <= 0) 
-  {
-    printOutTS(PL_ERROR, "ShapleyAnalyzer ERROR: invalid arguments.\n");
-    printOutTS(PL_ERROR, "    nInputs  = %d\n", nInputs);
-    printOutTS(PL_ERROR, "    nOutputs = %d\n", nOutputs);
-    printOutTS(PL_ERROR, "    nSamples = %d\n", nSamples);
-    return PSUADE_UNDEFINED;
-  } 
-
-  //**/ ---------------------------------------------------------------
-  //**/ check for valid samples
-  //**/ ---------------------------------------------------------------
-  int    errCnt = 0;
-  int    outputID = adata.outputID_;
-  double *yIn = adata.sampleOutputs_;
-  for (int ss = 0; ss < nSamples; ss++)
-    if (yIn[ss*nOutputs+outputID] > 0.99*PSUADE_UNDEFINED) errCnt++;
-  if (errCnt > 0)
-  {
-    printf("ShapleyAnalyzer ERROR: Found %d invalid sample points,\n",
-           errCnt);
-    exit(1);
-  }
-
-  //**/ ---------------------------------------------------------------
-  //**/ analyze using one of the 2 algorithms
-  //**/ ---------------------------------------------------------------
-  if (psConfig_.InteractiveIsOn() && psConfig_.AnaExpertModeIsOn())
-  {
-    char pString[1000];
-    printAsterisks(PL_INFO, 0);
-    printOutTS(PL_INFO,"You can select one of the 2 below : \n");
-    printOutTS(PL_INFO,"1. Sobol'-based method\n");
-    printOutTS(PL_INFO,"2. Entropy-based method\n");
-    snprintf(pString,100,"Select 1 or 2 : ");
-    costFunction_ = getInt(1, 2, pString);
-  }
-  if (costFunction_ == 1) return analyzeVCE(adata);
-  else                    return analyzeEntropy(adata);
-}
- 
-// ************************************************************************
-// perform analysis using VCE as cost function
-// ------------------------------------------------------------------------
-double ShapleyAnalyzer::analyzeVCE(aData &adata)
+double ShapleyAnalyzer::analyzeTSI(aData &adata)
 {
   //**/ ---------------------------------------------------------------
   //**/ extract data
@@ -196,16 +462,17 @@ double ShapleyAnalyzer::analyzeVCE(aData &adata)
   {
     char pString[1000];
     printAsterisks(PL_INFO, 0);
-    printOutTS(PL_INFO,"* Sobol'-based Shapley uses two large samples ");
+    printOutTS(PL_INFO,
+      "* SobolTSI-based Shapley uses two large samples ");
     printOutTS(PL_INFO,"to compute sensitivity\n");
-    printOutTS(PL_INFO,"* indices. The default sample size M is %d.\n",
-               sampleSize_);
+    printOutTS(PL_INFO,
+      "* indices. The default sample size M is %d.\n",sampleSize_);
     printOutTS(PL_INFO,"* You may, however, select a different M.\n");
-    printOutTS(PL_INFO,"* NOTE: large M may take long time, but ");
+    printOutTS(PL_INFO,"* NOTE: Large M may take long time, but ");
     printOutTS(PL_INFO,"gives more accurate results.\n");
     printEquals(PL_INFO, 0);
     snprintf(pString,100,"Enter M (suggestion: 10000-1000000) : ");
-    sampleSize_ = getInt(10000, 1000000, pString);
+    sampleSize_ = getInt(10000, 10000000, pString);
   }
 
   //**/ ---------------------------------------------------------------
@@ -240,15 +507,9 @@ double ShapleyAnalyzer::analyzeVCE(aData &adata)
   //**/ ---------------------------------------------------------------
   //**/ compute basic statistics
   //**/ ---------------------------------------------------------------
-  int    ss, ii, count = 0;
-  double *yIn = adata.sampleOutputs_;
-
-  double dmean = 0.0;
-  for (ss = 0; ss < sampleSize_; ss++) dmean += vecYM1[ss];
-  dmean /= (double) sampleSize_;
-  double dVar = 0.0;
-  for (ss = 0; ss < sampleSize_; ss++) dVar += pow(vecYM1[ss]-dmean,2.0);
-  dVar /= (double) (sampleSize_ - 1);
+  double dmean, dVar;
+  int status = computeBasicStatistics(vecYM1, dmean, dVar);
+  dVar = dVar * dVar;
   if (psConfig_.InteractiveIsOn())
   {
     printOutTS(PL_INFO,"Shapley: Sample mean     = %10.3e\n",dmean);
@@ -265,7 +526,7 @@ double ShapleyAnalyzer::analyzeVCE(aData &adata)
   //**/ perform Shapley analysis
   //**/ vecXMM holds the matrix for current single input modification
   //**/ ---------------------------------------------------------------
-  int    ind;
+  int    ss, ii, ind;
   double ddata;
   VecShapleys_.setLength(nInputs_);
   VecShapleyStds_.setLength(nInputs_);
@@ -291,11 +552,10 @@ double ShapleyAnalyzer::analyzeVCE(aData &adata)
     faPtr->evaluatePoint(sampleSize_,vecXMM.getDVector(),
                          vecYMM.getDVector());
 
-    //**/ elemental operations (YSpi = Y for subset(u) + {i}) 
-    //**/                      (YS = Y for subset(u)) 
+    //**/ TSI-based
     //**/ gamma = tsi(u+i) - tsi(u) = C(i) * D(i)
-    // C_n(i) = F_n(M1) - 1/2 [ F_n(M2(S(k~i)+i)) + F_n(M2(S_n(k~i)})) ]
-    // D_n(i) = F_n(M2(S(k~i))) - F_n(M2(S_n(k~i)+i))
+    //**/ C_n(i) = F_n(M1) - 1/2[F_n(M2(S(k~i)+i))+F_n(M2(S_n(k~i)))]
+    //**/ D_n(i) = F_n(M2(S(k~i))) - F_n(M2(S_n(k~i)+i))
     //**/ update Shapley values (phi1(i)  = phi1(i) + gamma/N)
     //**/ update Shapley variance (var(i) = var(i) + gamma*gamma/N)
     for (ss = 0; ss < sampleSize_; ss++)
@@ -317,36 +577,40 @@ double ShapleyAnalyzer::analyzeVCE(aData &adata)
     VecShapleyStds_[ii] /= sampleSize_;
   }
 
-
-  printOutTS(PL_INFO, "Shapley Values (variance-based):\n");
-  double totalChk=0;
+  //**/ print results
+  printOutTS(PL_INFO, "Shapley Values (TSI-based):\n");
+  double totalChk=0, lb, ub;
   for (ii = 0; ii < nInputs; ii++)
   {
     VecShapleyStds_[ii] = 
       (VecShapleyStds_[ii]-pow(VecShapleys_[ii],2.0))/(sampleSize_-1); 
+    lb = VecShapleys_[ii] - 1.96*VecShapleyStds_[ii];
+    ub = VecShapleys_[ii] + 1.96*VecShapleyStds_[ii];
+    if (VecShapleys_[ii] < 0) VecShapleys_[ii] = 0; 
+    if (lb < 0) lb = 0;
+    if (ub < 0) ub = - ub;
     printOutTS(PL_INFO,
-      "  Input %3d = %10.3e [%10.3e, %10.3e], Normalized = %10.3e\n",
-      ii+1,
-      VecShapleys_[ii],VecShapleys_[ii]-1.96*VecShapleyStds_[ii],
-      VecShapleys_[ii]+1.96*VecShapleyStds_[ii],VecShapleys_[ii]/dVar);
+      "  Input %3d = %9.3e [%9.3e, %9.3e], Normalized = %9.3e\n",
+      ii+1,VecShapleys_[ii], lb, ub, VecShapleys_[ii]/dVar);
     totalChk += VecShapleys_[ii];
   }
-  printOutTS(PL_INFO,"Sum of Shapley values = %11.4e\n",totalChk);
+  printOutTS(PL_INFO,"Sum of Shapley values = %10.4e\n",totalChk);
   printDashes(PL_INFO, 0);
-  printOutTS(PL_INFO,"Normalized Shapley Values (variance-based):\n");
+  printOutTS(PL_INFO,"Normalized Shapley Values (TSI-based):\n");
   for (ii = 0; ii < nInputs_; ii++)
-    printOutTS(PL_INFO,"  Input %3d = %10.3e\n",ii+1,
+    printOutTS(PL_INFO,"  Input %3d = %9.3e\n",ii+1,
                VecShapleys_[ii]/dVar);
-  printAsterisks(PL_INFO, 0);
   if (adata.printLevel_ > 2)
   { 
+    int kk, count;
+    printAsterisks(PL_INFO, 0);
     //**/ perform Shapley based on MOAT modified gradients
-    int kk;
     psVector vecShapleyMOAT;
     vecShapleyMOAT.setLength(nInputs);
     psVector vecLargeSample;
     vecLargeSample.setLength(sampleSize_*(nInputs+2)*nInputs);
     count = 0;
+    printf("Perform Morris-one-at-a-time analysis:\n");
     for (ss = 0; ss < sampleSize_; ss++)
     {
       //**/ copy M1 times to vecLargeSample
@@ -410,28 +674,44 @@ double ShapleyAnalyzer::analyzeEntropy(aData &adata)
   //**/ ---------------------------------------------------------------
   //**/ get sample size
   //**/ ---------------------------------------------------------------
-  sampleSize_ = 10000;
+  int nLevels=50;      /* number of levels in histogramming */
+  sampleSize_ = 10000; /* sample size to compute Shapley */
+  int maxSamples = 1000000;
   if (psConfig_.InteractiveIsOn() && psConfig_.AnaExpertModeIsOn())
   {
     char pString[1000];
     printAsterisks(PL_INFO, 0);
-    printOutTS(PL_INFO,"* Entropy-based Shapley uses a large sample ");
-    printOutTS(PL_INFO,"to compute output entropy\n");
-    printOutTS(PL_INFO,"* sensitivity indices. The default sample ");
-    printOutTS(PL_INFO,"size M is %d.\n", sampleSize_);
-    printOutTS(PL_INFO,"* You may, however, select a different M.\n");
-    printOutTS(PL_INFO,"* NOTE: large M may take long time, but ");
-    printOutTS(PL_INFO,"may give more accurate results.\n");
+    printOutTS(PL_INFO,"* This entropy-based Shapley value ");
+    printOutTS(PL_INFO,"method uses a large sample to\n");
+    printOutTS(PL_INFO,"* approximate the Shapley permutations, ");
+    printOutTS(PL_INFO,"and for each sample point\n");
+    printOutTS(PL_INFO,"* computes changes in entropy by ");
+    printOutTS(PL_INFO,"adding one input.\n");
+    printOutTS(PL_INFO,
+      "* The default sample size M = %d\n", sampleSize_);
     printEquals(PL_INFO, 0);
-    snprintf(pString,100,"Enter M (suggestion: 1000-1000000) : ");
+    snprintf(pString,100,
+      "Enter a new M (suggestion: 1000-100000) : ");
     sampleSize_ = getInt(1000, 1000000, pString);
+    printOutTS(PL_INFO,"* In each of the %d iteration, a LARGE ",
+               sampleSize_);
+    printOutTS(PL_INFO,"sample is to be created to\n");
+    printOutTS(PL_INFO,"* compute entropies. The default LARGE ");
+    printOutTS(PL_INFO,"sample size N is %d.\n",maxSamples);
+    snprintf(pString,100,
+      "Enter a new N (suggestion: 1000000-10000000) : ");
+    maxSamples = getInt(1000000, 10000000, pString);
   }
 
   //**/ ---------------------------------------------------------------
   //**/ create response surface 
   //**/ ---------------------------------------------------------------
   FuncApprox *faPtr = createResponseSurface(adata);
-  if (faPtr == NULL) return -1;
+  if (faPtr == NULL) 
+  {
+    printf("Shapley1 ERROR: Cannot create response surface.\n");
+    return -1;
+  }
 
   //**/ ---------------------------------------------------------------
   //**/ get input distribution information
@@ -454,10 +734,12 @@ double ShapleyAnalyzer::analyzeEntropy(aData &adata)
   //**/ ---------------------------------------------------------------
   //**/ first compute total entropy
   //**/ ---------------------------------------------------------------
-  int      ii, ss, nSam=10000, iOne=1, nLevels=20, status;
+  int      ii, ss, nSam=100000, iOne=1, status;
   double   totalEntropy, dOne=1, Ymax, Ymin, Ywidth, ddata;
   psVector vecSam, vecL, vecU, vecY;
   psMatrix matCov;
+
+  //**/ use PDFManager to create sample with desired distributions
   matCov.setDim(nInputs_, nInputs_);
   for (ii = 0; ii < nInputs_; ii++) matCov.setEntry(ii,ii,dOne);
   PDFManager *pdfman = new PDFManager();
@@ -468,8 +750,13 @@ double ShapleyAnalyzer::analyzeEntropy(aData &adata)
   vecU.load(nInputs_, adata.iUpperB_);
   pdfman->genSample(nSam, vecSam, vecL, vecU);
   delete pdfman;
+
+  //**/ evaluate sample points using response surface
   vecY.setLength(nSam);
   faPtr->evaluatePoint(nSam,vecSam.getDVector(),vecY.getDVector());
+
+  //**/ create histogram using ProbMatrix, which needs lower and
+  //**/ upper bounds of the data (Ymax, Ymin) 
   ProbMatrix matProb;
   matProb.setDim(nSam, iOne);
   Ymax = -PSUADE_UNDEFINED;
@@ -483,10 +770,10 @@ double ShapleyAnalyzer::analyzeEntropy(aData &adata)
   }
   if (Ymax <= Ymin)
   {
-    printf("Shapley INFO: Ymin (%e) = Ymax (%e)\n",Ymin,Ymax);
-    printf("        ===> Assume zero total entropy w.r.t. ");
+    printf("Shapley1 INFO: Ymin (%e) = Ymax (%e)\n",Ymin,Ymax);
+    printf("         ===> Assume zero total entropy w.r.t. ");
     printf("input variations.\n");
-    printf("        ===> Assume zero Shapley values for all inputs.\n");
+    printf("         ===> Assume zero Shapley values for all inputs.\n");
     printf("NOTE: This may be due to all insensitive inputs, ");
     printf("or this may be due to\n");
     printf("      poor quality of RS (inaccurate interpolations.)\n");
@@ -498,76 +785,53 @@ double ShapleyAnalyzer::analyzeEntropy(aData &adata)
   vecYU.setLength(1);
   vecYL[0] = Ymin;
   vecYU[0] = Ymax;
+  RSMEntropy1Analyzer entPtr;
 #ifdef _ADAPTIVE_
   //**/ bin widths vary to make all bins having same count
-  status = matProb.binAdaptive(nLevels, vecYL, vecYU);
+  entPtr.computeEntropy(matProb, vecYL, vecYU, totalEntropy, iOne);
 #else
   //**/ bin widths constant = 1/nLevels
-  status = matProb.binUniform(nLevels, vecYL, vecYU);
+  entPtr.computeEntropy(matProb, vecYL, vecYU, totalEntropy, iOne);
 #endif
-  if (status == 1)
-  {
-    printf("Shapley ERROR: Unable to perform histogram conversion.\n");
-    printf("Please consult developers.\n");
-    exit(1);
-  }
-  totalEntropy = 0;
-  for (ss = 0; ss < nLevels; ss++)
-  {
-    //**/ get total probability of the bin = P(Y_i) dY_i
-    ddata = (double) matProb.getCount(ss) / nSam;
-#ifdef _ADAPTIVE_
-    //**/ compute bin probability P(Y_i) by dividing by bin width
-    //**/ matProb(ss,1) has width for bin ss
-    ddata /= matProb.getEntry(ss,0);
-    //**/ compute entropy P(Y_i) log2(P(Y_i)) of the bin if not zero
-    if (ddata > 0) ddata = ddata * log2(ddata);
-    //**/ multiply for width of the bin => P(Y_i) log2(P(Y_i)) dY_i
-    ddata *= matProb.getEntry(ss,0);
-#else
-    //**/ compute bin probability P(Y_i) by dividing by bin width
-    ddata /= ((Ymax - Ymin) / nLevels);
-    //**/ compute entropy P(Y_i) log2(P(Y_i)) of the bin if not zero
-    if (ddata > 0) ddata = ddata * log2(ddata);
-    //**/ multiply for width of the bin => P(Y_i) log2(P(Y_i)) dY_i
-    ddata *= ((Ymax - Ymin) / nLevels);
-#endif
-    //**/ accumulate entropy
-    totalEntropy -= ddata;
-  }
   printf("Output entropy = %e\n", totalEntropy);
 
   //**/ ---------------------------------------------------------------
   //**/ declare all variables needed for processing
   //**/ ---------------------------------------------------------------
+  //**/ need 2 sample generator (2 PDFManagers)
   PDFManager *pdfman1=NULL, *pdfman2=NULL;
-  //**/ for subset selection
+  //**/ for generating random sets
   psIVector vecIRand;
-  psVector vecRand;
-  //**/ for input and output bounds
+  psVector  vecRand;
+  //**/ for input and output bounds need for histogramming
   psVector vecL1, vecL2, vecU1, vecU2, vecYL1, vecYU1, vecYL2, vecYU2; 
-  //**/ for input means and std dev of subsets
+  //**/ for input means and std devs of the 2 subsets of inputs
   psVector  vecIMean1, vecIMean2, vecIStdv1, vecIStdv2;
   psIVector vecIPDF1, vecIPDF2;
   psMatrix matCov1, matCov2;
-  //**/ for storing subset sample and entire sample
+  //**/ for storing the 2 sub-samples and entire sample
   psVector vecSam1, vecSam2, vecLargeSam, vecLargeY;
+  //**/ for lookup to improve efficiency
   MatShapleyMap_.setDim(MaxMapLength_, nInputs_);
   MapLength_ = 0;
   VecShapleyTable_.setLength(MaxMapLength_);
+  //**/ this is for allocating sample sizes for each sub-sample
+  int samPerInp = pow(1.0*maxSamples, 1.0/nInputs_) + 1;
+  //**/ system variable to store the computed Shapley values
+  VecShapleys_.setLength(nInputs_);
 
   //**/ ---------------------------------------------------------------
   //**/ process each input 
   //**/ ---------------------------------------------------------------
   int    ii2, ss1, ss2, nInp1, nInp2, nSam1, nSam2, ind;
-  double entropy1, entropy2, entropy;
-  VecShapleys_.setLength(nInputs_);
+  double entropy1, entropy2, entropy, entTemp, entTemp2;
 #pragma omp parallel shared(ii,faPtr) \
     private(ss,ii2,vecRand,vecIRand,nInp1,nInp2,vecIPDF1,vecIMean1,\
         vecIStdv1,vecL1,vecU1,matCov1,vecIPDF2,vecIMean2,vecIStdv2,\
         vecL2,vecU2,matCov2,nSam1,nSam2,pdfman1,pdfman2,vecSam1,vecSam2,\
         ind,ss1,ss2,entropy1,entropy2,entropy,vecLargeSam,vecLargeY,\
-        status,vecYL1,vecYL2,vecYU1,vecYU2,matProb,ddata,Ymin,Ymax)
+        status,vecYL1,vecYL2,vecYU1,vecYU2,matProb,ddata,Ymin,Ymax,\
+        entTemp, entTemp2)
 {
 #pragma omp for
   for (ii = 0; ii < nInputs_; ii++)
@@ -577,6 +841,7 @@ double ShapleyAnalyzer::analyzeEntropy(aData &adata)
 #else
     printf("Processing input %d ", ii+1);
 #endif
+    //**/---------------------------------------------------------------
     //**/ Let I be the set of all inputs. The algorithms goes like this:
     //**/ For each input:
     //**/ A. Compute mean entropy gain by taking the mean of the 
@@ -585,7 +850,7 @@ double ShapleyAnalyzer::analyzeEntropy(aData &adata)
     //**/ 2. Form another subset to be union of S and ii (call it S+)
     //**/ 3. Compute entropy gain for S : H(S+) - H(S)
     //**/    a. Compute entropy for H(S+)
-    //          - Create a sample for S+ (assume independent inputs)
+    //**/       - Create a sample for S+ (assume independent inputs)
     //**/       - Create a second sample from I\S+ of size N_2
     //**/       - For each sample point k for I\S+ compute conditional
     //**/         entropy H_k(S+|k-th sample point for I\S+)  
@@ -599,15 +864,24 @@ double ShapleyAnalyzer::analyzeEntropy(aData &adata)
     //**/       (that is, entropy gain for the current random subset S
     //**/ B. Sum all entropy gains dE's in previous steps and take 
     //**/    average and this will be the entropy-based Shapley value
+    //**/---------------------------------------------------------------
+    //**/ These 2 lines need to be here for OMP as they are private
     vecIRand.setLength(nInputs_);
     vecRand.setLength(nInputs_);
-    //**/ reset the lookup table
-    MatShapleyMap_.setDim(MaxMapLength_, nInputs_);
-    MapLength_ = 0;
+
+    //**/ cycle through the Shapley samples
     for (ss = 0; ss < sampleSize_; ss++)
     {
+      //**/ display progress
+      if ((ss % (sampleSize_/100)) == 0) 
+      {
+        printf(".");
+        fflush(stdout);
+      }
+
       //**/ generate a random subset S by using random numbers and 
-      //**/ sorting 
+      //**/ sorting (note the subset is what is in vecIRand up to
+      //**/ the entry having the value ii)
       for (ii2 = 0; ii2 < nInputs_; ii2++) 
       {
         vecRand[ii2] = drand48(); 
@@ -617,12 +891,19 @@ double ShapleyAnalyzer::analyzeEntropy(aData &adata)
                      vecIRand.getIVector());
 
       //**/ look up to see if this permutation has been analyzed
-      //**/ before. If so, just return the value
-      ddata = ShapleyLookup(vecIRand, ii);
-      if (ddata != -9999)
+      //**/ before. If so, just return the value (including ii)
+      //**/ (If the last index is ii, it is certainly not in 
+      //**/ lookup table, so skip lookup)
+      ddata = -9999;
+      if (vecIRand[nInputs_-1] != ii)
       {
-        VecShapleys_[ii] += PABS(ddata);
-        continue;
+        ddata = ShapleyEntropyLookup(vecIRand, ii, 1);
+        if (ddata != -9999)
+        {
+          //VecShapleys_[ii] += PABS(ddata);
+          VecShapleys_[ii] += ddata;
+          continue;
+        }
       }
 
       //**/ search for the ii index (the position of the ii index 
@@ -630,6 +911,9 @@ double ShapleyAnalyzer::analyzeEntropy(aData &adata)
       for (ii2 = 0; ii2 < nInputs_; ii2++) 
         if (vecIRand[ii2] == ii) break;
 
+      //**/ ========================================================
+      //**/ compute entropies for the 2 sets: S+ and I\S+
+      //**/ --------------------------------------------------------
       //**/ set nInp1 = size(S+) (i.e. including input ii)
       //**/ set nInp2 = size(I\S+) 
       nInp1 = ii2 + 1;
@@ -637,13 +921,17 @@ double ShapleyAnalyzer::analyzeEntropy(aData &adata)
       
       //**/ Construct a sample for S+ (sample size is somewhat
       //**/ arbitrary - just large enough for reasonable statistics)
-      if      (nInp1 == 1) nSam1 = 200;
-      else if (nInp1 == 2) nSam1 = 300;
-      else if (nInp1 >= 3) nSam1 = 1000;
-      //printf("   - Construct a sample: nInp1=%d, size=%d\n",nInp1,nSam1);
-      pdfman1 = NULL;
-      if (nInp1 > 0)
+      //**/ if S = all inputs, the entropy is just the total entropy
+      if (nInp1 == nInputs_) entropy1 = totalEntropy;
+      else
       {
+        if (adata.printLevel_ > 2)
+          printf("Shapley INFO: Running entropy (%d of %d)\n",
+                 ss+1,sampleSize_);  
+        //nSam1 = (int) pow(1.0*samPerInp, nInp1);
+        //if (nSam1 < 1000) nSam1 = 1000;
+        nSam1 = NSAM;
+        pdfman1 = NULL;
         vecIPDF1.setLength(nInp1);
         vecIMean1.setLength(nInp1);
         vecIStdv1.setLength(nInp1);
@@ -667,175 +955,199 @@ double ShapleyAnalyzer::analyzeEntropy(aData &adata)
         vecSam1.setLength(nSam1*nInp1);
         pdfman1->genSample(nSam1, vecSam1, vecL1, vecU1);
         delete pdfman1;
-      }
 
-      //**/ construct a sample for I\S+ (sample size is also somewhat
-      //**/ arbitrary - just large enough for reasonable statistics)
-      //**/ If size(I\S+)=0, nSam2 = 1 ==> no need to compute average
-      nSam2 = 1;
-      if      (nInp2 == 1) nSam2 = 10;
-      else if (nInp2 == 2) nSam2 = 20;
-      else if (nInp2 >= 3) nSam2 = 10 * nInp2;
-      //printf("   - Construct a sample: nInp2=%d, size=%d\n",nInp2,nSam2);
-      pdfman2 = NULL;
-      if (nInp2 > 0)
-      {
-        vecIPDF2.setLength(nInp2);
-        vecIMean2.setLength(nInp2);
-        vecIStdv2.setLength(nInp2);
-        vecL2.setLength(nInp2);
-        vecU2.setLength(nInp2);
-        matCov2.setDim(nInp2,nInp2);
-        for (ii2 = 0; ii2 < nInp2; ii2++)
+        //**/ construct a sample for I\S+ (sample size is also somewhat
+        //**/ arbitrary - just large enough for reasonable statistics)
+        //**/ If size(I\S+)=0, nSam2 = 1 ==> no need to compute average
+        if (nInp2 == 0) nSam2 = 1;
+        else            nSam2 = NSAM;
+        pdfman2 = NULL;
+        if (nInp2 > 0)
         {
-          ind = vecIRand[ii2+nInp1];
-          vecIPDF2[ii2] = pdfFlags[ind];
-          vecIMean2[ii2] = inputMeans[ind];
-          vecIStdv2[ii2] = inputStdvs[ind];
-          vecL2[ii2] = adata.iLowerB_[ind];
-          vecU2[ii2] = adata.iUpperB_[ind];
-          matCov2.setEntry(ii2,ii2,dOne);
-        }
-        pdfman2 = new PDFManager();
-        pdfman2->initialize(nInp2,vecIPDF2.getIVector(),
-                  vecIMean2.getDVector(),vecIStdv2.getDVector(),
-                  matCov2,NULL,NULL);
-        vecSam2.setLength(nSam2*nInp2);
-        pdfman2->genSample(nSam2, vecSam2, vecL2, vecU2);
-        delete pdfman2;
-      }
-
-      //**/ Merge the 2 samples into vecLargeSam (concatenation)
-      //printf("   - construct large sample\n");
-      vecLargeSam.setLength(nSam1*nSam2 * nInputs_);
-      for (ss1 = 0; ss1 < nSam2; ss1++)
-      {
-        //**/ copy the whole first sample into a block
-        for (ss2 = 0; ss2 < nSam1; ss2++)
-        {
-          for (ii2 = 0; ii2 < nInp1; ii2++)
-          {
-            ind = vecIRand[ii2];
-            vecLargeSam[(ss1*nSam1+ss2)*nInputs_+ind] = 
-               vecSam1[ss2*nInp1+ii2];
-          }
+          vecIPDF2.setLength(nInp2);
+          vecIMean2.setLength(nInp2);
+          vecIStdv2.setLength(nInp2);
+          vecL2.setLength(nInp2);
+          vecU2.setLength(nInp2);
+          matCov2.setDim(nInp2,nInp2);
           for (ii2 = 0; ii2 < nInp2; ii2++)
           {
             ind = vecIRand[ii2+nInp1];
-            vecLargeSam[(ss1*nSam1+ss2)*nInputs_+ind] = 
-               vecSam2[ss1*nInp2+ii2];
+            vecIPDF2[ii2] = pdfFlags[ind];
+            vecIMean2[ii2] = inputMeans[ind];
+            vecIStdv2[ii2] = inputStdvs[ind];
+            vecL2[ii2] = adata.iLowerB_[ind];
+            vecU2[ii2] = adata.iUpperB_[ind];
+            matCov2.setEntry(ii2,ii2,dOne);
           }
+          pdfman2 = new PDFManager();
+          pdfman2->initialize(nInp2,vecIPDF2.getIVector(),
+                    vecIMean2.getDVector(),vecIStdv2.getDVector(),
+                    matCov2,NULL,NULL);
+          vecSam2.setLength(nSam2*nInp2);
+          pdfman2->genSample(nSam2, vecSam2, vecL2, vecU2);
+          delete pdfman2;
         }
-      }
 
-      //**/ evaluation the large sample
-      //printf("   - function evaluation\n");
-      vecLargeY.setLength(nSam1*nSam2);
-      faPtr->evaluatePoint(nSam1*nSam2,vecLargeSam.getDVector(),
-                           vecLargeY.getDVector());
-           
-      //**/ for each of the sample point for I\S+, compute entropy
-      //**/ then take the mean ==> entropy1
-      //printf("   - compute entropy\n");
-      entropy1 = 0;
-      for (ss1 = 0; ss1 < nSam2; ss1++)
-      {
-        matProb.setDim(nSam1, iOne);
-        //**/ search for lower and upper bounds of Y
-        //**/ the reason to use tight bounds is that loose bound does
-        //**/ not reflect the true delta Y due to discrete intervals
-        //**/ because pdf(interval Y_i) ~ count/delta Y_i
-        Ymax = -PSUADE_UNDEFINED;
-        Ymin = +PSUADE_UNDEFINED;
-        for (ss2 = ss1*nSam1; ss2 < (ss1+1)*nSam1; ss2++)
+        //**/ Merge the 2 samples into vecLargeSam (concatenation)
+        //printf("   - construct large sample\n");
+        vecLargeSam.setLength(nSam1*nSam2 * nInputs_);
+        for (ss1 = 0; ss1 < nSam2; ss1++)
         {
-          ddata = vecLargeY[ss2];
-          if (ddata > Ymax) Ymax = ddata;
-          if (ddata < Ymin) Ymin = ddata;
-          ind = ss2 - ss1 * nSam1;
-          matProb.setEntry(ind,0,ddata);
-        }
-        if (Ymin >= Ymax)
-        {
-          //printf("Shapley INFO: Ymin %e == Ymax %e (a)\n",Ymin,Ymax);
-          //printf("   ==> Assume no entropy (no output variation).\n");
-          //printf("NOTE: It may be due to insensitive inputs, or ");
-          //printf("poor quality of RS (a).\n");
-          //printf("#");
-        }
-        else
-        //**/ binning
-        {
-          vecYL1.setLength(iOne);
-          vecYU1.setLength(iOne);
-          vecYL1[0] = Ymin;
-          vecYU1[0] = Ymax;
-#ifdef _ADAPTIVE_
-          status = matProb.binAdaptive(nLevels, vecYL1, vecYU1);
-#else
-          status = matProb.binUniform(nLevels, vecYL1, vecYU1);
-#endif
-          if (status == 1)
+          //**/ copy the whole first sample into a block
+          for (ss2 = 0; ss2 < nSam1; ss2++)
           {
-            printf("Shapley ERROR: Unable to perform histogram conversion (a).\n");
-            printf("Please consult developers.\n");
-            exit(1);
-          }
-
-          //**/ compute entropy based on binning data
-          entropy = 0;
-          for (ss2 = 0; ss2 < nLevels; ss2++)
-          {
-            //**/ get total probability of the bin = P(Y_i) dY_i
-            ddata = (double) matProb.getCount(ss2) / nSam1;
-#ifdef _ADAPTIVE_
-            //**/ compute bin probability P(Y_i) by dividing by bin width
-            //**/ matProb(ss,1) has width for bin ss
-            if (matProb.getEntry(ss2,0) > 0)
-              ddata /= matProb.getEntry(ss2,0);
-            else
+            for (ii2 = 0; ii2 < nInp1; ii2++)
             {
-              printf("Shapley ERROR: delta_Y(%d) = %e <= 0 (a)\n",ss2+1,
-                     matProb.getEntry(ss2,0));
-              exit(1);
+              ind = vecIRand[ii2];
+              vecLargeSam[(ss1*nSam1+ss2)*nInputs_+ind] = 
+                 vecSam1[ss2*nInp1+ii2];
             }
-            //**/ compute entropy P(Y_i) log2(P(Y_i)) of the bin if not zero
-            if (ddata > 0) ddata = ddata * log2(ddata);
-            //**/ multiply for width of the bin => P(Y_i) log2(P(Y_i)) dY_i
-            ddata *= matProb.getEntry(ss2,0);
-#else
-            //**/ compute bin probability P(Y_i) by dividing by bin width
-            ddata /= ((Ymax - Ymin) / nLevels);
-            //**/ compute entropy P(Y_i) log2(P(Y_i)) of the bin if not zero
-            if (ddata > 0) ddata = ddata * log2(ddata);
-            //**/ multiply for width of the bin => P(Y_i) log2(P(Y_i)) dY_i
-            ddata *= ((Ymax - Ymin) / nLevels);
-#endif
-            //**/ accumulate entropy
-            entropy -= ddata;
+            for (ii2 = 0; ii2 < nInp2; ii2++)
+            {
+              ind = vecIRand[ii2+nInp1];
+              vecLargeSam[(ss1*nSam1+ss2)*nInputs_+ind] = 
+                 vecSam2[ss1*nInp2+ii2];
+            }
           }
-          //**/ sum all entropies from all sample points in sample 2
-          entropy1 += entropy;
-        } /* Ymax > Ymin */
-      }
-      //**/ compute mean entropy
-      entropy1 /= (double) nSam2;
-      //printf("   - total entropy = %e\n", entropy1);
+        }
 
+        //**/ evaluation the large sample
+        //printf("   - function evaluation\n");
+        if (psConfig_.DiagnosticsIsOn())
+          printf("Shapley INFO: Running function evaluation 1\n");
+        vecLargeY.setLength(nSam1*nSam2);
+        faPtr->evaluatePoint(nSam1*nSam2,vecLargeSam.getDVector(),
+                             vecLargeY.getDVector());
+           
+        //**/ for each of the sample point for I\S+, compute entropy
+        //**/ then take the mean ==> entropy1
+        //printf("   - compute entropy\n");
+        if (psConfig_.DiagnosticsIsOn())
+          printf("Shapley INFO: Computing entropy for S+\n");
+        entropy1 = 0;
+        for (ss1 = 0; ss1 < nSam2; ss1++)
+        {
+          matProb.setDim(nSam1, iOne);
+          //**/ search for lower and upper bounds of Y
+          //**/ the reason to use tight bounds is that loose bound does
+          //**/ not reflect the true delta Y due to discrete intervals
+          //**/ because pdf(interval Y_i) ~ count/delta Y_i
+          Ymax = -PSUADE_UNDEFINED;
+          Ymin = +PSUADE_UNDEFINED;
+          for (ss2 = ss1*nSam1; ss2 < (ss1+1)*nSam1; ss2++)
+          {
+            ddata = vecLargeY[ss2];
+            if (ddata > Ymax) Ymax = ddata;
+            if (ddata < Ymin) Ymin = ddata;
+            ind = ss2 - ss1 * nSam1;
+            matProb.setEntry(ind,0,ddata);
+          }
+          if (Ymin < Ymax)
+          {
+            vecYL1.setLength(iOne);
+            vecYU1.setLength(iOne);
+            vecYL1[0] = Ymin;
+            vecYU1[0] = Ymax;
+#ifdef _ADAPTIVE_
+            entPtr.computeEntropy(matProb,vecYL1,vecYU1,entropy,iOne);
+#else
+            entPtr.computeEntropy(matProb,vecYL1,vecYU1,entropy,0);
+#endif
+            //**/ sum all entropies from all sample points in sample 2
+            entropy1 += entropy;
+          } /* Ymax > Ymin */
+        }
+        //**/ compute mean entropy
+        entropy1 /= (double) nSam2;
+
+        //**/ ========================================================
+        //**/ Process I\S+
+        //**/ --------------------------------------------------------
+        if (psConfig_.DiagnosticsIsOn())
+          printf("Shapley INFO: Computing entropy for I\\S+\n");
+        entTemp = 0;
+        for (ss1 = 0; ss1 < nSam1; ss1++)
+        {
+          matProb.setDim(nSam2, iOne);
+          //**/ search for lower and upper bounds of Y
+          //**/ the reason to use tight bounds is that loose bound does
+          //**/ not reflect the true delta Y due to discrete intervals
+          //**/ because pdf(interval Y_i) ~ count/delta Y_i
+          Ymax = -PSUADE_UNDEFINED;
+          Ymin = +PSUADE_UNDEFINED;
+          ind  = 0;
+          for (ss2 = ss1; ss2 < nSam1*nSam2; ss2+=nSam1)
+          {
+            ddata = vecLargeY[ss2];
+            if (ddata > Ymax) Ymax = ddata;
+            if (ddata < Ymin) Ymin = ddata;
+            matProb.setEntry(ind,0,ddata);
+            ind++;
+          }
+          if (Ymin < Ymax)
+          {
+            vecYL1.setLength(iOne);
+            vecYU1.setLength(iOne);
+            vecYL1[0] = Ymin;
+            vecYU1[0] = Ymax;
+#ifdef _ADAPTIVE_
+            entPtr.computeEntropy(matProb,vecYL1,vecYU1,entropy,iOne);
+#else
+            entPtr.computeEntropy(matProb,vecYL1,vecYU1,entropy,0);
+#endif
+            //**/ sum all entropies from all sample points in sample 2
+            entTemp += entropy;
+          } /* Ymax > Ymin */
+        }
+        //**/ compute mean entropy
+        entTemp /= (double) nSam1;
+      }
+      //**/ store the entropies for S+ and I\S+
+      if (nInp1 != nInputs_)
+      {
+#pragma omp critical
+{
+        //**/ store the result
+        ShapleyEntropySave(vecIRand, 0, nInp1, entropy1);
+
+        //**/ store the result
+        //ShapleyEntropySave(vecIRand, nInp1, nInputs_, entTemp);
+}
+      }
+
+      //**/ ========================================================
+      //**/ Process S
       //**/ nInp1 = size(S)    (note nInp1 may be 0)
       //**/ nInp2 = size(I\S)
+      //**/ --------------------------------------------------------
       nInp1--;
       nInp2 = nInputs_ - nInp1;
       
+      //**/ look up to see if this permutation has been analyzed
+      //**/ before. If so, just return the value
+      if (nInp1 > 0)
+      {
+        //**/ only search up to and before ii
+        entropy2 = ShapleyEntropyLookup(vecIRand, ii, 0);
+        if (entropy2 != -9999)
+        {
+          //VecShapleys_[ii] += PABS(entropy1 - entropy2);
+          VecShapleys_[ii] += entropy1 - entropy2;
+          continue;
+        }
+      }
+
       //**/ if nInp1 == 0, entropy H(S)=0 (no variation)
+      //**/ if nInp1 == nInputs, entropy H(S)=H(Y) (total variation)
       //**/ Construct a sample for S (sample size is somewhat
       //**/ arbitrary - just large enough for reasonable statistics)
       entropy2 = 0;
       if (nInp1 > 0)
       {
-        if      (nInp1 == 1) nSam1 = 200;
-        else if (nInp1 == 2) nSam1 = 300;
-        else if (nInp1 >= 3) nSam1 = 1000;
+        //nSam1 = (int) pow(1.0*samPerInp, nInp1);
+        //if (nSam1 < 1000) nSam1 = 1000;
+        nSam1 = NSAM;
         vecIPDF1.setLength(nInp1);
         vecIMean1.setLength(nInp1);
         vecIStdv1.setLength(nInp1);
@@ -860,10 +1172,8 @@ double ShapleyAnalyzer::analyzeEntropy(aData &adata)
         pdfman1->genSample(nSam1, vecSam1, vecL1, vecU1);
         delete pdfman1;
 
-        //**/ nSam2 may be small but at least 1
-        if      (nInp2 == 1) nSam2 = 200;
-        else if (nInp2 == 2) nSam2 = 300;
-        else if (nInp2 >= 3) nSam2 = 1000;
+        //**/ nSam2 fixed
+        nSam2 = NSAM;
         vecIPDF2.setLength(nInp2);
         vecIMean2.setLength(nInp2);
         vecIStdv2.setLength(nInp2);
@@ -912,10 +1222,15 @@ double ShapleyAnalyzer::analyzeEntropy(aData &adata)
 
         //**/ evaluation the large
         vecLargeY.setLength(nSam1*nSam2);
+        if (psConfig_.DiagnosticsIsOn())
+          printf("Shapley INFO: Function evaluation 2\n");
         faPtr->evaluatePoint(nSam1*nSam2,vecLargeSam.getDVector(),
                              vecLargeY.getDVector());
      
         //**/ compute mean of entropy
+        if (psConfig_.DiagnosticsIsOn())
+          printf("Shapley INFO: Computing entropy for S\n");
+        entropy2 = 0;
         for (ss1 = 0; ss1 < nSam2; ss1++)
         {
           matProb.setDim(nSam1, iOne);
@@ -929,108 +1244,91 @@ double ShapleyAnalyzer::analyzeEntropy(aData &adata)
             ind = ss2 - ss1 * nSam1;
             matProb.setEntry(ind,0,ddata);
           }
-          if (Ymin >= Ymax)
-          {
-            //printf("Shapley INFO: Ymin %e == Ymax %e (b)\n",Ymin,Ymax);
-            //printf("   ==> Assume no entropy (no output variation).\n");
-            //printf("NOTE: It may be due to insensitive inputs, or ");
-            //printf("poor quality of RS (b).\n");
-            //printf("#");
-          }
-          else
           //**/ binning
+          if (Ymin < Ymax)
           {
             vecYL2.setLength(iOne);
             vecYU2.setLength(iOne);
             vecYL2[0] = Ymin;
             vecYU2[0] = Ymax;
 #ifdef _ADAPTIVE_
-            status = matProb.binAdaptive(nLevels, vecYL2, vecYU2);
+            entPtr.computeEntropy(matProb,vecYL2,vecYU2,entropy,iOne);
 #else
-            status = matProb.binUniform(nLevels, vecYL2, vecYU2);
+            entPtr.computeEntropy(matProb,vecYL2,vecYU2,entropy,0);
 #endif
-            if (status == 1)
-            {
-              printf("Shapley ERROR: Unable to perform histogram conversion (b).\n");
-              printf("Please consult developers.\n");
-              exit(1);
-            }
-            entropy = 0;
-            for (ss2 = 0; ss2 < nLevels; ss2++)
-            {
-              //**/ get total probability of the bin = P(Y_i) dY_i
-              ddata = (double) matProb.getCount(ss2) / nSam1;
-#ifdef _ADAPTIVE_
-              //**/ compute bin probability P(Y_i) by dividing by bin width
-              //**/ matProb(ss,1) has width for bin ss
-              if (matProb.getEntry(ss2,0) > 0)
-                ddata /= matProb.getEntry(ss2,0);
-              else
-              {
-                printf("Shapley ERROR: delta_Y(%d) = %e <= 0 (b)\n",ss2+1,
-                       matProb.getEntry(ss2,0));
-                exit(1);
-              }
-              //**/ compute entropy P(Y_i) log2(P(Y_i)) of the bin if not zero
-              if (ddata > 0) ddata = ddata * log2(ddata);
-              //**/ multiply for width of the bin => P(Y_i) log2(P(Y_i)) dY_i
-              ddata *= matProb.getEntry(ss2,0);
-#else
-              //**/ compute bin probability P(Y_i) by dividing by bin width
-              ddata /= ((Ymax - Ymin) / nLevels);
-              //**/ compute entropy P(Y_i) log2(P(Y_i)) of the bin if not zero
-              if (ddata > 0) ddata = ddata * log2(ddata);
-              //**/ multiply for width of the bin => P(Y_i) log2(P(Y_i)) dY_i
-              ddata *= ((Ymax - Ymin) / nLevels);
-#endif
-              //**/ accumulate entropy
-              entropy -= ddata;
-            }
             //**/ sum all entropies from all sample points in sample 2
             entropy2 += entropy;
           } /* Ymax > Ymin */
         }
         //**/ compute mean entropy
         entropy2 /= (double) nSam2;
-      }
-      //**/ accumulate entropy gain
-      VecShapleys_[ii] += PABS(entropy1 - entropy2);
 
-      //**/ store entropy gain above certain ss
-      //**/ allow some burn-in to ensure randomness
-      if (MapLength_ < MaxMapLength_-1)
-      {
-        for (ii2 = 0; ii2 < nInp1+1; ii2++)
+        //**/ --------------------------------------------------------
+        //**/ compute mean of entropy for the I\S
+        //**/ --------------------------------------------------------
+        if (psConfig_.DiagnosticsIsOn())
+          printf("Shapley INFO: Computing entropy for I\\S\n");
+        entTemp2 = 0;
+        for (ss1 = 0; ss1 < nSam1; ss1++)
         {
-          ind = vecIRand[ii2];
-          MatShapleyMap_.setEntry(MapLength_,ind,iOne);
-          VecShapleyTable_[MapLength_] = entropy1;
-        }
-        MapLength_++;
-        if (nInp1 > 0)
-        {
-          for (ii2 = 0; ii2 < nInp1; ii2++)
+          matProb.setDim(nSam2, iOne);
+          Ymax = -PSUADE_UNDEFINED;
+          Ymin = +PSUADE_UNDEFINED;
+          ind  = 0;
+          for (ss2 = ss1; ss2 < nSam1*nSam2; ss2+=nSam1)
           {
-            ind = vecIRand[ii2];
-            MatShapleyMap_.setEntry(MapLength_,ind,iOne);
-            VecShapleyTable_[MapLength_] = entropy2;
+            ddata = vecLargeY[ss2];
+            if (ddata > Ymax) Ymax = ddata;
+            if (ddata < Ymin) Ymin = ddata;
+            matProb.setEntry(ind,0,ddata);
+            ind++;
           }
-          MapLength_++;
+          //**/ binning
+          if (Ymin < Ymax)
+          {
+            vecYL2.setLength(iOne);
+            vecYU2.setLength(iOne);
+            vecYL2[0] = Ymin;
+            vecYU2[0] = Ymax;
+#ifdef _ADAPTIVE_
+            if (psConfig_.DiagnosticsIsOn())
+              printf("Shapley INFO: Computing entropy for I\\S (a)\n");
+            entPtr.computeEntropy(matProb,vecYL2,vecYU2,entropy,iOne);
+            if (psConfig_.DiagnosticsIsOn())
+              printf("Shapley INFO: Computing entropy for I\\S (b)\n");
+#else
+            entPtr.computeEntropy(matProb,vecYL2,vecYU2,entropy,0);
+#endif
+            //**/ sum all entropies from all sample points in sample 2
+            entTemp2 += entropy;
+          } /* Ymax > Ymin */
         }
+        //**/ compute mean entropy
+        entTemp2 /= (double) nSam1;
+      }
+      //**/ store the entropies for S+ and I\S+
+      if (nInp1 > 0)
+      {
+#pragma omp critical
+{
+        //**/ store the result
+        ShapleyEntropySave(vecIRand, 0, nInp1, entropy2);
+
+        //**/ store the result
+        //ShapleyEntropySave(vecIRand, nInp1, nInputs_, entTemp2);
+}
       }
 
-      //**/ display progress
-      if ((ss * 50) % sampleSize_ == 0) 
-      {
-        printf(".");
-        fflush(stdout);
-      }
-    } /* different subsets */
+      //**/ accumulate entropy gain
+      //VecShapleys_[ii] += PABS(entropy1 - entropy2);
+      VecShapleys_[ii] += entropy1 - entropy2;
+    } /* different subset ss */
     printf("\n");
     VecShapleys_[ii] /= (double) sampleSize_;
 #ifndef PSUADE_OMP
     if (adata.printLevel_ > 0)
-      printOutTS(PL_INFO," ==> Shapley value = %9.3e\n",VecShapleys_[ii]);
+      printOutTS(PL_INFO,
+         " ==> Shapley value = %9.3e\n",VecShapleys_[ii]);
 #endif
   }
 } /* omp parallel */
@@ -1038,7 +1336,8 @@ double ShapleyAnalyzer::analyzeEntropy(aData &adata)
   double totalChk=0;
   for (ii = 0; ii < nInputs_; ii++)
   {
-    printOutTS(PL_INFO,"  Input %3d = %10.3e\n",ii+1,VecShapleys_[ii]);
+    printOutTS(PL_INFO,
+         "  Input %3d = %10.3e\n",ii+1,VecShapleys_[ii]);
     totalChk += VecShapleys_[ii];
   }
   printOutTS(PL_INFO,"Sum of Shapley values = %11.4e\n",totalChk);
@@ -1122,17 +1421,22 @@ int ShapleyAnalyzer::createRandomIntMatrix(int nRows, int nCols,
 
 // ************************************************************************
 // look up entropy table
+//**/ look up entropy for inputs in vecIn up to ind (and including ind)
+//**/ look up entropy for inputs in vecIn up to ind (and excluding ind)
+//**/ subtract the second from the first and return the value
 // ------------------------------------------------------------------------
-double ShapleyAnalyzer::ShapleyLookup(psIVector vecIn, int ind)
+double ShapleyAnalyzer::ShapleyEntropyLookup(psIVector vecIn, int ind,
+                                             int flag)
 {
   int    ii, ss, nActive, nInp = vecIn.length();
-  double ddata;
+  double retdata=0;
   if (nInp != MatShapleyMap_.ncols())
   {
-    printf("Shapley ShapleyLookup ERROR: nInputs mismatch.\n"); 
+    printf("ShapleyEntropyLookup ERROR: nInputs mismatch.\n"); 
     return -9999;
   }
-  //**/ put the subset S+ into vecIT using 0/1
+
+  //**/ put the subset S into vecIT using 0/1
   psIVector vecIT;
   vecIT.setLength(nInp);
   nActive = 0;
@@ -1145,27 +1449,32 @@ double ShapleyAnalyzer::ShapleyLookup(psIVector vecIn, int ind)
       nActive++;
     }
   }
+
+  //**/ form the subset S+ by adding the current input
   vecIT[ind] = 1;
 
-  //**/ search for a match in the table for the subset S+
-  //**/ and look for H(S+)
-  ddata = -9999.0;
-  for (ss = 0; ss < MapLength_; ss++)
+  //**/ if flag == 1 ==> look up Entropy(S+) - Entropy(S)
+  if (flag == 1)
   {
-    //**/ if no match, skip
-    for (ii = 0; ii < nInp; ii++)
-      if (vecIT[ii] != MatShapleyMap_.getEntry(ss,ii)) break;
-    if (ii == nInp)
+    //**/ search for a match in the table for the subset S+
+    //**/ and look for H(S+)
+    retdata = -9999.0;
+    for (ss = 0; ss < MapLength_; ss++)
     {
-      ddata = VecShapleyTable_[ss];
-      break;
+      //**/ if no match, skip
+      for (ii = 0; ii < nInp; ii++)
+        if (vecIT[ii] != MatShapleyMap_.getEntry(ss,ii)) break;
+      if (ii == nInp)
+      {
+        retdata = VecShapleyTable_[ss];
+        break;
+      }
     }
+    //**/ if not found, return a token
+    if (retdata == -9999.0) return retdata;
+    //**/ if S is empty, H(S)=0 so just return H(S+)
+    if (nActive == 0) return retdata;
   }
-  //**/ if not found, return a token
-  if (ddata == -9999.0) return ddata;
-
-  //**/ if S is empty, H(S)=0 so just return H(S+)
-  if (nActive == 0) return ddata;
 
   //**/ search for a match in the table for the subset S
   //**/ and look for H(S)
@@ -1177,11 +1486,46 @@ double ShapleyAnalyzer::ShapleyLookup(psIVector vecIn, int ind)
       if (vecIT[ii] != MatShapleyMap_.getEntry(ss,ii)) break;
     if (ii == nInp)
     {
-      ddata -= VecShapleyTable_[ss];
-      return ddata;
+      //**/ depending on the value of flag, return differently
+      if (flag == 0) retdata = VecShapleyTable_[ss];
+      else           retdata -= VecShapleyTable_[ss];
+//if (flag == 0) printf("(0) Lookup returns %e\n",retdata);
+//if (flag == 1) printf("(1) Lookup returns %e\n",retdata);
+      return retdata;
     }
   }
   return -9999;
+}
+
+// ************************************************************************
+// store data to the entropy table
+// ------------------------------------------------------------------------
+double ShapleyAnalyzer::ShapleyEntropySave(psIVector vecIn, int ind1, 
+                           int ind2, double entropy)
+{
+  int ii, ind, iOne=1;
+  if (MapLength_ < MaxMapLength_-1)
+  {
+    for (ii = ind1; ii < ind2; ii++)
+    {
+      ind = vecIn[ii];
+      MatShapleyMap_.setEntry(MapLength_,ind,iOne);
+      VecShapleyTable_[MapLength_] = entropy;
+    }
+//if (ind2 == ind1) printf("ERROR\n");
+//if (ind2 > ind1)
+//{
+//printf("Save : ");
+//for (ii = 0; ii < MatShapleyMap_.ncols(); ii++)
+//{
+//ind = MatShapleyMap_.getEntry(MapLength_,ii);
+//if (ind == 1) printf("%d ",ii+1);
+//}
+//printf("\n");
+//}
+    MapLength_++;
+  }
+  return 0;
 }
 
 // ************************************************************************
@@ -1219,7 +1563,7 @@ FuncApprox *ShapleyAnalyzer::createResponseSurface(aData &adata)
     return NULL;
   }
   return faPtr;
-}   
+}
 
 // ************************************************************************
 // perform analysis similar to MOAT analysis
@@ -1302,13 +1646,14 @@ int ShapleyAnalyzer::MOATAnalyze(int nInputs, int nSamples, double *xIn,
 }
 
 // ************************************************************************
-// equal operator
+// set internal parameter 
 // ------------------------------------------------------------------------
 int ShapleyAnalyzer::setParam(int argc, char **argv)
 {
   char  *request = (char *) argv[0];
-  if      (!strcmp(request, "ana_shapley_entropy"))  costFunction_ = 2;
-  else if (!strcmp(request, "ana_shapley_variance")) costFunction_ = 1;
+  if      (!strcmp(request, "ana_shapley_entropy")) costFunction_ = 2;
+  else if (!strcmp(request, "ana_shapley_tsi"))     costFunction_ = 1;
+  else if (!strcmp(request, "ana_shapley_vce"))     costFunction_ = 0;
   else
   {
     printOutTS(PL_ERROR,"ShapleyAnalyzer ERROR: setParams - not valid.\n");

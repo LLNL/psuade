@@ -151,12 +151,12 @@ Sampling::~Sampling()
 }
 
 // ************************************************************************
-// This function fully constructs a sampling from the psuadeIO_
-// input.  All the common functionality it done in the Sampleing
-// class, subclasses should overwrite this function.
-// Currently this function does not support adaptive sampling or refinement, 
-// although it probably could.  (The psuadeIO object has all the info for it)
-// @param psuadeIO_ : A Psuade Data file, should have Input/Output variables 
+// This function fully constructs a sample from psuadeIO_.
+// All the common functionality is done in the Sampling class, subclasses 
+// should overwrite this function. Currently this function does not support 
+// adaptive sampling or refinement, although it probably could.  
+// (The psuadeIO object has all the info for it)
+// @param psuadeIO_: A Psuade Data file, should have Input/Output variables 
 // and Method defined.
 // ------------------------------------------------------------------------
 int Sampling::doSampling(PsuadeData* psuadeIO_) 
@@ -226,33 +226,36 @@ int Sampling::doSampling(PsuadeData* psuadeIO_)
   {
     if (nRefines > 0)
     {
-       printf("PSUADE ERROR: both sample refinement and PDFs requested.\n");
-       printf("       Sample refinement requires that all the input\n");
-       printf("       probability distribution be uniform. You need to\n");
-       printf("       either reset the number of refinements to be zero,\n");
-       printf("       or not take out the probability distributions.\n");
-       exit(1);
-     }
+      printf("PSUADE ERROR: Both sample refinement and PDFs ");
+      printf("are requested. Sample\n");
+      printf("       refinement requires that all input ");
+      printf("probability distributions be\n");
+      printf("       uniform. You need to either reset the ");
+      printf("number of refinements to\n");
+      printf("       be zero, or not take out the probability ");
+      printf("distributions.\n");
+      exit(1);
+    }
 
-     printf("Sampling INFO: Creating a sample where some uncertain ");
-     printf("parameters are\n");
-     printf("               not uniformly distributed.\n");
-     PDFManager *pdfman;
-     pdfman = new PDFManager();
-     pdfman->initialize(psuadeIO_);
-     pdfman->genSample();
-     delete pdfman;
+    printf("Sampling INFO: Creating a sample where some uncertain ");
+    printf("parameters are\n");
+    printf("               not uniformly distributed.\n");
+    PDFManager *pdfman;
+    pdfman = new PDFManager();
+    pdfman->initialize(psuadeIO_);
+    pdfman->genSample();
+    delete pdfman;
   
-     pData pPtr;
-     psuadeIO_->getParameter("input_sample", pPtr);
-     double *sampleInputs = pPtr.dbleArray_;
-     psuadeIO_->getParameter("output_sample", pPtr);
-     double *sampleOutputs = pPtr.dbleArray_;
-     psuadeIO_->getParameter("output_states", pPtr);
-     int *sampleStates = pPtr.intArray_;
+    pData pPtr;
+    psuadeIO_->getParameter("input_sample", pPtr);
+    double *sampleInputs = pPtr.dbleArray_;
+    psuadeIO_->getParameter("output_sample", pPtr);
+    double *sampleOutputs = pPtr.dbleArray_;
+    psuadeIO_->getParameter("output_states", pPtr);
+    int *sampleStates = pPtr.intArray_;
 
-     initialize(1);
-     loadSamples(nSamples, nInputs, nOutputs, sampleInputs,
+    initialize(1);
+    loadSamples(nSamples, nInputs, nOutputs, sampleInputs,
                  sampleOutputs, sampleStates);
   }
   else
@@ -764,6 +767,16 @@ Sampling *SamplingCreateFromID(int samplingMethod)
          strcpy(sparam, "setResolution 5");
          sampler->setParam(sparam);
          break;
+    case PSUADE_SAMP_SOBOL2:
+         sampler = (Sampling *) new SobolSampling();
+         strcpy(sparam, "setOrder 2");
+         sampler->setParam(sparam);
+         break;
+    case PSUADE_SAMP_SOBOLG:
+         sampler = (Sampling *) new SobolSampling();
+         strcpy(sparam, "setOrder 3");
+         sampler->setParam(sparam);
+         break;
     default :
          printf("PSUADE::SamplingCreateFromID ERROR - ");
          printf("invalid sampling method (%d).\n",samplingMethod);
@@ -930,6 +943,14 @@ int SamplingDestroy(Sampling *sampler)
     case PSUADE_SAMP_RFF5:
          RFFSampler = (RFractFactSampling *) sampler;
          delete RFFSampler;
+         break;
+    case PSUADE_SAMP_SOBOL2:
+         SobolSampler = (SobolSampling *) sampler;
+         delete SobolSampler;
+         break;
+    case PSUADE_SAMP_SOBOLG:
+         SobolSampler = (SobolSampling *) sampler;
+         delete SobolSampler;
          break;
   }
   return 0;

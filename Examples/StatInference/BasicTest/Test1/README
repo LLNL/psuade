@@ -18,6 +18,7 @@ To begin:
 
 ** The priors have been prescribed in psuadeRS.in as uniform
    in [0,1] (implicitly) for both parameters
+
 ** PSUADE runs MCMC given priors and the likelihood function.
 
 ** to run:

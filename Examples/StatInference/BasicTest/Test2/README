@@ -5,7 +5,7 @@ so that they do not participate in MCMC, or use some
 parameters as uncertain but not to be calibrated).
 
 The idea is to use an index file to specify which inputs
-are fixed. For example, this example has in 'indexFile'
+are fixed. For example, this example has in 'rsIndexFile'
 
 5
 1 0 0.4

@@ -38,13 +38,14 @@ corrected function:
 Y = Ys + d1 = beta * X + 0.65 * X / (1 + X / 20) - dbeta * X
             = (beta - dbeta) * X + 0.65 * X / (1 + X / 20)
 
-For example, if dbeta has been set to be 0.5, then the corrected
+For example, if dbeta has been set to be 0.55 (default setting,
+which is the middle of the range of beta), then the corrected
 function Y becomes
 
-Y = (beta - 0.5) * X + 0.65 * X / (1 + X / 20)
+Y = (beta - 0.55) * X + 0.65 * X / (1 + X / 20)
 
 Then during inference, the posterior distribution of beta will be
-around beta=0.5 (a property of discrepancy modeling - that the
+around beta=0.55 (a property of discrepancy modeling - that the
 mode of the posterior distribution is the user-specified value
 of beta; thus, discrepancy modeling is good for improving prediction
 but not improving the knowledge of model parameters)
@@ -68,23 +69,16 @@ I. Preparing experimental data file (expdata)
 
       psuade psExper.in
 
-   3. Convert the experimental data file from PSUADE to Excel 
-      format (which will be inserted into the experimental data file)
+   3. Convert the experimental data file from PSUADE to standard
+      format  
 
       psuade
       > load psuadeData
-      > write_xls expdata
+      > write_std exp.std
       > quit
 
-    4. Replace the first line of 'expdata' with '21 1 1 1'
-       which means that there are 21 experiments, 1 output, 1
-       design parameter and the design parameter is parameter 1
-       in the simulation model.
-
-       Also, delete the second line (that begins with #).
-
-       Also, add 0.1 at the end of each line to specify the std dev
-       of the observations.
+    4. Compile and run the program 'processExp', which massages
+       the experimental file 'exp.std' into 'expdata'
 
 II. Prepare simulation data
 
@@ -103,7 +97,6 @@ III. Run inference
      the subdirectories (Case 1: no discrepancy, Case 2: with
      discrepancy).
 
-     To run these cases, first copy simdata and expdata to these
-     subdirectories, cd to the subdirectories, and follow 
-     instructions in the README files.
+     To run these cases, first copy script.mcmc from Case 1 or 2,
+     then do: psuade < script.mcmc
 

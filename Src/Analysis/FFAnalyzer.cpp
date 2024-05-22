@@ -134,10 +134,12 @@ double FFAnalyzer::analyze(aData &adata)
   printOutTS(PL_INFO, "\n");
   printAsterisks(PL_INFO, 0);
   printOutTS(PL_INFO,"* Fractional Factorial Main Effect Analysis\n");
-  printOutTS(PL_INFO,"* This analysis works for FF4, FF5 and PBD designs\n");
-  printOutTS(PL_INFO,"* This analysis is good for models that are linear\n");
-  printOutTS(PL_INFO,"* with respect to each input with some pairwise\n");
-  printOutTS(PL_INFO,"* interactions, e.g. Y = X_1 + X2 + X1 * X2.\n");
+  printOutTS(PL_INFO,
+   "* This analysis works for FF4, FF5 and PBD designs.\n");
+  printOutTS(PL_INFO,
+   "* This analysis is good for models that are linear with respect to\n");
+  printOutTS(PL_INFO,
+   "* each input with some pairwise interactions, e.g. Y=X_1+X2+X1*X2.\n");
   printDashes(PL_INFO, 0);
   printOutTS(PL_INFO, "* total number of samples = %10d \n",nSamples);
   printOutTS(PL_INFO, "* number of Inputs        = %10d \n",nInputs);
@@ -188,12 +190,13 @@ double FFAnalyzer::analyze(aData &adata)
       if (vecXT[ss] != vecXT[nSamples/2]) checkSample = 0;
     if (checkSample == 0)
     {
-      printOutTS(PL_INFO, 
-           "FFAnalysis ERROR: sample not fractional factorial.\n");
-      printOutTS(PL_INFO, 
-           "If you are using replicated Fractional Factorial\n");
-      printOutTS(PL_INFO, "enter the number of replications.\n");
-      snprintf(pString,100,"Number of replications = (2 - %d) ",nSamples/2);
+      printOutTS(PL_INFO,"FFAnalysis ERROR: Sample appears ");
+      printOutTS(PL_INFO,"not to be fractional factorial.\n");
+      printOutTS(PL_INFO,"If you are using REPLICATED Fractional");
+      printOutTS(PL_INFO,"Factorial, enter the number of\n");
+      printOutTS(PL_INFO,"replications.\n");
+      snprintf(pString,100,
+         "Number of replications = (2 - %d) ",nSamples/2);
       nReps = getInt(2, nSamples/2, pString);
       break;
     }
@@ -220,10 +223,9 @@ double FFAnalyzer::analyze(aData &adata)
             checkSample = 0;
         if (checkSample == 0)
         {
-          printOutTS(PL_ERROR, 
-             "FFAnalysis ERROR: sample not fractional factorial.\n");
-          printOutTS(PL_ERROR, 
-             "                  nor replicated fractional factorial.\n");
+          printOutTS(PL_ERROR,"FFAnalysis ERROR: Sample is not ");
+          printOutTS(PL_ERROR,"fractional factorial nor Replicated\n");
+          printOutTS(PL_ERROR,"           Fractional Factorial.\n");
           if(fp != NULL) fclose(fp);
           return 0.0;
         }

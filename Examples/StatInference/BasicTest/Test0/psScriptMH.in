@@ -10,9 +10,9 @@ mcmcFile
 1
 n
 1000000
-20
-0.0
--1
+0
+3
+1.05
 n
 ################################################
 # Now MCMCPostSample is available. You may run

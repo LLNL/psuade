@@ -42,6 +42,7 @@ public:
    double   expPower_;
    int      meanIndex_;
    int      homogeneous_;
+   int      numLBFGS_;
    psVector VecQLevels_;
    psVector VecHypers_;
    psMatrix MatCInvYs_;

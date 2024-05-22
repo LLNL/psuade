@@ -16,7 +16,7 @@ METHOD
    random_seed = 41491431
 END
 APPLICATION
-#  if ensemble mode is desired, uncomment the next 3 lines
+#  the next 3 lines are for ensemble runs
    ensemble_driver = ./ensemble_simulator
    ensemble_run_mode
    max_parallel_jobs = 10

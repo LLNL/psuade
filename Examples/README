@@ -15,3 +15,5 @@ PsuadeAsLib     - call psuade libraries from user codes
 PsuadeAsServer  - an example using PSUADE in a server-client mode
 CorrelatedInps  - an example for SA with correlated inputs
 SimpleUQ        - a few examples for conducting simple UQ analysis
+Sensitivity     - examples for different sensitivity analysis
+

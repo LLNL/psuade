@@ -1,0 +1,31 @@
+PSUADE
+INPUT
+   dimension = 2
+   variable   1 X1   = 0.0  1.0
+   variable   2 X2   = 0.0  1.0
+END
+OUTPUT
+   dimension = 4
+   variable 1 Y1
+   variable 2 Y2
+   variable 3 Y3
+   variable 4 Y4
+END
+METHOD
+   sampling = FACT
+   num_samples = 100
+   random_seed = 1211319841
+END
+APPLICATION
+   opt_driver = PSUADE_LOCAL
+   launch_interval = 0
+END
+ANALYSIS
+   optimization method = bobyqa
+   optimization num_starts = 3
+   optimization max_feval = 10000
+   optimization tolerance = 1.000000e-04
+   optimization print_level = 1
+   printlevel 1
+END
+END

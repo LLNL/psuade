@@ -51,6 +51,7 @@ static int     randFlag_=0;
 static int     randMask_;
 static double  pgplotXmin_, pgplotXmax_, pgplotYmin_, pgplotYmax_;
 static long    pgplotFlag_; 
+static int     sortCount_=0;
 
 // ************************************************************************
 // random number generator initializer 
@@ -257,6 +258,19 @@ void sortDbleList(int length, double *valueList)
   double ddata, *valueList2, *valueList3, dsort;
 
   if ( length <= 1 ) return;
+  if ( length == 2 )
+  {
+    if (valueList[0] > valueList[1])
+    {
+      ddata = valueList[0];
+      valueList[0] = valueList[1];
+      valueList[1] = ddata;
+    }
+    return;
+  }
+  if (sortCount_ > 20000) 
+    printf("INFO: Sort recursion level %d >= 20000.\n",sortCount_);
+  sortCount_++;
   mid   = (length - 1) / 2;
   ddata = valueList[0];
   valueList[0] = valueList[mid];
@@ -283,6 +297,83 @@ void sortDbleList(int length, double *valueList)
   valueList[last] = ddata;
   sortDbleList(last, valueList);
   sortDbleList(length-last-1,&(valueList[last+1]));
+  sortCount_--;
+}
+
+// ************************************************************************
+// sort double list using bubble sort
+// ------------------------------------------------------------------------
+void sortDbleListBubble(int length, double *valueList)
+{
+  int    ii, jj, ind; 
+  double ddata;
+  for (ii = 0; ii < length - 1; ii++) 
+  { 
+    // Find the minimum element 
+    ind = ii; 
+    for (jj = ii + 1; jj < length; jj++) 
+      if (valueList[jj] < valueList[ind]) ind = jj; 
+    // Swap the minimum element with the first element 
+    if (ind != ii)
+    {
+      ddata = valueList[ind];
+      valueList[ind] = valueList[ii];
+      valueList[ii] = ddata;
+    } 
+  } 
+}
+
+// ************************************************************************
+// sort double list using merge sort (downloaded from the www)
+// ------------------------------------------------------------------------
+void sortDbleListMerge(int length, double *valueList) 
+{
+  if (length == 1) return;
+
+  int    ii, n1 = length / 2, n2 = length - n1;
+  psVector psVec1, psVec2;
+  psVec1.setLength(n1);
+  psVec2.setLength(n2);
+  double *vec1 = psVec1.getDVector();
+  double *vec2 = psVec2.getDVector();
+
+  for (ii = 0; ii < n1; ++ii) vec1[ii] = valueList[ii];
+  for (ii = 0; ii < n2; ++ii) vec2[ii] = valueList[ii+n1];
+  sortCount_++;
+  if (sortCount_ > 20000) 
+    printf("INFO: Sort recursion level %d >= 20000.\n",sortCount_);
+
+  // recursively sort the two sub-arrays
+  sortDbleListMerge(n1, vec1);
+  sortDbleListMerge(n2, vec2);
+
+  // merge the two sorted sub-arrays
+  int count1 = 0;
+  int count2 = 0;
+  for (ii = 0; ii < length; ++ii) 
+  {
+    if ( count1 == n1 ) 
+    {
+      valueList[ii] = vec2[count2];
+      ++count2;
+    } 
+    else if ( count2 == n2 ) 
+    {
+      valueList[ii] = vec1[count1];
+      ++count1;
+    } 
+    else if ( vec1[count1] < vec2[count2] ) 
+    {
+      valueList[ii] = vec1[count1];
+      ++count1;
+    } 
+    else 
+    {
+      valueList[ii] = vec2[count2];
+      ++count2;
+    }
+  }
+  sortCount_--;
 }
 
 // ************************************************************************
@@ -890,6 +981,27 @@ void printEquals(int printLevel, int length)
 }
 
 // ************************************************************************
+// check double array data validity
+// ------------------------------------------------------------------------
+void checkDbleArray(char *fromWhere, int length, double *darray)
+{
+  if (psConfig_.DiagnosticsIsOn())
+    printf("INFO: Entering checkDbleArray from %s\n",fromWhere);
+  double ddata;
+  try {
+    for (int ii = 0; ii < length; ii++) ddata = darray[ii];
+  }
+  catch (const exception& e)
+  {
+    printf("checkDbleArray ERROR: Invalid data (call from %s)\n",
+           fromWhere);  
+    exit(1);
+  }
+  if (psConfig_.DiagnosticsIsOn())
+    printf("INFO: Exiting checkDbleArray from %s\n",fromWhere);
+}
+
+// ************************************************************************
 // check null for an allocation
 // ------------------------------------------------------------------------
 void checkAllocate(void *ptr, const char *mssg)
@@ -1121,6 +1233,25 @@ void StopTimer()
 double getElapsedTime()
 {
   return elapsedTime_;
+}
+
+// ************************************************************************
+// compute basic statistics
+// ------------------------------------------------------------------------
+int computeBasicStatistics(psVector vecY, double &mean, double &dstd)
+{
+  int ss;
+
+  int nSams = vecY.length();
+  if (nSams <= 0) return -1;
+  mean = 0;
+  for (ss = 0; ss < nSams; ss++) mean += vecY[ss];
+  mean /= (double) nSams;
+  dstd = 0.0;
+  for (ss = 0; ss < nSams; ss++) dstd += pow(vecY[ss]-mean,2.0);
+  if (nSams == 1 || dstd == 0.0) dstd = 1;
+  else                           dstd = sqrt(dstd / (nSams - 1.0));
+  return 0;
 }
 
 // ************************************************************************
@@ -1652,6 +1783,92 @@ int readIReadDataFile(char *fname, psMatrix &Amat)
     printf("readIReadDataFile ERROR: not enough data\n");
     return 1;
   }
+  return 0;
+}
+
+// ************************************************************************
+// read file that contains group information (e.g. needed for group SA)
+// ------------------------------------------------------------------------
+int readGrpInfoFile(char *fname, int nInputs, psIMatrix &Amat)
+{
+  int  ii, nGroups, groupID, length, jj, sCnt, index;
+  char lineIn[5000], pString[1000];
+
+  FILE *fp = fopen(fname, "r");
+  if (fp == NULL)
+  {
+    printOutTS(PL_ERROR,
+         "readGrpInfoFile ERROR: file '%s' not found.\n",fname);
+    system("ls");
+    return 1;
+  }
+  fgets(lineIn, 1000, fp);
+  sscanf(lineIn, "%s", pString);
+  if (!strcmp(pString, "PSUADE_BEGIN"))
+  {
+    fscanf(fp, "%d", &nGroups);
+    if (nGroups <= 0)
+    {
+      printOutTS(PL_ERROR,"readGrpInfoFile ERROR: nGroups <= 0.\n");
+      fclose(fp);
+      return 1;
+    }
+  }
+  else
+  {
+    printOutTS(PL_ERROR,
+         "readGrpInfoFile ERROR: PSUADE_BEGIN not found.\n");
+    fclose(fp);
+    return 1;
+  }
+  Amat.setDim(nGroups, nInputs);
+  for (ii = 0; ii < nGroups; ii++)
+  {
+    fscanf(fp, "%d", &groupID);
+    if (groupID != ii+1)
+    {
+      printOutTS(PL_ERROR,
+        "readGrpInfoFile ERROR: Invalid groupID %d - ",groupID);
+      printOutTS(PL_ERROR," should be %d\n", ii+1);
+      fclose(fp);
+      return 1;
+    }
+    fscanf(fp, "%d", &length);
+    if (length <= 0 || length >= nInputs)
+    {
+      printOutTS(PL_ERROR, 
+        "readGrpInfoFile ERROR: Invalid group length.\n");
+      printOutTS(PL_ERROR, 
+        "    Group length must be > 0 and less than %d.\n",nInputs);
+      fclose(fp);
+      return 1;
+    }
+    sCnt = 1;
+    for (jj = 0; jj < length; jj++)
+    {
+      fscanf(fp, "%d", &index);
+      if (index <= 0 || index > nInputs)
+      {
+        printOutTS(PL_ERROR, 
+          "readGrpInfoFile ERROR: Invalid group member.\n");
+        fclose(fp);
+        return 1;
+      }
+      Amat.setEntry(ii,index-1, sCnt);
+      sCnt++;
+    }
+  }
+  fgets(lineIn, 1000, fp);
+  fgets(lineIn, 1000, fp);
+  sscanf(lineIn, "%s", pString);
+  if (strcmp(pString, "PSUADE_END"))
+  {
+    printOutTS(PL_WARN, 
+      "readGrpInfoFile WARNING: PSUADE_END not found but will proceed.\n");
+    fclose(fp);
+    return 0;
+  }
+  fclose(fp);
   return 0;
 }
 

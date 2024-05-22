@@ -36,11 +36,13 @@
 // ************************************************************************
 // link to external OA generator
 // ************************************************************************
+#ifdef HAVE_BOSE
 extern "C" 
 {
   int  bose_link(int n, int ninputs, int str, int ***AA);
   void OA_strength(int q,int nrow,int ncol,int** A,int *str,int verbose);
 }
+#endif
 
 // ************************************************************************
 // Constructor
@@ -62,6 +64,10 @@ OALHSampling::~OALHSampling()
 // ------------------------------------------------------------------------
 int OALHSampling::initialize(int initLevel)
 {
+#ifndef HAVE_BOSE
+  printf("OALHSampling ERROR: Bose library not installed.\n");
+  exit(1);
+#else
   int    inputID, sampleID, strength, offset, nReps;
   int    repID, status, **itempMatrix, nSamples1;
   int    symbolID, symbolID2, index, nSubSamples, nSamples2;
@@ -326,6 +332,7 @@ int OALHSampling::initialize(int initLevel)
       }
     }
   }
+#endif
   return 0;
 }
 
@@ -335,6 +342,7 @@ int OALHSampling::initialize(int initLevel)
 int OALHSampling::refine(int refineRatio, int randomize, double thresh,
                          int nSamples, double *sampleErrors)
 {
+#ifdef HAVE_BOSE
   int    nReps, symMult, *factors, ncount, ind1, samMult, strength;
   int    status, **itempMatrix, newNSymbols, newNSamples;
   int    sampleID, repID, inputID, symbolID, nSubSamples;
@@ -754,6 +762,7 @@ int OALHSampling::refine(int refineRatio, int randomize, double thresh,
     if (vecInpNumSettings_.length() > 0 || vecSymTable_.length() > 0)
       printf("OALHSampling refine: diable input settings, symbol table.\n");
   }
+#endif
   return 0;
 }
 

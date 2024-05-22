@@ -74,7 +74,6 @@ II. MMV
    MMD method, namely, 
 
      cc -o simulator simulator.c -lm
-     # uncomment the 'driver = ./driver' line in psuade.in
      psuade psuade.in
      mv psuadeData Sample
      # then, after launching psuade and before calling

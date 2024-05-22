@@ -108,7 +108,7 @@ double BootstrapAnalyzer::analyze(aData &adata)
          "                         Prune the undefined's first.\n");
     return PSUADE_UNDEFINED;
   }
-  VecStoredVals_.clean();
+  VecStoredVals_.setLength(nSteps_);
 
   //**/ ---------------------------------------------------------------
   //**/ first find the mean of the current set of samples
@@ -307,7 +307,6 @@ int BootstrapAnalyzer::setupNormalCDF(double mean, double stdev)
   //**/ -------------------------------
   //**/ compute total area
   //**/ -------------------------------
-
   value = 0.0;
   VecStoredVals_.setLength(nSteps_+1);
   for (ii = 0; ii < nSteps_; ii++)

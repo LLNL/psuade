@@ -17,6 +17,7 @@ METHOD
 END
 APPLICATION
    driver = ./simulator
+#  driver = ./simulator.py
 #  if ensemble mode is desired, uncomment the next 3 lines
 #  ensemble_driver = ./ensemble_simulator
 #  ensemble_run_mode

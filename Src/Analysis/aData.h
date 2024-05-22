@@ -71,10 +71,14 @@ public:
   //**/ interpolation error of individual sample
   double *sampleErrors_;
 
+  //**/ file passed to analyzer
+  char grpFileName_[200];
+
   //**/ cross validation flag
   int    cvFlag_;
   //**/ regression weights (which output)
   int    regWgtID_;
+  //**/ response surface type
   int    faType_;
 
   //**/ pointer to all user-specific information

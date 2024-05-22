@@ -1,0 +1,74 @@
+=============================================================
+Bungee problem
+=============================================================
+To run local sensitivity method, 
+
+1. compile simulator: cc -o simulator simulator.c -lm
+2. run psuadeLSA.in: psuade psuadeLSA.in
+3. analyze
+   psuade
+   > load psuadeData
+   > lsa
+   ...
+
+=============================================================
+To run entropy methods, first compile simulator 
+
+cc -o simulator simulator.c -lm
+
+Case I. Not using response surface
+
+A. single-parameter entropy 
+ 
+   psuade
+   > load psuadeEnt.in
+   > entropy1
+     ...
+
+B. dual-parameter entropy 
+ 
+   psuade
+   > load psuadeEnt.in
+   > entropy2
+     ...
+
+C. group entropy 
+ 
+   psuade
+   > load psuadeEnt.in
+   > entropyg
+     ...
+     <use the group file called grpfile>
+
+Case II. using response surface
+
+* first create a sample
+  psuade psuadeRS.in
+  rename psuadeData as simdata
+
+A. single-parameter entropy 
+ 
+   psuade
+   > load simdata
+   > rsentropy1
+     <select MARS as response surface>
+     ...
+
+B. two-parameter entropy 
+ 
+   psuade
+   > load simdata
+   > rsentropy2
+     <select MARS as response surface>
+     ...
+
+C. group entropy 
+ 
+   psuade
+   > load simdata
+   > rsentropyg
+     <use the group file called grpfile>
+     <select MARS as response surface>
+     ...
+
+
